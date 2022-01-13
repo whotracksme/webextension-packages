@@ -19,7 +19,7 @@ define({
       target="_blank"
       href="https://www.ghostery.com"
     >
-      <img src="/images/logo.svg" />
+      <img src="/vendor/@whotracksme/ui/src/images/logo.svg" />
     </a>
     <span class="domain-name">
       ${domain}

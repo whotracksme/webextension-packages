@@ -1,0 +1,10 @@
+{
+  "name": "@whotracksme/webextension-packages",
+  "version": "0.0.2",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MPL-2.0"
+}

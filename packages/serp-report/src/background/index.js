@@ -62,3 +62,5 @@ function tryWTMReportOnMessageHandler(msg, sender, sendResponse) {
 
   return false; // continue
 }
+
+globalThis.tryWTMReportOnMessageHandler = tryWTMReportOnMessageHandler;
