@@ -8,7 +8,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-
+import * as tldts from '../../../../tldts/dist/index.esm.min.js';
+import {
+  WTM_PRIVACY_SCORE_CATEGORIES,
+  WTM_PRIVACY_SCORE_COMPRESSED_STATS,
+} from './data.js';
 
 /**
  * Takes a site (e.g. "economist.com") and returns a map of categories
@@ -20,7 +24,7 @@
  *
  * The shipped database covers the top 10,000 sites.
  */
- function lookupWtmPrivacyScoreForSite(domain) {
+function lookupWtmPrivacyScoreForSite(domain) {
   const response = {
     domain,
     stats: [],
@@ -38,10 +42,10 @@
     }
   });
 
-  response.stats = Object.keys(results).reduce((all, current) => ([
-    ...all,
-    ...Array(results[current]).fill(current),
-  ]), []);
+  response.stats = Object.keys(results).reduce(
+    (all, current) => [...all, ...Array(results[current]).fill(current)],
+    [],
+  );
 
   return response;
 }
@@ -51,7 +55,11 @@ function getWTMReportFromUrl(url) {
   return lookupWtmPrivacyScoreForSite(domain);
 }
 
-function tryWTMReportOnMessageHandler(msg, sender, sendResponse) {
+export default function tryWTMReportOnMessageHandler(
+  msg,
+  sender,
+  sendResponse,
+) {
   if (msg.action === 'getWTMReport') {
     const wtmStats = msg.links.map(getWTMReportFromUrl);
     sendResponse({
@@ -62,5 +70,3 @@ function tryWTMReportOnMessageHandler(msg, sender, sendResponse) {
 
   return false; // continue
 }
-
-globalThis.tryWTMReportOnMessageHandler = tryWTMReportOnMessageHandler;

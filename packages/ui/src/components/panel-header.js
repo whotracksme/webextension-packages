@@ -11,19 +11,14 @@
 
 import { html, define } from '/hybrids.js';
 
-define({
+export default define({
+  tag: 'panel-header',
   domain: '',
-  tag: "panel-header",
   render: ({ domain }) => html`
-    <a
-      target="_blank"
-      href="https://www.ghostery.com"
-    >
-      <img src="/vendor/@whotracksme/ui/src/images/logo.svg" />
+    <a target="_blank" href="https://www.ghostery.com">
+      <img src="/vendor/@whotracksme/ui/src/assets/images/logo.svg" />
     </a>
-    <span class="domain-name">
-      ${domain}
-    </span>
+    <span class="domain-name"> ${domain} </span>
     <slot></slot>
     <div class="notch"></div>
   `.css`

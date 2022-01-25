@@ -1,9 +1,3 @@
-# WhoTracks.Me Prevent SERP tracking
+# `@whotracksme/prevent-serp-tracking`
 
-This is WebExtension library to prevent SERP tracking.
-
-## Integrations with WebExtension
-
-Copy `src` folder to `/vendor/@whotracksme/prevent-serp-tracking/src`.
-
-Copy contents of `manifest.json` to the host WebExtension manifest.
+> Prevents SERP tracking on google search result pages

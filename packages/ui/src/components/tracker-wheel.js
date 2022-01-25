@@ -11,18 +11,24 @@
 
 import { html, define } from '/hybrids.js';
 
+import WTMTrackerWheel from '../tracker-wheel.js';
+
 const SIZE = 150;
 
-define({
-  tag: "tracker-wheel",
+export default define({
+  tag: 'tracker-wheel',
   categories: [],
   canvas: ({ categories }) => {
-    const el = document.createElement("canvas");
+    const el = document.createElement('canvas');
 
     const context = el.getContext('2d');
     context.imageSmoothingQuality = 'high';
 
-    WTMTrackerWheel.draw(context, SIZE, categories.length === 0 ? ['unknown'] : categories);
+    WTMTrackerWheel.draw(
+      context,
+      SIZE,
+      categories.length === 0 ? ['unknown'] : categories,
+    );
 
     // return element
     return el;

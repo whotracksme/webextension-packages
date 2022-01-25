@@ -199,21 +199,15 @@
       ],
       "run_at": "document_end",
       "css": [
-        "/vendor/@whotracksme/serp-report/src/content_scripts/index.css"
+        "vendor/@whotracksme/serp-report/src/content_scripts/serp-report.css"
       ],
       "js": [
-        "/vendor/@whotracksme/tracker-wheel/src/index.js",
-        "/vendor/@whotracksme/serp-report/src/content_scripts/index.js"
+        "vendor/@whotracksme/serp-report/src/content_scripts/serp-report.js"
       ]
     }
   ],
-  "background": {
-    "scripts": [
-      "/vendor/@whotracksme/serp-report/background/data.js",
-      "/vendor/@whotracksme/serp-report/background/index.js"
-    ]
-  },
   "web_accessible_resources": [
-    "vendor/@whotracksme/serp-report/assets/iframe/index.html"
+    "vendor/@whotracksme/serp-report/src/pages/iframe/index.html",
+    "vendor/@whotracksme/ui/src/tracker-wheel.js"
   ]
 }
