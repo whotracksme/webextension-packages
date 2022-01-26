@@ -200,7 +200,7 @@
       "run_at": "document_start",
       "all_frames": true,
       "js": [
-        "/vendor/@whotracksme/prevent-serp-tracking/src/index.js"
+        "vendor/@whotracksme/prevent-serp-tracking/src/content_scripts/prevent-serp-tracking.js"
       ]
     }
   ]

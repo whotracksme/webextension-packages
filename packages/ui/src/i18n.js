@@ -20,4 +20,3 @@ export function t(key) {
 export function getCategoryName(category) {
   return t(`category_${category}`);
 }
-

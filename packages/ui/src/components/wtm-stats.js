@@ -10,31 +10,38 @@
  */
 
 import { html, define } from '/hybrids.js';
-import "./tracker-wheel.js";
-import { getCategoryName } from '../../../../ui/src/i18n.js';
 
-define({
-  tag: "wtm-stats",
+import WTMTrackerWheel from '../tracker-wheel.js';
+import { getCategoryName } from '../i18n.js';
+
+import './tracker-wheel.js';
+
+export default define({
+  tag: 'wtm-stats',
   categories: [],
   byCategory: ({ categories }) => {
-    return categories.reduce((all, current) => ({
-      ...all,
-      [current]: (all[current] || 0) + 1,
-    }), {});
+    return categories.reduce(
+      (all, current) => ({
+        ...all,
+        [current]: (all[current] || 0) + 1,
+      }),
+      {},
+    );
   },
   render: ({ categories, byCategory }) => html`
     <tracker-wheel categories=${categories}></tracker-wheel>
 
     <ul>
-      ${WTMTrackerWheel.sortCategories(Object.keys(byCategory)).map((category) => html`
-        <li class="category">
-          <category-bullet category=${category} size=${7}></category-bullet>
-          <label>${getCategoryName(category)}</label>
-          <strong>${byCategory[category]}</strong>
-        </li>
-      `)}
+      ${WTMTrackerWheel.sortCategories(Object.keys(byCategory)).map(
+        (category) => html`
+          <li class="category">
+            <category-bullet category=${category} size=${7}></category-bullet>
+            <label>${getCategoryName(category)}</label>
+            <strong>${byCategory[category]}</strong>
+          </li>
+        `,
+      )}
     </ul>
-
   `.css`
     :host {
       display: grid;

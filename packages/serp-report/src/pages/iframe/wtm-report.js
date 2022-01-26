@@ -9,59 +9,73 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
- import { html, define } from '/hybrids.js';
- import '../../../../../ui/src/components/wtm-stats/index.js'
- import { externalLink, close } from '../../../../../ui/src/components/icons.js';
- import { t } from '../../../../../ui/src/i18n.js';
+import { html, define } from '/hybrids.js';
 
- const domain = new URLSearchParams(window.location.search).get('domain');
+import { externalLink, close } from '../../../../ui/src/components/icons.js';
+import '../../../../ui/src/components/panel-header.js';
+import '../../../../ui/src/components/wtm-stats.js';
 
- const Stats = new Promise((resolve, reject) => {
-   chrome.runtime.sendMessage({ action: 'getWTMReport', links: [`https://${domain}`] }, (response) => {
-     if (chrome.runtime.lastError) {
-       reject(chrome.runtime.lastError);
-       return;
-     }
-     resolve(response.wtmStats[0]);
-   });
- });
+import { t } from '../../../../ui/src/i18n.js';
 
- function requestClose() {
-   window.parent.postMessage("WTMReportClosePopups", "*");
- }
+const domain = new URLSearchParams(window.location.search).get('domain');
 
- define({
-   tag: "wtm-report",
-   render: () => html`
-     ${html.resolve(Stats.then(stats => html`
-       <panel-header domain=${stats.domain}>
-         <button class="svg-button" onclick="${requestClose}">
-           ${close}
-         </button>
-       </panel-header>
-     `))}
+const Stats = new Promise((resolve, reject) => {
+  chrome.runtime.sendMessage(
+    { action: 'getWTMReport', links: [`https://${domain}`] },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+        return;
+      }
+      resolve(response.wtmStats[0]);
+    },
+  );
+});
 
-     <main>
-       <h1>${t('android_site_blocking_header')}</h1>
+function requestClose() {
+  window.parent.postMessage('WTMReportClosePopups', '*');
+}
 
-       ${html.resolve(Stats.then(stats => html`
-         <wtm-stats categories=${stats.stats}></wtm-stats>
-       `))}
+export default define({
+  tag: 'wtm-report',
+  render: () => html`
+    ${html.resolve(
+      Stats.then(
+        (stats) => html`
+          <panel-header domain=${stats.domain}>
+            <button class="svg-button" onclick="${requestClose}">
+              ${close}
+            </button>
+          </panel-header>
+        `,
+      ),
+    )}
 
-       <section class="buttons">
-         ${html.resolve(Stats.then(stats => html`
-           <a
-             target="_blank"
-             href="https://whotracks.me/websites/${stats.domain}.html"
-           >
-             ${t('statistical_report')} ${externalLink}
-           </a>
-         `))}
-       </section>
-     </main>
+    <main>
+      <h1>${t('android_site_blocking_header')}</h1>
 
+      ${html.resolve(
+        Stats.then(
+          (stats) => html` <wtm-stats categories=${stats.stats}></wtm-stats> `,
+        ),
+      )}
 
-   `.css`
+      <section class="buttons">
+        ${html.resolve(
+          Stats.then(
+            (stats) => html`
+              <a
+                target="_blank"
+                href="https://whotracks.me/websites/${stats.domain}.html"
+              >
+                ${t('statistical_report')} ${externalLink}
+              </a>
+            `,
+          ),
+        )}
+      </section>
+    </main>
+  `.css`
      :host {
        height: 100%;
        display: block;
@@ -139,4 +153,4 @@
        margin-left: 3px;
      }
    `,
- });
+});

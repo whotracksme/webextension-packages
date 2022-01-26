@@ -11,9 +11,11 @@
 
 import { html, define } from '/hybrids.js';
 
-define({
-  tag: "category-bullet",
-  category: "unknown",
+import WTMTrackerWheel from '../tracker-wheel.js';
+
+export default define({
+  tag: 'category-bullet',
+  category: 'unknown',
   size: 0,
   render: ({ category, size }) => {
     const sizePx = `${size}px`;
