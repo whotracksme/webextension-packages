@@ -15,6 +15,7 @@ import WTMTrackerWheel from '../tracker-wheel.js';
 import { getCategoryName } from '../i18n.js';
 
 import './tracker-wheel.js';
+import './category-bullet.js';
 
 export default define({
   tag: 'wtm-stats',
@@ -61,14 +62,13 @@ export default define({
     }
 
     .category {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
+      display: grid;
+      grid-template-columns: min-content max-content 1fr;
+      grid-gap: 5px;
       margin-bottom: 5px;
     }
 
     .category label {
-      margin: 0 5px;
       font-size: 13px;
       line-height: 16px;
     }
@@ -79,5 +79,5 @@ export default define({
       font-weight: 500;
       line-height: 16px;
     }
-  `,
+   `,
 });
