@@ -58,11 +58,7 @@ function getWTMReportFromUrl(url) {
   return lookupWtmPrivacyScoreForSite(domain);
 }
 
-export default function tryWTMReportOnMessageHandler(
-  msg,
-  sender,
-  sendResponse,
-) {
+export function tryWTMReportOnMessageHandler(msg, sender, sendResponse) {
   if (msg.action === 'getWTMReport') {
     const wtmStats = msg.links.map(getWTMReportFromUrl);
     sendResponse({
@@ -72,4 +68,8 @@ export default function tryWTMReportOnMessageHandler(
   }
 
   return false; // continue
+}
+
+export function isDisableWTMReportMessage(msg) {
+  return msg.action === 'disableWTMReport';
 }
