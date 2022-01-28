@@ -126,6 +126,15 @@ function renderWheel(WTMTrackerWheel, anchor, stats) {
   parent.appendChild(container);
 }
 
+function removeWheel(anchor) {
+  const container = anchor.parentElement.querySelector(
+    '.wtm-tracker-wheel-container',
+  );
+  if (container) {
+    container.parentElement.removeChild(container);
+  }
+}
+
 (async function () {
   const { default: WTMTrackerWheel } = await import(
     chrome.runtime.getURL('vendor/@whotracksme/ui/src/tracker-wheel.js')
@@ -165,6 +174,13 @@ function renderWheel(WTMTrackerWheel, anchor, stats) {
 
     if (message.data === 'WTMReportClosePopups') {
       closePopups();
+      return;
+    }
+
+    if (message.data === 'WTMReportDisable') {
+      closePopups();
+      elements.forEach(removeWheel);
+      chrome.runtime.sendMessage({ action: 'disableWTMReport' });
       return;
     }
 
