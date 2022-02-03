@@ -17,8 +17,10 @@ const SIZE = 150;
 
 export default define({
   tag: 'tracker-wheel',
-  categories: [],
+  categories: undefined,
   canvas: ({ categories }) => {
+    if (!categories) return null;
+
     const el = document.createElement('canvas');
 
     const context = el.getContext('2d');
@@ -35,7 +37,7 @@ export default define({
   },
   render: ({ categories, canvas }) => html`
     ${canvas}
-    <strong>${categories.length}</strong>
+    <strong>${categories && categories.length}</strong>
   `.css`
     :host {
       align-self: center;
@@ -52,6 +54,12 @@ export default define({
       position: absolute;
       top: 0px;
       left: 0px;
+
+      /* all four are needed to support the most browsers */
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     strong {
