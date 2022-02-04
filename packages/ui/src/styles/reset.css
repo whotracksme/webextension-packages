@@ -1,15 +1,20 @@
 :root {
-  --text: #838B90;
+  --text: #838b90;
   --black: #252525;
-  --ghostery: #00AEF0;
-  --deep-blue: #0D8FE7;
+  --ghostery: #00aef0;
+  --deep-blue: #0d8fe7;
 }
 
-body, button {
-  font-family: "Roboto", "Open Sans", Arial, Helvetica, sans-serif !important;
+body,
+button,
+label,
+input {
+  font-family: -apple-system, BlinkMacSystemFont, 'Open Sans', Arial, Helvetica,
+    sans-serif;
 }
 
-html, body {
+html,
+body {
   padding: 0;
   margin: 0;
   font-size: 13px;
