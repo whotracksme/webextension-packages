@@ -23,6 +23,7 @@ export default define({
     <div class="notch"></div>
   `.css`
     :host {
+      flex-shrink: 0;
       background-color: var(--ghostery);
       color: white;
       display: flex;
@@ -30,6 +31,7 @@ export default define({
       align-items: center;
       padding: 9px 12px;
       position: relative;
+      overflow: hidden;
     }
 
     .notch {

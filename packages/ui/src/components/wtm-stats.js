@@ -19,9 +19,9 @@ import './category-bullet.js';
 
 export default define({
   tag: 'wtm-stats',
-  categories: [],
+  categories: undefined,
   byCategory: ({ categories }) => {
-    return categories.reduce(
+    return (categories || []).reduce(
       (all, current) => ({
         ...all,
         [current]: (all[current] || 0) + 1,

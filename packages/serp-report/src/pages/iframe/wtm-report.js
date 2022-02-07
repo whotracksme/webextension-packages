@@ -101,12 +101,12 @@ export default define({
     }
 
     h1 {
-      font-size: 20px;
+      font-size: 16px;
       text-align: center;
       color: var(--black);
       white-space: nowrap;
       font-weight: 600;
-      margin: 0px;
+      margin: 6px 0;
     }
 
     .svg-button {
@@ -190,5 +190,5 @@ export default define({
       width: 10px;
       height: 10px;
     }
-   `,
+  `,
 });
