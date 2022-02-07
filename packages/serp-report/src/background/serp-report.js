@@ -15,7 +15,7 @@ import {
 } from './data.js';
 
 // For now, we assume that "tldts" library is already loaded and exists on the global scope
-const { parse } = globalThis.tldts;
+const { tldts } = globalThis;
 
 /**
  * Takes a site (e.g. "economist.com") and returns a map of categories
