@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Roboto';
+  src: local('Roboto'), url('../fonts/Roboto-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: local('Roboto'), url('../fonts/Roboto-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: local('Roboto'), url('../fonts/Roboto-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --text: #838b90;
   --black: #252525;
@@ -9,8 +33,8 @@ body,
 button,
 label,
 input {
-  font-family: -apple-system, BlinkMacSystemFont, 'Open Sans', Arial, Helvetica,
-    sans-serif;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Open Sans', Arial,
+    Helvetica, sans-serif;
 }
 
 html,
