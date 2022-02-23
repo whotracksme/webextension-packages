@@ -1,3 +1,15 @@
+# v0.1.5 (Wed Feb 23 2022)
+
+#### 🐛 Bug Fix
+
+- Use relative paths for vite support [#12](https://github.com/whotracksme/webextension-packages/pull/12) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.1.1 (Wed Feb 23 2022)
 
 #### 🐛 Bug Fix
