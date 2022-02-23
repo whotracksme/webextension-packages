@@ -4,14 +4,33 @@
   "description": "",
   "scripts": {
     "lint": "eslint packages/",
-    "test": "npm run lint"
+    "test": "npm run lint",
+    "release": "auto shipit"
   },
-  "author": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whotracksme/webextension-packages.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whotracksme/webextension-packages/issues"
+  },
+  "homepage": "https://github.com/whotracksme/webextension-packages#readme",
+  "author": "Ghostery GmbH",
   "license": "MPL-2.0",
   "devDependencies": {
+    "auto": "^10.32.6",
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "prettier": "2.5.1"
+  },
+  "auto": {
+    "baseBranch": "main",
+    "plugins": [
+      "npm"
+    ]
   }
 }
