@@ -37,8 +37,8 @@ function renderPopup(container, stats) {
     wrapper.style.width = window.innerWidth - 20 + 'px';
     wrapper.style.left = '10px';
   } else {
-    wrapper.style.left =
-      container.getBoundingClientRect().left - 350 / 2 + 12 + 'px';
+    const left = container.getBoundingClientRect().left - 350 / 2 + 12;
+    wrapper.style.left = (left < 20 ? 20 : left) + 'px';
   }
   wrapper.style.top = getTop(container) + 25 + 'px';
 
@@ -54,76 +54,35 @@ function renderPopup(container, stats) {
   document.body.appendChild(wrapper);
 }
 
-function renderWheel(WTMTrackerWheel, anchor, stats) {
+function getWheelElement(WTMTrackerWheel, stats) {
   const count = stats.stats.length;
 
   if (count === 0) {
-    return;
+    return null;
   }
 
-  const parent = anchor.parentElement;
-  parent.style.position = 'relative';
-  const threeDotsElement = parent.querySelector(
-    'div[jsslot] div[aria-haspopup], div[jsaction] div[role=button] span',
-  );
-
-  if (!threeDotsElement && isMobile) {
-    // that's not a "full" result
-    return;
-  }
   const container = document.createElement('div');
   container.classList.add('wtm-tracker-wheel-container');
-  if (isMobile) {
-    container.style.left =
-      threeDotsElement.getBoundingClientRect().left -
-      parent.getBoundingClientRect().left -
-      50 +
-      'px';
-    container.style.top = 15 + 'px';
-  } else if (threeDotsElement) {
-    // default path on Safari (Desktop)
-    container.style.left =
-      threeDotsElement.getBoundingClientRect().right -
-      parent.getBoundingClientRect().left +
-      5 +
-      'px';
-  } else {
-    // default path in Chrome
-    const translate = 'a.iUh30 > span';
-    const arrowDown = 'span.gTl8xb';
-    const textEnd = 'cite > span';
-    const elem =
-      parent.querySelector(translate) ||
-      parent.querySelector(arrowDown) ||
-      parent.querySelector(textEnd);
-    if (!elem) {
-      return;
-    }
-    container.style.left =
-      elem.getBoundingClientRect().right -
-      parent.getBoundingClientRect().left +
-      10 +
-      'px';
-  }
-
-  container.addEventListener('click', (ev) => {
-    renderPopup(container, stats);
-    ev.preventDefault();
-    return false;
-  });
 
   const label = document.createElement('label');
   label.innerText = count;
 
   const canvas = document.createElement('canvas');
   canvas.classList.add('wtm-tracker-wheel');
+
   const ctx = canvas.getContext('2d');
-  WTMTrackerWheel.setupCtx(ctx, 22);
-  WTMTrackerWheel.draw(ctx, 22, stats.stats);
+  WTMTrackerWheel.setupCtx(ctx, 16);
+  WTMTrackerWheel.draw(ctx, 16, stats.stats);
 
   container.appendChild(canvas);
   container.appendChild(label);
-  parent.appendChild(container);
+
+  container.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    renderPopup(container, stats);
+  });
+
+  return container;
 }
 
 function removeWheel(anchor) {
@@ -142,10 +101,17 @@ function removeWheel(anchor) {
 
   const elements = [
     ...window.document.querySelectorAll(
-      '#main div.g div.yuRUbf > a, div.mnr-c.xpd.O9g5cc.uUPGi a.cz3goc',
+      '#main div.g div.yuRUbf > a, div.mnr-c.xpd.O9g5cc.uUPGi a.cz3goc, .ZINbbc > div:first-child a',
     ),
   ];
-  const links = elements.map((x) => x.href);
+
+  const links = elements.map((el) => {
+    if (el.hostname === window.location.hostname) {
+      const url = new URL(el.href);
+      return url.searchParams.get('url') || url.searchParams.get('q');
+    }
+    return el.href;
+  });
 
   chrome.runtime.sendMessage({ action: 'getWTMReport', links }, (response) => {
     if (chrome.runtime.lastError) {
@@ -156,10 +122,29 @@ function removeWheel(anchor) {
       return;
     }
 
-    elements.forEach((elem, i) => {
-      if (response.wtmStats[i]) {
+    elements.forEach((anchor, i) => {
+      const stats = response.wtmStats[i];
+      if (stats) {
         try {
-          renderWheel(WTMTrackerWheel, elem, response.wtmStats[i]);
+          const wheelEl = getWheelElement(WTMTrackerWheel, stats);
+          if (!wheelEl) return;
+
+          const parent = anchor.parentElement;
+
+          const container =
+            // Desktop flat
+            parent.querySelector('.B6fmyf') ||
+            // Mobile flat
+            anchor.querySelector('div[role="link"]') ||
+            // Mobile cards
+            anchor.querySelector('div.UPmit.AP7Wnd');
+
+          let tempEl = container.firstElementChild;
+          if (tempEl && tempEl.textContent.includes(stats.domain)) {
+            container.insertBefore(wheelEl, tempEl.nextElementSibling);
+          } else {
+            container.appendChild(wheelEl);
+          }
         } catch (e) {
           // ignore errors
         }
