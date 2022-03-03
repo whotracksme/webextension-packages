@@ -1,3 +1,15 @@
+# v0.2.0 (Thu Mar 03 2022)
+
+#### 🚀 Enhancement
+
+- Add support for mobile Firefox old layout for google [#14](https://github.com/whotracksme/webextension-packages/pull/14) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.1.5 (Wed Feb 23 2022)
 
 #### 🐛 Bug Fix
