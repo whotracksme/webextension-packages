@@ -79,6 +79,8 @@ function getWheelElement(WTMTrackerWheel, stats) {
 
   container.addEventListener('click', (ev) => {
     ev.preventDefault();
+    ev.stopImmediatePropagation();
+
     renderPopup(container, stats);
   });
 
@@ -95,84 +97,98 @@ function removeWheel(anchor) {
 }
 
 (async function () {
-  const { default: WTMTrackerWheel } = await import(
-    chrome.runtime.getURL('vendor/@whotracksme/ui/src/tracker-wheel.js')
-  );
-
   const elements = [
     ...window.document.querySelectorAll(
       '#main div.g div.yuRUbf > a, div.mnr-c.xpd.O9g5cc.uUPGi a.cz3goc, .ZINbbc > div:first-child a',
     ),
   ];
 
-  const links = elements.map((el) => {
-    if (el.hostname === window.location.hostname) {
-      const url = new URL(el.href);
-      return url.searchParams.get('url') || url.searchParams.get('q');
-    }
-    return el.href;
-  });
+  if (elements.length) {
+    const { default: WTMTrackerWheel } = await import(
+      chrome.runtime.getURL('vendor/@whotracksme/ui/src/tracker-wheel.js')
+    );
 
-  chrome.runtime.sendMessage({ action: 'getWTMReport', links }, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error(
-        'Could not retrieve WTM information on URLs',
-        chrome.runtime.lastError,
-      );
-      return;
-    }
+    const links = elements.map((el) => {
+      if (el.hostname === window.location.hostname) {
+        const url = new URL(el.href);
+        return url.searchParams.get('url') || url.searchParams.get('q');
+      }
+      return el.href;
+    });
 
-    elements.forEach((anchor, i) => {
-      const stats = response.wtmStats[i];
-      if (stats) {
-        try {
-          const wheelEl = getWheelElement(WTMTrackerWheel, stats);
-          if (!wheelEl) return;
-
-          const parent = anchor.parentElement;
-
-          const container =
-            // Desktop flat
-            parent.querySelector('.B6fmyf') ||
-            // Mobile flat
-            anchor.querySelector('div[role="link"]') ||
-            // Mobile cards
-            anchor.querySelector('div.UPmit.AP7Wnd');
-
-          let tempEl = container.firstElementChild;
-          if (tempEl && tempEl.textContent.includes(stats.domain)) {
-            container.insertBefore(wheelEl, tempEl.nextElementSibling);
-          } else {
-            container.appendChild(wheelEl);
-          }
-        } catch (e) {
-          // ignore errors
+    chrome.runtime.sendMessage(
+      { action: 'getWTMReport', links },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error(
+            'Could not retrieve WTM information on URLs',
+            chrome.runtime.lastError,
+          );
+          return;
         }
+
+        document.addEventListener('click', (event) => {
+          let el = event.target;
+          while (el && !el.href) el = el.parentElement;
+
+          if (!el) return;
+
+          closePopups();
+        });
+
+        elements.forEach((anchor, i) => {
+          const stats = response.wtmStats[i];
+          if (stats) {
+            try {
+              const wheelEl = getWheelElement(WTMTrackerWheel, stats);
+              if (!wheelEl) return;
+
+              const parent = anchor.parentElement;
+
+              const container =
+                // Desktop flat
+                parent.querySelector('.B6fmyf') ||
+                // Mobile flat
+                anchor.querySelector('div[role="link"]') ||
+                // Mobile cards
+                anchor.querySelector('div.UPmit.AP7Wnd');
+
+              let tempEl = container.firstElementChild;
+              if (tempEl && tempEl.textContent.includes(stats.domain)) {
+                container.insertBefore(wheelEl, tempEl.nextElementSibling);
+              } else {
+                container.appendChild(wheelEl);
+              }
+            } catch (e) {
+              // ignore errors
+            }
+          }
+        });
+      },
+    );
+
+    window.addEventListener('message', (message) => {
+      if (message.origin + '/' !== chrome.runtime.getURL('/').toLowerCase()) {
+        return;
+      }
+
+      if (message.data === 'WTMReportClosePopups') {
+        closePopups();
+        return;
+      }
+
+      if (message.data === 'WTMReportDisable') {
+        closePopups();
+        elements.forEach(removeWheel);
+        chrome.runtime.sendMessage({ action: 'disableWTMReport' });
+        return;
+      }
+
+      if (message.data.startsWith('WTMReportResize')) {
+        const height = message.data.split(':')[1];
+        resizePopup(height);
+        return;
       }
     });
-  });
-
-  window.addEventListener('message', (message) => {
-    if (message.origin + '/' !== chrome.runtime.getURL('/').toLowerCase()) {
-      return;
-    }
-
-    if (message.data === 'WTMReportClosePopups') {
-      closePopups();
-      return;
-    }
-
-    if (message.data === 'WTMReportDisable') {
-      closePopups();
-      elements.forEach(removeWheel);
-      chrome.runtime.sendMessage({ action: 'disableWTMReport' });
-      return;
-    }
-
-    if (message.data.startsWith('WTMReportResize')) {
-      const height = message.data.split(':')[1];
-      resizePopup(height);
-      return;
-    }
-  });
+  }
 })();
