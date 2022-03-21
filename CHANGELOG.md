@@ -1,3 +1,15 @@
+# v0.2.1 (Mon Mar 21 2022)
+
+#### 🐛 Bug Fix
+
+- Close popup when user clicks on a link [#17](https://github.com/whotracksme/webextension-packages/pull/17) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.2.0 (Thu Mar 03 2022)
 
 #### 🚀 Enhancement
