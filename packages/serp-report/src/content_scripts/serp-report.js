@@ -184,7 +184,10 @@ function removeWheel(anchor) {
         return;
       }
 
-      if (message.data.startsWith('WTMReportResize')) {
+      if (
+        typeof message.data === 'string' &&
+        message.data.startsWith('WTMReportResize')
+      ) {
         const height = message.data.split(':')[1];
         resizePopup(height);
         return;
