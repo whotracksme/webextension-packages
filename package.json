@@ -32,5 +32,8 @@
     "plugins": [
       "npm"
     ]
+  },
+  "dependencies": {
+    "pako": "^2.0.4"
   }
 }

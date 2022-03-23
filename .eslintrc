@@ -3,7 +3,8 @@
     "es2020": true,
     "browser": true,
     "serviceworker": true,
-    "webextensions": true 
+    "webextensions": true,
+    "mocha": true
   },
   "extends": [
     "eslint:recommended",
