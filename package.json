@@ -33,10 +33,10 @@
       "npm"
     ]
   },
-  "dependencies": {
-    "pako": "^2.0.4"
-  },
   "workspaces": [
     "packages/anonymous-communication"
-  ]
+  ],
+  "dependencies": {
+    "pako": "^2.0.4"
+  }
 }
