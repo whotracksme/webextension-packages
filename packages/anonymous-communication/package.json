@@ -1,7 +1,6 @@
 {
   "name": "@whotracksme/anonymous-communication",
   "version": "1.0.0",
-  "description": "",
   "type": "module",
   "scripts": {
     "test": "karma start --single-run --browsers ChromeHeadless karma.conf.cjs"
@@ -27,5 +26,18 @@
   },
   "dependencies": {
     "pako": "^2.0.4"
-  }
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whotracksme/webextension-packages.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whotracksme/webextension-packages/issues"
+  },
+  "homepage": "https://github.com/whotracksme/webextension-packages#readme",
+  "description": ""
 }
