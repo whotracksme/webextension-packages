@@ -45,7 +45,7 @@ describe('#PersistedHashes', function () {
   });
 
   afterEach(function () {
-    restoreConsole()
+    restoreConsole();
     clock.restore();
     clock = null;
   });
@@ -95,20 +95,30 @@ describe('#PersistedHashes', function () {
   });
 
   it('should have no false-negatives (i.e. hashes being added must never be forgotten)', async function () {
-    await fc.assert(fc.asyncProperty(fc.array(fc.string()), async (keys) => {
-      // given
+    await fc.assert(
+      fc
+        .asyncProperty(fc.array(fc.string()), async (keys) => {
+          // given
           await Promise.all(keys.map((key) => uut.add(key, NEVER_EXPIRES)));
 
-      // then
-      for (const key of keys) {
-        expect(await uut.has(key)).to.equal(true, `key <${key}> not found by "has"`);
-      }
-      for (const key of keys) {
-        expect(await uut.add(key, NEVER_EXPIRES)).to.equal(false, `key <${key}> not found by "add"`);
-      }
-    }).beforeEach(() => {
-      initMocks();
-    }));
+          // then
+          for (const key of keys) {
+            expect(await uut.has(key)).to.equal(
+              true,
+              `key <${key}> not found by "has"`,
+            );
+          }
+          for (const key of keys) {
+            expect(await uut.add(key, NEVER_EXPIRES)).to.equal(
+              false,
+              `key <${key}> not found by "add"`,
+            );
+          }
+        })
+        .beforeEach(() => {
+          initMocks();
+        }),
+    );
   });
 
   it('should purge expired keys', async function () {
@@ -123,12 +133,19 @@ describe('#PersistedHashes', function () {
     await uut.add('x', Date.now() + ttl);
     await uut.add('y', Date.now() + ttl);
     await uut.flush();
-    expect(lastWritten.hashes.map(x => x[0])).to.have.same.members(['x', 'y']);
+    expect(lastWritten.hashes.map((x) => x[0])).to.have.same.members([
+      'x',
+      'y',
+    ]);
     expect(countWrites).to.equal(1);
 
     await uut.add('z', Date.now() + ttl);
     await uut.flush();
-    expect(lastWritten.hashes.map(x => x[0])).to.have.same.members(['x', 'y', 'z']);
+    expect(lastWritten.hashes.map((x) => x[0])).to.have.same.members([
+      'x',
+      'y',
+      'z',
+    ]);
     expect(countWrites).to.equal(2);
 
     // make sure the default pruning interval has expired
@@ -136,7 +153,7 @@ describe('#PersistedHashes', function () {
 
     // now all entries should have been purged
     await uut.flush();
-    expect(lastWritten.hashes.map(x => x[0])).to.have.same.members([]);
+    expect(lastWritten.hashes.map((x) => x[0])).to.have.same.members([]);
     expect(countWrites).to.equal(3);
   });
 
@@ -148,10 +165,10 @@ describe('#PersistedHashes', function () {
       countWrites += 1;
     };
     const keys = [...new Array(1000)].map((_, i) => `key${i}`);
-    await Promise.all(keys.map(key => uut.add(key, NEVER_EXPIRES)));
+    await Promise.all(keys.map((key) => uut.add(key, NEVER_EXPIRES)));
 
     await uut.flush();
-    expect(lastWritten.hashes.map(x => x[0])).to.have.same.members(keys);
+    expect(lastWritten.hashes.map((x) => x[0])).to.have.same.members(keys);
     expect(countWrites).to.equal(1);
   });
 });

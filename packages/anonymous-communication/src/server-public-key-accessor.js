@@ -31,7 +31,11 @@ export default class ServerPublicKeyAccessor {
     if (!this._knownKeys.get(today)) {
       if (!this._pending) {
         this._pending = this._updateCache(today);
-        this._pending.catch(() => {}).then(() => { this._pending = null; });
+        this._pending
+          .catch(() => {})
+          .then(() => {
+            this._pending = null;
+          });
       }
       await this._pending;
     }
@@ -47,15 +51,23 @@ export default class ServerPublicKeyAccessor {
     // try to load from disk
     let knownKeys;
     try {
-      const keysFromDisk = await this.storage.get(this.storageKey).catch(() => null);
+      const keysFromDisk = await this.storage
+        .get(this.storageKey)
+        .catch(() => null);
       if (keysFromDisk && keysFromDisk.some(([date]) => date === today)) {
         logger.debug('Server keys on disk are still valid');
         knownKeys = await this.importAndVerifyPubKeys(keysFromDisk);
       } else {
-        logger.info('Server keys on disk need to be refetched. Expected:', today);
+        logger.info(
+          'Server keys on disk need to be refetched. Expected:',
+          today,
+        );
       }
     } catch (e) {
-      logger.warn(`Ignoring corrupted server keys (storageKey: ${this.storageKey}). Reload from network.`, e);
+      logger.warn(
+        `Ignoring corrupted server keys (storageKey: ${this.storageKey}). Reload from network.`,
+        e,
+      );
     }
 
     // not found on disk or outdated -> fetch from server
@@ -68,14 +80,16 @@ export default class ServerPublicKeyAccessor {
         redirect: 'manual',
       });
       if (!response.ok) {
-        throw new Error(`Failed to get config (${response.statusText}) from url=${url}`);
+        throw new Error(
+          `Failed to get config (${response.statusText}) from url=${url}`,
+        );
       }
       const { pubKeys } = await response.json();
       logger.info('Fetched server public keys:', pubKeys);
 
       const allKeys = Object.keys(pubKeys)
         .filter(isYYYYMMDD)
-        .map(date => [date, fromBase64(pubKeys[date])]);
+        .map((date) => [date, fromBase64(pubKeys[date])]);
       knownKeys = await this.importAndVerifyPubKeys(allKeys);
 
       // update disk cache
@@ -91,17 +105,19 @@ export default class ServerPublicKeyAccessor {
   }
 
   async importAndVerifyPubKeys(allKeys) {
-    return new Map(await Promise.all(
-      allKeys.map(async ([date, key]) => {
-        const imported = await crypto.subtle.importKey(
-          'raw',
-          key,
-          { name: 'ECDH', namedCurve: 'P-256' },
-          false,
-          []
-        );
-        return [date, { key, imported }];
-      })
-    ));
+    return new Map(
+      await Promise.all(
+        allKeys.map(async ([date, key]) => {
+          const imported = await crypto.subtle.importKey(
+            'raw',
+            key,
+            { name: 'ECDH', namedCurve: 'P-256' },
+            false,
+            [],
+          );
+          return [date, { key, imported }];
+        }),
+      ),
+    );
   }
 }

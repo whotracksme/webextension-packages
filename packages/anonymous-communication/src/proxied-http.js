@@ -46,13 +46,8 @@ export default class ProxiedHttp {
   // anonymization layer (sending through proxy) for other purposes,
   // the response should be decrypted and returned.
   async send({ body }) {
-    const {
-      ciphertext,
-      iv,
-      secret,
-      clientPublicKey,
-      serverPublicKeyDate,
-    } = await this.encrypt(body);
+    const { ciphertext, iv, secret, clientPublicKey, serverPublicKeyDate } =
+      await this.encrypt(body);
 
     // layout:
     // * algorithm type (1 byte)
@@ -85,11 +80,15 @@ export default class ProxiedHttp {
 
     const serverIV = response.headers.get('Encryption-IV');
     if (serverIV) {
-      const decrypted = await crypto.subtle.decrypt({
-        name: 'AES-GCM',
-        iv: fromBase64(serverIV),
-        tagLength: 128
-      }, secret, data);
+      const decrypted = await crypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: fromBase64(serverIV),
+          tagLength: 128,
+        },
+        secret,
+        data,
+      );
       data = new Uint8Array(decrypted);
     }
 
@@ -99,8 +98,8 @@ export default class ProxiedHttp {
     //   (e.g. fire-and-forget messages will always return '{}')
     // * otherwise, decompress it
     //   (format: "<size: 4-byte unsigned int>:<data: "size" bytes>")
-    if (data[0] !== 0x7B) {
-      const size = (new DataView(data.buffer)).getUint32();
+    if (data[0] !== 0x7b) {
+      const size = new DataView(data.buffer).getUint32();
       if (4 + size > data.length) {
         throw new ProtocolError('Overflow in data received from the server');
       }
@@ -122,7 +121,7 @@ export default class ProxiedHttp {
     const { publicKey, privateKey } = await crypto.subtle.generateKey(
       { name: 'ECDH', namedCurve: 'P-256' },
       true,
-      ['deriveKey']
+      ['deriveKey'],
     );
     return {
       publicKey: await exportKey(publicKey),
@@ -139,7 +138,8 @@ export default class ProxiedHttp {
       this.generateClientECDHKey(),
     ]);
     const { publicKey: serverPublicKey, date: serverPublicKeyDate } = serverKey;
-    const { publicKey: clientPublicKey, privateKey: clientPrivateKey } = clientKeys;
+    const { publicKey: clientPublicKey, privateKey: clientPrivateKey } =
+      clientKeys;
 
     // Perform ECDH to get a curve point (on P-256, which is assumed
     // have an effective security strength of at least 128 bits).
@@ -150,7 +150,7 @@ export default class ProxiedHttp {
       clientPrivateKey,
       { name: 'AES-GCM', length: 256 },
       true,
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
     const rawDerived = await exportKey(derivedKey);
     const raw128bitKey = (await sha256(rawDerived)).subarray(0, 16);
@@ -159,7 +159,7 @@ export default class ProxiedHttp {
       raw128bitKey,
       { name: 'AES-GCM', length: 128 },
       false,
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
     return { secret, clientPublicKey, serverPublicKeyDate };
   }
@@ -175,13 +175,22 @@ export default class ProxiedHttp {
    * (with a minimum size of 1K).
    */
   async encrypt(plaintext) {
-    const { secret, clientPublicKey, serverPublicKeyDate } = await this.negotiateSecret();
+    const { secret, clientPublicKey, serverPublicKeyDate } =
+      await this.negotiateSecret();
     const iv = crypto.getRandomValues(new Uint8Array(12));
 
     // note: we are assuming JSON messages, here
-    const unpaddedPlaintext = toUTF8(typeof plaintext === 'string' ? plaintext : JSON.stringify(plaintext));
+    const unpaddedPlaintext = toUTF8(
+      typeof plaintext === 'string' ? plaintext : JSON.stringify(plaintext),
+    );
     const data = encodeWithPadding(unpaddedPlaintext);
-    const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, secret, data));
+    const ciphertext = new Uint8Array(
+      await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv, tagLength: 128 },
+        secret,
+        data,
+      ),
+    );
 
     return { ciphertext, iv, secret, clientPublicKey, serverPublicKeyDate };
   }

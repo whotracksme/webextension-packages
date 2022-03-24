@@ -45,7 +45,10 @@ export default class PersistedHashes {
   async _ready() {
     if (!this._pending) {
       this._pending = this._loadFromDisk().catch((e) => {
-        logger.info('Could not restore previous state. It is normal to see this message on a new profile.', e);
+        logger.info(
+          'Could not restore previous state. It is normal to see this message on a new profile.',
+          e,
+        );
       });
     }
     await this._pending;
@@ -85,7 +88,9 @@ export default class PersistedHashes {
     // slow down the application. To protect against that possibility,
     // expire all previous keys.
     if (this.entries.size >= THRESHOLD_TO_RESET_ALL_KEYS) {
-      logger.error('The hashes on the profile ran full. Purging now to prevent performance impacts.');
+      logger.error(
+        'The hashes on the profile ran full. Purging now to prevent performance impacts.',
+      );
       this.entries.clear();
     }
 
@@ -126,11 +131,13 @@ export default class PersistedHashes {
   async flush() {
     await this._ready();
 
-    this._pending = this._pending.then(async () => {
-      if (this._dirty) {
-        await this._persist();
-      }
-    }).catch(() => {});
+    this._pending = this._pending
+      .then(async () => {
+        if (this._dirty) {
+          await this._persist();
+        }
+      })
+      .catch(() => {});
     await this._pending;
   }
 
@@ -164,8 +171,14 @@ export default class PersistedHashes {
     const now = Date.now();
     if (now >= this.nextPrune) {
       const oldSize = this.entries.size;
-      this.entries = new Map([...this.entries].filter(([, expireAt]) => expireAt > now));
-      logger.info('cleanup:', oldSize - this.entries.size, 'hashes have expired');
+      this.entries = new Map(
+        [...this.entries].filter(([, expireAt]) => expireAt > now),
+      );
+      logger.info(
+        'cleanup:',
+        oldSize - this.entries.size,
+        'hashes have expired',
+      );
       this.nextPrune = now + DEFAULT_PRUNE_INTERVAL;
       this._dirty = true;
 

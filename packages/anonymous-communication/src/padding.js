@@ -11,12 +11,12 @@
 
 /* eslint-disable no-bitwise */
 
-// import { inflate, deflate } from '../core/zlib';
+import { inflate, deflate } from './zlib.js';
 import { TooBigMsgError } from './errors.js';
 
 // https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 function nextPow2(_v) {
-  let v = (_v | 0);
+  let v = _v | 0;
   v -= 1;
   v |= v >> 1;
   v |= v >> 2;
@@ -39,7 +39,7 @@ function encodeLength(length) {
 }
 
 function decodeLength(data) {
-  if (data < (1 << 15)) {
+  if (data < 1 << 15) {
     throw new Error('Wrong encoded length');
   }
   return data & ((1 << 15) - 1);
@@ -49,12 +49,12 @@ export function encodeWithPadding(message) {
   const compressed = deflate(message);
   const paddedSize = Math.max(1 << 10, nextPow2(2 + compressed.length));
   const data = new Uint8Array(paddedSize);
-  (new DataView(data.buffer)).setUint16(0, encodeLength(compressed.length));
+  new DataView(data.buffer).setUint16(0, encodeLength(compressed.length));
   data.set(compressed, 2);
   return data;
 }
 
 export function decodeWithPadding(data) {
-  const compressedLength = decodeLength((new DataView(data.buffer)).getUint16());
+  const compressedLength = decodeLength(new DataView(data.buffer).getUint16());
   return inflate(data.slice(2, 2 + compressedLength));
 }

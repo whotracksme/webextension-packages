@@ -47,7 +47,7 @@ export default class MemoryPersistentMap {
   }
 
   async bulkDelete(keys) {
-    keys.forEach(key => this.db.delete(key));
+    keys.forEach((key) => this.db.delete(key));
   }
 
   async clear() {

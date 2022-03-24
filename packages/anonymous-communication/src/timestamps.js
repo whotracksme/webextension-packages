@@ -30,10 +30,16 @@ function getTrustedUtcTime() {
 
 export function getTimeAsYYYYMMDD(now) {
   const ts = now || getTrustedUtcTime();
-  return ts.toISOString().replace(/[^0-9]/g, '').slice(0, 8);
+  return ts
+    .toISOString()
+    .replace(/[^0-9]/g, '')
+    .slice(0, 8);
 }
 
 export function getTimeAsYYYYMMDDHH(now) {
   const ts = now || getTrustedUtcTime();
-  return ts.toISOString().replace(/[^0-9]/g, '').slice(0, 10);
+  return ts
+    .toISOString()
+    .replace(/[^0-9]/g, '')
+    .slice(0, 10);
 }
