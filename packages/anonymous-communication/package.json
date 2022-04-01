@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "start": "web-ext run -s ./example -t chromium",
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
     "test": "karma start --single-run --browsers ChromeHeadless karma.conf.cjs"
   },
   "author": "Ghostery GmbH",
@@ -22,13 +25,17 @@
     "rollup": "^2.70.1",
     "rollup-plugin-polyfill-node": "^0.8.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
-    "sinon": "^13.0.1"
+    "sinon": "^13.0.1",
+    "web-ext": "^6.8.0"
   },
   "dependencies": {
+    "dexie": "^3.2.1",
     "pako": "^2.0.4"
   },
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./storage": "./src/storage.js",
+    "./timestamps": "./src/timestamps.js"
   },
   "directories": {
     "test": "test"
@@ -41,8 +48,8 @@
     "url": "https://github.com/whotracksme/webextension-packages/issues"
   },
   "homepage": "https://github.com/whotracksme/webextension-packages#readme",
-  "engines" : {
-    "npm" : ">=7.0.0",
-    "node" : ">=16.0.0"
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
   }
 }

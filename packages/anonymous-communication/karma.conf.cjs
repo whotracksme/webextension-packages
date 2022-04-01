@@ -1,6 +1,4 @@
-const { nodeResolve } = require('@rollup/plugin-node-resolve');
-const sourcemaps = require('rollup-plugin-sourcemaps');
-const nodePolyfills = require('rollup-plugin-polyfill-node');
+const rollupPreprocessor = require('./rollup.common-config.cjs');
 
 module.exports = function (config) {
   config.set({
@@ -16,18 +14,6 @@ module.exports = function (config) {
     browsers: ['ChromeHeadless'],
     autoWatch: false,
     concurrency: 0,
-    rollupPreprocessor: {
-      plugins: [nodePolyfills(), nodeResolve(), sourcemaps()],
-      external: ['chai', 'sinon'],
-      output: {
-        globals: {
-          chai: 'chai',
-          sinon: 'sinon',
-        },
-        format: 'iife',
-        name: 'Test',
-        sourcemap: 'inline',
-      },
-    },
+    rollupPreprocessor,
   });
 };

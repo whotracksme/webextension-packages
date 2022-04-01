@@ -13,24 +13,14 @@ class Logger {
   static get(name) {
     return new Logger(name);
   }
-  constructor(name, options = {}) {
-    this.name = name;
-    this.options = options;
-  }
-  debug(text) {
-    console.debug(text);
-  }
-  log(text) {
-    console.log(text);
-  }
-  info(text) {
-    console.info(text);
-  }
-  warn(text) {
-    console.warn(text);
-  }
-  error(text) {
-    console.error(text);
+
+  constructor(name) {
+    name = `WTM [${name}]`;
+    this.debug = console.debug.bind(console, name);
+    this.log = console.log.bind(console, name);
+    this.info = console.info.bind(console, name);
+    this.warn = console.warn.bind(console, name);
+    this.error = console.error.bind(console, name);
   }
 }
 

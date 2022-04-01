@@ -11,6 +11,7 @@
 
 import ServerPublicKeyAccessor from './server-public-key-accessor.js';
 import ProxiedHttp from './proxied-http.js';
+import { InvalidMessageError } from './errors.js';
 
 export default class AnonymousCommunication {
   constructor({ config, storage }) {
@@ -20,5 +21,17 @@ export default class AnonymousCommunication {
       storageKey: 'server-ecdh-keys',
     });
     this.proxiedHttp = new ProxiedHttp(config, this.serverPublicKeyAccessor);
+  }
+
+  async send(msg) {
+    if (!msg || typeof msg !== 'object') {
+      throw new InvalidMessageError('Input message must be an object');
+    }
+    if (!msg.action) {
+      throw new InvalidMessageError('Mandatory field "action" is missing');
+    }
+    return this.proxiedHttp.send({
+      body: JSON.stringify(msg),
+    });
   }
 }

@@ -17,7 +17,7 @@
  * should not include high resolution timestamps, but instead should be rounded.
  */
 
-function getTrustedUtcTime() {
+export function getTrustedUtcTime() {
   // Note: the approach that is used on Desktop to prevent messages
   // being sent out with a wrong system clock cannot be ported
   // as it is inheritely based on frequent wakeups.
