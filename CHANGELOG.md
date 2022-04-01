@@ -1,3 +1,15 @@
+# v0.2.2 (Fri Apr 01 2022)
+
+#### 🐛 Bug Fix
+
+- New package: anonymous-communication [#18](https://github.com/whotracksme/webextension-packages/pull/18) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v0.2.1 (Mon Mar 21 2022)
 
 #### 🐛 Bug Fix
