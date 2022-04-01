@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "lint": "eslint packages/",
-    "test": "npm run lint",
+    "test": "npm run lint && npm run test --workspaces --if-present",
     "release": "auto shipit"
   },
   "publishConfig": {
@@ -32,5 +32,11 @@
     "plugins": [
       "npm"
     ]
+  },
+  "workspaces": [
+    "packages/anonymous-communication"
+  ],
+  "dependencies": {
+    "pako": "^2.0.4"
   }
 }
