@@ -1,8 +1,8 @@
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import sourcemaps from 'rollup-plugin-sourcemaps';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
+const sourcemaps = require('rollup-plugin-sourcemaps');
+const nodePolyfills = require('rollup-plugin-polyfill-node');
 
-export default {
+module.exports = {
   plugins: [nodePolyfills(), nodeResolve(), sourcemaps()],
   external: ['chai', 'sinon'],
   output: {

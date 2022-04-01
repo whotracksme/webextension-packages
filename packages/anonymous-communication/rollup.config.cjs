@@ -1,6 +1,6 @@
-import commonConfig from './rollup.common-config.js';
+const commonConfig = require('./rollup.common-config.cjs');
 
-export default {
+module.exports = {
   ...commonConfig,
   input: 'example/index.js',
   output: {
