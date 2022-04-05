@@ -37,6 +37,7 @@
     "packages/anonymous-communication"
   ],
   "dependencies": {
+    "dexie": "^3.2.1",
     "pako": "^2.0.4"
   }
 }
