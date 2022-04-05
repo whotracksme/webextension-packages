@@ -1,3 +1,15 @@
+# v0.2.4 (Tue Apr 05 2022)
+
+#### 🐛 Bug Fix
+
+- fix: account for message.data any type [#20](https://github.com/whotracksme/webextension-packages/pull/20) ([@chris-perts](https://github.com/chris-perts))
+
+#### Authors: 1
+
+- [@chris-perts](https://github.com/chris-perts)
+
+---
+
 # v0.2.3 (Tue Apr 05 2022)
 
 #### 🐛 Bug Fix
