@@ -1,3 +1,15 @@
+# v0.2.3 (Tue Apr 05 2022)
+
+#### 🐛 Bug Fix
+
+- Add missing dexie dependency [#21](https://github.com/whotracksme/webextension-packages/pull/21) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.2.2 (Fri Apr 01 2022)
 
 #### 🐛 Bug Fix
