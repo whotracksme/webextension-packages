@@ -1,3 +1,15 @@
+# v0.2.5 (Wed Apr 06 2022)
+
+#### 🐛 Bug Fix
+
+- Use new source for trackers-preview data [#22](https://github.com/whotracksme/webextension-packages/pull/22) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.2.4 (Tue Apr 05 2022)
 
 #### 🐛 Bug Fix
