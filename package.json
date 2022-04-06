@@ -1,10 +1,13 @@
 {
   "name": "@whotracksme/webextension-packages",
   "version": "0.2.4",
+  "type": "module",
   "description": "",
   "scripts": {
     "lint": "eslint packages/",
     "test": "npm run lint && npm run test --workspaces --if-present",
+    "serp-report:download": "node ./packages/serp-report/scripts/download.js",
+    "prepare": "npm run serp-report:download",
     "release": "auto shipit"
   },
   "publishConfig": {
@@ -25,6 +28,7 @@
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "node-fetch": "^3.2.3",
     "prettier": "2.5.1"
   },
   "auto": {
@@ -38,6 +42,7 @@
   ],
   "dependencies": {
     "dexie": "^3.2.1",
-    "pako": "^2.0.4"
+    "pako": "^2.0.4",
+    "tldts-experimental": "^5.7.74"
   }
 }
