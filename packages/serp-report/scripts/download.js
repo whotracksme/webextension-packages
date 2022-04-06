@@ -9,18 +9,16 @@ const OUTPUT_FILE = new URL(
   import.meta.url,
 ).pathname;
 
-const data = await fetch(DATA_URL).then(
-  (res) => (res.ok ? res.text() : ''),
-  () => '',
-);
+const data = await fetch(DATA_URL).then((res) => {
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.text();
+});
 
-writeFileSync(
-  OUTPUT_FILE,
-  data || JSON.stringify({ trackers: {}, categories: [] }),
-);
+writeFileSync(OUTPUT_FILE, data);
 
 console.log(
-  `Trackers preview data ${
-    data ? 'downloaded' : "couldn't be downloaded - empty list was generated"
-  } and saved in "${OUTPUT_FILE.replace(process.cwd(), '.')}"`,
+  `Trackers preview data downloaded and saved in "${OUTPUT_FILE.replace(
+    process.cwd(),
+    '.',
+  )}"`,
 );
