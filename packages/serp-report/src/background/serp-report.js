@@ -8,14 +8,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
+import { parse } from 'tldts-experimental';
 
-import {
-  WTM_PRIVACY_SCORE_CATEGORIES,
-  WTM_PRIVACY_SCORE_COMPRESSED_STATS,
-} from './data.js';
-
-// For now, we assume that "tldts" library is already loaded and exists on the global scope
-const { tldts } = globalThis;
+import trackersPreview from './trackers-preview.json';
 
 /**
  * Takes a site (e.g. "economist.com") and returns a map of categories
@@ -32,14 +27,14 @@ function lookupWtmPrivacyScoreForSite(domain) {
     domain,
     stats: [],
   };
-  const data = WTM_PRIVACY_SCORE_COMPRESSED_STATS[domain];
+  const data = trackersPreview.trackers[domain];
 
   if (!data) {
     return response;
   }
 
   const results = {};
-  WTM_PRIVACY_SCORE_CATEGORIES.forEach(function (c, i) {
+  trackersPreview.categories.forEach(function (c, i) {
     if (data[i] > 0) {
       results[c] = data[i];
     }
@@ -54,7 +49,7 @@ function lookupWtmPrivacyScoreForSite(domain) {
 }
 
 function getWTMReportFromUrl(url) {
-  const { domain } = tldts.parse(url);
+  const { domain } = parse(url);
   return lookupWtmPrivacyScoreForSite(domain);
 }
 
