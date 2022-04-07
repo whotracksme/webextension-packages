@@ -1,3 +1,15 @@
+# v0.2.6 (Thu Apr 07 2022)
+
+#### ⚠️ Pushed to `main`
+
+- Force push trackers preview data to npm package ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.2.5 (Wed Apr 06 2022)
 
 #### 🐛 Bug Fix
