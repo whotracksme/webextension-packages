@@ -6,8 +6,8 @@
   "scripts": {
     "lint": "eslint packages/",
     "test": "npm run lint && npm run test --workspaces --if-present",
-    "serp-report:download": "node ./packages/serp-report/scripts/download.js",
-    "prepare": "npm run serp-report:download",
+    "trackers-preview:download": "node ./packages/trackers-preview/scripts/download.js",
+    "prepare": "npm run trackers-preview:download",
     "release": "auto shipit"
   },
   "publishConfig": {

@@ -8,6 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
+import { drawWheel, setupCtx } from '@ghostery/ui/wheel';
 
 const WRAPPER_CLASS = 'wtm-popup-iframe-wrapper';
 
@@ -28,7 +29,7 @@ function resizePopup(height) {
 const getTop = (el) =>
   el.offsetTop + (el.offsetParent && getTop(el.offsetParent));
 
-function renderPopup(container, stats) {
+function renderPopup(container, stats, popupUrl) {
   closePopups();
 
   const wrapper = document.createElement('div');
@@ -43,18 +44,13 @@ function renderPopup(container, stats) {
   wrapper.style.top = getTop(container) + 25 + 'px';
 
   const iframe = document.createElement('iframe');
-  iframe.setAttribute(
-    'src',
-    chrome.runtime.getURL(
-      `vendor/@whotracksme/serp-report/src/pages/iframe/index.html?domain=${stats.domain}`,
-    ),
-  );
+  iframe.setAttribute('src', `${popupUrl}?domain=${stats.domain}`);
 
   wrapper.appendChild(iframe);
   document.body.appendChild(wrapper);
 }
 
-function getWheelElement(WTMTrackerWheel, stats) {
+function getWheelElement(stats, popupUrl) {
   const count = stats.stats.length;
 
   if (count === 0) {
@@ -71,8 +67,9 @@ function getWheelElement(WTMTrackerWheel, stats) {
   canvas.classList.add('wtm-tracker-wheel');
 
   const ctx = canvas.getContext('2d');
-  WTMTrackerWheel.setupCtx(ctx, 16);
-  WTMTrackerWheel.draw(ctx, 16, stats.stats);
+
+  setupCtx(ctx, 16);
+  drawWheel(ctx, 16, stats.stats);
 
   container.appendChild(canvas);
   container.appendChild(label);
@@ -81,7 +78,7 @@ function getWheelElement(WTMTrackerWheel, stats) {
     ev.preventDefault();
     ev.stopImmediatePropagation();
 
-    renderPopup(container, stats);
+    renderPopup(container, stats, popupUrl);
   });
 
   return container;
@@ -96,7 +93,7 @@ function removeWheel(anchor) {
   }
 }
 
-(async function () {
+export default function setupTrackersPreview(popupUrl) {
   const elements = [
     ...window.document.querySelectorAll(
       '#main div.g div.yuRUbf > a, div.mnr-c.xpd.O9g5cc.uUPGi a.cz3goc, .ZINbbc > div:first-child a',
@@ -104,10 +101,6 @@ function removeWheel(anchor) {
   ];
 
   if (elements.length) {
-    const { default: WTMTrackerWheel } = await import(
-      chrome.runtime.getURL('vendor/@whotracksme/ui/src/tracker-wheel.js')
-    );
-
     const links = elements.map((el) => {
       if (el.hostname === window.location.hostname) {
         const url = new URL(el.href);
@@ -140,7 +133,7 @@ function removeWheel(anchor) {
           const stats = response.wtmStats[i];
           if (stats) {
             try {
-              const wheelEl = getWheelElement(WTMTrackerWheel, stats);
+              const wheelEl = getWheelElement(stats, popupUrl);
               if (!wheelEl) return;
 
               const parent = anchor.parentElement;
@@ -194,4 +187,4 @@ function removeWheel(anchor) {
       }
     });
   }
-})();
+}
