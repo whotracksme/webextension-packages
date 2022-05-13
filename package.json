@@ -23,14 +23,6 @@
   "homepage": "https://github.com/whotracksme/webextension-packages#readme",
   "author": "Ghostery GmbH",
   "license": "MPL-2.0",
-  "devDependencies": {
-    "auto": "^10.32.6",
-    "eslint": "^8.8.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "node-fetch": "^3.2.3",
-    "prettier": "2.5.1"
-  },
   "auto": {
     "baseBranch": "main",
     "plugins": [
@@ -40,6 +32,14 @@
   "workspaces": [
     "packages/anonymous-communication"
   ],
+  "devDependencies": {
+    "auto": "^10.32.6",
+    "eslint": "^8.8.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "node-fetch": "^3.2.3",
+    "prettier": "2.5.1"
+  },
   "dependencies": {
     "@ghostery/ui": "^0.0.2",
     "dexie": "^3.2.1",
