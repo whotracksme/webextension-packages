@@ -1,3 +1,15 @@
+# v0.3.0 (Mon May 16 2022)
+
+#### 🚀 Enhancement
+
+- Move out the ui and use bare imports [#23](https://github.com/whotracksme/webextension-packages/pull/23) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.2.6 (Thu Apr 07 2022)
 
 #### ⚠️ Pushed to `main`
