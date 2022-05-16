@@ -1,6 +1,6 @@
 /**
- * Ghostery Browser Extension
- * https://www.ghostery.com/
+ * WhoTracks.Me
+ * https://whotracks.me/
  *
  * Copyright 2017-present Ghostery GmbH. All rights reserved.
  *
@@ -9,13 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { html, define } from '/hybrids.js';
-
-import { externalLink, close } from '../../../../ui/src/components/icons.js';
-import '../../../../ui/src/components/panel-header.js';
-import '../../../../ui/src/components/wtm-stats.js';
-
-import { t } from '../../../../ui/src/i18n.js';
+import { html, define } from 'hybrids';
+import '@ghostery/ui';
 
 const domain = new URLSearchParams(window.location.search).get('domain');
 
@@ -40,43 +35,43 @@ function disable() {
   window.parent.postMessage('WTMReportDisable', '*');
 }
 
-export default define({
-  tag: 'wtm-report',
+const Component = define({
+  tag: 'wtm-trackers-preview',
   confirmDisabled: false,
   render: ({ confirmDisabled }) => html`
-    <panel-header domain=${domain}>
-      <button class="svg-button" onclick="${requestClose}">${close}</button>
-    </panel-header>
+    <ui-header domain=${domain}>
+      <button class="svg-button" onclick="${requestClose}">
+        <ui-icon name="close"></ui-icon>
+      </button>
+    </ui-header>
 
     <main>
-      <h1>${t('wtm_trackers_preview_title')}</h1>
+      <h1>Trackers Preview</h1>
 
       ${html.resolve(
         Stats.then(
-          (stats) => html`<wtm-stats categories=${stats.stats}></wtm-stats>`,
+          (stats) => html`<ui-stats categories=${stats.stats}></ui-stats>`,
         ),
       )}
 
       <section class="buttons">
         <a target="_blank" href="https://whotracks.me/websites/${domain}.html">
-          ${t('statistical_report')} ${externalLink}
+          Statistical Report <ui-icon name="external-link"></ui-icon>
         </a>
       </section>
     </main>
     <footer>
       ${confirmDisabled
         ? html`
-            <span>${t('wtm_trackers_preview_disable_confirm_msg')}</span>
-            <button onclick="${disable}">
-              ${t('wtm_trackers_preview_disable_confirm_button')}
-            </button>
+            <span>Are you sure?</span>
+            <button onclick="${disable}">Disable Trackers Preview</button>
             <button onclick="${html.set('confirmDisabled', false)}">
-              ${t('wtm_trackers_preview_disable_confirm_cancel_button')}
+              Cancel
             </button>
           `
         : html`
             <button onclick="${html.set('confirmDisabled', true)}">
-              ${t('wtm_trackers_preview_disable_button')}
+              Disable Trackers Preview
             </button>
           `}
     </footer>
@@ -96,14 +91,14 @@ export default define({
     }
 
     main {
-      padding: 50px 12px 12px 12px;
+      padding: 12px;
       background-color: #F8F8F8;
     }
 
     h1 {
       font-size: 16px;
       text-align: center;
-      color: var(--black);
+      color: var(--ui-black);
       white-space: nowrap;
       font-weight: 600;
       margin: 6px 0;
@@ -123,7 +118,7 @@ export default define({
       width: 22px;
     }
 
-    .svg-button svg {
+    .svg-button ui-icon {
       height: 16px;
       width: 16px;
     }
@@ -136,7 +131,7 @@ export default define({
     }
 
     .buttons a {
-      color: var(--deep-blue);
+      color: var(--ui-deep-blue);
       padding: 10px 17px;
       flex: 1;
       text-align: center;
@@ -152,7 +147,7 @@ export default define({
       white-space: nowrap;
     }
 
-    .buttons a svg {
+    .buttons a ui-icon {
       width: 10px;
       height: 10px;
       margin-left: 3px;
@@ -169,7 +164,7 @@ export default define({
     footer button, footer span {
       background: none;
       border: none;
-      color: var(--text);
+      color: var(--ui-text);
       padding: 0;
       margin: 0;
       font-size: 11.5px;
@@ -192,3 +187,19 @@ export default define({
     }
   `,
 });
+
+export default Component;
+
+(function updateIframeHeight() {
+  let resizes = 0;
+  const resizeObserver = new ResizeObserver(() => {
+    if (resizes > 0) {
+      const height = document.body.clientHeight;
+      window.parent.postMessage(`WTMReportResize:${height}`, '*');
+    }
+    resizes += 1;
+  });
+  resizeObserver.observe(document.querySelector(Component.tag), {
+    box: 'border-box',
+  });
+})();

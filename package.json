@@ -6,8 +6,8 @@
   "scripts": {
     "lint": "eslint packages/",
     "test": "npm run lint && npm run test --workspaces --if-present",
-    "serp-report:download": "node ./packages/serp-report/scripts/download.js",
-    "prepare": "npm run serp-report:download",
+    "trackers-preview:download": "node ./packages/trackers-preview/scripts/download.js",
+    "prepare": "npm run trackers-preview:download",
     "release": "auto shipit"
   },
   "publishConfig": {
@@ -23,14 +23,6 @@
   "homepage": "https://github.com/whotracksme/webextension-packages#readme",
   "author": "Ghostery GmbH",
   "license": "MPL-2.0",
-  "devDependencies": {
-    "auto": "^10.32.6",
-    "eslint": "^8.8.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "node-fetch": "^3.2.3",
-    "prettier": "2.5.1"
-  },
   "auto": {
     "baseBranch": "main",
     "plugins": [
@@ -40,8 +32,18 @@
   "workspaces": [
     "packages/anonymous-communication"
   ],
+  "devDependencies": {
+    "auto": "^10.32.6",
+    "eslint": "^8.8.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "node-fetch": "^3.2.3",
+    "prettier": "2.5.1"
+  },
   "dependencies": {
+    "@ghostery/ui": "^0.0.2",
     "dexie": "^3.2.1",
+    "hybrids": "^8.0.3",
     "pako": "^2.0.4",
     "tldts-experimental": "^5.7.74"
   }
