@@ -1,3 +1,15 @@
+# v0.3.2 (Fri Jul 15 2022)
+
+#### ⚠️ Pushed to `main`
+
+- Update ghostery/ui ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.3.1 (Mon May 16 2022)
 
 #### 🐛 Bug Fix
