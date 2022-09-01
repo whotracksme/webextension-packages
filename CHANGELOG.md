@@ -1,3 +1,16 @@
+# v0.4.2 (Thu Sep 01 2022)
+
+#### ⚠️ Pushed to `main`
+
+- Merge branch 'main' of github.com:whotracksme/webextension-packages ([@smalluban](https://github.com/smalluban))
+- Fix google search result anchor selector ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.4.1 (Thu Sep 01 2022)
 
 #### ⚠️ Pushed to `main`
