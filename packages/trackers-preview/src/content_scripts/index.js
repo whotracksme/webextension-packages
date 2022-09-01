@@ -96,7 +96,7 @@ function removeWheel(anchor) {
 export default function setupTrackersPreview(popupUrl) {
   const elements = [
     ...window.document.querySelectorAll(
-      '#main div.g div.yuRUbf > a, div.mnr-c.xpd.O9g5cc.uUPGi a.cz3goc, .ZINbbc > div:first-child a',
+      '#main div.g div.yuRUbf > a, div.xpd a.cz3goc, .ZINbbc > div:first-child a',
     ),
   ];
 
