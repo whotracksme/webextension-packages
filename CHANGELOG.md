@@ -1,3 +1,15 @@
+# v0.4.0 (Thu Sep 01 2022)
+
+#### 🚀 Enhancement
+
+- Remove ui from the trackers-preview package [#25](https://github.com/whotracksme/webextension-packages/pull/25) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.3.2 (Fri Jul 15 2022)
 
 #### ⚠️ Pushed to `main`
