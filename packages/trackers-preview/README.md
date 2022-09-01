@@ -37,28 +37,11 @@ setupTrackersPreview(
 );
 ```
 
-### HTML Page
-
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Whotracks.me Report</title>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-    />
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <meta content="utf-8" http-equiv="encoding" />
-    <script src="./index.js" type="module" async></script>
-  </head>
-  <body>
-    <wtm-trackers-preview></wtm-trackers-preview>
-  </body>
-</html>
-```
+### HTML Iframe Page
 
 ```js
-import '@ghostery/ui/css';
-import '@whotracksme/webextension-packages/packages/trackers-preview/components';
+import { getStats, close, disable } from "@whotracksme/webextension-packages/packages/trackers-preview/page_scripts";
+
+// Display information, and use close and disable signals
+...
 ```

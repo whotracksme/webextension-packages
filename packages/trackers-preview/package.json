@@ -5,9 +5,9 @@
   "author": "Ghostery GmbH",
   "license": "MPL-2.0",
   "exports": {
-    "./components": "./src/components/index.js",
     "./background": "./src/background/index.js",
-    "./content_scripts": "./src/content_scripts/index.js"
+    "./content_scripts": "./src/content_scripts/index.js",
+    "./page_scripts": "./src/page_scripts/index.js"
   },
   "dependencies": {
     "@ghostery/ui": "^0.0.1",
