@@ -31,3 +31,19 @@ export function close() {
 export function disable() {
   window.parent.postMessage('WTMReportDisable', '*');
 }
+
+export function updateIframeHeight() {
+  if (window.parent !== window) {
+    let resizes = 0;
+    const resizeObserver = new ResizeObserver(() => {
+      if (resizes > 0) {
+        const height = document.body.clientHeight;
+        window.parent.postMessage(`WTMReportResize:${height}`, '*');
+      }
+      resizes += 1;
+    });
+    resizeObserver.observe(document.body, {
+      box: 'border-box',
+    });
+  }
+}
