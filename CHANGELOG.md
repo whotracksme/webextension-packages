@@ -1,3 +1,15 @@
+# v0.4.1 (Thu Sep 01 2022)
+
+#### ⚠️ Pushed to `main`
+
+- Move height observer back to the trackers-preview package ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.4.0 (Thu Sep 01 2022)
 
 #### 🚀 Enhancement
