@@ -1,3 +1,19 @@
+# v0.4.3 (Fri Sep 02 2022)
+
+#### 🐛 Bug Fix
+
+- Remove unused dependencies [#26](https://github.com/whotracksme/webextension-packages/pull/26) ([@smalluban](https://github.com/smalluban))
+
+#### ⚠️ Pushed to `main`
+
+- [trackers-preview] remove unused `setupCtx` ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v0.4.2 (Thu Sep 01 2022)
 
 #### ⚠️ Pushed to `main`
