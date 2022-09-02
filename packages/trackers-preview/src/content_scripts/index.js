@@ -8,7 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-import { drawWheel, setupCtx } from '@ghostery/ui/wheel';
+import { drawWheel } from '@ghostery/ui/wheel';
 
 const WRAPPER_CLASS = 'wtm-popup-iframe-wrapper';
 
@@ -67,8 +67,6 @@ function getWheelElement(stats, popupUrl) {
   canvas.classList.add('wtm-tracker-wheel');
 
   const ctx = canvas.getContext('2d');
-
-  setupCtx(ctx, 16);
   drawWheel(ctx, 16, stats.stats);
 
   container.appendChild(canvas);
