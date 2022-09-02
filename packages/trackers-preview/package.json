@@ -10,8 +10,7 @@
     "./page_scripts": "./src/page_scripts/index.js"
   },
   "dependencies": {
-    "@ghostery/ui": "^0.0.1",
-    "hybrids": "^8.0.1",
+    "@ghostery/ui": "^0.3.2",
     "tldts-experimental": "^5.7.74"
   }
 }
