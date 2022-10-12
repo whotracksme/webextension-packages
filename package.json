@@ -5,6 +5,7 @@
   "description": "",
   "scripts": {
     "lint": "eslint packages/",
+    "lint.fix": "eslint --fix packages/",
     "test": "npm run lint && npm run test --workspaces --if-present",
     "trackers-preview:download": "node ./packages/trackers-preview/scripts/download.js",
     "prepare": "npm run trackers-preview:download",
@@ -30,7 +31,8 @@
     ]
   },
   "workspaces": [
-    "packages/anonymous-communication"
+    "packages/anonymous-communication",
+    "packages/reporting"
   ],
   "devDependencies": {
     "auto": "^10.32.6",
