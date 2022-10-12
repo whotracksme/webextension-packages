@@ -14,9 +14,11 @@ import sinon from 'sinon';
 import { Buffer } from 'buffer';
 
 import MemoryPersistentMap from './helpers/memory-map.js';
-import { mockConsole, restoreConsole } from './helpers/logger.js';
 
 import ServerPublicKeyAccessor from '../src/server-public-key-accessor.js';
+import logger from '../src/logger.js';
+
+logger.disable();
 
 async function mockedResponse({ body = '', error = false } = {}) {
   return {
@@ -74,13 +76,11 @@ describe('#ServerPublicKeyAccessor', function () {
       storageKey: someStorageKey,
     });
     MOCKS.reset();
-    mockConsole();
     sinon.stub(window, 'fetch').callsFake(MOCKS.fetch);
     sinon.stub(crypto.subtle, 'importKey').callsFake(MOCKS.importKey);
   });
 
   afterEach(function () {
-    restoreConsole();
     window.fetch.restore();
     crypto.subtle.importKey.restore();
   });

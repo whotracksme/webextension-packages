@@ -14,7 +14,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import PersistedHashes from '../src/persisted-hashes.js';
-import { restoreConsole, mockConsole } from './helpers/logger.js';
 
 const NEVER_EXPIRES = Number.MAX_SAFE_INTEGER;
 
@@ -40,12 +39,10 @@ describe('#PersistedHashes', function () {
   };
 
   beforeEach(async function () {
-    mockConsole();
     initMocks();
   });
 
   afterEach(function () {
-    restoreConsole();
     clock.restore();
     clock = null;
   });

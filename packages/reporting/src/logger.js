@@ -38,4 +38,4 @@ class Logger {
   }
 }
 
-export default Logger.get('anonymous-communication');
+export default Logger.get('reporting');

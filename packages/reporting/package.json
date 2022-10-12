@@ -1,0 +1,55 @@
+{
+  "name": "@whotracksme/reporting",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "web-ext run -s ./example -t chromium",
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "test": "karma start --single-run --browsers ChromeHeadless karma.conf.cjs"
+  },
+  "author": "Ghostery GmbH",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^23.0.0",
+    "@rollup/plugin-json": "^5.0.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "chai": "^4.3.6",
+    "fast-check": "^2.25.0",
+    "karma": "^6.4.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.1",
+    "karma-mocha": "^2.0.1",
+    "karma-mocha-reporter": "^2.2.5",
+    "karma-rollup-preprocessor": "^7.0.8",
+    "karma-sinon": "^1.0.5",
+    "mocha": "^9.2.2",
+    "rollup": "^2.79.1",
+    "rollup-plugin-polyfill-node": "^0.8.0",
+    "rollup-plugin-sourcemaps": "^0.6.3",
+    "sinon": "^13.0.2",
+    "web-ext": "^6.8.0"
+  },
+  "dependencies": {
+    "@cliqz/url-parser": "^1.1.4",
+    "linkedom": "^0.14.17"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whotracksme/webextension-packages.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whotracksme/webextension-packages/issues"
+  },
+  "homepage": "https://github.com/whotracksme/webextension-packages#readme",
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  }
+}
