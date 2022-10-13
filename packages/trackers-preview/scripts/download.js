@@ -1,7 +1,6 @@
 import { writeFileSync } from 'fs';
 import { URL } from 'url';
 import { resolve } from 'path';
-import fetch from 'node-fetch';
 
 const DATA_URL = 'https://whotracks.me/data/trackers-preview.json';
 const OUTPUT_FILE = new URL(
