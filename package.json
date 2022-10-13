@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "@ghostery/ui": "^0.3.2",
-    "dexie": "^3.2.1",
     "pako": "^2.0.4",
     "tldts-experimental": "^5.7.74"
   }
