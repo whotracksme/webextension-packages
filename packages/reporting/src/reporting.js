@@ -20,12 +20,20 @@ import JobScheduler from './job-scheduler';
 import PersistedHashes from './persisted-hashes';
 import logger from './logger';
 
+function getTimeAsYYYYMMDDHH(ts) {
+  return ts
+    .toISOString()
+    .replace(/[^0-9]/g, '')
+    .slice(0, 10);
+}
+
 export default class Reporting {
   constructor({ config, storage, communication }) {
     // Defines whether Reporting is fully initialized and has permission
     // to collect data.
     this.isActive = false;
 
+    this.communication = communication;
     this.patterns = new Patterns();
     this.patternsUpdater = new PatternsUpdater({
       config,
@@ -79,6 +87,19 @@ export default class Reporting {
 
   async analyzeTracking(/* tabStats */) {
     // TODO: report tracking to whotrack.me
+  }
+
+  async reportAlive() {
+    const now = this.communication.getTrustedUtcTime();
+    const message = {
+      action: 'wtm.alive',
+      ver: 1,
+      payload: {
+        t: getTimeAsYYYYMMDDHH(now),
+        ctry: this.sanitizer.getSafeCountryCode(),
+      },
+    };
+    await this.communication.send(message);
   }
 
   /**

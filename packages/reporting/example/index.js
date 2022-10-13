@@ -23,11 +23,13 @@ const storage = {
 
 const communication = {
   send() {},
+  getTrustedUtcTime() {
+    return Date.now();
+  },
 };
 
 const config = {
-  ALLOWED_COUNTRY_CODES: ['en'],
-  CHANNEL: 'reporting',
+  ALLOWED_COUNTRY_CODES: ['de'],
   PATTERNS_URL: '',
 };
 
@@ -40,7 +42,7 @@ const reporting = new Reporting({
 (async function () {
   await reporting.init();
   reporting.patterns.updatePatterns(rules);
-  reporting.sanitizer.setSafeCountryCode('en');
+  reporting.sanitizer.setSafeCountryCode('de');
   reporting.analyzeUrl('https://www.google.com/search?q=shoes');
   await reporting.processPendingJobs();
 })();

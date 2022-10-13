@@ -12,6 +12,7 @@
 import ServerPublicKeyAccessor from './server-public-key-accessor.js';
 import ProxiedHttp from './proxied-http.js';
 import { InvalidMessageError } from './errors.js';
+import { getTrustedUtcTime, getTimeAsYYYYMMDD } from './timestamps.js';
 
 export default class AnonymousCommunication {
   constructor({ config, storage }) {
@@ -20,6 +21,10 @@ export default class AnonymousCommunication {
       storage,
       storageKey: 'server-ecdh-keys',
     });
+    this.config = config;
+    if (!config.CHANNEL) {
+      throw new Error('CHANNEL is missing on the config object');
+    }
     this.proxiedHttp = new ProxiedHttp(config, this.serverPublicKeyAccessor);
   }
 
@@ -30,8 +35,14 @@ export default class AnonymousCommunication {
     if (!msg.action) {
       throw new InvalidMessageError('Mandatory field "action" is missing');
     }
+    msg.channel = this.config.CHANNEL;
+    msg.ts = getTimeAsYYYYMMDD();
     return this.proxiedHttp.send({
       body: JSON.stringify(msg),
     });
+  }
+
+  getTrustedUtcTime() {
+    return getTrustedUtcTime();
   }
 }

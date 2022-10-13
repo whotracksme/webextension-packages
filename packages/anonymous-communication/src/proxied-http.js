@@ -11,7 +11,6 @@
 
 import { encodeWithPadding } from './padding.js';
 import { fromBase64, toBase64, fromUTF8, toUTF8 } from './encoding.js';
-import { randomInt } from './random.js';
 import { inflate } from './zlib.js';
 import { ProtocolError } from './errors.js';
 
@@ -24,6 +23,11 @@ async function exportKey(key) {
 
 async function sha256(data) {
   return new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, data));
+}
+
+function randomInt() {
+  // Consider using true random here
+  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 }
 
 /**
