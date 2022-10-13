@@ -14,9 +14,8 @@
 import parseHtml from './html-parser';
 import logger from './logger';
 import { truncatedHash } from './md5';
-import random from '../../anonymous-communication/src/random';
+import random from './random';
 import { anonymousHttpGet } from './http';
-import { getTimeAsYYYYMMDD } from '../../anonymous-communication/src/timestamps';
 import { lookupBuiltinTransform } from './patterns';
 
 function doublefetchQueryHash(query, type) {
@@ -98,14 +97,10 @@ function findFirstMatch(rootItem, selectorDef) {
 }
 
 export default class SearchExtractor {
-  constructor({ config, patterns, sanitizer, persistedHashes }) {
+  constructor({ patterns, sanitizer, persistedHashes }) {
     this.patterns = patterns;
     this.sanitizer = sanitizer;
     this.persistedHashes = persistedHashes;
-    this.channel = config.CHANNEL;
-    if (!this.channel) {
-      throw new Error('config.CHANNEL not configured');
-    }
   }
 
   async runJob({ type, query, doublefetchRequest }) {
@@ -285,12 +280,9 @@ export default class SearchExtractor {
 
       const { deduplicateBy } = schema;
       const body = {
-        type: 'whotracks.me',
         action,
         payload,
         ver: '2.9',
-        channel: this.channel,
-        ts: getTimeAsYYYYMMDD(),
         'anti-duplicates': Math.floor(random() * 10000000),
       };
       messages.push({ body, deduplicateBy });

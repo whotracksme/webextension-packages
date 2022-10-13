@@ -33,8 +33,6 @@ function mkMessage({ action = 'test-action', payload, deduplicateBy } = {}) {
     action,
     payload,
     ver: '2.9',
-    channel: 'test-channel',
-    ts: 20220101,
     'anti-duplicates': 1,
   };
   return { body, deduplicateBy };

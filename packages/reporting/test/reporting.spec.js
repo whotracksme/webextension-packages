@@ -20,7 +20,6 @@ describe('#Reporting', function () {
     const config = {
       ALLOWED_COUNTRY_CODES: ['us', 'de'],
       PATTERNS_URL: '',
-      CHANNEL: 'test',
     };
     const storage = {
       get: () => undefined, // assume nothing was stored yet

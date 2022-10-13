@@ -29,13 +29,10 @@
     "web-ext": "^6.8.0"
   },
   "dependencies": {
-    "dexie": "^3.2.1",
     "pako": "^2.0.4"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./storage": "./src/storage.js",
-    "./timestamps": "./src/timestamps.js"
+    ".": "./src/index.js"
   },
   "directories": {
     "test": "test"

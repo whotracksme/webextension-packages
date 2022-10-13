@@ -11,7 +11,7 @@
 
 import { truncatedHash } from './md5';
 import logger from './logger';
-import random from '../../anonymous-communication/src/random';
+import random from './random';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
