@@ -1,3 +1,18 @@
+# v0.4.4 (Thu Oct 13 2022)
+
+#### 🐛 Bug Fix
+
+- Remove dexie [#27](https://github.com/whotracksme/webextension-packages/pull/27) ([@chrmod](https://github.com/chrmod))
+- Improve the storage key prefixes [#27](https://github.com/whotracksme/webextension-packages/pull/27) ([@chrmod](https://github.com/chrmod))
+- Decuple code and competences of anonymouse-credentials and reporting [#27](https://github.com/whotracksme/webextension-packages/pull/27) ([@chrmod](https://github.com/chrmod))
+- New package: reporting [#27](https://github.com/whotracksme/webextension-packages/pull/27) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v0.4.3 (Fri Sep 02 2022)
 
 #### 🐛 Bug Fix
