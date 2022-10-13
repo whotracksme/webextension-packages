@@ -19,7 +19,7 @@ export default class AnonymousCommunication {
     this.serverPublicKeyAccessor = new ServerPublicKeyAccessor({
       config,
       storage,
-      storageKey: 'server-ecdh-keys',
+      storageKey: 'wtm.anonymous-communication.server-ecdh-keys',
     });
     this.config = config;
     if (!config.CHANNEL) {

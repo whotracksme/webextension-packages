@@ -39,14 +39,14 @@ export default class Reporting {
       config,
       patterns: this.patterns,
       storage,
-      storageKey: 'patterns',
+      storageKey: 'wtm.reporting.patterns',
     });
 
     this.sanitizer = new Sanitizer(config);
     this.urlAnalyzer = new UrlAnalyzer(this.patterns);
     this.persistedHashes = new PersistedHashes({
       storage,
-      storageKey: 'deduplication_hashes',
+      storageKey: 'wtm.reporting.deduplication_hashes',
     });
     this.duplicateDetector = new DuplicateDetector(this.persistedHashes);
 
