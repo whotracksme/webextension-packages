@@ -1,3 +1,15 @@
+# v0.4.5 (Fri Oct 14 2022)
+
+#### 🐛 Bug Fix
+
+- Show errors when rendering the tracker preview [#29](https://github.com/whotracksme/webextension-packages/pull/29) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v0.4.4 (Thu Oct 13 2022)
 
 #### 🐛 Bug Fix
