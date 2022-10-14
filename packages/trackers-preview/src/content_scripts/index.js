@@ -143,6 +143,7 @@ export default function setupTrackersPreview(popupUrl) {
                 anchor.querySelector('div[role="link"]') ||
                 // Mobile cards
                 anchor.querySelector('div.UPmit.AP7Wnd');
+              if (!container) return;
 
               let tempEl = container.firstElementChild;
               if (tempEl && tempEl.textContent.includes(stats.domain)) {
@@ -151,7 +152,10 @@ export default function setupTrackersPreview(popupUrl) {
                 container.appendChild(wheelEl);
               }
             } catch (e) {
-              // ignore errors
+              console.warn(
+                'Unexpected error while rendering the Tracker Preview wheel',
+                e,
+              );
             }
           }
         });
