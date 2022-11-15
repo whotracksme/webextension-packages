@@ -41,9 +41,9 @@ const reporting = new Reporting({
 
 (async function () {
   await reporting.init();
-  reporting.patterns.updatePatterns(rules);
+  await reporting.patterns.updatePatterns(rules);
   reporting.sanitizer.setSafeCountryCode('de');
-  reporting.analyzeUrl('https://www.google.com/search?q=shoes');
+  await reporting.analyzeUrl('https://www.google.com/search?q=shoes');
   await reporting.processPendingJobs();
 })();
 

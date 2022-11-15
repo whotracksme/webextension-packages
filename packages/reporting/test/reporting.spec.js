@@ -19,13 +19,27 @@ describe('#Reporting', function () {
   beforeEach(async function () {
     const config = {
       ALLOWED_COUNTRY_CODES: ['us', 'de'],
-      PATTERNS_URL: '',
+      PATTERNS_URL: 'https://some-patterns-endpoint.test',
+      CONFIG_URL: 'https://some-config-endpoint.test',
     };
     const storage = {
       get: () => undefined, // assume nothing was stored yet
       flush: () => {},
     };
-    uut = new Reporting({ config, storage });
+    const communication = {
+      async send() {},
+      trustedClock: {},
+    };
+    const _fetchImpl = async (url) => ({
+      ok: false,
+      statusText: `Stub server has been configured to fail (this is expected): request to ${url}`,
+    });
+    uut = new Reporting({
+      config,
+      storage,
+      communication,
+      _fetchImpl,
+    });
   });
 
   afterEach(function () {

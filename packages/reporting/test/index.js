@@ -7,6 +7,7 @@ import 'cssom';
 import './reporting.spec.js';
 import './duplicate-detector.spec.js';
 import './patterns-updater.spec.js';
+import './country-provider.spec.js';
 import './persisted-hashes.spec.js';
 import './url-analyzer.spec.js';
-import './duplicate-detector.spec.js';
+import './alive-check.spec.js';

@@ -10,6 +10,7 @@
  */
 
 import logger from './logger';
+import { randBetween, clamp } from './utils';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -26,14 +27,6 @@ const HOUR = 60 * MINUTE;
  */
 const DB_VERSION = 1;
 
-function randBetween(min, max) {
-  return min + Math.random() * (max - min);
-}
-
-function clamp({ min, max, value }) {
-  return Math.min(Math.max(min, value), max);
-}
-
 /**
  * Responsible for keeping the patterns up-to-date by polling
  * the backend for changes. By design, it supports situations where
@@ -44,12 +37,6 @@ function clamp({ min, max, value }) {
  * The current implementation assumes that the "update" function
  * gets triggered frequently enough to check for new patterns
  * within the configured intervals.
- *
- * (If the need to trigger the "update" function becomes a problem,
- * it could be lifted by using alternative browser APIs such as
- * as the "Alarms API". But as calling update is a fast operation
- * and the results are cached, it is safe to call it before
- * each access to the patterns.)
  */
 export default class PatternsUpdater {
   constructor({ config, patterns, storage, storageKey, _fetchImpl }) {
@@ -57,6 +44,11 @@ export default class PatternsUpdater {
     this.storage = storage;
     this.storageKey = storageKey;
     this.patternUpdateUrl = config.PATTERNS_URL;
+    if (!this.patternUpdateUrl) {
+      logger.warn(
+        'PATTERNS_URL is not configured. Pattern updates will be skipped and empty patterns will be used instead.',
+      );
+    }
 
     // Update intervals:
     // 1) standard polling interval
@@ -78,26 +70,13 @@ export default class PatternsUpdater {
     this._initEmptyCache();
 
     // Wrap browser APIs (primarily to swap them out in the unit tests):
-    // this._fetch works like the native "fetch"
-    this._fetch =
-      _fetchImpl ||
-      (() => {
-        try {
-          // Apology, this part is a bit esoteric. Do not simplify without
-          // testing on different devices (Android)!
-          // Both the extra assignment and explicit wrapping are intended.
-          const nativeFetch = fetch; // fail fast if "fetch" is not available
-          return (...args) => nativeFetch(...args);
-        } catch (e) {
-          const msg =
-            'fetch API is not available. You should never see this warning in production! ' +
-            'For unit tests, you can pass _fetchImpl to provide an implementation.';
-          logger.warn(msg);
-          return () => {
-            throw new Error(msg);
-          };
-        }
-      })();
+    // this._fetch works like the native "fetch".
+    //
+    // Notes:
+    // * will not work in NodeJs < 18, since trying to access "fetch" will throw
+    // * the extra argument wrapping was needed on Android (when simplify test
+    //   whether it is still needed in the Ghostery Android Browser)
+    this._fetch = _fetchImpl || ((...args) => fetch(...args));
   }
 
   _initEmptyCache() {
@@ -119,7 +98,7 @@ export default class PatternsUpdater {
     let force = false;
     try {
       let persistedState = await this.storage.get(this.storageKey);
-      if (persistedState && persistedState.version !== DB_VERSION) {
+      if (persistedState && persistedState.dbVersion !== DB_VERSION) {
         logger.info('DB_VERSION changed. Discarding the cache...');
         persistedState = null;
       }
@@ -187,6 +166,12 @@ export default class PatternsUpdater {
   }
 
   async _update({ force = false, now = Date.now() } = {}) {
+    const url = this.patternUpdateUrl;
+    if (!url) {
+      logger.debug('Pattern updates skipped (update URL not configured)');
+      return;
+    }
+
     if (!force && now < this._persistedState.skipAttemptsUntil) {
       logger.debug(
         'Cooldown not reached yet. Need to wait until',
@@ -214,9 +199,9 @@ export default class PatternsUpdater {
     });
     try {
       this._persistedState.lastFetchAttempt = now;
-      const url = this.patternUpdateUrl;
       const response = await this._fetch(url, {
         method: 'GET',
+        cache: 'no-cache',
         credentials: 'omit',
       });
       if (!response.ok) {
