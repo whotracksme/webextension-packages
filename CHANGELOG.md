@@ -1,3 +1,15 @@
+# v0.4.6 (Tue Nov 15 2022)
+
+#### 🐛 Bug Fix
+
+- Add dependencies of reporting [#32](https://github.com/whotracksme/webextension-packages/pull/32) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v0.4.5 (Fri Oct 14 2022)
 
 #### 🐛 Bug Fix
