@@ -1,3 +1,16 @@
+# v0.4.7 (Wed Nov 16 2022)
+
+#### 🐛 Bug Fix
+
+- Fix regression in the Github release hook [#33](https://github.com/whotracksme/webextension-packages/pull/33) ([@philipp-classen](https://github.com/philipp-classen))
+- Avoid parsing the trackers-preview-data on each startup. Instead ship [#30](https://github.com/whotracksme/webextension-packages/pull/30) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v0.4.6 (Tue Nov 15 2022)
 
 #### 🐛 Bug Fix
