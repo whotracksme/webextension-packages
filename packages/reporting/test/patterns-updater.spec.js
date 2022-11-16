@@ -10,6 +10,7 @@
  */
 
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import PatternsUpdater from '../src/patterns-updater.js';
 
@@ -181,7 +182,6 @@ describe('#PatternsUpdater', function () {
       patterns: clientPatterns,
       storage,
       storageKey,
-      _fetchImpl: (...args) => fetchMock.fetchImpl(...args),
     });
   }
 
@@ -202,7 +202,12 @@ describe('#PatternsUpdater', function () {
     };
     storage = mockStorage(storageKey);
     fetchMock = mockFetch(config.PATTERNS_URL, serverPatterns);
+    sinon.stub(window, 'fetch').callsFake(fetchMock.fetchImpl);
     uut = newPatternsUpdater();
+  });
+
+  afterEach(function () {
+    window.fetch.restore();
   });
 
   describe('on a fresh extension installation', function () {

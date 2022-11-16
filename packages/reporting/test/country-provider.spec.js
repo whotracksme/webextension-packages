@@ -10,6 +10,7 @@
  */
 
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import CountryProvider from '../src/country-provider.js';
 
@@ -67,7 +68,6 @@ describe('#CountryProvider', function () {
       config,
       storage,
       storageKey,
-      _fetchImpl: fetchMock,
     });
   }
 
@@ -99,10 +99,12 @@ describe('#CountryProvider', function () {
       },
     };
     fetchMock = mockApi();
+    sinon.stub(window, 'fetch').callsFake(fetchMock);
     uut = newCountryProvider();
   });
 
   afterEach(() => {
+    window.fetch.restore();
     config = null;
     storage = null;
     fetchMock = null;

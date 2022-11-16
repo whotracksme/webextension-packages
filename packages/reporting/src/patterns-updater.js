@@ -39,7 +39,7 @@ const DB_VERSION = 1;
  * within the configured intervals.
  */
 export default class PatternsUpdater {
-  constructor({ config, patterns, storage, storageKey, _fetchImpl }) {
+  constructor({ config, patterns, storage, storageKey }) {
     this.patterns = patterns;
     this.storage = storage;
     this.storageKey = storageKey;
@@ -68,15 +68,6 @@ export default class PatternsUpdater {
       max: 2 * HOUR,
     };
     this._initEmptyCache();
-
-    // Wrap browser APIs (primarily to swap them out in the unit tests):
-    // this._fetch works like the native "fetch".
-    //
-    // Notes:
-    // * will not work in NodeJs < 18, since trying to access "fetch" will throw
-    // * the extra argument wrapping was needed on Android (when simplify test
-    //   whether it is still needed in the Ghostery Android Browser)
-    this._fetch = _fetchImpl || ((...args) => fetch(...args));
   }
 
   _initEmptyCache() {
@@ -199,7 +190,7 @@ export default class PatternsUpdater {
     });
     try {
       this._persistedState.lastFetchAttempt = now;
-      const response = await this._fetch(url, {
+      const response = await fetch(url, {
         method: 'GET',
         cache: 'no-cache',
         credentials: 'omit',

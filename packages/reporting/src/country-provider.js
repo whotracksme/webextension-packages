@@ -38,7 +38,7 @@ const DB_VERSION = 1;
  * (see the comments in "_sanitizeCountry" for details).
  */
 export default class CountryProvider {
-  constructor({ config, storage, storageKey, _fetchImpl }) {
+  constructor({ config, storage, storageKey }) {
     this.allowedCountryCodes = config.ALLOWED_COUNTRY_CODES;
     if (!this.allowedCountryCodes) {
       throw new Error('config.ALLOWED_COUNTRY_CODES not set');
@@ -57,15 +57,6 @@ export default class CountryProvider {
       min: 22 * HOUR,
       max: 26 * HOUR,
     };
-
-    // Wrap browser APIs (primarily to swap them out in the unit tests):
-    // this._fetch works like the native "fetch".
-    //
-    // Notes:
-    // * will not work in NodeJs < 18, since trying to access "fetch" will throw
-    // * the extra argument wrapping was needed on Android (when simplify test
-    //   whether it is still needed in the Ghostery Android Browser)
-    this._fetch = _fetchImpl || ((...args) => fetch(...args));
   }
 
   async init({ now = Date.now() } = {}) {
@@ -149,7 +140,7 @@ export default class CountryProvider {
       try {
         const url = this.configApiEndpoint;
         try {
-          const response = await this._fetch(url, {
+          const response = await fetch(url, {
             method: 'GET',
             cache: 'no-cache',
             credentials: 'omit',

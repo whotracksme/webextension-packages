@@ -10,6 +10,7 @@
  */
 
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Reporting from '../src/reporting.js';
 
@@ -30,21 +31,24 @@ describe('#Reporting', function () {
       async send() {},
       trustedClock: {},
     };
-    const _fetchImpl = async (url) => ({
+    sinon.stub(window, 'fetch').callsFake(async (url) => ({
       ok: false,
       statusText: `Stub server has been configured to fail (this is expected): request to ${url}`,
-    });
+    }));
     uut = new Reporting({
       config,
       storage,
       communication,
-      _fetchImpl,
     });
   });
 
   afterEach(function () {
-    uut.unload();
-    uut = null;
+    try {
+      uut.unload();
+      uut = null;
+    } finally {
+      window.fetch.restore();
+    }
   });
 
   describe('should load and unload correctly', function () {

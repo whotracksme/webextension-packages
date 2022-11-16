@@ -23,7 +23,7 @@ import AliveCheck from './alive-check';
 import logger from './logger';
 
 export default class Reporting {
-  constructor({ config, storage, communication, _fetchImpl = null }) {
+  constructor({ config, storage, communication }) {
     // Defines whether Reporting is fully initialized and has permission
     // to collect data.
     this.isActive = false;
@@ -35,13 +35,11 @@ export default class Reporting {
       patterns: this.patterns,
       storage,
       storageKey: 'patterns',
-      _fetchImpl,
     });
     this.countryProvider = new CountryProvider({
       config,
       storage,
       storageKey: 'ctry',
-      _fetchImpl,
     });
     this.sanitizer = new Sanitizer(this.countryProvider);
     this.urlAnalyzer = new UrlAnalyzer(this.patterns);
