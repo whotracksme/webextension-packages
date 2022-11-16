@@ -1,3 +1,15 @@
+# v0.4.8 (Wed Nov 16 2022)
+
+#### 🐛 Bug Fix
+
+- Use native fetch [#28](https://github.com/whotracksme/webextension-packages/pull/28) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v0.4.7 (Wed Nov 16 2022)
 
 #### 🐛 Bug Fix
