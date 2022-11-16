@@ -54,7 +54,7 @@ function checkForLongNumber(str, maxNumberLength) {
 }
 
 function isSuspiciousQueryStub(query) {
-  logger.info('[STUB] isSuspiciousQuery is not fully ported.');
+  logger.debug('[STUB] isSuspiciousQuery is not fully ported.');
 
   // Remove the msg if the query is too long,
   if (query.length > 50) {
@@ -224,11 +224,8 @@ export function sanitizeUrl(url) {
  * you will find many harmless examples that will be rejected by the rules.
  */
 export default class Sanitizer {
-  constructor(config) {
-    this.allowedCountryCodes = config.ALLOWED_COUNTRY_CODES;
-    if (!this.allowedCountryCodes) {
-      throw new Error('config.ALLOWED_COUNTRY_CODES not set');
-    }
+  constructor(countryProvider) {
+    this.countryProvider = countryProvider;
   }
 
   isSuspiciousQuery(query) {
@@ -266,21 +263,7 @@ export default class Sanitizer {
     return null;
   }
 
-  /**
-   * As long as there are enough other users, revealing the country
-   * will not compromise anonymity. Only if the user base is too low
-   * (e.g., Liechtenstein), we have to be careful. In that case,
-   * do not reveal the country, otherwise fingerprinting attacks
-   * could be possible.
-   *
-   * As the expected number of users varies between products,
-   * the information needs to be provided by the config.
-   */
   getSafeCountryCode() {
-    return this.allowedCountryCodes.includes(this.ctry) ? this.ctry : '--';
-  }
-
-  setSafeCountryCode(ctry) {
-    this.ctry = ctry;
+    return this.countryProvider.getSafeCountryCode();
   }
 }

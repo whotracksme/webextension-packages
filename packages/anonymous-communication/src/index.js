@@ -11,8 +11,9 @@
 
 import ServerPublicKeyAccessor from './server-public-key-accessor.js';
 import ProxiedHttp from './proxied-http.js';
+import { sortObjectKeys } from './utils.js';
 import { InvalidMessageError } from './errors.js';
-import { getTrustedUtcTime, getTimeAsYYYYMMDD } from './timestamps.js';
+import { TrustedClock } from './trusted-clock.js';
 
 export default class AnonymousCommunication {
   constructor({ config, storage }) {
@@ -26,6 +27,7 @@ export default class AnonymousCommunication {
       throw new Error('CHANNEL is missing on the config object');
     }
     this.proxiedHttp = new ProxiedHttp(config, this.serverPublicKeyAccessor);
+    this.trustedClock = new TrustedClock();
   }
 
   async send(msg) {
@@ -35,14 +37,22 @@ export default class AnonymousCommunication {
     if (!msg.action) {
       throw new InvalidMessageError('Mandatory field "action" is missing');
     }
-    msg.channel = this.config.CHANNEL;
-    msg.ts = getTimeAsYYYYMMDD();
-    return this.proxiedHttp.send({
-      body: JSON.stringify(msg),
-    });
-  }
 
-  getTrustedUtcTime() {
-    return getTrustedUtcTime();
+    // Add meta fields (channel, ts) if absent.
+    //
+    // Implementation details:
+    // * Avoid accessing the clock if it is not needed, as the operation may
+    //   fail in rare situations if the clock is out of sync
+    // * Sorting keys prevents that details about how the message was
+    //   constructed leaks through the JSON representation to the server
+    const ts = msg.ts || this.trustedClock.getTimeAsYYYYMMDD();
+    const fullMessage = {
+      channel: this.config.CHANNEL,
+      ts,
+      ...msg,
+    };
+    return this.proxiedHttp.send({
+      body: JSON.stringify(sortObjectKeys(fullMessage)),
+    });
   }
 }
