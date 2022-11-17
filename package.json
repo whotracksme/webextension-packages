@@ -1,6 +1,6 @@
 {
   "name": "@whotracksme/webextension-packages",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "type": "module",
   "description": "",
   "scripts": {
@@ -25,7 +25,7 @@
   "author": "Ghostery GmbH",
   "license": "MPL-2.0",
   "auto": {
-    "baseBranch": "0.4",
+    "baseBranch": "main",
     "plugins": [
       "npm"
     ]
