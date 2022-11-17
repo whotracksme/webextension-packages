@@ -1,3 +1,16 @@
+# v1.0.1 (Thu Nov 17 2022)
+
+#### ⚠️ Pushed to `0.4`
+
+- CD: allow releases from 0.4 branch ([@chrmod](https://github.com/chrmod))
+- Trackers Preview: change code style to prevent WebPack bug ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v0.4.8 (Wed Nov 16 2022)
 
 #### 🐛 Bug Fix
