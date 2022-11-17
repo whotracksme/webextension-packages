@@ -1,1 +1,1 @@
-# WhoTracksMe WebExtension Packages
+# WhoTracks.Me WebExtension Packages
