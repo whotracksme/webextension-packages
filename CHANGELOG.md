@@ -1,3 +1,20 @@
+# v2.0.0 (Thu Nov 17 2022)
+
+#### 💥 Breaking Change
+
+- Integrate reporting in Ghostery (Manifest V3) [#31](https://github.com/whotracksme/webextension-packages/pull/31) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- Update README.md [#34](https://github.com/whotracksme/webextension-packages/pull/34) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v1.0.0 (Wed Nov 16 2022)
 
 #### 💥 Breaking Change
