@@ -1,3 +1,15 @@
+# v2.0.1 (Thu Dec 01 2022)
+
+#### 🐛 Bug Fix
+
+- Fixed: URL#protocol ends with trailing colon [#36](https://github.com/whotracksme/webextension-packages/pull/36) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.0.0 (Thu Nov 17 2022)
 
 #### 💥 Breaking Change
