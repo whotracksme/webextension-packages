@@ -163,29 +163,22 @@ export default function setupTrackersPreview(popupUrl) {
     );
 
     window.addEventListener('message', (message) => {
-      if (message.origin + '/' !== chrome.runtime.getURL('/').toLowerCase()) {
+      if (
+        message.origin + '/' !== chrome.runtime.getURL('/').toLowerCase() &&
+        typeof message.data == 'string'
+      ) {
         return;
       }
 
       if (message.data === 'WTMReportClosePopups') {
         closePopups();
-        return;
-      }
-
-      if (message.data === 'WTMReportDisable') {
+      } else if (message.data === 'WTMReportDisable') {
         closePopups();
         elements.forEach(removeWheel);
         chrome.runtime.sendMessage({ action: 'disableWTMReport' });
-        return;
-      }
-
-      if (
-        typeof message.data === 'string' &&
-        message.data.startsWith('WTMReportResize')
-      ) {
+      } else if (message.data.startsWith('WTMReportResize')) {
         const height = message.data.split(':')[1];
         resizePopup(height);
-        return;
       }
     });
   }
