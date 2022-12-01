@@ -157,7 +157,7 @@ export function sanitizeUrl(url) {
   if (parsedUrl.port && parsedUrl.port !== '80' && parsedUrl.port !== '443') {
     return drop('URL has uncommon port');
   }
-  if (parsedUrl.protocol !== 'http' && parsedUrl.protocol !== 'https') {
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
     return drop('URL has uncommon protocol');
   }
   if (checkForInternalIp(parsedUrl.hostname)) {
