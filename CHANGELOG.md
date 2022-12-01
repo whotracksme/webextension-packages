@@ -1,3 +1,20 @@
+# v2.1.0 (Thu Dec 01 2022)
+
+#### 🚀 Enhancement
+
+- Backport 0.4 changes [#37](https://github.com/whotracksme/webextension-packages/pull/37) ([@chrmod](https://github.com/chrmod) [@smalluban](https://github.com/smalluban))
+
+#### 🐛 Bug Fix
+
+- Fix trackers-preview iframe UI [#35](https://github.com/whotracksme/webextension-packages/pull/35) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 2
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v2.0.1 (Thu Dec 01 2022)
 
 #### 🐛 Bug Fix
