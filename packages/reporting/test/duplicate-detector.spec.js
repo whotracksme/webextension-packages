@@ -52,6 +52,7 @@ describe('#DuplicateDetector', function () {
     });
 
     uut = new DuplicateDetector(persistedHashes);
+    await uut.init();
   });
 
   afterEach(() => {

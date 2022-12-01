@@ -10,6 +10,7 @@
  */
 
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import PatternsUpdater from '../src/patterns-updater.js';
 
@@ -67,6 +68,7 @@ function mockFetch(patternsUrl, serverPatterns) {
     url: patternsUrl,
     options: {
       method: 'GET',
+      cache: 'no-cache',
       credentials: 'omit',
     },
   };
@@ -133,6 +135,7 @@ function mockPatterns() {
 }
 
 describe('#PatternsUpdater', function () {
+  const storageKey = 'some-storage-key';
   let uut;
   let config;
   let storage;
@@ -173,6 +176,21 @@ describe('#PatternsUpdater', function () {
     expect(clientPatterns.getRulesSnapshot()).to.deep.equal(expectedRules);
   }
 
+  function newPatternsUpdater() {
+    return new PatternsUpdater({
+      config,
+      patterns: clientPatterns,
+      storage,
+      storageKey,
+    });
+  }
+
+  // Helper that simulate an event like a restart of the service worker/background script:
+  // it keeps the storage but purges everything that was in memory.
+  async function simulateRestart() {
+    uut = newPatternsUpdater();
+  }
+
   beforeEach(function () {
     clientPatterns = mockPatterns();
     serverPatterns = {
@@ -182,16 +200,14 @@ describe('#PatternsUpdater', function () {
     config = {
       PATTERNS_URL: 'https://patterns-location.test',
     };
-    const storageKey = 'some-storage-key';
     storage = mockStorage(storageKey);
     fetchMock = mockFetch(config.PATTERNS_URL, serverPatterns);
-    uut = new PatternsUpdater({
-      config,
-      patterns: clientPatterns,
-      storage,
-      storageKey,
-      _fetchImpl: (...args) => fetchMock.fetchImpl(...args),
-    });
+    sinon.stub(window, 'fetch').callsFake(fetchMock.fetchImpl);
+    uut = newPatternsUpdater();
+  });
+
+  afterEach(function () {
+    window.fetch.restore();
   });
 
   describe('on a fresh extension installation', function () {
@@ -345,6 +361,40 @@ describe('#PatternsUpdater', function () {
         expectLoadedPatternsToBe(ANOTHER_NON_EMPTY_PATTERN);
         expect(fetchMock.stats.attemptedRequests).to.equal(2);
       });
+    });
+  });
+
+  describe('[after a restart]', function () {
+    it('should not immediately fetch patterns again', async () => {
+      // first make sure the patterns are loaded
+      const now = Date.now();
+      releasePatterns(SOME_NON_EMPTY_PATTERN);
+      await uut.init({ now });
+      expectLoadedPatternsToBe(SOME_NON_EMPTY_PATTERN);
+      expect(fetchMock.stats.attemptedRequests).to.equal(1);
+
+      // If we restart now without letting much time pass, it should
+      // trust the persisted value and save the network calls.
+      await simulateRestart();
+      expect(fetchMock.stats.attemptedRequests).to.equal(1);
+      await uut.init({ now: now + 10 * SECOND });
+      expect(fetchMock.stats.attemptedRequests).to.equal(1);
+    });
+
+    it('should eventually fetch patterns if enough time passed', async () => {
+      // first make sure the patterns are loaded
+      const now = Date.now();
+      releasePatterns(SOME_NON_EMPTY_PATTERN);
+      await uut.init({ now });
+      expectLoadedPatternsToBe(SOME_NON_EMPTY_PATTERN);
+      expect(fetchMock.stats.attemptedRequests).to.equal(1);
+
+      // If we restart now after a longer time, it should not
+      // trust the cached patterns but fetch them from the server.
+      await simulateRestart();
+      expect(fetchMock.stats.attemptedRequests).to.equal(1);
+      await uut.init({ now: now + 4 * WEEK });
+      expect(fetchMock.stats.attemptedRequests).to.equal(2);
     });
   });
 });

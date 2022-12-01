@@ -162,12 +162,16 @@ export function computeDeduplicationKey({ body, deduplicateBy = '' }) {
 export default class DuplicateDetector {
   constructor(persistedHashes) {
     this.persistedHashes = persistedHashes;
-    this.unloaded = false;
+    this.enabled = false;
+  }
+
+  async init() {
+    this.enabled = true;
   }
 
   unload() {
-    if (!this.unloaded) {
-      this.unloaded = true;
+    if (this.enabled) {
+      this.enabled = false;
       this.persistedHashes.flush();
     }
   }
@@ -180,10 +184,10 @@ export default class DuplicateDetector {
    * cannot retry, as all later attempts will be rejected as duplicates.
    */
   async trySend(message) {
-    if (this.unloaded) {
+    if (!this.enabled) {
       return {
         ok: false,
-        rejectReason: 'Module is unloading',
+        rejectReason: 'Module is disabled',
       };
     }
 
