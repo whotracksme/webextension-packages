@@ -14,5 +14,8 @@ module.exports = function (config) {
     autoWatch: false,
     concurrency: 0,
     rollupPreprocessor,
+    client: {
+      TEST_FIXTURES_URL: process.env.TEST_FIXTURES_URL,
+    }
   });
 };

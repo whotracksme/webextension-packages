@@ -131,7 +131,6 @@ describe('#UrlAnalyzer', function () {
         const { query } = uut.parseSearchLinks(url);
         return query === text;
       }),
-      { numRuns: 100 },
     );
   });
 
