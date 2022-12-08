@@ -1,3 +1,15 @@
+# v2.1.1 (Thu Dec 08 2022)
+
+#### 🐛 Bug Fix
+
+- Adds functional tests, including optionally running external test [#38](https://github.com/whotracksme/webextension-packages/pull/38) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.1.0 (Thu Dec 01 2022)
 
 #### 🚀 Enhancement
