@@ -32,12 +32,46 @@ function randomInt() {
 
 /**
  * Responsible for sending WhoTracksMe message to the servers.
- * Ideally in a way that is as anonymous as possible, although
- * the choices are limited on Mobile.
  *
- * Note: We can start with https. There is no fundamental
- * reason why ANONYMOUS_COMMUNICATION could not be used on Mobile as well,
- * but it is a project on its own to port it.
+ * In our context, there are two additional side-goals:
+ *
+ * 1) Anonymity: the server should NOT be able to link messages
+ *    to the same client
+ * 2) Duplicate detection: the server should be able to detect it
+ *    when malicious clients send duplicated messages
+ *
+ * These goals seem to be in conflict, but it can be supported through a
+ * cryptographic algorithm called "Direct Anonymous Attestation". The
+ * client can include a zero-knowledge proof that it has not sent the
+ * message before (see https://github.com/whotracksme/anonymous-credentials).
+ *
+ * (TODO: anonymous-credentials hasn't been ported to Manifest V3. It relies
+ * on pairing-based cryptography, which we implemented with web assembly
+ * in Manifest V2. Perhaps web assembly will be support in Manifest V3
+ * eventually but it is hard to predict at this point. For details, see
+ * https://bugs.chromium.org/p/chromium/issues/detail?id=1173354)
+ *
+ * When it comes to anonymity, there is still the challenge that the server
+ * could link messages by meta data from the network layer (e.g. the IP address).
+ * To prevent that, messages can be routed through a trusted-party (e.g. Tor or
+ * through third-party proxies). Since the trusted-party should neither be able to
+ * read or modify the content of the messages, each message needs to be end-to-end
+ * encrypted and techniques to defend against statistical attacks (guessing messages
+ * based on their length) should be applied as well.
+ *
+ * In our current implementation, we are using AES-128-GCM with a non-iteractive
+ * Diffie-Hellman key exchange (server keys being rotated once a key). In addition,
+ * payloads are padded to power-of-2 buckets to defend against traffic analysis.
+ *
+ * Notes:
+ * - It is important to stress that the assumption here is that messages are
+ *   already free of identifiers and are safe against fingerprinting attacks.
+ *   If you send messages that can be linked based on their content, then
+ *   stripping network layer information will not magically make it safe.
+ * - Our goal is to follow a "privacy by design" architecture: the server should
+ *   not have access to more information beside the message payload.
+ *   But independent of whether the traffic is sent directly or through a
+ *   trusted-party, Ghostery will not log the IP of the sender.
  */
 export default class ProxiedHttp {
   constructor(config, serverPublicKeyAccessor) {
@@ -45,10 +79,6 @@ export default class ProxiedHttp {
     this.serverPublicKeyAccessor = serverPublicKeyAccessor;
   }
 
-  // TODO: The interface might changes. For WhoTracksMe, fire-and-forget
-  // messages to the same endpoint are enough. Should we need to use the
-  // anonymization layer (sending through proxy) for other purposes,
-  // the response should be decrypted and returned.
   async send({ body }) {
     const { ciphertext, iv, secret, clientPublicKey, serverPublicKeyDate } =
       await this.encrypt(body);
