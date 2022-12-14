@@ -1,3 +1,15 @@
+# v2.1.2 (Wed Dec 14 2022)
+
+#### 🐛 Bug Fix
+
+- Trackers Preview: fix import of pre-generated data [#40](https://github.com/whotracksme/webextension-packages/pull/40) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v2.1.1 (Thu Dec 08 2022)
 
 #### 🐛 Bug Fix
