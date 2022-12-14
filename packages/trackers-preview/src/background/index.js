@@ -10,7 +10,7 @@
  */
 import { parse } from 'tldts-experimental';
 
-import trackersPreview from './trackers-preview-generated';
+import trackersPreview from './trackers-preview-generated.js';
 
 /**
  * Takes a site (e.g. "economist.com") and returns a map of categories
