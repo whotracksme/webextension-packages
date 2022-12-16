@@ -145,7 +145,7 @@ describe('#SearchExtractor', async function () {
 
           for (const check of mustNotContain) {
             const unexpectedMatch = new RegExp(
-              `^${check.action.replace('*', '.*')}$`,
+              `^${check.action.replaceAll('.', '[.]').replaceAll('*', '.*')}$`,
             );
             const matches = Object.keys(messages).filter((x) =>
               unexpectedMatch.test(x),
