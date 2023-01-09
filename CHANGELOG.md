@@ -1,3 +1,16 @@
+# v2.1.3 (Mon Jan 09 2023)
+
+#### 🐛 Bug Fix
+
+- Improve the test suite runner ("." should not match any char and [#41](https://github.com/whotracksme/webextension-packages/pull/41) ([@philipp-classen](https://github.com/philipp-classen))
+- Update the comment in ProxiedHttp [#39](https://github.com/whotracksme/webextension-packages/pull/39) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.1.2 (Wed Dec 14 2022)
 
 #### 🐛 Bug Fix
