@@ -1,3 +1,15 @@
+# v2.1.4 (Wed Jan 11 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Fix trackers-preview iframe styling ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v2.1.3 (Mon Jan 09 2023)
 
 #### 🐛 Bug Fix
