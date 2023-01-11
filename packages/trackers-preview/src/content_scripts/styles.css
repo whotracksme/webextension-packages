@@ -33,9 +33,10 @@
   position: absolute;
   width: 350px;
   height: 338px;
-  z-index: 20000;
-  box-shadow: 0px 10px 15px 0px rgba(0, 0, 0, 0.15);
-  border-radius: 7.4px;
+  z-index: 127;
+  border: 1px solid #C3CAD9;
+  box-shadow: 30px 60px 160px rgba(32, 44, 68, 0.4);
+  border-radius: 16px;
   background: white;
 }
 
@@ -43,5 +44,5 @@
   border: 0px;
   height: 100%;
   width: 100%;
-  border-radius: 7.4px;
+  border-radius: 16px;
 }
