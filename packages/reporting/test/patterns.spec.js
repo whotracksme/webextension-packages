@@ -273,7 +273,7 @@ describe('Test builtin primitives', function () {
         );
       });
 
-      describe('should should return null for invalid URIs', function () {
+      describe('should return null for invalid URIs', function () {
         ['%', '%%', '-%-'].forEach((invalidURI) => {
           it(`invalid URI: ${invalidURI}`, function () {
             expect(uut(invalidURI)).to.be.null;
@@ -338,7 +338,7 @@ describe('Test builtin primitives', function () {
         );
       });
 
-      describe('should should return the original text for invalid URIs', function () {
+      describe('should return the original text for invalid URIs', function () {
         ['%', '%%', '-%-'].forEach((invalidURI) => {
           it(`invalid URI: ${invalidURI}`, function () {
             expect(uut(invalidURI)).to.eql(invalidURI);

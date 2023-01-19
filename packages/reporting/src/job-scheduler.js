@@ -51,7 +51,7 @@ export default class JobScheduler {
   }
 
   async runJob(job) {
-    if (job.type === 'search-go') {
+    if (job.doublefetchRequest) {
       const { messages } = await this.searchExtractor.runJob(job);
       logger.debug('searchExtractor found', messages.length, 'messages');
       messages.forEach((message) => {
