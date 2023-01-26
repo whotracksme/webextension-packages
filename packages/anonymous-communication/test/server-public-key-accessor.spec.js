@@ -13,7 +13,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { Buffer } from 'buffer';
 
-import MemoryPersistentMap from './helpers/memory-map.js';
+import InMemoryDatabase from './helpers/in-memory-database.js';
 
 import ServerPublicKeyAccessor from '../src/server-public-key-accessor.js';
 import logger from '../src/logger.js';
@@ -52,28 +52,25 @@ const MOCKS = {
 };
 
 describe('#ServerPublicKeyAccessor', function () {
-  let storage;
+  let database;
   let uut;
-  const someStorageKey = 'test-storage-key';
 
   const assumeKeysOnDisk = async (storedKeys) => {
     const entry = storedKeys.map(({ date, key }) => [
       date,
       Buffer.from(key, 'base64'),
     ]);
-    await storage.set(someStorageKey, entry);
+    await database.set(uut.storageKey, entry);
   };
 
   beforeEach(async function () {
-    // in-memory implementation of storage
-    storage = new MemoryPersistentMap();
+    database = new InMemoryDatabase();
     const config = {
       COLLECTOR_DIRECT_URL: '192.0.2.0', // TEST-NET-1 address
     };
     uut = new ServerPublicKeyAccessor({
       config,
-      storage,
-      storageKey: someStorageKey,
+      database,
     });
     MOCKS.reset();
     sinon.stub(window, 'fetch').callsFake(MOCKS.fetch);
@@ -111,6 +108,24 @@ describe('#ServerPublicKeyAccessor', function () {
 
   it('should persist loaded keys to disk', async function () {
     await assumeKeysOnDisk([{ date: MOCKS.today, key: MOCKS.fakeKey }]);
+    expect(await uut.getKey(MOCKS.today)).to.deep.equal({
+      date: MOCKS.today,
+      publicKey: MOCKS.fakeImportedKey,
+    });
+    expect(MOCKS.fetch._numCalls).to.equal(0);
+  });
+
+  it('should fetch newer keys if the cached ones are outdated', async function () {
+    const oneYearAgo = (MOCKS.today - '00010000').toString();
+    await assumeKeysOnDisk([{ date: oneYearAgo, key: MOCKS.fakeKey }]);
+    expect(await uut.getKey(MOCKS.today)).to.deep.equal({
+      date: MOCKS.today,
+      publicKey: MOCKS.fakeImportedKey,
+    });
+    expect(MOCKS.fetch._numCalls).to.equal(1);
+
+    // also check that the new keys were properly cached
+    MOCKS.fetch._numCalls = 0;
     expect(await uut.getKey(MOCKS.today)).to.deep.equal({
       date: MOCKS.today,
       publicKey: MOCKS.fakeImportedKey,
