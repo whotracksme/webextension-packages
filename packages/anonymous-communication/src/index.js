@@ -16,11 +16,11 @@ import { InvalidMessageError } from './errors.js';
 import { TrustedClock } from './trusted-clock.js';
 
 export default class AnonymousCommunication {
-  constructor({ config, storage }) {
+  constructor({ config, connectDatabase }) {
+    this.cacheDatabase = connectDatabase('cache');
     this.serverPublicKeyAccessor = new ServerPublicKeyAccessor({
       config,
-      storage,
-      storageKey: 'wtm.anonymous-communication.server-ecdh-keys',
+      database: this.cacheDatabase,
     });
     this.config = config;
     if (!config.CHANNEL) {

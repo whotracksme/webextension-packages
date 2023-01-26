@@ -18,12 +18,12 @@ function isYYYYMMDD(date) {
 }
 
 export default class ServerPublicKeyAccessor {
-  constructor({ config, storage, storageKey }) {
+  constructor({ config, database }) {
     // Note: do not go through proxies when fetching keys; otherwise,
     // the proxy could replace it, and the key exchange would be insecure.
     this.collectorUrl = config.COLLECTOR_DIRECT_URL;
-    this.storage = storage;
-    this.storageKey = storageKey;
+    this.database = database;
+    this.storageKey = 'server-ecdh-keys';
     this._knownKeys = new Map();
   }
 
@@ -51,7 +51,7 @@ export default class ServerPublicKeyAccessor {
     // try to load from disk
     let knownKeys;
     try {
-      const keysFromDisk = await this.storage
+      const keysFromDisk = await this.database
         .get(this.storageKey)
         .catch(() => null);
       if (keysFromDisk && keysFromDisk.some(([date]) => date === today)) {
@@ -94,8 +94,8 @@ export default class ServerPublicKeyAccessor {
 
       // update disk cache
       try {
-        const entry = [...knownKeys].map((date, { key }) => [date, key]);
-        await this.storage.set(this.storageKey, entry);
+        const entry = [...knownKeys].map(([date, { key }]) => [date, key]);
+        await this.database.set(this.storageKey, entry);
       } catch (e) {
         logger.warn('Failed to cache server keys to disk.', e);
       }
