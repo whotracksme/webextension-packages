@@ -1,3 +1,16 @@
+# v2.1.5 (Fri Jan 27 2023)
+
+#### 🐛 Bug Fix
+
+- Fixed: caching keys didn't work since chrome.local doesn't support [#43](https://github.com/whotracksme/webextension-packages/pull/43) ([@philipp-classen](https://github.com/philipp-classen))
+- Support more search pages [#42](https://github.com/whotracksme/webextension-packages/pull/42) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.1.4 (Wed Jan 11 2023)
 
 #### ⚠️ Pushed to `main`
