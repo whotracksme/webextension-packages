@@ -16,8 +16,7 @@ import * as datetime from './time';
 
 
 export default class BlockLog {
-  constructor(telemetry, config) {
-    this.telemetry = telemetry;
+  constructor(config) {
     this.config = config;
     this.blocked = new persist.LazyPersistentObject('blocked');
     this.localBlocked = new persist.LazyPersistentObject('localBlocked');
@@ -38,7 +37,6 @@ export default class BlockLog {
       const hourCutoff = datetime.hourString(hour);
 
       this._cleanLocalBlocked(hourCutoff);
-      this.sendTelemetry();
     };
     this._hourChangedListener = events.subscribe('attrack:hour_changed', this.onHourChanged);
   }
@@ -174,18 +172,5 @@ export default class BlockLog {
       }
     }
     return false;
-  }
-
-  sendTelemetry() {
-    if (Object.keys(this.blocked.value).length > 0) {
-      this.telemetry({
-        message: {
-          action: 'attrack.blocked',
-          payload: this.blocked.value,
-        }
-      });
-      // reset the state
-      this.blocked.clear();
-    }
   }
 }

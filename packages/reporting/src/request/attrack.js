@@ -24,11 +24,10 @@ import Pipeline from '../webrequest-pipeline/pipeline';
 import QSWhitelist2 from './qs-whitelist2';
 import TempSet from './temp-set';
 import { truncatedHash } from '../core/helpers/md5';
-import telemetry from './telemetry';
 import { HashProb, shouldCheckToken } from './hash';
 import { getDefaultTrackerTxtRule } from './tracker-txt';
 import { parse, isPrivateIP, getName } from '../core/url';
-import { VERSION, TELEMETRY, COOKIE_MODE } from './config';
+import { VERSION, COOKIE_MODE } from './config';
 import { checkInstalledPrivacyAddons } from '../platform/addon-check';
 import { compressionAvailable, compressJSONToBase64 } from './compression';
 import { generateAttrackPayload, shuffle } from './utils';
@@ -43,7 +42,6 @@ import PageLogger from './steps/page-logger';
 import RedirectTagger from './steps/redirect-tagger';
 import TokenChecker from './steps/token-checker';
 import TokenExaminer from './steps/token-examiner';
-import TokenTelemetry from './steps/token-telemetry';
 import OAuthDetector from './steps/oauth-detector';
 import { checkValidContext, checkSameGeneralDomain } from './steps/check-context';
 
@@ -173,20 +171,6 @@ export default class CliqzAttrack {
     });
   }
 
-  telemetry({ message, raw = false, compress = false, ts = undefined }) {
-    if (!message.type) {
-      message.type = telemetry.msgType;
-    }
-    if (raw !== true) {
-      message.payload = generateAttrackPayload(message.payload, ts, this.qs_whitelist.getVersion());
-    }
-    if (compress === true && compressionAvailable()) {
-      message.compressed = true;
-      message.payload = compressJSONToBase64(message.payload);
-    }
-    telemetry.telemetry(message);
-  }
-
   /** Global module initialisation.
   */
   init(config, settings) {
@@ -235,16 +219,6 @@ export default class CliqzAttrack {
     return Promise.all(initPromises);
   }
 
-  setHWTelemetryMode(enabled) {
-    const mode = enabled ? TELEMETRY.TRACKERS_ONLY : TELEMETRY.DISABLED;
-    if (this.config.telemetryMode === mode) {
-      return Promise.resolve();
-    }
-    this.config.telemetryMode = mode;
-    // reset pipeline to reflect new state
-    return this.initPipeline();
-  }
-
   async initPipeline() {
     await this.unloadPipeline();
 
@@ -256,16 +230,6 @@ export default class CliqzAttrack {
       redirectTagger: new RedirectTagger(),
       oauthDetector: new OAuthDetector(),
     };
-    if (this.config.databaseEnabled && this.config.telemetryMode !== TELEMETRY.DISABLED) {
-      steps.tokenTelemetry = new TokenTelemetry(
-        this.telemetry.bind(this),
-        this.qs_whitelist,
-        this.config,
-        this.db,
-        this.shouldCheckToken.bind(this),
-        this.config.tokenTelemetry
-      );
-    }
     if (this.config.databaseEnabled) {
       steps.tokenExaminer = new TokenExaminer(
         this.qs_whitelist,
@@ -278,7 +242,6 @@ export default class CliqzAttrack {
         {},
         this.shouldCheckToken.bind(this),
         this.config,
-        this.telemetry,
         this.db
       );
     }
@@ -375,11 +338,6 @@ export default class CliqzAttrack {
         name: 'tokenExaminer.examineTokens',
         spec: 'collect', // TODO - global state
         fn: state => steps.tokenExaminer.examineTokens(state),
-      },
-      {
-        name: 'tokenTelemetry.extractKeyTokens',
-        spec: 'collect', // TODO - global state
-        fn: state => !steps.tokenTelemetry || steps.tokenTelemetry.extractKeyTokens(state),
       },
       {
         name: 'tokenChecker.findBadTokens',

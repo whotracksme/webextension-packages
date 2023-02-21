@@ -24,12 +24,6 @@ const PROTECTION = 'antitrackingProtectionEnabled';
 
 export const VERSION = '0.102';
 
-export const TELEMETRY = {
-  DISABLED: 0,
-  TRACKERS_ONLY: 1,
-  ALL: 2,
-};
-
 export const COOKIE_MODE = {
   THIRD_PARTY: 'thirdparty',
   TRACKERS: 'trackers',
@@ -47,12 +41,10 @@ export const DEFAULTS = {
   qsEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
     ? SETTINGS[PROTECTION] : true,
   bloomFilterEnabled: true,
-  telemetryMode: TELEMETRY.TRACKERS_ONLY,
   sendAntiTrackingHeader: true,
   blockCookieNewToken: false,
   tpDomainDepth: 2,
   firstPartyIsolation: false,
-  tokenTelemetry: {},
   databaseEnabled: true,
   cookieMode: COOKIE_MODE.THIRD_PARTY,
   networkFetchEnabled: true,
@@ -69,7 +61,6 @@ export const PREFS = {
   forceBlockEnabled: 'attrackForceBlock',
   overrideUserAgent: 'attrackOverrideUserAgent',
   cookieTrustReferers: 'attrackCookieTrustReferers',
-  telemetryMode: 'attrackTelemetryMode',
   sendAntiTrackingHeader: 'attrackSendHeader',
   firstPartyIsolation: 'attrack.firstPartyIsolation',
   cookieMode: 'attrack.cookieMode',
@@ -81,7 +72,7 @@ export const PREFS = {
  * @type {Array}
  */
 const REMOTELY_CONFIGURED = ['blockRules', 'reportList', 'cookieWhitelist',
-  'subdomainRewriteRules', 'compatibilityList', 'tokenTelemetry'];
+  'subdomainRewriteRules', 'compatibilityList'];
 
 export default class Config {
   constructor({

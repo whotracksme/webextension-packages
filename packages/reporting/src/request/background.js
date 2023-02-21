@@ -10,23 +10,17 @@
 /* eslint func-names: 'off' */
 
 import background from '../core/base/background';
-import telemetryService from '../core/services/telemetry';
 import Attrack from './attrack';
 import { DEFAULT_ACTION_PREF, updateDefaultTrackerTxtRule } from './tracker-txt';
 import prefs from '../core/prefs';
 import events from '../core/events';
-import telemetry from './telemetry';
-import Config, { TELEMETRY } from './config';
+import Config from './config';
 import { updateTimestamp } from './time';
 import { bindObjectFunctions } from '../core/helpers/bind-functions';
 import inject from '../core/kord/inject';
 import { isLegacyEdge } from '../core/platform';
 import { parse } from '../core/url';
 
-// Telemetry schemas
-import popupActionsMetrics from './telemetry/metrics/popup';
-import tokensMetrics from './telemetry/metrics/tokens';
-import tokensAnalyses from './telemetry/analyses/tokens';
 
 function humanwebExistsAndDisabled() {
   const humanweb = inject.module('human-web');
@@ -38,12 +32,7 @@ function humanwebExistsAndDisabled() {
 * @class Background
 */
 export default background({
-  requiresServices: ['domainInfo', 'pacemaker', 'telemetry'],
-  telemetrySchemas: [
-    ...popupActionsMetrics,
-    ...tokensMetrics,
-    ...tokensAnalyses,
-  ],
+  requiresServices: ['domainInfo', 'pacemaker'],
 
   attrack: null,
 
@@ -52,8 +41,6 @@ export default background({
   * @param settings
   */
   init(settings) {
-    telemetryService.register(this.telemetrySchemas);
-
     // Create new attrack class
     this.settings = settings;
     this.core = inject.module('core');
@@ -66,12 +53,6 @@ export default background({
 
     bindObjectFunctions(this.popupActions, this);
 
-    // inject configured telemetry module
-    // do not initiate if disabled from config
-    if (!settings.DISABLE_ATTRACK_TELEMETRY) {
-      telemetry.loadFromProvider(settings.ATTRACK_TELEMETRY_PROVIDER || 'human-web', settings.HW_CHANNEL);
-    }
-
     // load config
     this.config = new Config({}, () => this.core.action('refreshAppState'));
     if (isLegacyEdge) {
@@ -81,13 +62,6 @@ export default background({
       this.pageStore = pageStore;
     });
     return this.config.init().then(() => {
-      // check HW status (for telemetry)
-      // - On Cliqz humanweb opt-out is flagged via 'humanWebOptOut' pref.
-      // - On Ghostery the module is disabled
-      // - On other platforms, where humanweb is not in the build, opt-out should be done directly.
-      if (prefs.get('humanWebOptOut', false) || humanwebExistsAndDisabled()) {
-        this.config.telemetryMode = TELEMETRY.DISABLED;
-      }
       return this.attrack.init(this.config, settings);
     });
   },
@@ -96,8 +70,6 @@ export default background({
   * @method unload
   */
   unload() {
-    telemetryService.unregister(this.telemetrySchemas);
-
     if (this.attrack !== null) {
       this.attrack.unload();
       this.attrack = null;
@@ -191,9 +163,6 @@ export default background({
         this.attrack.pipelines[stage].removePipelineStep(name);
       }
     },
-    telemetry(opts) {
-      return this.attrack.telemetry(opts);
-    },
     getWhitelist() {
       return this.attrack.qs_whitelist;
     },
@@ -267,41 +236,6 @@ export default background({
     }
   },
 
-  popupActions: {
-    _isDuplicate(info) {
-      const now = Date.now();
-      const key = info.tab + info.hostname + info.path;
-
-      // clean old entries
-      for (const k of Object.keys(this.clickCache)) {
-        if (now - this.clickCache[k] > 60000) {
-          delete this.clickCache[k];
-        }
-      }
-
-      if (key in this.clickCache) {
-        return true;
-      }
-      this.clickCache[key] = now;
-      return false;
-    },
-
-    telemetry(msg, schema) {
-      if (msg.includeUnsafeCount) {
-        delete msg.includeUnsafeCount;
-        const info = this.attrack.getCurrentTabBlockingInfo();
-        // drop duplicated messages
-        if (info.error || this.popupActions._isDuplicate(info)) {
-          return;
-        }
-        msg.unsafe_count = info.cookies.blocked + info.requests.unsafe;
-        msg.special = info.error !== undefined;
-      }
-      msg.type = 'antitracking';
-      telemetryService.push(msg, schema);
-    }
-  },
-
   status() {
     const enabled = prefs.get('modules.antitracking.enabled', true);
     return {
@@ -319,12 +253,6 @@ export default background({
       } else if (pref === 'config_ts') {
         // update date timestamp set in humanweb
         updateTimestamp(prefs.get('config_ts', null));
-      } else if (pref === 'humanWebOptOut') {
-        if (prefs.get('humanWebOptOut', false)) {
-          this.attrack.setHWTelemetryMode(false);
-        } else {
-          this.attrack.setHWTelemetryMode(true);
-        }
       }
       this.config.onPrefChange(pref);
     },
@@ -342,21 +270,9 @@ export default background({
     'antitracking:whitelist:add': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'add');
       this.attrack.logWhitelist(hostname);
-      if (!isPrivateMode) {
-        this.popupActions.telemetry({
-          action: 'click',
-          target: 'whitelist_domain'
-        }, 'metrics.antitracking.popup.action');
-      }
     },
     'antitracking:whitelist:remove': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'remove');
-      if (!isPrivateMode) {
-        this.popupActions.telemetry({
-          action: 'click',
-          target: 'unwhitelist_domain'
-        }, 'metrics.antitracking.popup.action');
-      }
     },
     'control-center:antitracking-strict': () => {
       prefs.set('attrackForceBlock', !prefs.get('attrackForceBlock', false));
@@ -369,12 +285,6 @@ export default background({
     },
     'control-center:antitracking-clearcache': function (isPrivateMode) {
       this.attrack.clearCache();
-      if (!isPrivateMode) {
-        this.popupActions.telemetry({
-          action: 'click',
-          target: 'clearcache',
-        }, 'metrics.antitracking.popup.action');
-      }
     },
     'webrequest-pipeline:stage': function (page) {
       let report = {

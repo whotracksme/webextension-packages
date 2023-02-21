@@ -217,13 +217,6 @@ export default describeModule('antitracking/attrack',
     'platform/lib/moment': {
       default: moment,
     },
-    'core/services/telemetry': {
-      default: {
-        isEnabled: () => false,
-        register: () => {},
-        unregister: () => {},
-      }
-    },
   }), function () {
     let attrack;
     let pipeline;
