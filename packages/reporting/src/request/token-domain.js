@@ -6,8 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Subject, asyncScheduler, merge, from } from 'rxjs';
-import { observeOn, pluck, distinctUntilChanged, delay, map } from 'rxjs/operators';
 import * as datetime from './time';
 
 const DAYS_EXPIRE = 7;
@@ -20,8 +18,6 @@ export default class TokenDomain {
     this.stagedTokenDomain = new Map();
     // cache of currentDay string (YYYYMMDD)
     this._currentDay = null;
-
-    this.subjectTokens = new Subject();
   }
 
   init() {
@@ -31,37 +27,12 @@ export default class TokenDomain {
       await this.db.tokenDomain.clear();
     });
 
-    // listen to the token tuples and update staged token data
-    // emit when a new token is added to the blockedTokens set
-    this._tokenSubscription = this.subjectTokens
-      .subscribe((v) => {
-        this._addTokenOnFirstParty(v);
-      });
-
-    // when cleanup is due: after startup, or when day changes
-    this._cleanupSubscription = merge(
-      from(startup).pipe(map(() => this.currentDay)),
-      this.subjectTokens.pipe(
-        observeOn(asyncScheduler),
-        pluck('day')
-      )
-    ).pipe(
-      distinctUntilChanged(),
-      delay(5000)
-    ).subscribe(() => {
-      this.clean();
-    });
+    // TODO @chrmod: when cleanup is due: after startup, or when day changes
+    // this.clean();
     return startup;
   }
 
-  unload() {
-    [this._persistSubscription, this._cleanupSubscription, this._tokenSubscription]
-      .forEach((sub) => {
-        if (sub) {
-          sub.unsubscribe();
-        }
-      });
-  }
+  unload() {}
 
   get currentDay() {
     if (!this._currentDay || Date.now() > this._nextDayCheck) {
@@ -92,10 +63,8 @@ export default class TokenDomain {
    */
   addTokenOnFirstParty(token, firstParty, day) {
     const tokenDay = day || this.currentDay;
-    // Pass the token tuples to the Rx Subject. Processing is handled via the _tokenSubscription
-    // subscription (synchronously), and data persistance by the _persistSubscription
-    // (asynchronously).
-    this.subjectTokens.next({
+
+    this._addTokenOnFirstParty({
       token,
       firstParty,
       day: tokenDay,
