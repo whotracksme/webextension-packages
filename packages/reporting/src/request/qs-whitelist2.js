@@ -5,10 +5,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
 import PackedBloomFilter from '../core/bloom-filter-packed';
 import { Resource } from '../core/resource-loader';
-import moment from '../platform/lib/moment';
 import pacemaker from '../core/services/pacemaker';
 import logger from '../logger';
 
@@ -114,7 +114,10 @@ export default class QSWhitelist2 {
       return; // already up to date!
     }
     this._cleanLocalSafekey();
-    if (useDiff === true && moment(this.version).diff(version, 'days') === -1) {
+    if (
+      useDiff === true &&
+      differenceInDays(parseISO(this.version)).diff(parseISO(version)) === -1
+    ) {
       logger.debug(`[QSWhitelist2] Updating bloom filter to version ${version} from diff file`);
       // diff update is allowed and our version is one day behind the server
       const buffer = await fetchPackedBloomFilter(`${this.CDN_BASE_URL}/${version}/bf_diff_1.gz`);
@@ -138,7 +141,7 @@ export default class QSWhitelist2 {
   }
 
   _cleanLocalSafekey() {
-    const cutoff = moment().subtract(7, 'days').valueOf();
+    const cutoff = getUnixTime(sub(new Date(), { days: 7 }));
     Object.keys(this.localSafeKey).forEach((domain) => {
       Object.keys(this.localSafeKey[domain]).forEach((key) => {
         if (this.localSafeKey[domain][key] < cutoff) {
@@ -206,7 +209,7 @@ export default class QSWhitelist2 {
     if (!this.localSafeKey[domain]) {
       this.localSafeKey[domain] = {};
     }
-    this.localSafeKey[domain][key] = moment().valueOf();
+    this.localSafeKey[domain][key] = getUnixTime(new Date());
   }
 
   addSafeToken(tracker, token) {
