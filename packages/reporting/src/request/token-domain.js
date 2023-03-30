@@ -47,7 +47,7 @@ export default class TokenDomain {
 
   loadBlockedTokens() {
     // delete expired blocked tokens
-    return this.db.tokenBlocked.toCollection().uniqueKeys()
+    return this.db.tokenBlocked.uniqueKeys()
       .then((blockedTokens) => {
         this.blockedTokens.clear();
         blockedTokens.forEach(tok => this.blockedTokens.add(tok));

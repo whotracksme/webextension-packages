@@ -13,7 +13,6 @@ import { VERSION } from './config';
 import { getHourTimestamp } from './time';
 import prefs from '../core/prefs';
 
-
 function getCountryCode() {
   return prefs.get('config_location', '--');
 }
@@ -73,4 +72,12 @@ export function shuffle(s) {
     a[j] = tmp;
   }
   return a.join('');
+}
+
+export function generateAttrackPayload(data, ts, qsVersion) {
+  const extraAttrs = qsVersion;
+  extraAttrs.ver = VERSION;
+  extraAttrs.ctry = getCountryCode();
+  ts = ts || getHourTimestamp();
+  return generatePayload(data, ts, false, extraAttrs);
 }

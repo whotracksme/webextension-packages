@@ -26,7 +26,8 @@ import { HashProb, shouldCheckToken } from './hash';
 import { getDefaultTrackerTxtRule } from './tracker-txt';
 import { parse, isPrivateIP, getName } from '../utils/url';
 import { VERSION, COOKIE_MODE } from './config';
-import { shuffle } from './utils';
+import { generateAttrackPayload, shuffle } from './utils';
+import buildPageLoadObject from './page-telemetry';
 import AttrackDatabase from './database';
 import getTrackingStatus from './dnt';
 import TrackerCounter from '../core/helpers/tracker-counter';
@@ -37,6 +38,7 @@ import PageLogger from './steps/page-logger';
 import RedirectTagger from './steps/redirect-tagger';
 import TokenChecker from './steps/token-checker';
 import TokenExaminer from './steps/token-examiner';
+import TokenTelemetry from './steps/token-telemetry';
 import { checkValidContext, checkSameGeneralDomain } from './steps/check-context';
 
 export default class CliqzAttrack {
@@ -222,11 +224,20 @@ export default class CliqzAttrack {
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
     };
+    if (this.config.databaseEnabled && this.config.telemetryMode !== TELEMETRY.DISABLED) {
+      steps.tokenTelemetry = new TokenTelemetry(
+        this.telemetry.bind(this),
+        this.qs_whitelist,
+        this.config,
+        this.db,
+        this.shouldCheckToken.bind(this),
+        this.config.tokenTelemetry
+      );
+    }
     if (this.config.databaseEnabled) {
       steps.tokenExaminer = new TokenExaminer(
         this.qs_whitelist,
         this.config,
-        this.db,
         this.shouldCheckToken.bind(this)
       );
       steps.tokenChecker = new TokenChecker(
@@ -986,6 +997,17 @@ export default class CliqzAttrack {
     prefs.set(this.config.PREFS.enabled, false);
   }
 
+  logWhitelist(payload) {
+    this.telemetry({
+      message: {
+        type: telemetry.msgType,
+        action: 'attrack.whitelistDomain',
+        payload
+      },
+      raw: true,
+    });
+  }
+
   clearCache() {
     if (this.pipelineSteps.tokenExaminer) {
       this.pipelineSteps.tokenExaminer.clearCache();
@@ -997,5 +1019,28 @@ export default class CliqzAttrack {
 
   shouldCheckToken(tok) {
     return shouldCheckToken(this.hashProb, this.config.shortTokenLength, tok);
+  }
+
+  onPageStaged(page) {
+    if (this.config.telemetryMode !== TELEMETRY.DISABLED
+        && page.state === 'complete'
+        && !page.isPrivate
+        && !page.isPrivateServer) {
+      const payload = buildPageLoadObject(page);
+      if (payload.scheme.startsWith('http') && Object.keys(payload.tps).length > 0) {
+        const wrappedPayload = generateAttrackPayload([payload], undefined, {
+          conf: {},
+          addons: this.similarAddon,
+        });
+        this.telemetry({
+          message: {
+            type: telemetry.msgType,
+            action: 'attrack.tp_events',
+            payload: wrappedPayload
+          },
+          raw: true,
+        });
+      }
+    }
   }
 }

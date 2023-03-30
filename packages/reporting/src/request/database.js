@@ -6,35 +6,97 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import getDexie from '../platform/lib/dexie';
+import * as IDB from 'idb';
+
+class IDBWrapper {
+  constructor(db, tableName) {
+    this.db = db;
+    this.tableName = tableName;
+  }
+
+  async put(value) {
+    await this.db.put(this.tableName, value);
+  }
+
+  async clear() {
+    await this.db.clear(this.tableName);
+  }
+
+  async uniqueKeys() {
+    return this.db.keys(this.tableName);
+  }
+
+  async count() {
+    return this.db.count(this.tableName);
+  }
+
+  async bulkPut(rows) {
+    const tx = this.db.transaction(this.tableName, 'readwrite');
+    await Promise.all(rows.map((row) => tx.store.add(row)));
+    await tx.done;
+  }
+
+  async bulkDelete(keys, { primaryKey = null } = {}) {
+    const tx = this.db.transaction(this.tableName, 'readwrite');
+    const store = primaryKey ? tx.store.index(primaryKey) : tx.store;
+    await Promise.all(keys.map((key) => store.delete(key)));
+    await tx.done;
+  }
+
+  async where({ primaryKey, anyOf }) {
+    const rows = await this.db.getAllFromIndex(this.tableName, primaryKey);
+    return rows.filter((row) => anyOf.includes(row[primaryKey]));
+  }
+}
 
 export default class AttrackDatabase {
   constructor() {
     this.db = null;
-    this._ready = null;
+    this.ready = null;
   }
 
-  init() {
-    if (this.db !== null) return Promise.resolve();
-
-    this._ready = getDexie().then((Dexie) => {
-      this.db = new Dexie('antitracking');
-      const tables = {
-        tokenDomain: '[token+fp], token, mtime',
-        tokenBlocked: 'token, expires',
-        requestKeyValue: '[tracker+key+value], [tracker+key], day',
-      };
-      this.db.version(2).stores({
-        ...tables,
-        tokens: 'token, lastSent, created',
-        keys: 'hash, lastSent, created',
-      });
-
-      this.db.version(1).stores(tables);
-
-      return this.db.open();
+  async init() {
+    let resolver;
+    new Promise((resolve) => {
+      resolver = resolve;
     });
-    return this._ready;
+    // TODO @chrmod: consider moving outside of the webextesnion-packages
+    // same as other reporting database
+    this.db = await IDB.openDB('antitracking', 21, {
+      async upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const tokenDomainStore = db.createObjectStore('tokenDomain', {
+            keyPath: ['token', 'fp'],
+          });
+          tokenDomainStore.createIndex('token', 'token');
+          tokenDomainStore.createIndex('mtime', 'mtime');
+          const tokenBlockedStore = db.createObjectStore('tokenBlocked', {
+            keyPath: 'token',
+          });
+          tokenBlockedStore.createIndex('token', 'token');
+          tokenBlockedStore.createIndex('expires', 'expires');
+          const tokensStore = db.createObjectStore('tokens', {
+            keyPath: 'token',
+          });
+          tokensStore.createIndex('lastSent', 'lastSent');
+          tokensStore.createIndex('created', 'created');
+          const keysStore = db.createObjectStore('keys', { keyPath: 'hash' });
+          keysStore.createIndex('lastSent', 'lastSent');
+          keysStore.createIndex('created', 'created');
+        }
+
+        if (oldVersion > 20) {
+          db.deleteObjectStore('requestKeyValue');
+        }
+      },
+    });
+    resolver();
+    // const tables = {
+    //   tokenDomain: '[token+fp], token, mtime',
+    //   tokenBlocked: 'token, expires',
+    //   tokens: 'token, lastSent, created',
+    //   keys: 'hash, lastSent, created',
+    // };
   }
 
   unload() {
@@ -52,22 +114,18 @@ export default class AttrackDatabase {
   }
 
   get tokenDomain() {
-    return this.db.tokenDomain;
+    return new IDBWrapper(this.db, 'tokenDomain');
   }
 
   get tokenBlocked() {
-    return this.db.tokenBlocked;
-  }
-
-  get requestKeyValue() {
-    return this.db.requestKeyValue;
+    return new IDBWrapper(this.db, 'tokenBlocked');
   }
 
   get tokens() {
-    return this.db.tokens;
+    return new IDBWrapper(this.db, 'tokens');
   }
 
   get keys() {
-    return this.db.keys;
+    return new IDBWrapper(this.db, 'keys');
   }
 }

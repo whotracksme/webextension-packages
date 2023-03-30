@@ -33,6 +33,7 @@
   "dependencies": {
     "@cliqz/url-parser": "^1.1.4",
     "date-fns": "^2.29.3",
+    "idb": "^7.1.1",
     "linkedom": "^0.14.20",
     "tldts-experimental": "^5.7.112"
   },

@@ -184,6 +184,7 @@ export default {
 
     changeWhitelistState(url, type, action) {
       return this.attrack.urlWhitelist.changeState(url, type, action);
+      this.attrack.logWhitelist(hostname);
     },
 
     getWhitelistState(url) {
@@ -285,6 +286,10 @@ export default {
         host: page.hostname,
         report,
       });
+      // send page-load telemetry
+      if (this.attrack) {
+        this.attrack.onPageStaged(page);
+      }
     },
   },
 });

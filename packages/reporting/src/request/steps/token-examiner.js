@@ -44,7 +44,7 @@ class TokenSet {
  * Manages the local safekey list
  */
 export default class TokenExaminer {
-  constructor(qsWhitelist, config, db, shouldCheckToken) {
+  constructor(qsWhitelist, config, shouldCheckToken) {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
     this.shouldCheckToken = shouldCheckToken;
@@ -53,11 +53,6 @@ export default class TokenExaminer {
     this._syncTimer = null;
     this._lastPrune = null;
     this._currentDay = null;
-    this._cleanLegacyDb = db.requestKeyValue.clear();
-  }
-
-  init() {
-    return this._cleanLegacyDb;
   }
 
   unload() {
