@@ -10,9 +10,6 @@
 
 export default describeModule('antitracking/tracker-txt',
   () => ({
-    'core/http': {
-      httpGet() {}
-    },
     'core/prefs': {
       default: {
         get: () => null,

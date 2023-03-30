@@ -9,29 +9,24 @@
 /* eslint-disable no-param-reassign */
 import * as persist from '../core/persistent-state';
 import UrlWhitelist from '../core/url-whitelist';
-import console from '../core/console';
 import domainInfo from '../core/services/domain-info';
-import inject, { ifModuleEnabled } from '../core/kord/inject';
 import pacemaker from '../core/services/pacemaker';
-import { getGeneralDomain } from '../core/tlds';
+import { getGeneralDomain } from '../utils/tlds';
 import prefs from '../core/prefs';
 import events from '../core/events';
-import logger from './logger';
+import logger from '../logger';
 
 import * as browser from '../platform/browser';
 import * as datetime from './time';
 import Pipeline from '../webrequest-pipeline/pipeline';
 import QSWhitelist2 from './qs-whitelist2';
 import TempSet from './temp-set';
-import { truncatedHash } from '../core/helpers/md5';
+import { truncatedHash } from '../md5';
 import { HashProb, shouldCheckToken } from './hash';
 import { getDefaultTrackerTxtRule } from './tracker-txt';
-import { parse, isPrivateIP, getName } from '../core/url';
+import { parse, isPrivateIP, getName } from '../utils/url';
 import { VERSION, COOKIE_MODE } from './config';
-import { checkInstalledPrivacyAddons } from '../platform/addon-check';
-import { compressionAvailable, compressJSONToBase64 } from './compression';
-import { generateAttrackPayload, shuffle } from './utils';
-import buildPageLoadObject from './page-telemetry';
+import { shuffle } from './utils';
 import AttrackDatabase from './database';
 import getTrackingStatus from './dnt';
 import TrackerCounter from '../core/helpers/tracker-counter';
@@ -42,7 +37,6 @@ import PageLogger from './steps/page-logger';
 import RedirectTagger from './steps/redirect-tagger';
 import TokenChecker from './steps/token-checker';
 import TokenExaminer from './steps/token-examiner';
-import OAuthDetector from './steps/oauth-detector';
 import { checkValidContext, checkSameGeneralDomain } from './steps/check-context';
 
 export default class CliqzAttrack {
@@ -51,7 +45,6 @@ export default class CliqzAttrack {
     this.LOG_KEY = 'attrack';
     this.debug = false;
     this.msgType = 'attrack';
-    this.similarAddon = false;
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
     this.urlWhitelist = new UrlWhitelist('attrack-url-whitelist');
@@ -61,7 +54,7 @@ export default class CliqzAttrack {
     this.tpEventInterval = null;
 
     // Web request pipelines
-    this.webRequestPipeline = inject.module('webrequest-pipeline');
+    this.webRequestPipeline = null; //inject.module('webrequest-pipeline');
     this.pipelineSteps = {};
     this.pipelines = {};
 
@@ -228,7 +221,6 @@ export default class CliqzAttrack {
       blockRules: new BlockRules(this.config),
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
-      oauthDetector: new OAuthDetector(),
     };
     if (this.config.databaseEnabled) {
       steps.tokenExaminer = new TokenExaminer(
@@ -274,11 +266,6 @@ export default class CliqzAttrack {
         name: 'checkState',
         spec: 'break',
         fn: checkValidContext,
-      },
-      {
-        name: 'oauthDetector.checkMainFrames',
-        spec: 'break',
-        fn: state => steps.oauthDetector.checkMainFrames(state),
       },
       {
         name: 'redirectTagger.checkRedirect',
@@ -360,11 +347,6 @@ export default class CliqzAttrack {
         spec: 'break',
         fn: state => state.badTokens.length > 0 && this.qs_whitelist.isUpToDate()
                      && !this.config.paused,
-      },
-      {
-        name: 'oauthDetector.checkIsOAuth',
-        spec: 'break',
-        fn: state => steps.oauthDetector.checkIsOAuth(state, 'token'),
       },
       {
         name: 'isQSEnabled',
@@ -486,11 +468,6 @@ export default class CliqzAttrack {
         name: 'cookieContext.checkContextFromEvent',
         spec: 'break',
         fn: state => steps.cookieContext.checkContextFromEvent(state),
-      },
-      {
-        name: 'oauthDetector.checkIsOAuth',
-        spec: 'break',
-        fn: state => steps.oauthDetector.checkIsOAuth(state, 'cookie'),
       },
       {
         name: 'shouldBlockCookie',
@@ -727,26 +704,6 @@ export default class CliqzAttrack {
     Object.keys(this.pipelines).forEach((stage) => {
       this.pipelines[stage].unload();
     });
-
-    // Remove steps to the global web request pipeline
-    // NOTE: this is async but the result can be ignored when the extension is
-    // unloaded. This is because the background from webrequest-pipeline has
-    // a synchronous `unload` method which will clean up everything anyway.
-    // But if we reload only the antitracking module, we need to be sure we
-    // removed the steps before we try to add them again.
-    return Promise.all(
-      Object.keys(this.pipelines).map(
-        stage => ifModuleEnabled(
-          this.webRequestPipeline.action(
-            'removePipelineStep',
-            stage,
-            `antitracking.${stage}`
-          )
-        )
-      )
-    ).then(() => {
-      this.pipelines = {};
-    });
   }
 
   /** Per-window module initialisation
@@ -771,14 +728,6 @@ export default class CliqzAttrack {
 
     pacemaker.clearTimeout(this.tpEventInterval);
     this.tpEventInterval = null;
-  }
-
-  checkInstalledAddons() {
-    checkInstalledPrivacyAddons().then((adds) => {
-      this.similarAddon = adds;
-    }).catch(() => {
-      // rejection expected on platforms which do not support addon check
-    });
   }
 
   hourChanged() {
@@ -1037,17 +986,6 @@ export default class CliqzAttrack {
     prefs.set(this.config.PREFS.enabled, false);
   }
 
-  logWhitelist(payload) {
-    this.telemetry({
-      message: {
-        type: telemetry.msgType,
-        action: 'attrack.whitelistDomain',
-        payload
-      },
-      raw: true,
-    });
-  }
-
   clearCache() {
     if (this.pipelineSteps.tokenExaminer) {
       this.pipelineSteps.tokenExaminer.clearCache();
@@ -1059,28 +997,5 @@ export default class CliqzAttrack {
 
   shouldCheckToken(tok) {
     return shouldCheckToken(this.hashProb, this.config.shortTokenLength, tok);
-  }
-
-  onPageStaged(page) {
-    if (this.config.telemetryMode !== TELEMETRY.DISABLED
-        && page.state === 'complete'
-        && !page.isPrivate
-        && !page.isPrivateServer) {
-      const payload = buildPageLoadObject(page);
-      if (payload.scheme.startsWith('http') && Object.keys(payload.tps).length > 0) {
-        const wrappedPayload = generateAttrackPayload([payload], undefined, {
-          conf: {},
-          addons: this.similarAddon,
-        });
-        this.telemetry({
-          message: {
-            type: telemetry.msgType,
-            action: 'attrack.tp_events',
-            payload: wrappedPayload
-          },
-          raw: true,
-        });
-      }
-    }
   }
 }

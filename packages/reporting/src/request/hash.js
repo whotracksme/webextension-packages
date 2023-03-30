@@ -9,7 +9,7 @@
 /* eslint no-param-reassign: 'off' */
 
 import { BundledResource } from '../core/resource-loader';
-import { isIpv4Address } from '../core/url';
+import { isIpv4Address } from './utils/url';
 
 export class HashProb {
   constructor() {

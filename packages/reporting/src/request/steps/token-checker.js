@@ -8,9 +8,8 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import md5, { truncatedHash } from '../../core/helpers/md5';
-import { tryDecodeURIComponent } from '../../core/url';
-import console from '../../core/console';
+import md5, { truncatedHash } from '../../md5';
+import { tryDecodeURIComponent } from '../../utils/url';
 
 import TokenDomain from '../token-domain';
 import BlockLog from '../block-log';

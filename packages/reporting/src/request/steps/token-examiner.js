@@ -9,8 +9,7 @@
 /* eslint no-param-reassign: 'off' */
 
 import * as datetime from '../time';
-import md5, { truncatedHash } from '../../core/helpers/md5';
-import console from '../../core/console';
+import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../../core/services/pacemaker';
 
 class TokenSet {

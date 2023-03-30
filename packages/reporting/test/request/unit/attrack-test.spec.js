@@ -245,12 +245,6 @@ export default describeModule('antitracking/attrack',
           }
         },
         services: {
-          telemetry: {
-            api: {
-              isEnabled: () => true,
-              push: () => {},
-            },
-          },
         },
       });
       const md5Module = await this.system.import('core/helpers/md5');

@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@cliqz/url-parser": "^1.1.4",
-    "linkedom": "^0.14.20"
+    "linkedom": "^0.14.20",
+    "tldts-experimental": "^5.7.112"
   },
   "exports": {
     ".": "./src/index.js"

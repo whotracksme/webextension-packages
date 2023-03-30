@@ -9,29 +9,19 @@
 /* eslint no-param-reassign: 'off' */
 /* eslint func-names: 'off' */
 
-import background from '../core/base/background';
 import Attrack from './attrack';
 import { DEFAULT_ACTION_PREF, updateDefaultTrackerTxtRule } from './tracker-txt';
 import prefs from '../core/prefs';
 import events from '../core/events';
 import Config from './config';
 import { updateTimestamp } from './time';
-import { bindObjectFunctions } from '../core/helpers/bind-functions';
-import inject from '../core/kord/inject';
-import { isLegacyEdge } from '../core/platform';
-import { parse } from '../core/url';
-
-
-function humanwebExistsAndDisabled() {
-  const humanweb = inject.module('human-web');
-  return humanweb.isPresent() && !humanweb.isEnabled();
-}
+import { parse } from './utils/url';
 
 /**
 * @namespace antitracking
 * @class Background
 */
-export default background({
+export default {
   requiresServices: ['domainInfo', 'pacemaker'],
 
   attrack: null,
@@ -43,7 +33,6 @@ export default background({
   init(settings) {
     // Create new attrack class
     this.settings = settings;
-    this.core = inject.module('core');
 
     this.attrack = new Attrack();
 
@@ -51,13 +40,8 @@ export default background({
     this.enabled = true;
     this.clickCache = {};
 
-    bindObjectFunctions(this.popupActions, this);
-
     // load config
-    this.config = new Config({}, () => this.core.action('refreshAppState'));
-    if (isLegacyEdge) {
-      this.config.databaseEnabled = false;
-    }
+    this.config = new Config({});
     this.attrack.webRequestPipeline.action('getPageStore').then((pageStore) => {
       this.pageStore = pageStore;
     });
@@ -269,7 +253,6 @@ export default background({
     },
     'antitracking:whitelist:add': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'add');
-      this.attrack.logWhitelist(hostname);
     },
     'antitracking:whitelist:remove': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'remove');
@@ -302,10 +285,6 @@ export default background({
         host: page.hostname,
         report,
       });
-      // send page-load telemetry
-      if (this.attrack) {
-        this.attrack.onPageStaged(page);
-      }
     },
   },
 });

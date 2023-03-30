@@ -6,10 +6,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { truncatedHash } from '../../core/helpers/md5';
+import { truncatedHash } from '../../md5';
 import pacemaker from '../../core/services/pacemaker';
-import { parse } from '../../core/url';
-import { sameGeneralDomain, getGeneralDomain } from '../../core/tlds';
+import { parse } from '../../utils/core/url';
+import { sameGeneralDomain, getGeneralDomain } from '../../utils/tlds';
 
 import { cleanTimestampCache } from '../utils';
 

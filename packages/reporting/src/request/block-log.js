@@ -10,7 +10,7 @@
 /* eslint guard-for-in: 'off' */
 
 import * as persist from '../core/persistent-state';
-import md5 from '../core/helpers/md5';
+import md5 from '../md5';
 import events from '../core/events';
 import * as datetime from './time';
 

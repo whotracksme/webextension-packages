@@ -8,7 +8,6 @@
 
 import { Subject, asyncScheduler, merge, from } from 'rxjs';
 import { observeOn, pluck, distinctUntilChanged, delay, map } from 'rxjs/operators';
-import console from '../core/console';
 import * as datetime from './time';
 
 const DAYS_EXPIRE = 7;

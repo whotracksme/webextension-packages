@@ -15,7 +15,6 @@ TrackerTXT: caching rules for tracker.txt
 
 import MapCache from '../core/helpers/fixed-size-cache';
 import { getTime } from './time';
-import { httpGet } from '../core/http';
 import prefs from '../core/prefs';
 
 const trackerTxtActions = new Set(['placeholder', 'block', 'empty', 'replace']);
@@ -86,8 +85,7 @@ TrackerTXT.prototype = {
       || this.last_update === getTime()) return; // try max once per hour
     this.status = 'updating';
     const self = this;
-    httpGet(
-      `${self.baseurl}/tracking.txt`,
+    fetch(`${self.baseurl}/tracking.txt`).then(
       function success(req) {
         if (req.responseText.length < 4 * 1024) {
           self.rules = [];

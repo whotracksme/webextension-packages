@@ -38,9 +38,6 @@ export default describeModule('antitracking/config',
         set: (p, v) => { mockPrefs[p] = v; },
       }
     },
-    'core/http': {
-      fetch,
-    },
   }),
   () => {
     let Config;

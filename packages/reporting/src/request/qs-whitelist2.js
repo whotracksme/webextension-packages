@@ -8,13 +8,12 @@
 
 import PackedBloomFilter from '../core/bloom-filter-packed';
 import { Resource } from '../core/resource-loader';
-import { fetch, fetchArrayBuffer } from '../core/http';
 import moment from '../platform/lib/moment';
 import pacemaker from '../core/services/pacemaker';
-import logger from './logger';
+import logger from '../logger';
 
 async function fetchPackedBloomFilter(url) {
-  const response = await fetchArrayBuffer(url);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(response.error);
   }

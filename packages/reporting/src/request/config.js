@@ -12,7 +12,6 @@ import config from '../core/config';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
 import events from '../core/events';
-import { fetch } from '../core/http';
 import pacemaker from '../core/services/pacemaker';
 
 const SETTINGS = config.settings;
@@ -79,11 +78,10 @@ export default class Config {
     defaults = DEFAULTS,
     versionUrl = VERSIONCHECK_URL,
     whitelistUrl = WHITELIST2_URL,
-  }, onUpdated) {
+  }) {
     this.debugMode = false;
     this.versionCheckUrl = versionUrl;
     this.whitelistUrl = whitelistUrl;
-    this.onUpdated = onUpdated;
 
     this.tokenDomainCountThreshold = 2;
     this.safeKeyExpire = 7;
@@ -163,8 +161,5 @@ export default class Config {
     REMOTELY_CONFIGURED.forEach((key) => {
       this[key] = conf[key];
     });
-    if (this.onUpdated) {
-      this.onUpdated();
-    }
   }
 }

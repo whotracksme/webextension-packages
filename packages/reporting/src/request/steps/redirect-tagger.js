@@ -7,7 +7,6 @@
  */
 
 import TempSet from '../temp-set';
-import console from '../../core/console';
 
 /**
  * Caches 302 redirects so that we can ensure that the resulting request is properly

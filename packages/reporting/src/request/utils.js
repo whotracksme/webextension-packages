@@ -18,30 +18,6 @@ function getCountryCode() {
   return prefs.get('config_location', '--');
 }
 
-export function splitTelemetryData(data, bucketSize) {
-  let acc = 0;
-  let bucket = {};
-  const splitData = [];
-  for (const k in data) {
-    if (Object.prototype.hasOwnProperty.call(data, k)) {
-      const length = JSON.stringify(data[k]).length;
-      // full bucket
-      if (acc !== 0 && acc + length > bucketSize) {
-        // full bucket, push it
-        splitData.push(bucket);
-        bucket = {};
-        acc = 0;
-      }
-      acc += length;
-      bucket[k] = data[k];
-    }
-  }
-  if (Object.keys(bucket).length > 0) {
-    splitData.push(bucket);
-  }
-  return splitData;
-}
-
 export function generatePayload(data, ts, instant, attachAttrs) {
   const payl = {
     data,
@@ -67,15 +43,6 @@ export function cleanTimestampCache(cacheObj, timeout, currTime) {
       delete cacheObj[k];
     }
   });
-}
-
-
-export function generateAttrackPayload(data, ts, qsVersion) {
-  const extraAttrs = qsVersion;
-  extraAttrs.ver = VERSION;
-  extraAttrs.ctry = getCountryCode();
-  ts = ts || getHourTimestamp();
-  return generatePayload(data, ts, false, extraAttrs);
 }
 
 export function truncateDomain(host, depth) {

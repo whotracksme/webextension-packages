@@ -86,10 +86,6 @@ export default describeModule('antitracking/qs-whitelist2',
     'platform/resource-loader-storage': {
       default: MockStorage,
     },
-    'core/http': {
-      fetch: mockFetch,
-      fetchArrayBuffer: mockFetch,
-    },
     'platform/lib/moment': {
       default: (...args) => {
         if (momentMock) {
