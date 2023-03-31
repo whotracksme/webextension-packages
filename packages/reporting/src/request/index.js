@@ -10,12 +10,8 @@
 /* eslint func-names: 'off' */
 
 import Attrack from './attrack';
-import { DEFAULT_ACTION_PREF, updateDefaultTrackerTxtRule } from './tracker-txt';
-import prefs from '../core/prefs';
 import telemetry from './telemetry';
 import Config from './config';
-import { updateTimestamp } from './time';
-import { parse } from './utils/url';
 
 /**
 * @namespace antitracking
@@ -76,66 +72,7 @@ export default {
     };
   },
 
-  async currentWindowStatus({ id, url: u }) {
-    if (this.attrack === null) {
-      return this.status();
-    }
-
-    return this.attrack.getTabBlockingInfo(id, u)
-      .then((info) => {
-        const url = parse(info.url);
-        const ps = info.ps;
-        const hostname = url ? url.hostname : '';
-        const isWhitelisted = url !== null && this.attrack.urlWhitelist.isWhitelisted(
-          url.href,
-          url.hostname,
-          url.generalDomain,
-        );
-        const enabled = prefs.get('modules.antitracking.enabled', true) && !isWhitelisted;
-        let s;
-
-        if (enabled) {
-          s = 'active';
-        } else if (isWhitelisted) {
-          s = 'inactive';
-        } else {
-          s = 'critical';
-        }
-
-        return {
-          visible: true,
-          strict: prefs.get('attrackForceBlock', false),
-          hostname,
-          cookiesCount: info.cookies.blocked,
-          requestsCount: info.requests.unsafe,
-          totalCount: info.cookies.blocked + info.requests.unsafe,
-          badgeData: this.getBadgeData(info),
-          enabled,
-          isWhitelisted: isWhitelisted || enabled,
-          reload: info.reload || false,
-          trackersList: info,
-          ps,
-          state: s
-        };
-      });
-  },
-
-  getBadgeData(info) {
-    if (this.attrack === null || this.attrack.urlWhitelist.isWhitelisted(info.url)) {
-      // do not display number if site is whitelisted
-      return 0;
-    }
-    return info.cookies.blocked + info.requests.unsafe;
-  },
-
   actions: {
-    getBadgeData({ tabId, url }) {
-      if (this.attrack === null) {
-        return 0;
-      }
-
-      return this.attrack.getTabBlockingInfo(tabId, url).then(info => this.getBadgeData(info));
-    },
     getCurrentTabBlockingInfo() {
       return this.attrack.getCurrentTabBlockingInfo();
     },
@@ -208,10 +145,6 @@ export default {
       return this.actions.changeWhitelistState(domain, 'hostname', 'remove');
     },
 
-    setConfigOption(prefName, value) {
-      this.config.setPref(prefName, value);
-    },
-
     pause() {
       this.config.paused = true;
     },
@@ -225,26 +158,7 @@ export default {
     }
   },
 
-  status() {
-    const enabled = prefs.get('modules.antitracking.enabled', true);
-    return {
-      visible: true,
-      strict: prefs.get('attrackForceBlock', false),
-      state: enabled ? 'active' : 'critical',
-      totalCount: 0,
-    };
-  },
-
   events: {
-    prefchange: function onPrefChange(pref) {
-      if (pref === DEFAULT_ACTION_PREF) {
-        updateDefaultTrackerTxtRule();
-      } else if (pref === 'config_ts') {
-        // update date timestamp set in humanweb
-        updateTimestamp(prefs.get('config_ts', null));
-      }
-      this.config.onPrefChange(pref);
-    },
     'content:dom-ready': function onDomReady(url) {
       const domChecker = this.attrack.pipelineSteps.domChecker;
 

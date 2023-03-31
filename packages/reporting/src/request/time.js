@@ -8,8 +8,6 @@
 
 /* eslint prefer-template: 'off' */
 
-import prefs from '../core/prefs';
-
 // this is the sanitised timestamp retrieved from humanweb.
 let hwTs = null;
 
@@ -37,18 +35,8 @@ export function getTime() {
 }
 
 export function getConfigTs() {
-  // lazy loading of pref
-  if (hwTs === null) {
-    hwTs = prefs.get('config_ts', null);
-  }
-  if (!hwTs) {
-    hwTs = getTime().substring(0, 8);
-  }
-  return hwTs;
-}
-
-export function updateTimestamp(ts) {
-  hwTs = ts;
+  // TODO @chrmod: use trusted time
+  return getTime().substring(0, 8);
 }
 
 export function newUTCDate() {

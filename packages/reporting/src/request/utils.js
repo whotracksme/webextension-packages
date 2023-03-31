@@ -11,10 +11,9 @@
 
 import { VERSION } from './config';
 import { getHourTimestamp } from './time';
-import prefs from '../core/prefs';
 
 function getCountryCode() {
-  return prefs.get('config_location', '--');
+  // TODO @chrmod: wire ctry provider
 }
 
 export function generatePayload(data, ts, instant, attachAttrs) {

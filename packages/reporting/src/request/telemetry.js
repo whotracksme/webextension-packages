@@ -8,7 +8,6 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import prefs from '../core/prefs';
 import platformTelemetry from '../platform/telemetry';
 import inject, { ifModuleEnabled } from '../core/kord/inject';
 import random from '../random';
@@ -45,11 +44,7 @@ function getPlatformConstants() {
 }
 
 function msgSanitize(msg, channel) {
-  if (prefs.get('ff-experiment', null)) {
-    msg.channel = 'ff-experiment';
-  } else {
-    msg.channel = channel;
-  }
+  msg.channel = channel;
 
   try {
     msg.ts = getConfigTs();

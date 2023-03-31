@@ -7,7 +7,6 @@
  */
 
 import * as persist from '../core/persistent-state';
-import prefs from '../core/prefs';
 import config from '../core/config';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
@@ -18,7 +17,6 @@ const VERSIONCHECK_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/versionche
 const CONFIG_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/config.json`;
 const WHITELIST2_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/2`;
 const PROTECTION = 'antitrackingProtectionEnabled';
-
 
 export const VERSION = '0.102';
 
@@ -95,27 +93,6 @@ export default class Config {
                             || this.shortTokenLength;
 
     this.paused = false;
-
-    this.loadPrefs();
-  }
-
-  loadPrefs() {
-    Object.keys(PREFS).forEach((conf) => {
-      this[conf] = prefs.get(PREFS[conf], this[conf] || false);
-    });
-  }
-
-  setPref(name, value) {
-    if (!PREFS[name]) {
-      throw new Error(`pref ${name} not known`);
-    }
-    prefs.set(PREFS[name], value);
-  }
-
-  onPrefChange(pref) {
-    if (Object.keys(PREFS).map(n => PREFS[n]).indexOf(pref) > -1) {
-      this.loadPrefs();
-    }
   }
 
   async init() {
@@ -123,16 +100,12 @@ export default class Config {
   }
 
   unload() {
-    if (this._prefListener) {
-      this._prefListener.unsubscribe();
-      this._prefListener = null;
-    }
   }
 
   async _loadConfig() {
     const storedConfig = await asyncPrefs.multiGet(['attrack.configLastUpdate', 'attrack.config']);
     const lastUpdate = storedConfig.reduce((obj, kv) => Object.assign(obj, { [kv[0]]: kv[1] }), {});
-    const day = prefs.get('config_ts', null) || getConfigTs();
+    const day = getConfigTs();
     // use stored config if it was already updated today, or if remote fetch is disabled.
     if (storedConfig.length === 2 && (lastUpdate['attrack.configLastUpdate'] === day || !this.networkFetchEnabled)) {
       this._updateConfig(JSON.parse(lastUpdate['attrack.config']));

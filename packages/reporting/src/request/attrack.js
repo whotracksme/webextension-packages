@@ -12,7 +12,6 @@ import UrlWhitelist from '../core/url-whitelist';
 import domainInfo from '../core/services/domain-info';
 import pacemaker from '../core/services/pacemaker';
 import { getGeneralDomain } from '../utils/tlds';
-import prefs from '../core/prefs';
 import events from '../utils/events';
 import logger from '../logger';
 
@@ -22,8 +21,8 @@ import Pipeline from '../webrequest-pipeline/pipeline';
 import QSWhitelist2 from './qs-whitelist2';
 import TempSet from './temp-set';
 import { truncatedHash } from '../md5';
+import telemetry from './telemetry';
 import { HashProb, shouldCheckToken } from './hash';
-import { getDefaultTrackerTxtRule } from './tracker-txt';
 import { parse, isPrivateIP, getName } from '../utils/url';
 import { VERSION, COOKIE_MODE } from './config';
 import { generateAttrackPayload, shuffle } from './utils';
@@ -120,7 +119,7 @@ export default class CliqzAttrack {
       return 'block';
     }
 
-    return getDefaultTrackerTxtRule();
+    return 'placeholder';
   }
 
   isEnabled() {
@@ -984,24 +983,6 @@ export default class CliqzAttrack {
         return acc;
       }, {});
     });
-  }
-
-  /** Enables Attrack module with cookie, QS and referrer protection enabled.
-   *  if module_only is set to true, will not set preferences for cookie, QS
-   *  and referrer protection (for selective loading in AB tests)
-   */
-  enableModule() {
-    if (this.isEnabled()) {
-      return;
-    }
-
-    this.config.setPref('enabled', true);
-  }
-
-  /** Disables anti-tracking immediately.
-  */
-  disableModule() {
-    prefs.set(this.config.PREFS.enabled, false);
   }
 
   logWhitelist(payload) {
