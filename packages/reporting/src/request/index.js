@@ -12,7 +12,6 @@
 import Attrack from './attrack';
 import { DEFAULT_ACTION_PREF, updateDefaultTrackerTxtRule } from './tracker-txt';
 import prefs from '../core/prefs';
-import events from '../core/events';
 import Config from './config';
 import { updateTimestamp } from './time';
 import { parse } from './utils/url';
@@ -271,21 +270,6 @@ export default {
       this.attrack.clearCache();
     },
     'webrequest-pipeline:stage': function (page) {
-      let report = {
-        bugs: {},
-        others: {},
-      };
-      // Generate tracker-report event for insights
-      if (page.annotations && page.annotations.counter) {
-        report = page.annotations.counter.getSummary();
-      }
-      events.pub('antitracking:tracker-report', {
-        tabId: page.id,
-        ts: page.s,
-        url: page.url,
-        host: page.hostname,
-        report,
-      });
       // send page-load telemetry
       if (this.attrack) {
         this.attrack.onPageStaged(page);

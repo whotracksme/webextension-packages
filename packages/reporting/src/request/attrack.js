@@ -13,7 +13,7 @@ import domainInfo from '../core/services/domain-info';
 import pacemaker from '../core/services/pacemaker';
 import { getGeneralDomain } from '../utils/tlds';
 import prefs from '../core/prefs';
-import events from '../core/events';
+import events from '../utils/events';
 import logger from '../logger';
 
 import * as browser from '../platform/browser';
@@ -197,13 +197,6 @@ export default class CliqzAttrack {
     if (config.databaseEnabled) {
       initPromises.push(this.db.init());
     }
-
-    // force clean requestKeyValue
-    this.onSafekeysUpdated = events.subscribe('attrack:safekeys_updated', (version, forceClean) => {
-      if (forceClean && this.pipelineSteps.tokenExaminer) {
-        this.pipelineSteps.tokenExaminer.clearCache();
-      }
-    });
 
     this.checkInstalledAddons();
 

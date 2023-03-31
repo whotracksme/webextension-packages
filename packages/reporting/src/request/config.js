@@ -11,7 +11,6 @@ import prefs from '../core/prefs';
 import config from '../core/config';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
-import events from '../core/events';
 import pacemaker from '../core/services/pacemaker';
 
 const SETTINGS = config.settings;
@@ -121,11 +120,6 @@ export default class Config {
 
   async init() {
     await this._loadConfig();
-    this._prefListener = events.subscribe('prefchange', (pref) => {
-      if (pref === 'config_ts') {
-        this._loadConfig();
-      }
-    });
   }
 
   unload() {

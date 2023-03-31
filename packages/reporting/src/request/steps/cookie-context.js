@@ -8,7 +8,7 @@
 
 import { truncatedHash } from '../../md5';
 import pacemaker from '../../core/services/pacemaker';
-import { parse } from '../../utils/core/url';
+import { parse } from '../../utils/url';
 import { sameGeneralDomain, getGeneralDomain } from '../../utils/tlds';
 
 import { cleanTimestampCache } from '../utils';
