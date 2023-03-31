@@ -1,20 +1,22 @@
 import DefaultMap from './default-map';
 
-const listeners = new DefaultMap(() => []);
+export class EventEmitter {
+  constructor() {
+    this.listeners = new DefaultMap(() => []);
+  }
 
-export default {
   pub(event, value) {
-    listeners.get(event).forEach((listener) => {
+    this.listeners.get(event).forEach((listener) => {
       try {
         listener(value);
       } catch (e) {
         //
       }
     });
-  },
+  }
 
   subscribe(event, listener) {
-    listeners.update(event, (subscribers) => {
+    this.listeners.update(event, (subscribers) => {
       return [...subscribers, listener];
     });
     return {
@@ -24,5 +26,7 @@ export default {
         });
       },
     };
-  },
-};
+  }
+}
+
+export default new EventEmitter();

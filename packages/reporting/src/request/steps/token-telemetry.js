@@ -6,21 +6,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Subject, interval, timer, of, merge } from 'rxjs';
-import {
-  groupBy,
-  flatMap,
-  filter,
-  map,
-  delay,
-  distinct,
-  buffer,
-  auditTime,
-} from 'rxjs/operators';
 import md5, { truncatedHash } from '../../md5';
 import DefaultMap from '../../utils/default-map';
 import logger from '../../logger';
 import { getConfigTs } from '../time';
+import { EventEmitter as Subject } from '../../utils/events';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
@@ -95,64 +85,64 @@ class CachedEntryPipeline {
    * @param batchInterval how often to run batches
    * @param batchLimit maximum messages per batch
    */
-  init(inputObservable, outputSubject, batchInterval, batchLimit) {
-    const bufferInterval = () => interval(batchInterval);
-    const clearDistinct = new Subject();
-    const retryQueue = new Subject();
-    this.input = inputObservable;
-    this.pipelineSubscription = merge(
-      inputObservable,
-      retryQueue.pipe(delay(1)),
-    )
-      .pipe(
-        distinct(undefined, clearDistinct),
-        buffer(bufferInterval()),
-        filter((batch) => batch.length > 0),
-      )
-      .subscribe(async (batch) => {
-        try {
-          // merge existing entries from DB
-          await this.loadBatchIntoCache(batch);
-          // extract message and clear
-          const toBeSent = batch
-            .map((token) => [token, this.cache.get(token)])
-            .filter(([, { lastSent }]) => lastSent !== currentDay());
+  init(
+    inputObservable,
+    sendMessage,
+    batchInterval,
+    batchLimit,
+    overflowSubject,
+  ) {
+    const pipeline = new Subject();
 
-          // generate the set of messages to be sent from the candiate list
-          const { messages, overflow } = this.createMessagePayloads(
-            toBeSent,
-            batchLimit,
-          );
-          // get the keys of the entries not being sent this time
-          const overflowKeys = new Set(overflow.map((tup) => tup[0]));
+    let batch = [];
+    setInterval(() => {
+      pipeline.pub(batch);
+      batch = [];
+    }, batchInterval);
 
-          // update lastSent for sent messages
-          toBeSent
-            .filter((tup) => !overflowKeys.has(tup[0]))
-            .forEach(([, _entry]) => {
-              const entry = _entry;
-              entry.lastSent = currentDay();
-            });
+    inputObservable.subscribe((token) => {
+      batch.push(token);
+    });
 
-          await this.saveBatchToDb(batch);
-          // clear the distinct map
-          clearDistinct.next(true);
-          messages.forEach((msg) => {
-            outputSubject.next(msg);
+    pipeline.subscribe(async (batch) => {
+      try {
+        // merge existing entries from DB
+        await this.loadBatchIntoCache(batch);
+        // extract message and clear
+        const toBeSent = batch
+          .map((token) => [token, this.cache.get(token)])
+          .filter(([, { lastSent }]) => lastSent !== currentDay());
+
+        // generate the set of messages to be sent from the candiate list
+        const { messages, overflow } = this.createMessagePayloads(
+          toBeSent,
+          batchLimit,
+        );
+        // get the keys of the entries not being sent this time
+        const overflowKeys = new Set(overflow.map((tup) => tup[0]));
+
+        // update lastSent for sent messages
+        toBeSent
+          .filter((tup) => !overflowKeys.has(tup[0]))
+          .forEach(([, _entry]) => {
+            const entry = _entry;
+            entry.lastSent = currentDay();
           });
-          // push overflowed entries back into the queue
-          overflowKeys.forEach((k) => retryQueue.next(k));
-        } catch (e) {
-          logger.error('Failed to initialize stream', e);
-        }
-      });
+
+        await this.saveBatchToDb(batch);
+        // clear the distinct map
+        messages.forEach((msg) => {
+          sendMessage(msg);
+        });
+        // push overflowed entries back into the queue
+        overflowKeys.forEach((k) => overflowSubject.pub(k));
+      } catch (e) {
+        logger.error('Failed to initialize stream', e);
+      }
+    });
   }
 
-  unload() {
-    if (this.pipelineSubscription) {
-      this.pipelineSubscription.unsubscribe();
-    }
-  }
+  unload() {}
 
   /**
    * Periodic task to take unsent values from the database and push them to be sent,
@@ -214,7 +204,8 @@ class CachedEntryPipeline {
     await this.saveBatchToDb(saveBatch, {
       source: this.name,
       dbSize: await this.db.count(),
-      dbDelete: dbDeleted,
+      // TODO @chrmod: check if this works
+      dbDelete: toBeDeleted,
       cacheSize: this.cache.size,
       cacheDeleted: deleted,
       processed: queuedForSending.length,
@@ -442,28 +433,27 @@ export default class TokenTelemetry {
     this.subjectTokens = new Subject();
     this.tokenSendQueue = new Subject();
     this.keySendQueue = new Subject();
-    this.messageQueue = new Subject();
 
     this.tokens = new TokenPipeline(database.tokens, opts);
     this.keys = new KeyPipeline(database.keys, opts);
   }
 
   init() {
-    const bufferInterval = () => interval(this.TOKEN_BUFFER_TIME);
-    const filteredTokens = this.subjectTokens.pipe(
-      groupBy(
-        (el) => el.token,
-        undefined,
-        () => timer(60000),
-      ),
-      flatMap((group) => group.pipe(buffer(bufferInterval()))),
-      filter((batch) => batch.length > 0),
-    );
+    let filteredTokensBatch = [];
+    const filteredTokens = new Subject();
+    setInterval(() => {
+      filteredTokens.pub(filteredTokensBatch);
+      filteredTokensBatch = [];
+    }, 12000);
+
+    this.subjectTokens.subscribe((token) => {
+      filteredTokensBatch.push(token);
+    });
 
     // token subscription pipeline takes batches of tokens (grouped by value)
     // caches their state, and pushes values for sending once they reach a sending
     // threshold.
-    this._tokenSubscription = filteredTokens.subscribe((batch) => {
+    filteredTokens.subscribe((batch) => {
       // process a batch of entries for a specific token
       const token = batch[0].token;
 
@@ -489,7 +479,7 @@ export default class TokenTelemetry {
           (keyStats.sitesTokens.size > 1 ||
             (keyStats.count > this.MIN_COUNT && keyStats.created < entryCutoff))
         ) {
-          this.keySendQueue.next(keyKey);
+          this.keySendQueue.pub(keyKey);
         }
       });
       if (
@@ -498,63 +488,36 @@ export default class TokenTelemetry {
           (tokenStats.count > this.MIN_COUNT &&
             tokenStats.created < entryCutoff))
       ) {
-        this.tokenSendQueue.next(token);
+        this.tokenSendQueue.pub(token);
       }
     });
 
-    // pipe tokens sending to messageQueue
-    const tokenMessages = new Subject();
-    const keyMessages = new Subject();
-    this.messageQueue = merge(
-      tokenMessages.pipe(
-        map((payload) => ({ action: 'attrack.tokensv2', payload })),
-      ),
-      keyMessages.pipe(
-        map((payload) => ({ action: 'attrack.keysv2', payload })),
-      ),
-    );
-
     this.tokens.init(
       this.tokenSendQueue,
-      tokenMessages,
+      (payload) => this.telemetry({ action: 'attrack.tokensv2', payload }),
       this.TOKEN_BATCH_INTERVAL,
       this.TOKEN_BATCH_SIZE,
+      this.subjectTokens,
     );
     this.keys.init(
       this.keySendQueue,
-      keyMessages,
+      (payload) => this.telemetry({ action: 'attrack.keysv2', payload }),
       this.KEY_BATCH_INTERVAL,
       this.KEY_BATCH_SIZE,
+      this.subjectTokens,
     );
 
     // run every x minutes while there is activity
-    this._onIdleSubscription = merge(
-      of(''),
-      filteredTokens,
-      this.tokenSendQueue,
-      this.keySendQueue,
-      this.messageQueue,
-    )
-      .pipe(auditTime(this.CLEAN_INTERVAL))
-      .subscribe(async () => {
-        await this.tokens.clean();
-        await this.keys.clean();
-      });
-
-    // batch and throttle message sending to 10/30s
-    this._messageSubsription = this.messageQueue.subscribe((message) => {
-      this.telemetry({
-        message,
-      });
-    });
+    // TODO @chrmod: tune it for MV3
+    setInterval(async () => {
+      await this.tokens.clean();
+      await this.keys.clean();
+    }, this.CLEAN_INTERVAL);
   }
 
   unload() {
-    this._tokenSubscription.unsubscribe();
-    this._messageSubsription.unsubscribe();
     this.tokens.unload();
     this.keys.unload();
-    this._onIdleSubscription.unsubscribe();
   }
 
   extractKeyTokens(state) {
@@ -596,7 +559,7 @@ export default class TokenTelemetry {
         this.qsWhitelist.isSafeKey(thirdPartyGeneralDomain, key) ||
         this.qsWhitelist.isSafeToken(thirdPartyGeneralDomain, token);
 
-      this.subjectTokens.next({
+      this.subjectTokens.pub({
         day: currentDay(),
         key,
         token,
