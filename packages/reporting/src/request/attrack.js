@@ -8,7 +8,6 @@
 
 /* eslint-disable no-param-reassign */
 import * as persist from '../core/persistent-state';
-import UrlWhitelist from '../core/url-whitelist';
 import pacemaker from '../utils/pacemaker';
 import events from '../utils/events';
 import logger from '../logger';
@@ -44,8 +43,6 @@ export default class CliqzAttrack {
     this.debug = false;
     this.msgType = 'attrack';
     this.recentlyModified = new TempSet();
-    this.whitelistedRequestCache = new Set();
-    this.urlWhitelist = new UrlWhitelist('attrack-url-whitelist');
 
     // Intervals
     this.hourChangedInterval = null;
@@ -59,25 +56,6 @@ export default class CliqzAttrack {
     this.ghosteryDomains = {};
 
     this.db = new AttrackDatabase();
-  }
-
-  checkIsWhitelisted(state) {
-    if (this.whitelistedRequestCache.has(state.requestId)) {
-      return true;
-    }
-    if (this.isWhitelisted(state)) {
-      this.whitelistedRequestCache.add(state.requestId);
-      return true;
-    }
-    return false;
-  }
-
-  isWhitelisted(state) {
-    return state.tabUrlParts !== null && this.urlWhitelist.isWhitelisted(
-      state.tabUrl,
-      state.tabUrlParts.hostname,
-      state.tabUrlParts.generalDomain,
-    );
   }
 
   obfuscate(s, method) {
@@ -180,14 +158,11 @@ export default class CliqzAttrack {
     // Large static caches (e.g. token whitelist) are loaded from sqlite
     // Smaller caches (e.g. update timestamps) are kept in prefs
 
-    this.qs_whitelist = new QSWhitelist2(this.config.whitelistUrl, this.config);
+    this.qs_whitelist = new QSWhitelist2(this.config.whitelistUrl);
 
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
-    // urlWhitelist is not needed on ghostery
-    if (!settings || settings.channel !== 'CH80') {
-      initPromises.push(this.urlWhitelist.init());
-    }
+
     if (config.databaseEnabled) {
       initPromises.push(this.db.init());
     }
@@ -330,17 +305,6 @@ export default class CliqzAttrack {
         fn: state => steps.tokenChecker.findBadTokens(state),
       },
       {
-        name: 'checkSourceWhitelisted',
-        spec: 'break',
-        fn: (state) => {
-          if (this.checkIsWhitelisted(state)) {
-            state.incrementStat('source_whitelisted');
-            return false;
-          }
-          return true;
-        },
-      },
-      {
         name: 'checkShouldBlock',
         spec: 'break',
         fn: state => state.badTokens.length > 0 && this.qs_whitelist.isUpToDate()
@@ -471,8 +435,7 @@ export default class CliqzAttrack {
         name: 'shouldBlockCookie',
         spec: 'break',
         fn: (state) => {
-          const shouldBlock = !this.checkIsWhitelisted(state)
-            && this.isCookieEnabled(state) && !this.config.paused;
+          const shouldBlock = this.isCookieEnabled(state) && !this.config.paused;
           if (!shouldBlock) {
             state.incrementStat('bad_cookie_sent');
           }
@@ -569,8 +532,7 @@ export default class CliqzAttrack {
       {
         name: 'shouldBlockCookie',
         spec: 'break',
-        fn: state => !this.checkIsWhitelisted(state)
-          && this.isCookieEnabled(state),
+        fn: state => this.isCookieEnabled(state),
       },
       {
         name: 'checkIsCookieWhitelisted',
@@ -650,7 +612,6 @@ export default class CliqzAttrack {
         name: 'logIsCached',
         spec: 'collect',
         fn: (state) => {
-          this.whitelistedRequestCache.delete(state.requestId);
           state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
         }
       }
@@ -670,7 +631,6 @@ export default class CliqzAttrack {
         name: 'logError',
         spec: 'collect',
         fn: (state) => {
-          this.whitelistedRequestCache.delete(state.requestId);
           if (state.error && state.error.indexOf('ABORT')) {
             state.incrementStat('error_abort');
           }

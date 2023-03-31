@@ -8,7 +8,6 @@
 import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
 import PackedBloomFilter from '../utils/bloom-filter-packed';
-import { Resource } from '../core/resource-loader';
 import pacemaker from '../utils/pacemaker';
 import logger from '../logger';
 
@@ -22,73 +21,23 @@ async function fetchPackedBloomFilter(url) {
 }
 
 export default class QSWhitelist2 {
-  constructor(CDN_BASE_URL, { networkFetchEnabled, localBaseUrl } = {}) {
-    this.bloomFilter = null;
-    this.LOCAL_BASE_URL = localBaseUrl;
+  constructor(CDN_BASE_URL) {
     this.CDN_BASE_URL = CDN_BASE_URL;
-    this.networkFetchEnabled = networkFetchEnabled !== false;
-    this._bfLoader = new Resource(['antitracking', 'bloom_filter2.json'], {
-      dataType: 'json',
-      remoteOnly: true,
-    });
-    this._bfBinaryLoader = new Resource(['antitracking', 'bloom_filter2.bin'], {
-      dataType: 'binary',
-      remoteOnly: true,
-    });
+    this.bloomFilter = null;
     this.localSafeKey = {};
   }
 
   async init() {
     try {
-      const {
-        version,
-        localSafeKey,
-      } = await this._bfLoader.load();
-      const buffer = await this._bfBinaryLoader.load();
-      this.bloomFilter = new PackedBloomFilter(buffer);
-      this.version = version;
-      this.localSafeKey = localSafeKey || {};
-      logger.debug(`[QSWhitelist2] Bloom filter loaded version ${version}`);
+      const update = await this._fetchUpdateURL();
+      await this._fullUpdate(update.version);
     } catch (e) {
-      logger.info('[QSWhitelist2] Failed loading filter from local');
-    }
-    if (this.bloomFilter === null) {
-      // local bloom filter loading wasn't successful, grab a new version
-      try {
-        const update = await this._fetchUpdateURL();
-        await this._fullUpdate(update.version);
-      } catch (e) {
-        logger.error('[QSWhitelist2] Error fetching bloom filter from remote', e);
-        // use bundled bloomfilter as a fallback
-        this.networkFetchEnabled = false;
-        try {
-          await this._fullUpdate((await this._fetchUpdateURL()).version);
-        } catch (e2) {
-          // local fetch also failed
-          // create empty bloom filter
-          const n = 1000;
-          const k = 10;
-          const buffer = new ArrayBuffer(5 + (n * 4));
-          const view = new DataView(buffer);
-          view.setUint32(0, n, false);
-          view.setUint8(4, k, false);
-          this.bloomFilter = new PackedBloomFilter(buffer);
-        }
-      }
-    } else {
-      // we loaded the bloom filter, check for updates
-      try {
-        await this._checkForUpdates();
-      } catch (e) {
-        logger.error('[QSWhitelist2] Error fetching bloom filter updates from remote', e);
-      }
+      // TODO @chrmod: consider how to deal with this situation
     }
   }
 
   async _fetchUpdateURL() {
-    const url = this.networkFetchEnabled
-      ? `${this.CDN_BASE_URL}/update.json.gz`
-      : `${this.LOCAL_BASE_URL}/update.json`;
+    const url = `${this.CDN_BASE_URL}/update.json.gz`;
     const request = await fetch(url);
     if (!request.ok) {
       throw new Error(request.error);
@@ -97,14 +46,11 @@ export default class QSWhitelist2 {
   }
 
   async _fullUpdate(version) {
-    const url = this.networkFetchEnabled
-      ? `${this.CDN_BASE_URL}/${version}/bloom_filter.gz`
-      : `${this.LOCAL_BASE_URL}/bloom_filter.dat`;
+    const url = `${this.CDN_BASE_URL}/${version}/bloom_filter.gz`;
     const buffer = await fetchPackedBloomFilter(url);
     this.bloomFilter = new PackedBloomFilter(buffer);
     this.version = version;
     logger.debug(`[QSWhitelist2] Bloom filter fetched version ${version}`);
-    await this._persistBloomFilter();
   }
 
   async _checkForUpdates() {
@@ -123,21 +69,10 @@ export default class QSWhitelist2 {
       const buffer = await fetchPackedBloomFilter(`${this.CDN_BASE_URL}/${version}/bf_diff_1.gz`);
       this.bloomFilter.update(buffer);
       this.version = version;
-      await this._persistBloomFilter();
       return;
     }
     logger.debug(`[QSWhitelist2] Updating bloom filter to version ${version}`);
     await this._fullUpdate(version);
-  }
-
-  async _persistBloomFilter() {
-    if (this.bloomFilter !== null) {
-      await this._bfBinaryLoader.persist(this.bloomFilter.data.buffer);
-      await this._bfLoader.persist(JSON.stringify({
-        version: this.version,
-        localSafeKey: this.localSafeKey,
-      }));
-    }
   }
 
   _cleanLocalSafekey() {
@@ -156,7 +91,6 @@ export default class QSWhitelist2 {
 
   async destroy() {
     pacemaker.clearTimeout(this._updateChecker);
-    await this._persistBloomFilter();
   }
 
   isUpToDate() {

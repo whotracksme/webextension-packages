@@ -12,7 +12,6 @@ import { getConfigTs } from './time';
 import pacemaker from '../utils/pacemaker';
 
 const SETTINGS = {};
-const VERSIONCHECK_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/versioncheck.json`;
 const CONFIG_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/config.json`;
 const WHITELIST2_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/2`;
 const PROTECTION = 'antitrackingProtectionEnabled';
@@ -42,7 +41,6 @@ export const DEFAULTS = {
   firstPartyIsolation: false,
   databaseEnabled: true,
   cookieMode: COOKIE_MODE.THIRD_PARTY,
-  networkFetchEnabled: true,
 };
 
 export const PREFS = {
@@ -59,7 +57,6 @@ export const PREFS = {
   sendAntiTrackingHeader: 'attrackSendHeader',
   firstPartyIsolation: 'attrack.firstPartyIsolation',
   cookieMode: 'attrack.cookieMode',
-  networkFetchEnabled: 'attrack.networkFetchEnabled',
 };
 
 /**
@@ -72,11 +69,9 @@ const REMOTELY_CONFIGURED = ['blockRules', 'reportList', 'cookieWhitelist',
 export default class Config {
   constructor({
     defaults = DEFAULTS,
-    versionUrl = VERSIONCHECK_URL,
     whitelistUrl = WHITELIST2_URL,
   }) {
     this.debugMode = false;
-    this.versionCheckUrl = versionUrl;
     this.whitelistUrl = whitelistUrl;
 
     this.tokenDomainCountThreshold = 2;
@@ -105,12 +100,12 @@ export default class Config {
     const storedConfig = await asyncPrefs.multiGet(['attrack.configLastUpdate', 'attrack.config']);
     const lastUpdate = storedConfig.reduce((obj, kv) => Object.assign(obj, { [kv[0]]: kv[1] }), {});
     const day = getConfigTs();
-    // use stored config if it was already updated today, or if remote fetch is disabled.
-    if (storedConfig.length === 2 && (lastUpdate['attrack.configLastUpdate'] === day || !this.networkFetchEnabled)) {
+    // use stored config if it was already updated today
+    if (storedConfig.length === 2 && (lastUpdate['attrack.configLastUpdate'] === day)) {
       this._updateConfig(JSON.parse(lastUpdate['attrack.config']));
       return;
     }
-    const fetchUrl = this.networkFetchEnabled ? CONFIG_URL : `${this.localBaseUrl}/config.json`;
+    const fetchUrl = CONFIG_URL;
     try {
       const conf = await (await fetch(fetchUrl)).json();
       this._updateConfig(conf);

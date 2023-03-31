@@ -8,28 +8,20 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import { BundledResource } from '../core/resource-loader';
 import { isIpv4Address } from './utils/url';
+import prob from './resources/prob';
 
 export class HashProb {
   constructor() {
-    this.probHashLogM = null;
-    this.probHashThreshold = null;
+    this.probHashLogM = prob.logM;
+    this.probHashThreshold = prob.thresh;
     this.probHashChars = {};
     'abcdefghijklmnopqrstuvwxyz1234567890.- '.split('').forEach((e, idx) => {
       this.probHashChars[e] = idx;
     });
-
-    this.probLoader = new BundledResource(['antitracking', 'prob.json']);
-  }
-
-  _update(data) {
-    this.probHashLogM = data.logM;
-    this.probHashThreshold = data.thresh;
   }
 
   init() {
-    return this.probLoader.load().then(this._update.bind(this));
   }
 
   unload() {}
