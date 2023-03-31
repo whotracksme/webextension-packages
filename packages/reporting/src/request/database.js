@@ -49,6 +49,59 @@ class IDBWrapper {
   }
 }
 
+class PersistentState {
+  constructor(db, tableName, keyName) {
+    this.db = db;
+    this.tableName = tableName;
+    this.keyName = keyName;
+    this.value = {};
+    this.dirty = false;
+  }
+
+  async load() {
+    const value = await this.db.get(this.tableName, this.keyName);
+    try {
+      this.value = JSON.parse(value || '{}');
+    } catch (e) {
+      this.value = {};
+      this.dirty = true;
+    }
+    return this.value;
+  }
+
+  async save() {
+    if (this.dirty) {
+      await this.db.put(
+        this.tableName,
+        JSON.stringify(this.value),
+        this.keyName,
+      );
+      this.dirty = false;
+    }
+  }
+
+  async setValue(v) {
+    this.value = v;
+    this.dirty = true;
+    await this.save();
+  }
+
+  async getValue() {
+    await this.load();
+    return this.value;
+  }
+
+  setDirty() {
+    this.dirty = true;
+  }
+
+  async clear() {
+    this.value = {};
+    this.dirty = true;
+    await this.save();
+  }
+}
+
 export default class AttrackDatabase {
   constructor() {
     this.db = null;
@@ -70,19 +123,24 @@ export default class AttrackDatabase {
           });
           tokenDomainStore.createIndex('token', 'token');
           tokenDomainStore.createIndex('mtime', 'mtime');
+
           const tokenBlockedStore = db.createObjectStore('tokenBlocked', {
             keyPath: 'token',
           });
           tokenBlockedStore.createIndex('token', 'token');
           tokenBlockedStore.createIndex('expires', 'expires');
+
           const tokensStore = db.createObjectStore('tokens', {
             keyPath: 'token',
           });
           tokensStore.createIndex('lastSent', 'lastSent');
           tokensStore.createIndex('created', 'created');
+
           const keysStore = db.createObjectStore('keys', { keyPath: 'hash' });
           keysStore.createIndex('lastSent', 'lastSent');
           keysStore.createIndex('created', 'created');
+
+          db.createObjectStore('state');
         }
 
         if (oldVersion > 20) {
@@ -127,5 +185,17 @@ export default class AttrackDatabase {
 
   get keys() {
     return new IDBWrapper(this.db, 'keys');
+  }
+
+  get blocked() {
+    return new PersistentState(this.db, 'state', 'blocked');
+  }
+
+  get localBlocked() {
+    return new PersistentState(this.db, 'state', 'localBlocked');
+  }
+
+  get hourChangedlastRun() {
+    return new PersistentState(this.db, 'state', 'hourChangedlastRun');
   }
 }

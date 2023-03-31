@@ -7,7 +7,6 @@
  */
 
 /* eslint-disable no-param-reassign */
-import * as persist from '../core/persistent-state';
 import pacemaker from '../utils/pacemaker';
 import events from '../utils/events';
 import logger from '../logger';
@@ -682,13 +681,12 @@ export default class CliqzAttrack {
     this.tpEventInterval = null;
   }
 
-  hourChanged() {
-    const name = 'hourChanged';
+  async hourChanged() {
     const fidelity = 10; // hour
 
     const timestamp = datetime.getTime().slice(0, fidelity);
-    const lastHour = persist.getValue(`${name}lastRun`) || timestamp;
-    persist.setValue(`${name}lastRun`, timestamp);
+    const lastHour = (await this.db.hourChangedlastRun.getValue()) || timestamp;
+    await this.db.hourChangedlastRun.setValue(timestamp);
 
     if (timestamp === lastHour) {
       return;

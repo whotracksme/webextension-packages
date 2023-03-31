@@ -6,7 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import * as persist from '../core/persistent-state';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
 import pacemaker from '../utils/pacemaker';
@@ -80,11 +79,6 @@ export default class Config {
     this.localBaseUrl = `${SETTINGS.baseURL}antitracking`;
 
     Object.assign(this, defaults);
-
-    this.safekeyValuesThreshold = parseInt(persist.getValue('safekeyValuesThreshold'), 10)
-                                  || this.safekeyValuesThreshold;
-    this.shortTokenLength = parseInt(persist.getValue('shortTokenLength'), 10)
-                            || this.shortTokenLength;
 
     this.paused = false;
   }

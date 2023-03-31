@@ -38,7 +38,7 @@ export default class TokenChecker {
     this.privateValues = privateValues;
     this.shouldCheckToken = shouldCheckToken;
     this.tokenDomain = new TokenDomain(config, db);
-    this.blockLog = new BlockLog(config);
+    this.blockLog = new BlockLog(config, db);
   }
 
   init() {

@@ -9,24 +9,25 @@
 /* eslint no-restricted-syntax: 'off' */
 /* eslint guard-for-in: 'off' */
 
-import * as persist from '../core/persistent-state';
 import md5 from '../md5';
 import events from '../utils/events';
 import * as datetime from './time';
 
 
 export default class BlockLog {
-  constructor(config) {
+  constructor(config, db) {
     this.config = config;
-    this.blocked = new persist.LazyPersistentObject('blocked');
-    this.localBlocked = new persist.LazyPersistentObject('localBlocked');
+
+    this.blocked = db.blocked;
+    this.localBlocked = db.localBlocked;
   }
 
   get blockReportList() {
     return this.config.reportList || {};
   }
 
-  init() {
+  async init() {
+    await this.db.ready;
     this.blocked.load();
     this.localBlocked.load();
 
