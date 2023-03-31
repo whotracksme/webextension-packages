@@ -12,6 +12,7 @@ import { isPrivateIP, getName } from '../utils/url';
 import pacemaker from '../utils/pacemaker';
 import events from '../utils/events';
 import logger from '../logger';
+import TrackerCounter from '../utils/tracker-counter';
 import { truncatedHash } from '../md5';
 
 import * as datetime from './time';
@@ -24,7 +25,6 @@ import { generateAttrackPayload, shuffle } from './utils';
 import buildPageLoadObject from './page-telemetry';
 import AttrackDatabase from './database';
 import getTrackingStatus from './dnt';
-import TrackerCounter from '../core/helpers/tracker-counter';
 
 import BlockRules from './steps/block-rules';
 import CookieContext from './steps/cookie-context';
