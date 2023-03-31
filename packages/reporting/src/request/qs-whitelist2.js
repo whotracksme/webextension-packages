@@ -7,7 +7,7 @@
  */
 import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
-import PackedBloomFilter from '../core/bloom-filter-packed';
+import PackedBloomFilter from '../utils/bloom-filter-packed';
 import { Resource } from '../core/resource-loader';
 import pacemaker from '../utils/pacemaker';
 import logger from '../logger';
