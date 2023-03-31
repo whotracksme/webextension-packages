@@ -10,7 +10,7 @@ import * as persist from '../core/persistent-state';
 import config from '../core/config';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
-import pacemaker from '../core/services/pacemaker';
+import pacemaker from '../utils/pacemaker';
 
 const SETTINGS = config.settings;
 const VERSIONCHECK_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/versioncheck.json`;

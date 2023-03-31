@@ -18,8 +18,6 @@ import Config from './config';
 * @class Background
 */
 export default {
-  requiresServices: ['domainInfo', 'pacemaker'],
-
   attrack: null,
 
   /**

@@ -11,7 +11,7 @@
 
 const noop = () => {};
 
-class Logger {
+export class Logger {
   static get(name) {
     return new Logger(name);
   }

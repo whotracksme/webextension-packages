@@ -7,7 +7,7 @@
  */
 
 import { truncatedHash } from '../../md5';
-import pacemaker from '../../core/services/pacemaker';
+import pacemaker from '../../utils/pacemaker';
 import { parse } from '../../utils/url';
 import { sameGeneralDomain, getGeneralDomain } from '../../utils/tlds';
 

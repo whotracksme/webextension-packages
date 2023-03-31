@@ -10,7 +10,7 @@
 import * as persist from '../core/persistent-state';
 import UrlWhitelist from '../core/url-whitelist';
 import domainInfo from '../core/services/domain-info';
-import pacemaker from '../core/services/pacemaker';
+import pacemaker from '../utils/pacemaker';
 import { getGeneralDomain } from '../utils/tlds';
 import events from '../utils/events';
 import logger from '../logger';
@@ -156,8 +156,6 @@ export default class CliqzAttrack {
 
   initPacemaker() {
     const twoMinutes = 2 * 60 * 1000;
-
-    // pacemaker.register(this.updateConfig, 3 * 60 * 60 * 1000);
 
     // if the hour has changed
     this.hourChangedInterval = pacemaker.register(this.hourChanged.bind(this), {
