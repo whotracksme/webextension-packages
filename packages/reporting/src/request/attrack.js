@@ -7,18 +7,18 @@
  */
 
 /* eslint-disable no-param-reassign */
+import Pipeline from '../utils/pipeline';
+import { isPrivateIP, getName } from '../utils/url';
 import pacemaker from '../utils/pacemaker';
 import events from '../utils/events';
 import logger from '../logger';
+import { truncatedHash } from '../md5';
 
 import * as datetime from './time';
-import Pipeline from '../webrequest-pipeline/pipeline';
 import QSWhitelist2 from './qs-whitelist2';
 import TempSet from './temp-set';
-import { truncatedHash } from '../md5';
 import telemetry from './telemetry';
 import { HashProb, shouldCheckToken } from './hash';
-import { isPrivateIP, getName } from '../utils/url';
 import { VERSION, COOKIE_MODE } from './config';
 import { generateAttrackPayload, shuffle } from './utils';
 import buildPageLoadObject from './page-telemetry';
