@@ -71,9 +71,6 @@ export default {
   },
 
   actions: {
-    getCurrentTabBlockingInfo() {
-      return this.attrack.getCurrentTabBlockingInfo();
-    },
     addPipelineStep(stage, opts) {
       if (!this.attrack.pipelines || !this.attrack.pipelines[stage]) {
         return Promise.reject(new Error(`Could not add pipeline step: ${stage}, ${opts.name}`));
@@ -88,24 +85,6 @@ export default {
     },
     getWhitelist() {
       return this.attrack.qs_whitelist;
-    },
-    getTrackerListForTab(tab) {
-      return this.attrack.getTrackerListForTab(tab);
-    },
-    getGhosteryStats(tabId) {
-      if (!this.pageStore) {
-        return { bugs: {}, others: {} };
-      }
-      const page = this.pageStore.tabs.get(tabId);
-      if (!page
-          || !page.annotations
-          || !page.annotations.counter) {
-        return {
-          bugs: {},
-          others: {},
-        };
-      }
-      return page.annotations.counter.getSummary();
     },
     isEnabled() {
       return this.enabled;
@@ -123,7 +102,6 @@ export default {
 
     changeWhitelistState(url, type, action) {
       return this.attrack.urlWhitelist.changeState(url, type, action);
-      this.attrack.logWhitelist(hostname);
     },
 
     getWhitelistState(url) {
@@ -170,6 +148,7 @@ export default {
     },
     'antitracking:whitelist:add': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'add');
+      this.attrack.logWhitelist(hostname);
     },
     'antitracking:whitelist:remove': function (hostname, isPrivateMode) {
       this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'remove');

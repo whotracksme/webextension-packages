@@ -9,13 +9,10 @@
 /* eslint-disable no-param-reassign */
 import * as persist from '../core/persistent-state';
 import UrlWhitelist from '../core/url-whitelist';
-import domainInfo from '../core/services/domain-info';
 import pacemaker from '../utils/pacemaker';
-import { getGeneralDomain } from '../utils/tlds';
 import events from '../utils/events';
 import logger from '../logger';
 
-import * as browser from '../platform/browser';
 import * as datetime from './time';
 import Pipeline from '../webrequest-pipeline/pipeline';
 import QSWhitelist2 from './qs-whitelist2';
@@ -23,7 +20,7 @@ import TempSet from './temp-set';
 import { truncatedHash } from '../md5';
 import telemetry from './telemetry';
 import { HashProb, shouldCheckToken } from './hash';
-import { parse, isPrivateIP, getName } from '../utils/url';
+import { isPrivateIP, getName } from '../utils/url';
 import { VERSION, COOKIE_MODE } from './config';
 import { generateAttrackPayload, shuffle } from './utils';
 import buildPageLoadObject from './page-telemetry';
@@ -98,20 +95,6 @@ export default class CliqzAttrack {
       default:
         return this.config.placeHolder;
     }
-  }
-
-  getPrivateValues(window) {
-    // creates a list of return values of functions may leak private info
-    const p = {};
-    const navigator = window.navigator;
-    // plugins
-    for (let i = 0; i < navigator.plugins.length; i += 1) {
-      const name = navigator.plugins[i].name;
-      if (name.length >= 8) {
-        p[name] = true;
-      }
-    }
-    this.privateValues = p;
   }
 
   getDefaultRule() {
@@ -721,12 +704,6 @@ export default class CliqzAttrack {
     });
   }
 
-  /** Per-window module initialisation
-  */
-  initWindow(window) {
-    this.getPrivateValues(window);
-  }
-
   unload() {
     // Check is active usage, was sent
     this.hashProb.unload();
@@ -864,123 +841,6 @@ export default class CliqzAttrack {
       return false;
     }
     return true;
-  }
-
-  /** Get info about trackers and blocking done in a specified tab.
-   *
-   *  Returns an object describing anti-tracking actions for this page, with keys as follows:
-   *    cookies: 'allowed' and 'blocked' counts.
-   *    requests: 'safe' and 'unsafe' counts. 'Unsafe' means that unsafe data
-   *      was seen in a request to a tracker.
-   *    trackers: more detailed information about each tracker. Object with
-   *      keys being tracker domain and values more detailed blocking data.
-   */
-  async getTabBlockingInfo(tabId, url) {
-    const result = {
-      url,
-      tab: tabId,
-      hostname: '',
-      path: '',
-      cookies: { allowed: 0, blocked: 0 },
-      requests: { safe: 0, unsafe: 0 },
-      trackers: {},
-      companies: {},
-      companyInfo: {},
-      ps: null
-    };
-
-    // ignore special tabs
-    if (url && (url.startsWith('about')
-                || url.startsWith('chrome')
-                || url.startsWith('resource'))) {
-      result.error = 'Special tab';
-      return Promise.resolve(result);
-    }
-
-    const page = await this.webRequestPipeline.action('getPageForTab', tabId);
-
-    if (!page) {
-      // no tp event, but 'active' tab = must reload for data
-      // otherwise -> system tab
-      return browser.checkIsWindowActive(tabId)
-        .then((active) => {
-          if (active) {
-            result.reload = true;
-          }
-
-          result.error = 'No Data';
-          return result;
-        });
-    }
-
-    const trackers = [...page.requestStats.entries()].filter(([domain, data]) =>
-      this.qs_whitelist.isTrackerDomain(truncatedHash(getGeneralDomain(domain)))
-      || data.blocked_blocklist > 0).map(pair => pair[0]);
-
-    // const firstPartyCompany = domainInfo.domainOwners[getGeneralDomain(tabData.hostname)];
-    const urlInfo = parse(page.url);
-    result.hostname = urlInfo.hostname;
-    result.path = urlInfo.path;
-
-    trackers.forEach((dom) => {
-      result.trackers[dom] = {};
-      ['c', 'cookie_set', 'cookie_blocked', 'bad_cookie_sent', 'bad_qs', 'set_cookie_blocked', 'blocked_blocklist'].forEach((k) => {
-        result.trackers[dom][k] = page.requestStats.get(dom)[k] || 0;
-      });
-
-      // actual block count can be in several different signals, depending on
-      // configuration. Aggregate them into one.
-      result.trackers[dom].tokens_removed = ['empty', 'replace', 'placeholder', 'block'].reduce(
-        (cumsum, action) => cumsum + (page.requestStats.get(dom)[`token_blocked_${action}`] || 0), 0
-      );
-      result.trackers[dom].tokens_removed += page.requestStats.get(dom).blocked_blocklist || 0;
-
-      result.cookies.allowed += (
-        result.trackers[dom].cookie_set - result.trackers[dom].cookie_blocked
-      );
-      result.cookies.blocked += (
-        result.trackers[dom].cookie_blocked + result.trackers[dom].set_cookie_blocked
-      );
-      result.requests.safe += result.trackers[dom].c - result.trackers[dom].tokens_removed;
-      result.requests.unsafe += result.trackers[dom].tokens_removed;
-
-      // add set cookie blocks to cookie blocked count
-      result.trackers[dom].cookie_blocked += result.trackers[dom].set_cookie_blocked;
-
-      const company = domainInfo.getDomainOwner(dom);
-      result.companyInfo[company.name] = company;
-
-      if (!(company.name in result.companies)) {
-        result.companies[company.name] = [];
-      }
-      result.companies[company.name].push(dom);
-    });
-
-    return Promise.resolve(result);
-  }
-
-  getCurrentTabBlockingInfo(window) {
-    return browser.getActiveTab(window)
-      .then(({ id, url }) => this.getTabBlockingInfo(id, url));
-  }
-
-  getTrackerListForTab(tabId) {
-    return this.getTabBlockingInfo(tabId).then((info) => {
-      const revComp = {};
-      Object.keys(info.companies).forEach((comp) => {
-        info.companies[comp].forEach((domain) => {
-          revComp[domain] = comp;
-        });
-      });
-      return Object.keys(info.trackers).map((domain) => {
-        const name = revComp[domain] || getGeneralDomain(domain);
-        const count = info.trackers[domain].tokens_removed || 0;
-        return { name, count };
-      }).reduce((acc, val) => {
-        acc[val.name] = (acc[val.name] || 0) + val.count;
-        return acc;
-      }, {});
-    });
   }
 
   logWhitelist(payload) {
