@@ -6,7 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
 import pacemaker from '../utils/pacemaker';
 
@@ -38,7 +37,6 @@ export const DEFAULTS = {
   blockCookieNewToken: false,
   tpDomainDepth: 2,
   firstPartyIsolation: false,
-  databaseEnabled: true,
   cookieMode: COOKIE_MODE.THIRD_PARTY,
 };
 
@@ -69,7 +67,8 @@ export default class Config {
   constructor({
     defaults = DEFAULTS,
     whitelistUrl = WHITELIST2_URL,
-  }) {
+  }, db) {
+    this.db = db;
     this.debugMode = false;
     this.whitelistUrl = whitelistUrl;
 
@@ -91,22 +90,22 @@ export default class Config {
   }
 
   async _loadConfig() {
-    const storedConfig = await asyncPrefs.multiGet(['attrack.configLastUpdate', 'attrack.config']);
-    const lastUpdate = storedConfig.reduce((obj, kv) => Object.assign(obj, { [kv[0]]: kv[1] }), {});
+    await this.db.ready;
+    const lastUpdate = await this.db.config.getValue();
     const day = getConfigTs();
     // use stored config if it was already updated today
-    if (storedConfig.length === 2 && (lastUpdate['attrack.configLastUpdate'] === day)) {
-      this._updateConfig(JSON.parse(lastUpdate['attrack.config']));
+    if (lastUpdate['config'] && lastUpdate['lastUpdate'] === day) {
+      this._updateConfig(lastUpdate['config']);
       return;
     }
     const fetchUrl = CONFIG_URL;
     try {
       const conf = await (await fetch(fetchUrl)).json();
       this._updateConfig(conf);
-      await asyncPrefs.multiSet([
-        ['attrack.configLastUpdate', day],
-        ['attrack.config', JSON.stringify(conf)],
-      ]);
+      await this.db.config.getValue({
+        lastUpdate: day,
+        config: conf,
+      });
     } catch (e) {
       pacemaker.setTimeout(this._loadConfig.bind(this), 30000);
     }

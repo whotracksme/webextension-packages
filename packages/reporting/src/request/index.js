@@ -12,6 +12,8 @@
 import Attrack from './attrack';
 import telemetry from './telemetry';
 import Config from './config';
+import AttrackDatabase from './database';
+
 
 /**
 * @namespace antitracking
@@ -24,11 +26,14 @@ export default {
   * @method init
   * @param settings
   */
-  init(settings, communicaton) {
+  async init(settings, communicaton) {
     // Create new attrack class
     this.settings = settings;
 
-    this.attrack = new Attrack();
+    this.db = new AttrackDatabase();
+    await this.db.init()
+    this.config = new Config({}, this.db);
+    this.attrack = new Attrack(this.db);
 
     // indicates if the antitracking background is initiated
     this.enabled = true;
@@ -37,7 +42,6 @@ export default {
     telemetry.setCommunication({ communicaton });
 
     // load config
-    this.config = new Config({});
     this.attrack.webRequestPipeline.action('getPageStore').then((pageStore) => {
       this.pageStore = pageStore;
     });

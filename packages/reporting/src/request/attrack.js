@@ -23,7 +23,6 @@ import { HashProb, shouldCheckToken } from './hash';
 import { VERSION, COOKIE_MODE } from './config';
 import { generateAttrackPayload, shuffle } from './utils';
 import buildPageLoadObject from './page-telemetry';
-import AttrackDatabase from './database';
 import getTrackingStatus from './dnt';
 
 import BlockRules from './steps/block-rules';
@@ -36,7 +35,8 @@ import TokenTelemetry from './steps/token-telemetry';
 import { checkValidContext, checkSameGeneralDomain } from './steps/check-context';
 
 export default class CliqzAttrack {
-  constructor() {
+  constructor(db) {
+    this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
@@ -53,8 +53,6 @@ export default class CliqzAttrack {
     this.pipelines = {};
 
     this.ghosteryDomains = {};
-
-    this.db = new AttrackDatabase();
   }
 
   obfuscate(s, method) {
@@ -139,17 +137,15 @@ export default class CliqzAttrack {
 
   /** Global module initialisation.
   */
-  init(config, settings) {
+  init(config) {
     const initPromises = [];
     this.config = config;
 
     // Replace getWindow functions with window object used in init.
     if (this.debug) console.log('Init function called:', this.LOG_KEY);
 
-    if (!this.hashProb && config.databaseEnabled) {
-      this.hashProb = new HashProb();
-      this.hashProb.init();
-    }
+    this.hashProb = new HashProb();
+    this.hashProb.init();
 
     // load all caches:
     // Large dynamic caches are loaded via the persist module, which will
@@ -161,10 +157,6 @@ export default class CliqzAttrack {
 
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
-
-    if (config.databaseEnabled) {
-      initPromises.push(this.db.init());
-    }
 
     this.checkInstalledAddons();
 
@@ -185,30 +177,27 @@ export default class CliqzAttrack {
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
     };
-    if (this.config.databaseEnabled) {
-      steps.tokenTelemetry = new TokenTelemetry(
-        this.telemetry.bind(this),
-        this.qs_whitelist,
-        this.config,
-        this.db,
-        this.shouldCheckToken.bind(this),
-        this.config.tokenTelemetry
-      );
-    }
-    if (this.config.databaseEnabled) {
-      steps.tokenExaminer = new TokenExaminer(
-        this.qs_whitelist,
-        this.config,
-        this.shouldCheckToken.bind(this)
-      );
-      steps.tokenChecker = new TokenChecker(
-        this.qs_whitelist,
-        {},
-        this.shouldCheckToken.bind(this),
-        this.config,
-        this.db
-      );
-    }
+    steps.tokenTelemetry = new TokenTelemetry(
+      this.telemetry.bind(this),
+      this.qs_whitelist,
+      this.config,
+      this.db,
+      this.shouldCheckToken.bind(this),
+      this.config.tokenTelemetry
+    );
+
+    steps.tokenExaminer = new TokenExaminer(
+      this.qs_whitelist,
+      this.config,
+      this.shouldCheckToken.bind(this)
+    );
+    steps.tokenChecker = new TokenChecker(
+      this.qs_whitelist,
+      {},
+      this.shouldCheckToken.bind(this),
+      this.config,
+      this.db
+    );
 
     this.pipelineSteps = steps;
 
@@ -286,12 +275,6 @@ export default class CliqzAttrack {
           }
           return true;
         },
-      },
-      {
-        name: 'checkDatabaseEnabled',
-        spec: 'break',
-        // if there is no database the following steps should be skipped
-        fn: () => this.config.databaseEnabled,
       },
       {
         name: 'tokenExaminer.examineTokens',

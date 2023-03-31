@@ -198,4 +198,8 @@ export default class AttrackDatabase {
   get hourChangedlastRun() {
     return new PersistentState(this.db, 'state', 'hourChangedlastRun');
   }
+
+  get config() {
+    return new PersistentState(this.db, 'state', 'config');
+  }
 }
