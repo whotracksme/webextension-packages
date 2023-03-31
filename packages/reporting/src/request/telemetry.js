@@ -8,40 +8,9 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import platformTelemetry from '../platform/telemetry';
-import inject, { ifModuleEnabled } from '../core/kord/inject';
 import random from '../random';
 import { getConfigTs } from './time';
-import pltfrm from '../platform/platform';
-
-function getPlatformConstants() {
-  if (pltfrm.platformName === 'firefox') {
-    return {
-      platform: '',
-      userAgent: 'firefox'
-    };
-  }
-  if (pltfrm.platformName === 'webextension') {
-    let userAgent = '';
-    if (pltfrm.isFirefox) {
-      userAgent = 'firefox';
-    } else if (pltfrm.isEdge) {
-      userAgent = 'edge';
-    } else if (pltfrm.isLegacyEdge) {
-      userAgent = 'legacy-edge';
-    } else if (pltfrm.isChromium) {
-      userAgent = 'chrome';
-    }
-    return {
-      platform: pltfrm.isMobile ? 'mobile' : '',
-      userAgent,
-    };
-  }
-  return {
-    platform: '',
-    userAgent: '',
-  };
-}
+import logger from '../logger';
 
 function msgSanitize(msg, channel) {
   msg.channel = channel;
@@ -63,43 +32,23 @@ function msgSanitize(msg, channel) {
 export default {
   telemetry(payl) {
     if (!this.provider) {
-      console.log('No telemetry provider loaded', 'attrack');
+      logger.error('No provider provider loaded');
       return;
     }
     payl.platform = this.platform;
     payl.userAgent = this.userAgent;
 
-    if (this.providerName.startsWith('hpn')) {
-      // sending payload directly through hpn,
-      // this is used in ghostery since humanweb is not always there
-      // and we need to do add meta data that humanweb added
-      payl = msgSanitize(payl, this.channel);
-      if (payl) {
-        ifModuleEnabled(this.provider.action('sendTelemetry', payl));
-      }
-    } else {
-      ifModuleEnabled(this.provider.action('telemetry', payl));
-    }
+    payl = msgSanitize(payl, this.channel);
+    this.communication.send(payl);
   },
 
-  provider: null,
-  providerName: null,
-  msgType: 'humanweb',
-  channel: null,
+  communication: null,
+  platform: '',
+  userAgent: '',
 
-  loadFromProvider(provider, channel) {
-    console.log(`Load telemetry provider: ${provider}`, 'attrack');
-    this.providerName = provider;
-    this.channel = channel;
-    const { platform, userAgent } = getPlatformConstants();
+  setCommunication({ communication, platform = '', userAgent = '' }) {
+    this.communication = communication;
     this.platform = platform;
     this.userAgent = userAgent;
-    if (provider === 'platform') {
-      this.telemetry = platformTelemetry.telemetry.bind(platformTelemetry);
-      this.msgType = platformTelemetry.msgType;
-      return Promise.resolve(this);
-    }
-    this.provider = inject.module(provider);
-    return undefined;
-  }
+  },
 };

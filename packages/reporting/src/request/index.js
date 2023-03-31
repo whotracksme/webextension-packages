@@ -24,7 +24,7 @@ export default {
   * @method init
   * @param settings
   */
-  init(settings) {
+  init(settings, communicaton) {
     // Create new attrack class
     this.settings = settings;
 
@@ -34,9 +34,7 @@ export default {
     this.enabled = true;
     this.clickCache = {};
 
-    // inject configured telemetry module
-    // do not initiate if disabled from config
-    telemetry.loadFromProvider('human-web', settings.HW_CHANNEL);
+    telemetry.setCommunication({ communicaton });
 
     // load config
     this.config = new Config({});

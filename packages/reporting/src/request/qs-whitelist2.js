@@ -9,7 +9,7 @@ import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
 import PackedBloomFilter from '../core/bloom-filter-packed';
 import { Resource } from '../core/resource-loader';
-import pacemaker from '../core/services/pacemaker';
+import pacemaker from '../utils/pacemaker';
 import logger from '../logger';
 
 async function fetchPackedBloomFilter(url) {
