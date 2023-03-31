@@ -94,7 +94,7 @@ export default class TokenExaminer {
     if (!this._currentDay || Date.now() > this._nextDayCheck) {
       const day = datetime.getTime().substr(0, 8);
       if (day !== this._currentDay) {
-        this._nextDayCheck = Date.now() + (3600 * 1000);
+        this._nextDayCheck = Date.now() + 3600 * 1000;
       }
       this._currentDay = day;
     }
@@ -103,8 +103,12 @@ export default class TokenExaminer {
 
   examineTokens(state) {
     // do not do anything for private tabs and non-tracker domains
-    if (!state.isPrivate
-        && this.qsWhitelist.isTrackerDomain(truncatedHash(state.urlParts.generalDomain))) {
+    if (
+      !state.isPrivate &&
+      this.qsWhitelist.isTrackerDomain(
+        truncatedHash(state.urlParts.generalDomain),
+      )
+    ) {
       const today = this.currentDay;
 
       const tracker = truncatedHash(state.urlParts.generalDomain);
@@ -112,35 +116,44 @@ export default class TokenExaminer {
       // create a Map of key => set(values) from the url data
       const cachedKvs = this.requestKeyValue.get(tracker) || new Map();
       const reachedThreshold = new Set();
-      const kvs = state.urlParts.extractKeyValues().params.reduce((hash, kv) => {
-        const [k, v] = kv;
-        if (!this.shouldCheckToken(v)) {
-          return hash;
-        }
-        const key = this.hashTokens ? md5(k) : k;
-        if (this.qsWhitelist.isSafeKey(tracker, key)) {
-          return hash;
-        }
-        const tok = this.hashTokens ? md5(v) : v;
-        if (!hash.has(key)) {
-          hash.set(key, new TokenSet());
-        }
-        hash.get(key).add(tok, today);
-        // whitelist any keys which reached the threshold
-        if (!reachedThreshold.has(key)
-            && hash.get(key).size() > this.config.safekeyValuesThreshold) {
-          reachedThreshold.add(key);
-          if (this.config.debugMode) {
-            console.log('Add safekey', state.urlParts.generalDomain, key, hash.get(key));
+      const kvs = state.urlParts
+        .extractKeyValues()
+        .params.reduce((hash, kv) => {
+          const [k, v] = kv;
+          if (!this.shouldCheckToken(v)) {
+            return hash;
           }
-          this.qsWhitelist.addSafeKey(
-            tracker,
-            this.hashTokens ? key : md5(key),
-            this.config.safekeyValuesThreshold,
-          );
-        }
-        return hash;
-      }, cachedKvs);
+          const key = this.hashTokens ? md5(k) : k;
+          if (this.qsWhitelist.isSafeKey(tracker, key)) {
+            return hash;
+          }
+          const tok = this.hashTokens ? md5(v) : v;
+          if (!hash.has(key)) {
+            hash.set(key, new TokenSet());
+          }
+          hash.get(key).add(tok, today);
+          // whitelist any keys which reached the threshold
+          if (
+            !reachedThreshold.has(key) &&
+            hash.get(key).size() > this.config.safekeyValuesThreshold
+          ) {
+            reachedThreshold.add(key);
+            if (this.config.debugMode) {
+              console.log(
+                'Add safekey',
+                state.urlParts.generalDomain,
+                key,
+                hash.get(key),
+              );
+            }
+            this.qsWhitelist.addSafeKey(
+              tracker,
+              this.hashTokens ? key : md5(key),
+              this.config.safekeyValuesThreshold,
+            );
+          }
+          return hash;
+        }, cachedKvs);
 
       // push updated cache
       this.requestKeyValue.set(tracker, kvs);
@@ -179,9 +192,15 @@ export default class TokenExaminer {
           }
         });
         tokens.setDirty(false);
-        if (tokens.size() > this.config.safekeyValuesThreshold
-            && !this.qsWhitelist.isSafeKey(tracker, key)) {
-          this.qsWhitelist.addSafeKey(tracker, this.hashTokens ? key : md5(key), tokens.size());
+        if (
+          tokens.size() > this.config.safekeyValuesThreshold &&
+          !this.qsWhitelist.isSafeKey(tracker, key)
+        ) {
+          this.qsWhitelist.addSafeKey(
+            tracker,
+            this.hashTokens ? key : md5(key),
+            tokens.size(),
+          );
           this.removeRequestKeyValueEntry(tracker, key);
         }
       }

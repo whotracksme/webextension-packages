@@ -14,24 +14,23 @@ import telemetry from './telemetry';
 import Config from './config';
 import AttrackDatabase from './database';
 
-
 /**
-* @namespace antitracking
-* @class Background
-*/
+ * @namespace antitracking
+ * @class Background
+ */
 export default {
   attrack: null,
 
   /**
-  * @method init
-  * @param settings
-  */
+   * @method init
+   * @param settings
+   */
   async init(settings, communicaton) {
     // Create new attrack class
     this.settings = settings;
 
     this.db = new AttrackDatabase();
-    await this.db.init()
+    await this.db.init();
     this.config = new Config({}, this.db);
     this.attrack = new Attrack(this.db);
 
@@ -51,8 +50,8 @@ export default {
   },
 
   /**
-  * @method unload
-  */
+   * @method unload
+   */
   unload() {
     if (this.attrack !== null) {
       this.attrack.unload();
@@ -75,13 +74,19 @@ export default {
   actions: {
     addPipelineStep(stage, opts) {
       if (!this.attrack.pipelines || !this.attrack.pipelines[stage]) {
-        return Promise.reject(new Error(`Could not add pipeline step: ${stage}, ${opts.name}`));
+        return Promise.reject(
+          new Error(`Could not add pipeline step: ${stage}, ${opts.name}`),
+        );
       }
 
       return this.attrack.pipelines[stage].addPipelineStep(opts);
     },
     removePipelineStep(stage, name) {
-      if (this.attrack && this.attrack.pipelines && this.attrack.pipelines[stage]) {
+      if (
+        this.attrack &&
+        this.attrack.pipelines &&
+        this.attrack.pipelines[stage]
+      ) {
         this.attrack.pipelines[stage].removePipelineStep(name);
       }
     },
@@ -133,7 +138,7 @@ export default {
 
     setWhiteListCheck(fn) {
       this.attrack.isWhitelisted = fn;
-    }
+    },
   },
 
   events: {
@@ -160,8 +165,10 @@ export default {
     },
     'core:mouse-down': function (...args) {
       if (this.attrack.pipelineSteps.cookieContext) {
-        this.attrack.pipelineSteps.cookieContext.setContextFromEvent
-          .call(this.attrack.pipelineSteps.cookieContext, ...args);
+        this.attrack.pipelineSteps.cookieContext.setContextFromEvent.call(
+          this.attrack.pipelineSteps.cookieContext,
+          ...args,
+        );
       }
     },
     'control-center:antitracking-clearcache': function (isPrivateMode) {

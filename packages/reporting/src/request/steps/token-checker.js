@@ -59,10 +59,16 @@ export default class TokenChecker {
   findBadTokens(state) {
     const stats = {};
     state.isTracker = this.qsWhitelist.shouldCheckDomainTokens(
-      truncatedHash(state.urlParts.generalDomain)
+      truncatedHash(state.urlParts.generalDomain),
     );
-    state.badTokens = this.checkTokens(state.urlParts, state.tabUrl,
-      stats, state.tabUrlParts, state.isTracker, state.isPrivate);
+    state.badTokens = this.checkTokens(
+      state.urlParts,
+      state.tabUrl,
+      stats,
+      state.tabUrlParts,
+      state.isTracker,
+      state.isPrivate,
+    );
     // set stats
     if (state.incrementStat) {
       Object.keys(stats).forEach((key) => {
@@ -158,15 +164,22 @@ export default class TokenChecker {
       }
 
       // push to block log and bad tokens list
-      this.blockLog.add(tabUrlParts.generalDomain, urlParts.hostname, key, tok, tokenType);
+      this.blockLog.add(
+        tabUrlParts.generalDomain,
+        urlParts.hostname,
+        key,
+        tok,
+        tokenType,
+      );
       badTokens.push(tok);
       return `${tokenType}_countThreshold`;
     });
 
     if (this.debug) {
       // debug message: labeled key values
-      const tokenReport = keyTokens
-        .map((kv, i) => Object.assign(kv, { class: tokenStatus[i] }));
+      const tokenReport = keyTokens.map((kv, i) =>
+        Object.assign(kv, { class: tokenStatus[i] }),
+      );
       console.log('tokens', urlParts.hostname, tokenReport);
     }
 

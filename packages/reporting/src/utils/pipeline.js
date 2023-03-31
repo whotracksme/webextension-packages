@@ -15,7 +15,7 @@ import logger from '../logger';
  * and empty object return-value, then flow these arguments through the functions in
  * the pipeline until one returns false.
  *
- * @class Pipeline
+s * @class Pipeline
  * @namespace antitracking
  */
 export default class Pipeline {
@@ -71,23 +71,36 @@ export default class Pipeline {
     const { name, fn, after = [], before = [], spec } = step;
 
     if (name === undefined) {
-      throw new Error(`Every step of the pipeline should be given a name in ${this.name}`);
+      throw new Error(
+        `Every step of the pipeline should be given a name in ${this.name}`,
+      );
     }
 
     if (this.stepNames.has(name)) {
       throw new Error(`Trying to overwrite existing ${this.name}.${name}`);
     }
 
-    if (spec !== 'annotate' && spec !== 'collect' && spec !== 'blocking' && spec !== 'break') {
-      throw new Error(`Every step of the pipeline should be given a valid spec (got ${spec}): ${this.name}.${name}`);
+    if (
+      spec !== 'annotate' &&
+      spec !== 'collect' &&
+      spec !== 'blocking' &&
+      spec !== 'break'
+    ) {
+      throw new Error(
+        `Every step of the pipeline should be given a valid spec (got ${spec}): ${this.name}.${name}`,
+      );
     }
 
     if (fn === undefined) {
-      throw new Error(`Every step of the pipeline should have a function ('fn' argument): ${this.name}.${name}`);
+      throw new Error(
+        `Every step of the pipeline should have a function ('fn' argument): ${this.name}.${name}`,
+      );
     }
 
     if (spec === 'break' && !this.isBreakable) {
-      throw new Error(`Cannot add a break step '${name}' to an unbreakable pipeline`);
+      throw new Error(
+        `Cannot add a break step '${name}' to an unbreakable pipeline`,
+      );
     }
 
     this.stepNames.add(name);
@@ -109,7 +122,11 @@ export default class Pipeline {
       }
 
       if (insertAt === -1) {
-        throw new Error(`no step from 'after' list found, after=${JSON.stringify(after)}, pipeline=${this.name}`);
+        throw new Error(
+          `no step from 'after' list found, after=${JSON.stringify(
+            after,
+          )}, pipeline=${this.name}`,
+        );
       } else if (insertAt === this.pipeline.length) {
         this.pipeline.push(step);
       } else {
@@ -140,7 +157,7 @@ export default class Pipeline {
    * @param  {String} name of the step
    */
   removePipelineStep(name) {
-    this.pipeline = this.pipeline.filter(step => step.name !== name);
+    this.pipeline = this.pipeline.filter((step) => step.name !== name);
     this.stepNames.delete(name);
   }
 
@@ -208,18 +225,19 @@ export default class Pipeline {
         }
         // we only reach here if the pipeline is not breakable: show a warning
         // that we ignored the break
-        logger.error(this.name, webRequestContext.url, 'ignoring attempted break of unbreakable pipeline at', name);
+        logger.error(
+          this.name,
+          webRequestContext.url,
+          'ignoring attempted break of unbreakable pipeline at',
+          name,
+        );
       }
     }
   }
 
   safeExecute(context, response, canAlterRequest) {
     try {
-      this.execute(
-        context,
-        response,
-        canAlterRequest,
-      );
+      this.execute(context, response, canAlterRequest);
     } catch (ex) {
       logger.error('while running pipeline', context, ex);
     }

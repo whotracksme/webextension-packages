@@ -32,7 +32,10 @@ import RedirectTagger from './steps/redirect-tagger';
 import TokenChecker from './steps/token-checker';
 import TokenExaminer from './steps/token-examiner';
 import TokenTelemetry from './steps/token-telemetry';
-import { checkValidContext, checkSameGeneralDomain } from './steps/check-context';
+import {
+  checkValidContext,
+  checkSameGeneralDomain,
+} from './steps/check-context';
 
 export default class CliqzAttrack {
   constructor(db) {
@@ -126,7 +129,11 @@ export default class CliqzAttrack {
       message.type = telemetry.msgType;
     }
     if (raw !== true) {
-      message.payload = generateAttrackPayload(message.payload, ts, this.qs_whitelist.getVersion());
+      message.payload = generateAttrackPayload(
+        message.payload,
+        ts,
+        this.qs_whitelist.getVersion(),
+      );
     }
     if (compress === true && compressionAvailable()) {
       message.compressed = true;
@@ -136,7 +143,7 @@ export default class CliqzAttrack {
   }
 
   /** Global module initialisation.
-  */
+   */
   init(config) {
     const initPromises = [];
     this.config = config;
@@ -183,20 +190,20 @@ export default class CliqzAttrack {
       this.config,
       this.db,
       this.shouldCheckToken.bind(this),
-      this.config.tokenTelemetry
+      this.config.tokenTelemetry,
     );
 
     steps.tokenExaminer = new TokenExaminer(
       this.qs_whitelist,
       this.config,
-      this.shouldCheckToken.bind(this)
+      this.shouldCheckToken.bind(this),
     );
     steps.tokenChecker = new TokenChecker(
       this.qs_whitelist,
       {},
       this.shouldCheckToken.bind(this),
       this.config,
-      this.db
+      this.db,
     );
 
     this.pipelineSteps = steps;
@@ -216,355 +223,395 @@ export default class CliqzAttrack {
     // to an in-memory database). Without further research it
     // seems risky to change the old semantic.
     Promise.all(pendingInits).catch((e) => {
-      logger.warn('Unexpected error while initializing steps. Ignore and continue...', e);
+      logger.warn(
+        'Unexpected error while initializing steps. Ignore and continue...',
+        e,
+      );
     });
 
     // ----------------------------------- \\
     // create pipeline for onBeforeRequest \\
     // ----------------------------------- \\
-    this.pipelines.onBeforeRequest = new Pipeline('antitracking.onBeforeRequest', [
-      {
-        name: 'checkState',
-        spec: 'break',
-        fn: checkValidContext,
-      },
-      {
-        name: 'redirectTagger.checkRedirect',
-        spec: 'break',
-        fn: state => steps.redirectTagger.checkRedirect(state),
-      },
-      {
-        name: 'checkSameGeneralDomain',
-        spec: 'break',
-        fn: checkSameGeneralDomain,
-      },
-      {
-        name: 'cancelRecentlyModified',
-        spec: 'blocking',
-        fn: (state, response) => this.cancelRecentlyModified(state, response),
-      },
-      {
-        name: 'pageLogger.onBeforeRequest',
-        spec: 'annotate',
-        fn: state => steps.pageLogger.onBeforeRequest(state),
-      },
-      {
-        name: 'logIsTracker',
-        spec: 'collect',
-        fn: (state) => {
-          if (this.qs_whitelist.isTrackerDomain(truncatedHash(state.urlParts.generalDomain))) {
+    this.pipelines.onBeforeRequest = new Pipeline(
+      'antitracking.onBeforeRequest',
+      [
+        {
+          name: 'checkState',
+          spec: 'break',
+          fn: checkValidContext,
+        },
+        {
+          name: 'redirectTagger.checkRedirect',
+          spec: 'break',
+          fn: (state) => steps.redirectTagger.checkRedirect(state),
+        },
+        {
+          name: 'checkSameGeneralDomain',
+          spec: 'break',
+          fn: checkSameGeneralDomain,
+        },
+        {
+          name: 'cancelRecentlyModified',
+          spec: 'blocking',
+          fn: (state, response) => this.cancelRecentlyModified(state, response),
+        },
+        {
+          name: 'pageLogger.onBeforeRequest',
+          spec: 'annotate',
+          fn: (state) => steps.pageLogger.onBeforeRequest(state),
+        },
+        {
+          name: 'logIsTracker',
+          spec: 'collect',
+          fn: (state) => {
+            if (
+              this.qs_whitelist.isTrackerDomain(
+                truncatedHash(state.urlParts.generalDomain),
+              )
+            ) {
+              const annotations = state.getPageAnnotations();
+              annotations.counter = annotations.counter || new TrackerCounter();
+              annotations.counter.addTrackerSeen(
+                state.ghosteryBug,
+                state.urlParts.hostname,
+              );
+            }
+            if (
+              state.ghosteryBug &&
+              this.config.cookieMode === COOKIE_MODE.GHOSTERY
+            ) {
+              // track domains used by ghostery rules so that we only block cookies for these
+              // domains
+              this.ghosteryDomains[state.urlParts.generalDomain] =
+                state.ghosteryBug;
+            }
+          },
+        },
+        {
+          name: 'checkExternalBlocking',
+          spec: 'blocking',
+          fn: (state, response) => {
+            if (response.cancel === true || response.redirectUrl) {
+              state.incrementStat('blocked_external');
+              response.shouldIncrementCounter = true;
+              return false;
+            }
+            return true;
+          },
+        },
+        {
+          name: 'tokenExaminer.examineTokens',
+          spec: 'collect', // TODO - global state
+          fn: (state) => steps.tokenExaminer.examineTokens(state),
+        },
+        {
+          name: 'tokenChecker.findBadTokens',
+          spec: 'annotate',
+          fn: (state) => steps.tokenChecker.findBadTokens(state),
+        },
+        {
+          name: 'checkShouldBlock',
+          spec: 'break',
+          fn: (state) =>
+            state.badTokens.length > 0 &&
+            this.qs_whitelist.isUpToDate() &&
+            !this.config.paused,
+        },
+        {
+          name: 'isQSEnabled',
+          spec: 'break',
+          fn: () => this.isQSEnabled(),
+        },
+        {
+          name: 'blockRules.applyBlockRules',
+          spec: 'blocking',
+          fn: (state, response) =>
+            steps.blockRules.applyBlockRules(state, response),
+        },
+        {
+          name: 'logBlockedToken',
+          spec: 'collect',
+          fn: (state) => {
             const annotations = state.getPageAnnotations();
             annotations.counter = annotations.counter || new TrackerCounter();
-            annotations.counter.addTrackerSeen(state.ghosteryBug, state.urlParts.hostname);
-          }
-          if (state.ghosteryBug && this.config.cookieMode === COOKIE_MODE.GHOSTERY) {
-            // track domains used by ghostery rules so that we only block cookies for these
-            // domains
-            this.ghosteryDomains[state.urlParts.generalDomain] = state.ghosteryBug;
-          }
+            annotations.counter.addTokenRemoved(
+              state.ghosteryBug,
+              state.urlParts.hostname,
+            );
+          },
         },
-      },
-      {
-        name: 'checkExternalBlocking',
-        spec: 'blocking',
-        fn: (state, response) => {
-          if (response.cancel === true || response.redirectUrl) {
-            state.incrementStat('blocked_external');
-            response.shouldIncrementCounter = true;
-            return false;
-          }
-          return true;
+        {
+          name: 'applyBlock',
+          spec: 'blocking',
+          fn: (state, response) => this.applyBlock(state, response),
         },
-      },
-      {
-        name: 'tokenExaminer.examineTokens',
-        spec: 'collect', // TODO - global state
-        fn: state => steps.tokenExaminer.examineTokens(state),
-      },
-      {
-        name: 'tokenChecker.findBadTokens',
-        spec: 'annotate',
-        fn: state => steps.tokenChecker.findBadTokens(state),
-      },
-      {
-        name: 'checkShouldBlock',
-        spec: 'break',
-        fn: state => state.badTokens.length > 0 && this.qs_whitelist.isUpToDate()
-                     && !this.config.paused,
-      },
-      {
-        name: 'isQSEnabled',
-        spec: 'break',
-        fn: () => this.isQSEnabled(),
-      },
-      {
-        name: 'blockRules.applyBlockRules',
-        spec: 'blocking',
-        fn: (state, response) => steps.blockRules.applyBlockRules(state, response),
-      },
-      {
-        name: 'logBlockedToken',
-        spec: 'collect',
-        fn: (state) => {
-          const annotations = state.getPageAnnotations();
-          annotations.counter = annotations.counter || new TrackerCounter();
-          annotations.counter.addTokenRemoved(state.ghosteryBug, state.urlParts.hostname);
-        },
-      },
-      {
-        name: 'applyBlock',
-        spec: 'blocking',
-        fn: (state, response) => this.applyBlock(state, response),
-      },
-    ]);
-
+      ],
+    );
 
     // --------------------------------------- \\
     // create pipeline for onBeforeSendHeaders \\
     // --------------------------------------- \\
-    this.pipelines.onBeforeSendHeaders = new Pipeline('antitracking.onBeforeSendHeaders', [
-      {
-        name: 'checkState',
-        spec: 'break',
-        fn: checkValidContext,
-      },
-      {
-        name: 'cookieContext.assignCookieTrust',
-        spec: 'collect', // TODO - global state
-        fn: state => steps.cookieContext.assignCookieTrust(state),
-      },
-      {
-        name: 'redirectTagger.confirmRedirect',
-        spec: 'break',
-        fn: state => steps.redirectTagger.confirmRedirect(state),
-      },
-      {
-        name: 'checkIsMainDocument',
-        spec: 'break',
-        fn: state => !state.isMainFrame,
-      },
-      {
-        name: 'checkSameGeneralDomain',
-        spec: 'break',
-        fn: checkSameGeneralDomain,
-      },
-      {
-        name: 'pageLogger.onBeforeSendHeaders',
-        spec: 'annotate',
-        fn: state => steps.pageLogger.onBeforeSendHeaders(state),
-      },
-      {
-        name: 'catchMissedOpenListener',
-        spec: 'blocking',
-        fn: (state, response) => {
-          if ((state.reqLog && state.reqLog.c === 0)
-              || steps.redirectTagger.isFromRedirect(state.url)) {
-            // take output from 'open' pipeline and copy into our response object
-            this.pipelines.onBeforeRequest.execute(state, response);
-          }
+    this.pipelines.onBeforeSendHeaders = new Pipeline(
+      'antitracking.onBeforeSendHeaders',
+      [
+        {
+          name: 'checkState',
+          spec: 'break',
+          fn: checkValidContext,
         },
-      },
-      {
-        name: 'overrideUserAgent',
-        spec: 'blocking',
-        fn: (state, response) => {
-          if (this.config.overrideUserAgent === true) {
-            const domainHash = truncatedHash(state.urlParts.generalDomain);
-            if (this.qs_whitelist.isTrackerDomain(domainHash)) {
-              response.modifyHeader('User-Agent', 'CLIQZ');
-              state.incrementStat('override_user_agent');
+        {
+          name: 'cookieContext.assignCookieTrust',
+          spec: 'collect', // TODO - global state
+          fn: (state) => steps.cookieContext.assignCookieTrust(state),
+        },
+        {
+          name: 'redirectTagger.confirmRedirect',
+          spec: 'break',
+          fn: (state) => steps.redirectTagger.confirmRedirect(state),
+        },
+        {
+          name: 'checkIsMainDocument',
+          spec: 'break',
+          fn: (state) => !state.isMainFrame,
+        },
+        {
+          name: 'checkSameGeneralDomain',
+          spec: 'break',
+          fn: checkSameGeneralDomain,
+        },
+        {
+          name: 'pageLogger.onBeforeSendHeaders',
+          spec: 'annotate',
+          fn: (state) => steps.pageLogger.onBeforeSendHeaders(state),
+        },
+        {
+          name: 'catchMissedOpenListener',
+          spec: 'blocking',
+          fn: (state, response) => {
+            if (
+              (state.reqLog && state.reqLog.c === 0) ||
+              steps.redirectTagger.isFromRedirect(state.url)
+            ) {
+              // take output from 'open' pipeline and copy into our response object
+              this.pipelines.onBeforeRequest.execute(state, response);
             }
-          }
+          },
         },
-      },
-      {
-        name: 'checkHasCookie',
-        spec: 'break',
-        // hasCookie flag is set by pageLogger.onBeforeSendHeaders
-        fn: state => state.hasCookie === true,
-      },
-      {
-        name: 'checkIsCookieWhitelisted',
-        spec: 'break',
-        fn: state => this.checkIsCookieWhitelisted(state),
-      },
-      {
-        name: 'checkCompatibilityList',
-        spec: 'break',
-        fn: state => this.checkCompatibilityList(state),
-      },
-      {
-        name: 'checkCookieBlockingMode',
-        spec: 'break',
-        fn: state => this.checkCookieBlockingMode(state),
-      },
-      {
-        name: 'cookieContext.checkCookieTrust',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkCookieTrust(state),
-      },
-      {
-        name: 'cookieContext.checkVisitCache',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkVisitCache(state),
-      },
-      {
-        name: 'cookieContext.checkContextFromEvent',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkContextFromEvent(state),
-      },
-      {
-        name: 'shouldBlockCookie',
-        spec: 'break',
-        fn: (state) => {
-          const shouldBlock = this.isCookieEnabled(state) && !this.config.paused;
-          if (!shouldBlock) {
-            state.incrementStat('bad_cookie_sent');
-          }
-          return shouldBlock;
-        }
-      },
-      {
-        name: 'logBlockedCookie',
-        spec: 'collect',
-        fn: (state) => {
-          const annotations = state.getPageAnnotations();
-          annotations.counter = annotations.counter || new TrackerCounter();
-          annotations.counter.addCookieBlocked(state.ghosteryBug, state.urlParts.hostname);
+        {
+          name: 'overrideUserAgent',
+          spec: 'blocking',
+          fn: (state, response) => {
+            if (this.config.overrideUserAgent === true) {
+              const domainHash = truncatedHash(state.urlParts.generalDomain);
+              if (this.qs_whitelist.isTrackerDomain(domainHash)) {
+                response.modifyHeader('User-Agent', 'CLIQZ');
+                state.incrementStat('override_user_agent');
+              }
+            }
+          },
         },
-      },
-      {
-        name: 'blockCookie',
-        spec: 'blocking',
-        fn: (state, response) => {
-          state.incrementStat('cookie_blocked');
-          state.incrementStat('cookie_block_tp1');
-          response.modifyHeader('Cookie', '');
-          if (this.config.sendAntiTrackingHeader) {
-            response.modifyHeader(this.config.cliqzHeader, ' ');
-          }
-          state.page.counter += 1;
+        {
+          name: 'checkHasCookie',
+          spec: 'break',
+          // hasCookie flag is set by pageLogger.onBeforeSendHeaders
+          fn: (state) => state.hasCookie === true,
         },
-      }
-    ]);
-
+        {
+          name: 'checkIsCookieWhitelisted',
+          spec: 'break',
+          fn: (state) => this.checkIsCookieWhitelisted(state),
+        },
+        {
+          name: 'checkCompatibilityList',
+          spec: 'break',
+          fn: (state) => this.checkCompatibilityList(state),
+        },
+        {
+          name: 'checkCookieBlockingMode',
+          spec: 'break',
+          fn: (state) => this.checkCookieBlockingMode(state),
+        },
+        {
+          name: 'cookieContext.checkCookieTrust',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkCookieTrust(state),
+        },
+        {
+          name: 'cookieContext.checkVisitCache',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkVisitCache(state),
+        },
+        {
+          name: 'cookieContext.checkContextFromEvent',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkContextFromEvent(state),
+        },
+        {
+          name: 'shouldBlockCookie',
+          spec: 'break',
+          fn: (state) => {
+            const shouldBlock =
+              this.isCookieEnabled(state) && !this.config.paused;
+            if (!shouldBlock) {
+              state.incrementStat('bad_cookie_sent');
+            }
+            return shouldBlock;
+          },
+        },
+        {
+          name: 'logBlockedCookie',
+          spec: 'collect',
+          fn: (state) => {
+            const annotations = state.getPageAnnotations();
+            annotations.counter = annotations.counter || new TrackerCounter();
+            annotations.counter.addCookieBlocked(
+              state.ghosteryBug,
+              state.urlParts.hostname,
+            );
+          },
+        },
+        {
+          name: 'blockCookie',
+          spec: 'blocking',
+          fn: (state, response) => {
+            state.incrementStat('cookie_blocked');
+            state.incrementStat('cookie_block_tp1');
+            response.modifyHeader('Cookie', '');
+            if (this.config.sendAntiTrackingHeader) {
+              response.modifyHeader(this.config.cliqzHeader, ' ');
+            }
+            state.page.counter += 1;
+          },
+        },
+      ],
+    );
 
     // ------------------------------------- \\
     // create pipeline for onHeadersReceived \\
     // ------------------------------------- \\
-    this.pipelines.onHeadersReceived = new Pipeline('antitracking.onHeadersReceived', [
-      {
-        name: 'checkState',
-        spec: 'break',
-        fn: checkValidContext,
-      },
-      {
-        name: 'checkMainDocumentRedirects',
-        spec: 'break',
-        fn: (state) => {
-          if (state.isMainFrame) {
-            // check for tracking status headers for first party
-            const trackingStatus = getTrackingStatus(state);
-            if (trackingStatus) {
-              state.page.setTrackingStatus(trackingStatus);
-            }
-            return false;
-          }
-          return true;
+    this.pipelines.onHeadersReceived = new Pipeline(
+      'antitracking.onHeadersReceived',
+      [
+        {
+          name: 'checkState',
+          spec: 'break',
+          fn: checkValidContext,
         },
-      },
-      {
-        name: 'checkSameGeneralDomain',
-        spec: 'break',
-        fn: checkSameGeneralDomain,
-      },
-      {
-        name: 'redirectTagger.checkRedirectStatus',
-        spec: 'break',
-        fn: state => steps.redirectTagger.checkRedirectStatus(state),
-      },
-      {
-        name: 'pageLogger.onHeadersReceived',
-        spec: 'annotate',
-        fn: state => steps.pageLogger.onHeadersReceived(state),
-      },
-      {
-        name: 'logResponseStats',
-        spec: 'collect',
-        fn: (state) => {
-          if (state.incrementStat) {
-            // TSV stats
-            if (this.qs_whitelist.isTrackerDomain(truncatedHash(state.urlParts.generalDomain))) {
+        {
+          name: 'checkMainDocumentRedirects',
+          spec: 'break',
+          fn: (state) => {
+            if (state.isMainFrame) {
+              // check for tracking status headers for first party
               const trackingStatus = getTrackingStatus(state);
               if (trackingStatus) {
-                state.incrementStat(`tsv_${trackingStatus.value}`);
-                if (trackingStatus.statusId) {
-                  state.incrementStat('tsv_status');
+                state.page.setTrackingStatus(trackingStatus);
+              }
+              return false;
+            }
+            return true;
+          },
+        },
+        {
+          name: 'checkSameGeneralDomain',
+          spec: 'break',
+          fn: checkSameGeneralDomain,
+        },
+        {
+          name: 'redirectTagger.checkRedirectStatus',
+          spec: 'break',
+          fn: (state) => steps.redirectTagger.checkRedirectStatus(state),
+        },
+        {
+          name: 'pageLogger.onHeadersReceived',
+          spec: 'annotate',
+          fn: (state) => steps.pageLogger.onHeadersReceived(state),
+        },
+        {
+          name: 'logResponseStats',
+          spec: 'collect',
+          fn: (state) => {
+            if (state.incrementStat) {
+              // TSV stats
+              if (
+                this.qs_whitelist.isTrackerDomain(
+                  truncatedHash(state.urlParts.generalDomain),
+                )
+              ) {
+                const trackingStatus = getTrackingStatus(state);
+                if (trackingStatus) {
+                  state.incrementStat(`tsv_${trackingStatus.value}`);
+                  if (trackingStatus.statusId) {
+                    state.incrementStat('tsv_status');
+                  }
                 }
               }
             }
-          }
+          },
         },
-      },
-      {
-        name: 'checkSetCookie',
-        spec: 'break',
-        fn: state => state.hasSetCookie === true,
-      },
-      {
-        name: 'shouldBlockCookie',
-        spec: 'break',
-        fn: state => this.isCookieEnabled(state),
-      },
-      {
-        name: 'checkIsCookieWhitelisted',
-        spec: 'break',
-        fn: state => this.checkIsCookieWhitelisted(state),
-      },
-      {
-        name: 'checkCompatibilityList',
-        spec: 'break',
-        fn: state => this.checkCompatibilityList(state),
-      },
-      {
-        name: 'checkCookieBlockingMode',
-        spec: 'break',
-        fn: state => this.checkCookieBlockingMode(state),
-      },
-      {
-        name: 'cookieContext.checkCookieTrust',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkCookieTrust(state),
-      },
-      {
-        name: 'cookieContext.checkVisitCache',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkVisitCache(state),
-      },
-      {
-        name: 'cookieContext.checkContextFromEvent',
-        spec: 'break',
-        fn: state => steps.cookieContext.checkContextFromEvent(state),
-      },
-      {
-        name: 'logSetBlockedCookie',
-        spec: 'collect',
-        fn: (state) => {
-          const annotations = state.getPageAnnotations();
-          annotations.counter = annotations.counter || new TrackerCounter();
-          annotations.counter.addCookieBlocked(state.ghosteryBug, state.urlParts.hostname);
+        {
+          name: 'checkSetCookie',
+          spec: 'break',
+          fn: (state) => state.hasSetCookie === true,
         },
-      },
-      {
-        name: 'blockSetCookie',
-        spec: 'blocking',
-        fn: (state, response) => {
-          response.modifyResponseHeader('Set-Cookie', '');
-          state.incrementStat('set_cookie_blocked');
-          state.page.counter += 1;
+        {
+          name: 'shouldBlockCookie',
+          spec: 'break',
+          fn: (state) => this.isCookieEnabled(state),
         },
-      },
-    ]);
+        {
+          name: 'checkIsCookieWhitelisted',
+          spec: 'break',
+          fn: (state) => this.checkIsCookieWhitelisted(state),
+        },
+        {
+          name: 'checkCompatibilityList',
+          spec: 'break',
+          fn: (state) => this.checkCompatibilityList(state),
+        },
+        {
+          name: 'checkCookieBlockingMode',
+          spec: 'break',
+          fn: (state) => this.checkCookieBlockingMode(state),
+        },
+        {
+          name: 'cookieContext.checkCookieTrust',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkCookieTrust(state),
+        },
+        {
+          name: 'cookieContext.checkVisitCache',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkVisitCache(state),
+        },
+        {
+          name: 'cookieContext.checkContextFromEvent',
+          spec: 'break',
+          fn: (state) => steps.cookieContext.checkContextFromEvent(state),
+        },
+        {
+          name: 'logSetBlockedCookie',
+          spec: 'collect',
+          fn: (state) => {
+            const annotations = state.getPageAnnotations();
+            annotations.counter = annotations.counter || new TrackerCounter();
+            annotations.counter.addCookieBlocked(
+              state.ghosteryBug,
+              state.urlParts.hostname,
+            );
+          },
+        },
+        {
+          name: 'blockSetCookie',
+          spec: 'blocking',
+          fn: (state, response) => {
+            response.modifyResponseHeader('Set-Cookie', '');
+            state.incrementStat('set_cookie_blocked');
+            state.page.counter += 1;
+          },
+        },
+      ],
+    );
 
     this.pipelines.onCompleted = new Pipeline('antitracking.onCompleted', [
       {
@@ -583,20 +630,20 @@ export default class CliqzAttrack {
             return false;
           }
           return true;
-        }
+        },
       },
       {
         name: 'pageLogger.reattachStatCounter',
         spec: 'annotate',
-        fn: state => steps.pageLogger.reattachStatCounter(state),
+        fn: (state) => steps.pageLogger.reattachStatCounter(state),
       },
       {
         name: 'logIsCached',
         spec: 'collect',
         fn: (state) => {
           state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
-        }
-      }
+        },
+      },
     ]);
 
     this.pipelines.onErrorOccurred = new Pipeline('antitracking.onError', [
@@ -608,29 +655,29 @@ export default class CliqzAttrack {
       {
         name: 'pageLogger.reattachStatCounter',
         spec: 'annotate',
-        fn: state => steps.pageLogger.reattachStatCounter(state),
-      }, {
+        fn: (state) => steps.pageLogger.reattachStatCounter(state),
+      },
+      {
         name: 'logError',
         spec: 'collect',
         fn: (state) => {
           if (state.error && state.error.indexOf('ABORT')) {
             state.incrementStat('error_abort');
           }
-        }
-      }
+        },
+      },
     ]);
 
     // Add steps to the global web request pipeline
-    return Promise.all(Object.keys(this.pipelines).map(stage =>
-      this.webRequestPipeline.action(
-        'addPipelineStep',
-        stage,
-        {
+    return Promise.all(
+      Object.keys(this.pipelines).map((stage) =>
+        this.webRequestPipeline.action('addPipelineStep', stage, {
           name: `antitracking.${stage}`,
           spec: 'blocking',
           fn: (...args) => this.pipelines[stage].execute(...args),
-        }
-      )));
+        }),
+      ),
+    );
   }
 
   unloadPipeline() {
@@ -685,7 +732,7 @@ export default class CliqzAttrack {
     for (let i = 0; i < keys.length; i += 1) {
       const ind = domain.indexOf(keys[i]);
       if (ind >= 0) {
-        if ((ind + keys[i].length) === domain.length) return true;
+        if (ind + keys[i].length === domain.length) return true;
       }
     }
     return false;
@@ -708,7 +755,15 @@ export default class CliqzAttrack {
     const rule = this.getDefaultRule();
 
     if (this.debug) {
-      console.log('ATTRACK', rule, 'URL:', state.urlParts.hostname, state.urlParts.pathname, 'TOKENS:', badTokens);
+      console.log(
+        'ATTRACK',
+        rule,
+        'URL:',
+        state.urlParts.hostname,
+        state.urlParts.pathname,
+        'TOKENS:',
+        badTokens,
+      );
     }
 
     if (rule === 'block') {
@@ -756,9 +811,11 @@ export default class CliqzAttrack {
   checkCompatibilityList(state) {
     const tpGd = state.urlParts.generalDomain;
     const fpGd = state.tabUrlParts.generalDomain;
-    if (this.config.compabilityList
-        && this.config.compatibilityList[tpGd]
-        && this.config.compatibilityList[tpGd].indexOf(fpGd) !== -1) {
+    if (
+      this.config.compabilityList &&
+      this.config.compatibilityList[tpGd] &&
+      this.config.compatibilityList[tpGd].indexOf(fpGd) !== -1
+    ) {
       return false;
     }
     return true;
@@ -766,15 +823,19 @@ export default class CliqzAttrack {
 
   checkCookieBlockingMode(state) {
     const mode = this.config.cookieMode;
-    if (mode === COOKIE_MODE.TRACKERS
-        && !this.qs_whitelist.isTrackerDomain(truncatedHash(state.urlParts.generalDomain))) {
+    if (
+      mode === COOKIE_MODE.TRACKERS &&
+      !this.qs_whitelist.isTrackerDomain(
+        truncatedHash(state.urlParts.generalDomain),
+      )
+    ) {
       state.incrementStat('cookie_allow_nottracker');
       return false;
     }
     if (
-      mode === COOKIE_MODE.GHOSTERY
-      && !this.ghosteryDomains[state.urlParts.generalDomain]
-      && getName(state.urlParts) !== 'google'
+      mode === COOKIE_MODE.GHOSTERY &&
+      !this.ghosteryDomains[state.urlParts.generalDomain] &&
+      getName(state.urlParts) !== 'google'
     ) {
       // in Ghostery mode: if the domain did not match a ghostery bug we allow it. One exception
       // are third-party google.tld cookies, which we do not allow with this mechanism.
@@ -789,7 +850,7 @@ export default class CliqzAttrack {
       message: {
         type: telemetry.msgType,
         action: 'attrack.whitelistDomain',
-        payload
+        payload,
       },
       raw: true,
     });
@@ -809,11 +870,12 @@ export default class CliqzAttrack {
   }
 
   onPageStaged(page) {
-    if (page.state === 'complete'
-        && !page.isPrivate
-        && !page.isPrivateServer) {
+    if (page.state === 'complete' && !page.isPrivate && !page.isPrivateServer) {
       const payload = buildPageLoadObject(page);
-      if (payload.scheme.startsWith('http') && Object.keys(payload.tps).length > 0) {
+      if (
+        payload.scheme.startsWith('http') &&
+        Object.keys(payload.tps).length > 0
+      ) {
         const wrappedPayload = generateAttrackPayload([payload], undefined, {
           conf: {},
           addons: this.similarAddon,
@@ -822,7 +884,7 @@ export default class CliqzAttrack {
           message: {
             type: telemetry.msgType,
             action: 'attrack.tp_events',
-            payload: wrappedPayload
+            payload: wrappedPayload,
           },
           raw: true,
         });

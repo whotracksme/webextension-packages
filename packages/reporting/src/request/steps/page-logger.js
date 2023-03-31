@@ -40,7 +40,9 @@ export default class PageLogger {
   }
 
   attachCounters(state) {
-    const stats = state.page.getStatsForDomain(truncateDomain(state.urlParts.domainInfo, 2));
+    const stats = state.page.getStatsForDomain(
+      truncateDomain(state.urlParts.domainInfo, 2),
+    );
     state.reqLog = stats;
     const incrementStat = (statName, c) => {
       stats[statName] = (stats[statName] || 0) + (c || 1);
@@ -83,7 +85,7 @@ export default class PageLogger {
     incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
 
     // log protocol (secure or not)
-    const isHTTP = protocol => protocol === 'http:' || protocol === 'https:';
+    const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
     const scheme = isHTTP(urlParts.protocol) ? urlParts.scheme : 'other';
     incrementStat(`scheme_${scheme}`);
 
@@ -110,11 +112,15 @@ export default class PageLogger {
     if (referrer && referrer.indexOf(state.tabUrl) > -1) {
       state.incrementStat('referer_leak_header');
     }
-    if (state.url.indexOf(state.tabUrlParts.hostname) > -1
-        || state.url.indexOf(encodeURIComponent(state.tabUrlParts.hostname)) > -1) {
+    if (
+      state.url.indexOf(state.tabUrlParts.hostname) > -1 ||
+      state.url.indexOf(encodeURIComponent(state.tabUrlParts.hostname)) > -1
+    ) {
       state.incrementStat('referer_leak_site');
-      if (state.url.indexOf(state.tabUrlParts.pathname) > -1
-          || state.url.indexOf(encodeURIComponent(state.tabUrlParts.pathname)) > -1) {
+      if (
+        state.url.indexOf(state.tabUrlParts.pathname) > -1 ||
+        state.url.indexOf(encodeURIComponent(state.tabUrlParts.pathname)) > -1
+      ) {
         state.incrementStat('referer_leak_path');
       }
     }
@@ -135,7 +141,10 @@ export default class PageLogger {
       this.attachCounters(state);
     }
     state.incrementStat('resp_ob');
-    state.incrementStat('content_length', parseInt(state.getResponseHeader('Content-Length'), 10) || 0);
+    state.incrementStat(
+      'content_length',
+      parseInt(state.getResponseHeader('Content-Length'), 10) || 0,
+    );
     state.incrementStat(`status_${state.statusCode}`);
 
     const setCookie = state.getResponseHeader('Set-Cookie');
@@ -195,7 +204,7 @@ export default class PageLogger {
     incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
 
     // log protocol (secure or not)
-    const isHTTP = protocol => protocol === 'http:' || protocol === 'https:';
+    const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
     const scheme = isHTTP(urlParts.protocol) ? urlParts.scheme : 'other';
     incrementStat(`scheme_${scheme}`);
 

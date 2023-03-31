@@ -29,9 +29,11 @@ export const DEFAULTS = {
   cliqzHeader: SETTINGS.antitrackingHeader,
   enabled: true,
   cookieEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
-    ? SETTINGS[PROTECTION] : true,
+    ? SETTINGS[PROTECTION]
+    : true,
   qsEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
-    ? SETTINGS[PROTECTION] : true,
+    ? SETTINGS[PROTECTION]
+    : true,
   bloomFilterEnabled: true,
   sendAntiTrackingHeader: true,
   blockCookieNewToken: false,
@@ -60,14 +62,16 @@ export const PREFS = {
  * These are attributes which are loaded from the remote CONFIG_URL
  * @type {Array}
  */
-const REMOTELY_CONFIGURED = ['blockRules', 'reportList', 'cookieWhitelist',
-  'subdomainRewriteRules', 'compatibilityList'];
+const REMOTELY_CONFIGURED = [
+  'blockRules',
+  'reportList',
+  'cookieWhitelist',
+  'subdomainRewriteRules',
+  'compatibilityList',
+];
 
 export default class Config {
-  constructor({
-    defaults = DEFAULTS,
-    whitelistUrl = WHITELIST2_URL,
-  }, db) {
+  constructor({ defaults = DEFAULTS, whitelistUrl = WHITELIST2_URL }, db) {
     this.db = db;
     this.debugMode = false;
     this.whitelistUrl = whitelistUrl;
@@ -86,8 +90,7 @@ export default class Config {
     await this._loadConfig();
   }
 
-  unload() {
-  }
+  unload() {}
 
   async _loadConfig() {
     await this.db.ready;

@@ -38,7 +38,7 @@ export default class TokenDomain {
     if (!this._currentDay || Date.now() > this._nextDayCheck) {
       const day = datetime.getTime().substr(0, 8);
       if (day !== this._currentDay) {
-        this._nextDayCheck = Date.now() + (3600 * 1000);
+        this._nextDayCheck = Date.now() + 3600 * 1000;
       }
       this._currentDay = day;
     }
@@ -47,11 +47,10 @@ export default class TokenDomain {
 
   loadBlockedTokens() {
     // delete expired blocked tokens
-    return this.db.tokenBlocked.uniqueKeys()
-      .then((blockedTokens) => {
-        this.blockedTokens.clear();
-        blockedTokens.forEach(tok => this.blockedTokens.add(tok));
-      });
+    return this.db.tokenBlocked.uniqueKeys().then((blockedTokens) => {
+      this.blockedTokens.clear();
+      blockedTokens.forEach((tok) => this.blockedTokens.add(tok));
+    });
   }
 
   /**
@@ -103,7 +102,9 @@ export default class TokenDomain {
   }
 
   isTokenDomainThresholdReached(token) {
-    return this.config.tokenDomainCountThreshold < 2 || this.blockedTokens.has(token);
+    return (
+      this.config.tokenDomainCountThreshold < 2 || this.blockedTokens.has(token)
+    );
   }
 
   clean() {

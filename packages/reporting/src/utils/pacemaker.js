@@ -39,13 +39,7 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 // const ONE_DAY = 24 * ONE_HOUR;
 
 class Task {
-  constructor({
-    fn,
-    timeout,
-    once,
-    startImmediately,
-    args,
-  }) {
+  constructor({ fn, timeout, once, startImmediately, args }) {
     this.name = fn.name || '<anon>';
     this.fn = fn;
     this.timeout = timeout;
@@ -70,7 +64,6 @@ class Task {
     }
   }
 }
-
 
 class Pacemaker {
   constructor() {
@@ -154,7 +147,9 @@ class Pacemaker {
       // In case some instant task was added, we run a first tick to make sure
       // instant timeouts or intervals are executed straight away. Otherwise, we
       // just set a timeout to trigger a _tick in `this.freq` milliseconds.
-      const hasInstantTask = added.some(({ startImmediately }) => startImmediately);
+      const hasInstantTask = added.some(
+        ({ startImmediately }) => startImmediately,
+      );
       this._scheduleNextTick(hasInstantTask ? 0 : this.freq);
     }
   }
@@ -203,12 +198,7 @@ class Pacemaker {
    * periodically like in a setInterval. It's possible to make the function
    * start immediately, or only once like a setTimeout.
    */
-  register(fn, {
-    timeout,
-    once = false,
-    startImmediately = false,
-    args = [],
-  }) {
+  register(fn, { timeout, once = false, startImmediately = false, args = [] }) {
     if (fn === undefined) {
       throw new Error('fn cannot be undefined');
     }

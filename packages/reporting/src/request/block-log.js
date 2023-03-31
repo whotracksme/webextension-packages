@@ -13,7 +13,6 @@ import md5 from '../md5';
 import events from '../utils/events';
 import * as datetime from './time';
 
-
 export default class BlockLog {
   constructor(config, db) {
     this.config = config;
@@ -39,7 +38,10 @@ export default class BlockLog {
 
       this._cleanLocalBlocked(hourCutoff);
     };
-    this._hourChangedListener = events.subscribe('attrack:hour_changed', this.onHourChanged);
+    this._hourChangedListener = events.subscribe(
+      'attrack:hour_changed',
+      this.onHourChanged,
+    );
   }
 
   unload() {
@@ -121,7 +123,9 @@ export default class BlockLog {
                 delete this.localBlocked.value[source][s][k][v][h];
               }
             }
-            if (Object.keys(this.localBlocked.value[source][s][k][v]).length === 0) {
+            if (
+              Object.keys(this.localBlocked.value[source][s][k][v]).length === 0
+            ) {
               delete this.localBlocked.value[source][s][k][v];
             }
           }

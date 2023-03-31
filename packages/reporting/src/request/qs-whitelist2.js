@@ -64,9 +64,13 @@ export default class QSWhitelist2 {
       useDiff === true &&
       differenceInDays(parseISO(this.version)).diff(parseISO(version)) === -1
     ) {
-      logger.debug(`[QSWhitelist2] Updating bloom filter to version ${version} from diff file`);
+      logger.debug(
+        `[QSWhitelist2] Updating bloom filter to version ${version} from diff file`,
+      );
       // diff update is allowed and our version is one day behind the server
-      const buffer = await fetchPackedBloomFilter(`${this.CDN_BASE_URL}/${version}/bf_diff_1.gz`);
+      const buffer = await fetchPackedBloomFilter(
+        `${this.CDN_BASE_URL}/${version}/bf_diff_1.gz`,
+      );
       this.bloomFilter.update(buffer);
       this.version = version;
       return;

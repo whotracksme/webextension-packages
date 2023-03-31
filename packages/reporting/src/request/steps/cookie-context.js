@@ -30,10 +30,9 @@ export default class CookieContext {
   }
 
   init() {
-    this._pmclean = pacemaker.register(
-      this.cleanCookieCache.bind(this),
-      { timeout: 2 * 60 * 1000 },
-    );
+    this._pmclean = pacemaker.register(this.cleanCookieCache.bind(this), {
+      timeout: 2 * 60 * 1000,
+    });
   }
 
   unload() {
@@ -47,11 +46,9 @@ export default class CookieContext {
     // trusted domain pairs
     const now = Date.now();
     this.trustedThirdParties.forEach((counter, key) => {
-      const timeoutAt = counter.ts + (
-        counter.c > 0
-          ? this.USED_TRUST_TIMEOUT
-          : this.UNUSED_TRUST_TIMEOUT
-      );
+      const timeoutAt =
+        counter.ts +
+        (counter.c > 0 ? this.USED_TRUST_TIMEOUT : this.UNUSED_TRUST_TIMEOUT);
       if (now > timeoutAt) {
         this.trustedThirdParties.delete(key);
       }
@@ -63,7 +60,11 @@ export default class CookieContext {
       return;
     }
     // don't trust trackers
-    if (this.qsWhitelist.isTrackerDomain(truncatedHash(getGeneralDomain(toThirdParty)))) {
+    if (
+      this.qsWhitelist.isTrackerDomain(
+        truncatedHash(getGeneralDomain(toThirdParty)),
+      )
+    ) {
       return;
     }
     const key = `${fromFirstParty}:${toThirdParty}`;
@@ -108,8 +109,12 @@ export default class CookieContext {
     // check if the response has been received yet
     const stage = state.statusCode !== undefined ? 'set_cookie' : 'cookie';
     const tabId = state.tabId;
-    const diff = Date.now() - (this.visitCache[`${tabId}:${state.hostGD}`] || 0);
-    if (diff < this.timeActive && this.visitCache[`${tabId}:${state.sourceGD}`]) {
+    const diff =
+      Date.now() - (this.visitCache[`${tabId}:${state.hostGD}`] || 0);
+    if (
+      diff < this.timeActive &&
+      this.visitCache[`${tabId}:${state.sourceGD}`]
+    ) {
       state.incrementStat(`${stage}_allow_visitcache`);
       return false;
     }
@@ -128,7 +133,10 @@ export default class CookieContext {
 
       const diff = time - (this.contextFromEvent.ts || 0);
       if (diff < this.timeAfterLink) {
-        if (hostGD === this.contextFromEvent.cGD && sourceGD === this.contextFromEvent.pageGD) {
+        if (
+          hostGD === this.contextFromEvent.cGD &&
+          sourceGD === this.contextFromEvent.pageGD
+        ) {
           this.visitCache[`${tabId}:${hostGD}`] = time;
           state.incrementStat(`${stage}_allow_userinit_same_context_gd`);
           return false;
@@ -143,7 +151,10 @@ export default class CookieContext {
           }
         }
         // last try, guess the possible domain from script src;
-        if (!this.contextFromEvent.cGD && this.contextFromEvent.possibleCGD.has(hostGD)) {
+        if (
+          !this.contextFromEvent.cGD &&
+          this.contextFromEvent.possibleCGD.has(hostGD)
+        ) {
           this.visitCache[`${tabId}:${hostGD}`] = time;
           state.incrementStat(`${stage}_allow_userinit_same_script_gd`);
           return false;
@@ -154,7 +165,7 @@ export default class CookieContext {
   }
 
   extractPossilbeContextGD(links) {
-    return new Set(links.map(link => parse(link).generalDomain));
+    return new Set(links.map((link) => parse(link).generalDomain));
   }
 
   setContextFromEvent(ev, contextHTML, herf, sender) {
@@ -178,7 +189,7 @@ export default class CookieContext {
       ts: Date.now(),
       cGD,
       pageGD,
-      possibleCGD
+      possibleCGD,
     };
   }
 }

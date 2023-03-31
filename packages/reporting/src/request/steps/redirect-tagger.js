@@ -35,7 +35,10 @@ export default class RedirectTagger {
         // relative redirect
         const redirectUrl = `${state.urlParts.protocol}://${state.urlParts.hostname}${location}`;
         this.redirectCache.add(redirectUrl, this.cacheTimeout);
-      } else if (location.startsWith('http://') || location.startsWith('https://')) {
+      } else if (
+        location.startsWith('http://') ||
+        location.startsWith('https://')
+      ) {
         // absolute redirect
         this.redirectCache.add(location, this.cacheTimeout);
       }
@@ -52,7 +55,10 @@ export default class RedirectTagger {
   }
 
   confirmRedirect(details) {
-    if (details.requestId !== undefined && this.redirectTaggerCache.has(details.requestId)) {
+    if (
+      details.requestId !== undefined &&
+      this.redirectTaggerCache.has(details.requestId)
+    ) {
       return false;
     }
 

@@ -46,18 +46,19 @@ export function cleanTimestampCache(cacheObj, timeout, currTime) {
 export function truncateDomain(host, depth) {
   const generalDomain = host.domain;
 
-  if (host.isIp
-    || host.hostname === generalDomain
-    || generalDomain === null
-    || generalDomain.length === 0
+  if (
+    host.isIp ||
+    host.hostname === generalDomain ||
+    generalDomain === null ||
+    generalDomain.length === 0
   ) {
     return host.hostname;
   }
 
-  const subdomains = host.subdomain
-    .split('.')
-    .filter(p => p.length > 0);
-  return `${subdomains.slice(Math.max(subdomains.length - depth, 0)).join('.')}.${generalDomain}`;
+  const subdomains = host.subdomain.split('.').filter((p) => p.length > 0);
+  return `${subdomains
+    .slice(Math.max(subdomains.length - depth, 0))
+    .join('.')}.${generalDomain}`;
 }
 
 export function shuffle(s) {

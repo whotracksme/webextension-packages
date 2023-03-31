@@ -23,7 +23,7 @@ export function getTime() {
     let m = null;
     let y = null;
     d = (date.getDate() < 10 ? '0' : '') + date.getDate();
-    m = (date.getMonth() < 9 ? '0' : '') + parseInt((date.getMonth()) + 1, 10);
+    m = (date.getMonth() < 9 ? '0' : '') + parseInt(date.getMonth() + 1, 10);
     h = (date.getUTCHours() < 10 ? '0' : '') + date.getUTCHours();
     y = date.getFullYear();
     _ts = y + '' + m + '' + d + '' + h;
@@ -41,12 +41,14 @@ export function getConfigTs() {
 
 export function newUTCDate() {
   const dayHour = getTime();
-  return new Date(Date.UTC(
-    dayHour.substring(0, 4),
-    parseInt(dayHour.substring(4, 6), 10) - 1,
-    dayHour.substring(6, 8),
-    dayHour.substring(8, 10)
-  ));
+  return new Date(
+    Date.UTC(
+      dayHour.substring(0, 4),
+      parseInt(dayHour.substring(4, 6), 10) - 1,
+      dayHour.substring(6, 8),
+      dayHour.substring(8, 10),
+    ),
+  );
 }
 
 export function dateString(date) {

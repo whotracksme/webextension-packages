@@ -1,7 +1,9 @@
 import { ImmutableURL } from '@cliqz/url-parser';
 
 const ipv4Part = '0*([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'; // numbers 0 - 255
-const ipv4Regex = new RegExp(`^${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}([:]([0-9])+)?$`); // port number
+const ipv4Regex = new RegExp(
+  `^${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}([:]([0-9])+)?$`,
+); // port number
 
 export function isIpv4Address(host) {
   return ipv4Regex.test(host);
@@ -64,8 +66,8 @@ export function isPrivateIP(ip) {
     }
     const ipParts = ip.split(':');
     return (
-      ipParts[0].startsWith('fd')
-      || ipParts.every((d, i) => {
+      ipParts[0].startsWith('fd') ||
+      ipParts.every((d, i) => {
         if (i === ipParts.length - 1) {
           // last group of address
           return d === '1';
@@ -74,13 +76,13 @@ export function isPrivateIP(ip) {
       })
     );
   }
-  const ipParts = ip.split('.').map(d => parseInt(d, 10));
+  const ipParts = ip.split('.').map((d) => parseInt(d, 10));
   return (
-    ipParts[0] === 10
-    || (ipParts[0] === 192 && ipParts[1] === 168)
-    || (ipParts[0] === 172 && ipParts[1] >= 16 && ipParts[1] < 32)
-    || ipParts[0] === 127
-    || ipParts[0] === 0
+    ipParts[0] === 10 ||
+    (ipParts[0] === 192 && ipParts[1] === 168) ||
+    (ipParts[0] === 172 && ipParts[1] >= 16 && ipParts[1] < 32) ||
+    ipParts[0] === 127 ||
+    ipParts[0] === 0
   );
 }
 

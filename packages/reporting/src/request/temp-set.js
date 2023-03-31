@@ -12,7 +12,7 @@
 import pacemaker from '../utils/pacemaker';
 
 /** Set like class whose members are removed after a specific amount of time
-*/
+ */
 export default class TempSet {
   constructor() {
     this._items = new Set();
@@ -29,10 +29,13 @@ export default class TempSet {
 
   add(item, ttl) {
     this._items.add(item);
-    const timeout = pacemaker.setTimeout(function () {
-      this.delete(item);
-      this._timeouts.delete(timeout);
-    }.bind(this), ttl || 0);
+    const timeout = pacemaker.setTimeout(
+      function () {
+        this.delete(item);
+        this._timeouts.delete(timeout);
+      }.bind(this),
+      ttl || 0,
+    );
     this._timeouts.add(timeout);
   }
 

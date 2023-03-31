@@ -21,8 +21,7 @@ export class HashProb {
     });
   }
 
-  init() {
-  }
+  init() {}
 
   unload() {}
 
@@ -48,7 +47,7 @@ export class HashProb {
 
   isHash(str) {
     const p = this.isHashProb(str);
-    return (p < this.probHashThreshold);
+    return p < this.probHashThreshold;
   }
 }
 
@@ -66,8 +65,8 @@ export function isMostlyNumeric(str) {
   return numbers / length > numberThreshold;
 }
 
-const BEGIN_DATE = (new Date(2010, 1, 1)).getTime();
-const END_DATE = Date.now() + (1000 * 60 * 60 * 24 * 365 * 5);
+const BEGIN_DATE = new Date(2010, 1, 1).getTime();
+const END_DATE = Date.now() + 1000 * 60 * 60 * 24 * 365 * 5;
 
 export function isTimestamp(str) {
   const intVal = parseInt(str, 10);

@@ -18,7 +18,10 @@ export default class SubdomainCheck {
     for (let i = 0; i < rules.length; i += 1) {
       const rule = rules[i];
       if (requestHost.endsWith(rule)) {
-        const newUrl = state.url.replace(requestHost, subdomainRewriteRules[rule]);
+        const newUrl = state.url.replace(
+          requestHost,
+          subdomainRewriteRules[rule],
+        );
         response.redirectTo(newUrl);
         return false;
       }
