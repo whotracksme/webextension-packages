@@ -109,9 +109,10 @@ class CachedEntryPipeline {
         // merge existing entries from DB
         await this.loadBatchIntoCache(batch);
         // extract message and clear
+        const today = currentDay();
         const toBeSent = batch
           .map((token) => [token, this.cache.get(token)])
-          .filter(([, { lastSent }]) => lastSent !== currentDay());
+          .filter(([, { lastSent }]) => lastSent !== today);
 
         // generate the set of messages to be sent from the candiate list
         const { messages, overflow } = this.createMessagePayloads(
@@ -157,21 +158,19 @@ class CachedEntryPipeline {
         (this.options.TOKEN_BATCH_SIZE * this.options.TOKEN_MESSAGE_SIZE),
     );
     // get values from the database which have not yet been sent today
-    const notSentToday = (
-      await this.db
-        .where('lastSent')
-        .notEqual(currentDay())
-        .limit(batchSize)
-        .sortBy('created')
-    ).filter(
-      (row) => row.created < Date.now() - this.options.NEW_ENTRY_MIN_AGE,
-    );
+    const today = currentDay();
+    const now = Date.now();
+    const notSentToday = (await this.db.where({ primaryKey: 'lastSent' }))
+      .filter((token) => token.lastSent !== today)
+      .slice(0, batchSize)
+      .sort((a, b) => a.created > b.created)
+      .filter((row) => row.created < now - this.options.NEW_ENTRY_MIN_AGE);
     // check if they have data to send, or are empty objects.
     // - The former are pushed to the batch processing queue
     // - The later can be discarded, as they were just markers for previously sent data
     const toBeDeleted = [];
     const queuedForSending = [];
-    const pruneCutoff = Date.now() - this.options.LOW_COUNT_DISCARD_AGE;
+    const pruneCutoff = now - this.options.LOW_COUNT_DISCARD_AGE;
     notSentToday.forEach((t) => {
       const hasData = this.hasData(t);
       const minCount = t.count > this.options.MIN_COUNT;
@@ -453,6 +452,7 @@ export default class TokenTelemetry {
     // token subscription pipeline takes batches of tokens (grouped by value)
     // caches their state, and pushes values for sending once they reach a sending
     // threshold.
+    const today = currentDay();
     filteredTokens.subscribe((batch) => {
       // process a batch of entries for a specific token
       const token = batch[0].token;
@@ -475,7 +475,7 @@ export default class TokenTelemetry {
         siteTokens.set(entry.token, entry.safe);
 
         if (
-          keyStats.lastSent !== currentDay() &&
+          keyStats.lastSent !== today &&
           (keyStats.sitesTokens.size > 1 ||
             (keyStats.count > this.MIN_COUNT && keyStats.created < entryCutoff))
         ) {
@@ -483,7 +483,7 @@ export default class TokenTelemetry {
         }
       });
       if (
-        tokenStats.lastSent !== currentDay() &&
+        tokenStats.lastSent !== today &&
         (tokenStats.sites.size > 1 ||
           (tokenStats.count > this.MIN_COUNT &&
             tokenStats.created < entryCutoff))
