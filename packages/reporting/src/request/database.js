@@ -105,12 +105,12 @@ class PersistentState {
 export default class AttrackDatabase {
   constructor() {
     this.db = null;
-    this.ready = null;
+    this._ready = null;
   }
 
   async init() {
     let resolver;
-    new Promise((resolve) => {
+    this._ready = new Promise((resolve) => {
       resolver = resolve;
     });
     // TODO @chrmod: consider moving outside of the webextesnion-packages

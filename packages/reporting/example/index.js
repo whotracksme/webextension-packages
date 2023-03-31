@@ -9,6 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 import Reporting from '../src/index.js';
+import RequestMonitor from '../src/reporting-request.js';
 import rules from './rules.json';
 
 const storage = {
@@ -34,6 +35,8 @@ const config = {
   CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
 };
 
+const requestMonitor = new RequestMonitor(config, communication);
+
 const reporting = new Reporting({
   config,
   storage,
@@ -41,6 +44,7 @@ const reporting = new Reporting({
 });
 
 (async function () {
+  await requestMonitor.init();
   await reporting.init();
   await reporting.patterns.updatePatterns(rules);
   await reporting.analyzeUrl('https://www.google.com/search?q=shoes');
