@@ -12,6 +12,7 @@
 import Attrack from './attrack';
 import { DEFAULT_ACTION_PREF, updateDefaultTrackerTxtRule } from './tracker-txt';
 import prefs from '../core/prefs';
+import telemetry from './telemetry';
 import Config from './config';
 import { updateTimestamp } from './time';
 import { parse } from './utils/url';
@@ -38,6 +39,10 @@ export default {
     // indicates if the antitracking background is initiated
     this.enabled = true;
     this.clickCache = {};
+
+    // inject configured telemetry module
+    // do not initiate if disabled from config
+    telemetry.loadFromProvider('human-web', settings.HW_CHANNEL);
 
     // load config
     this.config = new Config({});

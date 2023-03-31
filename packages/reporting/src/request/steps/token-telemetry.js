@@ -9,11 +9,9 @@
 import { Subject, interval, timer, of, merge } from 'rxjs';
 import { groupBy, flatMap, filter, map, delay, distinct, buffer, auditTime } from 'rxjs/operators';
 import md5, { truncatedHash } from '../../md5';
-import DefaultMap from '../../core/helpers/default-map';
-import logger_ from '../../logger';
-import { TELEMETRY } from '../config';
+import DefaultMap from '../../utils/default-map';
+import logger from '../../logger';
 import { getConfigTs } from '../time';
-import inject from '../../core/kord/inject';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
@@ -42,11 +40,10 @@ function currentDay() {
  * Abstract part of token/key processing logic.
  */
 class CachedEntryPipeline {
-  constructor(db, primaryKey, logger, options) {
+  constructor(db, primaryKey, options) {
     this.db = db;
     this.cache = new DefaultMap(() => this.newEntry());
     this.primaryKey = primaryKey;
-    this.logger = logger;
     this.options = options;
   }
 
@@ -131,19 +128,8 @@ class CachedEntryPipeline {
         // push overflowed entries back into the queue
         overflowKeys.forEach(k => retryQueue.next(k));
 
-        // send telemetry about batch process
-        this.logger.next({
-          type: 'tokens.batch',
-          signal: {
-            source: this.name,
-            size: batch.length,
-            toBeSentSize: toBeSent.length,
-            overflow: overflow.length,
-            messages: messages.length,
-          },
-        });
       } catch (e) {
-        logger_.error('Failed to initialize stream', e);
+        logger.error('Failed to initialize stream', e);
       }
     });
   }
@@ -216,17 +202,6 @@ class CachedEntryPipeline {
       cacheDeleted: deleted,
       processed: queuedForSending.length,
     });
-    this.logger.next({
-      type: 'tokens.clean',
-      signal: {
-        source: this.name,
-        dbSize: await this.db.count(),
-        dbDelete: toBeDeleted.length,
-        cacheSize: this.cache.size,
-        cacheDeleted: deleted,
-        processed: queuedForSending.length,
-      },
-    });
   }
 
   createMessagePayloads(toBeSent, batchLimit) {
@@ -239,8 +214,8 @@ class CachedEntryPipeline {
 }
 
 export class TokenPipeline extends CachedEntryPipeline {
-  constructor(db, logger, options) {
-    super(db, 'token', logger, options);
+  constructor(db, options) {
+    super(db, 'token', options);
     this.name = 'tokens';
   }
 
@@ -323,8 +298,8 @@ export class TokenPipeline extends CachedEntryPipeline {
 }
 
 export class KeyPipeline extends CachedEntryPipeline {
-  constructor(db, logger, options) {
-    super(db, 'hash', logger, options);
+  constructor(db, options) {
+    super(db, 'hash', options);
     this.name = 'keys';
   }
 
@@ -438,13 +413,9 @@ export default class TokenTelemetry {
     this.tokenSendQueue = new Subject();
     this.keySendQueue = new Subject();
     this.messageQueue = new Subject();
-    this.telemetrySender = {
-      next: ({ type, signal }) => {
-        inject.service('telemetry', ['push']).push(signal, `metrics.antitracking.${type}`);
-      },
-    };
-    this.tokens = new TokenPipeline(database.tokens, this.telemetrySender, opts);
-    this.keys = new KeyPipeline(database.keys, this.telemetrySender, opts);
+
+    this.tokens = new TokenPipeline(database.tokens, opts);
+    this.keys = new KeyPipeline(database.keys, opts);
   }
 
   init() {
@@ -562,12 +533,6 @@ export default class TokenTelemetry {
   _saveKeyTokens({ kv, firstParty, thirdPartyGeneralDomain }) {
     // anything here should already be hash
     const isTracker = this.qsWhitelist.isTrackerDomain(thirdPartyGeneralDomain);
-
-    // telemetryMode 0: collect nothing, telemetryMode 1: collect only for tracker domains
-    if (this.config.telemetryMode === TELEMETRY.DISABLED
-       || (this.config.telemetryMode === TELEMETRY.TRACKERS_ONLY && !isTracker)) {
-      return;
-    }
 
     /* eslint camelcase: 'off' */
     kv.forEach(([k, v]) => {

@@ -166,6 +166,20 @@ export default class CliqzAttrack {
     });
   }
 
+  telemetry({ message, raw = false, compress = false, ts = undefined }) {
+    if (!message.type) {
+      message.type = telemetry.msgType;
+    }
+    if (raw !== true) {
+      message.payload = generateAttrackPayload(message.payload, ts, this.qs_whitelist.getVersion());
+    }
+    if (compress === true && compressionAvailable()) {
+      message.compressed = true;
+      message.payload = compressJSONToBase64(message.payload);
+    }
+    telemetry.telemetry(message);
+  }
+
   /** Global module initialisation.
   */
   init(config, settings) {
@@ -217,7 +231,7 @@ export default class CliqzAttrack {
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
     };
-    if (this.config.databaseEnabled && this.config.telemetryMode !== TELEMETRY.DISABLED) {
+    if (this.config.databaseEnabled) {
       steps.tokenTelemetry = new TokenTelemetry(
         this.telemetry.bind(this),
         this.qs_whitelist,
@@ -1015,8 +1029,7 @@ export default class CliqzAttrack {
   }
 
   onPageStaged(page) {
-    if (this.config.telemetryMode !== TELEMETRY.DISABLED
-        && page.state === 'complete'
+    if (page.state === 'complete'
         && !page.isPrivate
         && !page.isPrivateServer) {
       const payload = buildPageLoadObject(page);
