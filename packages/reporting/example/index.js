@@ -31,6 +31,7 @@ const communication = {
 const config = {
   ALLOWED_COUNTRY_CODES: ['de'],
   PATTERNS_URL: '',
+  CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
 };
 
 const reporting = new Reporting({
@@ -42,7 +43,6 @@ const reporting = new Reporting({
 (async function () {
   await reporting.init();
   await reporting.patterns.updatePatterns(rules);
-  reporting.sanitizer.setSafeCountryCode('de');
   await reporting.analyzeUrl('https://www.google.com/search?q=shoes');
   await reporting.processPendingJobs();
 })();
