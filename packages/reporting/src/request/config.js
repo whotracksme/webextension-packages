@@ -7,12 +7,11 @@
  */
 
 import * as persist from '../core/persistent-state';
-import config from '../core/config';
 import asyncPrefs from '../platform/async-storage';
 import { getConfigTs } from './time';
 import pacemaker from '../utils/pacemaker';
 
-const SETTINGS = config.settings;
+const SETTINGS = {};
 const VERSIONCHECK_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/versioncheck.json`;
 const CONFIG_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/config.json`;
 const WHITELIST2_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/2`;
@@ -83,7 +82,7 @@ export default class Config {
     this.tokenDomainCountThreshold = 2;
     this.safeKeyExpire = 7;
     this.localBlockExpire = 24;
-    this.localBaseUrl = `${config.baseURL}antitracking`;
+    this.localBaseUrl = `${SETTINGS.baseURL}antitracking`;
 
     Object.assign(this, defaults);
 
