@@ -6,31 +6,20 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-/* global chai, describeModule */
+import * as chai from 'chai';
+
+import probData from '../../../src/request/resources/prob.js';
+import {
+  isMostlyNumeric,
+  HashProb,
+  shouldCheckToken,
+} from '../../../src/request/hash.js';
+
 const nonNumeric = ['', 'ithinkthereis1numberhere', '1240abcd'];
 const mostlyNumeric = ['4902', '1024x768'];
 
-const probData = require('../../../antitracking/prob.json');
-
-export default describeModule('antitracking/hash', function () {
-  return {
-    'core/resource-loader': {
-      BundledResource: class BundledResource {
-        load() {
-          return Promise.resolve(probData);
-        }
-      },
-    },
-  };
-},
-function () {
+describe('antitracking/hash', function () {
   describe('#isMostlyNumeric', function () {
-    let isMostlyNumeric;
-
-    beforeEach(function () {
-      isMostlyNumeric = this.module().isMostlyNumeric;
-    });
-
     nonNumeric.forEach((testInput) => {
       it(`returns false for "${testInput}"`, function () {
         chai.expect(isMostlyNumeric(testInput)).to.eql(false);
@@ -48,13 +37,14 @@ function () {
     let hashProb;
 
     beforeEach(function () {
-      const HashProb = this.module().HashProb;
       hashProb = new HashProb();
       hashProb._update(probData);
     });
 
     const notHash = [
-      '', 'Firefox', 'cliqz.com', // a url
+      '',
+      'Firefox',
+      'cliqz.com', // a url
       'anti-tracking',
       'front/ng',
       'javascript',
@@ -71,7 +61,7 @@ function () {
       '468x742',
       '1021x952',
       '1024x768',
-      '1440x900'
+      '1440x900',
     ];
 
     notHash.forEach(function (str) {
@@ -87,11 +77,6 @@ function () {
     });
 
     describe('shouldCheckToken', function () {
-      let shouldCheckToken;
-      beforeEach(function () {
-        shouldCheckToken = this.module().shouldCheckToken;
-      });
-
       it('returns false for short tokens', () => {
         chai.expect(shouldCheckToken(hashProb, 6, '1234')).to.be.false;
       });

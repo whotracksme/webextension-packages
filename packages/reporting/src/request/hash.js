@@ -21,6 +21,11 @@ export class HashProb {
     });
   }
 
+  _update(data) {
+    this.probHashLogM = data.logM;
+    this.probHashThreshold = data.thresh;
+  }
+
   init() {}
 
   unload() {}

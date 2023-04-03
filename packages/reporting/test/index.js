@@ -17,3 +17,5 @@ import './search-extractor.spec.js';
 import './request/unit/utils-test.spec.js';
 import './request/unit/step-context-test.spec.js';
 import './request/unit/qs-whitelist2-test.spec.js';
+import './request/unit/hash-test.spec.js';
+
