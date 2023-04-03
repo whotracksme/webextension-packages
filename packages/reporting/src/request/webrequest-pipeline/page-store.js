@@ -6,9 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import tabs from '../platform/tabs';
-import windows from '../platform/windows';
-import webNavigation from '../platform/webnavigation';
 import events from '../utils/events';
 import logger from './logger';
 import Page, { PAGE_LOADING_STATE } from './page';
@@ -24,19 +21,21 @@ export default class PageStore {
   }
 
   init() {
-    tabs.onCreated.addListener(this.onTabCreated);
-    tabs.onUpdated.addListener(this.onTabUpdated);
-    tabs.onRemoved.addListener(this.onTabRemoved);
-    tabs.onActivated.addListener(this.onTabActivated);
-    webNavigation.onBeforeNavigate.addListener(this.onBeforeNavigate);
-    webNavigation.onCommitted.addListener(this.onNavigationCommitted);
-    webNavigation.onDOMContentLoaded.addListener(this.onNavigationLoaded);
-    webNavigation.onCompleted.addListener(this.onNavigationComplete);
-    if (windows && windows.onFocusChanged) {
-      windows.onFocusChanged.addListener(this.onWindowFocusChanged);
+    chrome.tabs.onCreated.addListener(this.onTabCreated);
+    chrome.tabs.onUpdated.addListener(this.onTabUpdated);
+    chrome.tabs.onRemoved.addListener(this.onTabRemoved);
+    chrome.tabs.onActivated.addListener(this.onTabActivated);
+    chrome.webNavigation.onBeforeNavigate.addListener(this.onBeforeNavigate);
+    chrome.webNavigation.onCommitted.addListener(this.onNavigationCommitted);
+    chrome.webNavigation.onDOMContentLoaded.addListener(
+      this.onNavigationLoaded,
+    );
+    chrome.webNavigation.onCompleted.addListener(this.onNavigationComplete);
+    if (chrome.windows && chrome.windows.onFocusChanged) {
+      chrome.windows.onFocusChanged.addListener(this.onWindowFocusChanged);
     }
     // popupate initially open tabs
-    tabs.query({}, (openTabs) => {
+    chrome.tabs.query({}, (openTabs) => {
       openTabs.forEach((tab) => {
         this.onTabCreated(tab);
       });
@@ -47,16 +46,18 @@ export default class PageStore {
     this.tabs.forEach((page) => this.stagePage(page));
     this.tabs.clear();
 
-    tabs.onCreated.removeListener(this.onTabCreated);
-    tabs.onUpdated.removeListener(this.onTabUpdated);
-    tabs.onRemoved.removeListener(this.onTabRemoved);
-    tabs.onActivated.removeListener(this.onTabActivated);
-    webNavigation.onBeforeNavigate.removeListener(this.onBeforeNavigate);
-    webNavigation.onCommitted.removeListener(this.onNavigationCommitted);
-    webNavigation.onDOMContentLoaded.removeListener(this.onNavigationLoaded);
-    webNavigation.onCompleted.removeListener(this.onNavigationComplete);
-    if (windows && windows.onFocusChanged) {
-      windows.onFocusChanged.removeListener(this.onWindowFocusChanged);
+    chrome.tabs.onCreated.removeListener(this.onTabCreated);
+    chrome.tabs.onUpdated.removeListener(this.onTabUpdated);
+    chrome.tabs.onRemoved.removeListener(this.onTabRemoved);
+    chrome.tabs.onActivated.removeListener(this.onTabActivated);
+    chrome.webNavigation.onBeforeNavigate.removeListener(this.onBeforeNavigate);
+    chrome.webNavigation.onCommitted.removeListener(this.onNavigationCommitted);
+    chrome.webNavigation.onDOMContentLoaded.removeListener(
+      this.onNavigationLoaded,
+    );
+    chrome.webNavigation.onCompleted.removeListener(this.onNavigationComplete);
+    if (chrome.windows && chrome.windows.onFocusChanged) {
+      chrome.windows.onFocusChanged.removeListener(this.onWindowFocusChanged);
     }
   }
 
@@ -71,14 +72,14 @@ export default class PageStore {
   /**
    * Create a new `tabContext` for the new tab
    */
-  onTabCreated = (tab) => {
+  onTabCreated(tab) {
     this.tabs.set(tab.id, makeTabContext(tab));
-  };
+  }
 
   /**
    * Update an existing tab or create it if we do not have a context yet.
    */
-  onTabUpdated = (tabId, info, tab) => {
+  onTabUpdated(tabId, info, tab) {
     let tabContext = this.tabs.get(tabId);
     if (tabContext === undefined) {
       tabContext = makeTabContext(tab);
@@ -91,20 +92,20 @@ export default class PageStore {
     if (info.url !== undefined) {
       tabContext.url = info.url;
     }
-  };
+  }
 
   /**
    * Remove tab context for `tabId`.
    */
-  onTabRemoved = (tabId) => {
+  onTabRemoved(tabId) {
     const tabContext = this.tabs.get(tabId);
     if (tabContext && tabContext.state === PAGE_LOADING_STATE.COMPLETE) {
       this.stagePage(tabContext);
     }
     this.tabs.delete(tabId);
-  };
+  }
 
-  onTabActivated = ({ previousTabId, tabId }) => {
+  onTabActivated({ previousTabId, tabId }) {
     // if previousTabId is not set (e.g. on chrome), set all tabs to inactive
     // otherwise, we only have to mark the previous tab as inactive
     if (!previousTabId) {
@@ -117,10 +118,10 @@ export default class PageStore {
     if (this.tabs.has(tabId)) {
       this.tabs.get(tabId).setActive(true);
     }
-  };
+  }
 
-  onWindowFocusChanged = (focusedWindow) => {
-    tabs.query({ active: true }, (activeTabs) => {
+  onWindowFocusChanged(focusedWindow) {
+    chrome.tabs.query({ active: true }, (activeTabs) => {
       activeTabs.forEach(({ id, windowId }) => {
         const tabContext = this.tabs.get(id);
         if (!tabContext) {
@@ -133,9 +134,9 @@ export default class PageStore {
         }
       });
     });
-  };
+  }
 
-  onBeforeNavigate = (details) => {
+  onBeforeNavigate(details) {
     const { frameId, tabId, url } = details;
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0) {
@@ -156,9 +157,9 @@ export default class PageStore {
       this.tabs.set(tabId, nextContext);
       nextContext.updateState(PAGE_LOADING_STATE.NAVIGATING);
     }
-  };
+  }
 
-  onNavigationCommitted = (details) => {
+  onNavigationCommitted(details) {
     const { frameId, tabId } = details;
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
@@ -167,21 +168,21 @@ export default class PageStore {
       // frame created without request
       this.onSubFrame(details);
     }
-  };
+  }
 
-  onNavigationLoaded = ({ frameId, tabId }) => {
+  onNavigationLoaded({ frameId, tabId }) {
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
       tabContext.updateState(PAGE_LOADING_STATE.LOADED);
     }
-  };
+  }
 
-  onNavigationComplete = ({ frameId, tabId }) => {
+  onNavigationComplete({ frameId, tabId }) {
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
       tabContext.updateState(PAGE_LOADING_STATE.COMPLETE);
     }
-  };
+  }
 
   onMainFrame({ tabId, url, requestId }, event) {
     // main frame from tabId -1 is from service worker and should not be saved
