@@ -10,7 +10,7 @@ import * as chai from 'chai';
 import sinon from 'sinon';
 import { sub } from 'date-fns';
 
-import QSWhitelist from '../../../src/request/qs-whitelist2';
+import QSWhitelist from '../../src/request/qs-whitelist2';
 
 function testWhitelist(whitelist) {
   chai.expect(whitelist.isTrackerDomain('example.com')).to.be.true;

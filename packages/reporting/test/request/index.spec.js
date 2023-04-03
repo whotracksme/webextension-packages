@@ -8,17 +8,18 @@
 
 import * as chai from 'chai';
 
-/* eslint no-param-reassign : off */
-
-import probData from '../../../src/request/resources/prob.js';
 import testPages from './test-pages.js';
 
-import { truncatedHash, default as md5 } from '../../../src/md5.js';
+/* eslint no-param-reassign : off */
 
-import Config from '../../../src/request/config.js';
-import Database from '../../../src/request/database.js';
-import RequestMonitor from '../../../src/request/index.js';
-import WebrequestPipeline from '../../../src/request/webrequst-pipeline.js';
+import probData from '../../src/request/resources/prob.js';
+
+import { truncatedHash, default as md5 } from '../../src/md5.js';
+
+import Config from '../../src/request/config.js';
+import Database from '../../src/request/database.js';
+import RequestMonitor from '../../src/request/index.js';
+import WebrequestPipeline from '../../src/request/webrequst-pipeline.js';
 
 const resources = {
   'prob.json': probData,

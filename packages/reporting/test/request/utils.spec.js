@@ -8,7 +8,7 @@
 
 import * as chai from 'chai';
 
-import { truncateDomain } from '../../../src/request/utils';
+import { truncateDomain } from '../../src/request/utils';
 
 describe('request/utils', function () {
   describe('truncateDomain', function () {
