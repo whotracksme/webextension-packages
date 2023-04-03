@@ -12,7 +12,7 @@
 import RequestMonitor from './request/index';
 import telemetry from './request/telemetry';
 import Config from './request/config';
-import AttrackDatabase from './request/database';
+import Database from './request/database';
 
 /**
  * @namespace antitracking
@@ -24,7 +24,7 @@ export default class ReportingRequest {
    * @param settings
    */
   async init() {
-    this.db = new AttrackDatabase();
+    this.db = new Database();
     await this.db.init();
     this.config = new Config({}, this.db);
     this.attrack = new RequestMonitor(this.db);
@@ -36,11 +36,11 @@ export default class ReportingRequest {
     telemetry.setCommunication({ communicaton: this.communicaton });
 
     // load config
-    this.attrack.webRequestPipeline.action('getPageStore').then((pageStore) => {
+    this.attrack.webRequestPipeline.getPageStore().then((pageStore) => {
       this.pageStore = pageStore;
     });
     return this.config.init().then(() => {
-      return this.attrack.init(this.config, settings);
+      return this.attrack.init(this.config);
     });
   }
 

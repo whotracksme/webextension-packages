@@ -6,7 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-module.exports = {
+export default {
   thirdpartyscript: {
     tab: {
       id: 66,
@@ -25,7 +25,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -37,7 +37,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -49,8 +49,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
-      }
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -63,7 +63,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -75,7 +75,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -87,8 +87,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/thirdpartyscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
-      }
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -102,7 +102,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -115,7 +115,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -128,9 +128,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/thirdpartyscript.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/thirdpartyscript.html',
+      },
+    ],
   },
   injectedscript: {
     tab: {
@@ -150,7 +150,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -162,7 +162,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -174,8 +174,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
-      }
+        tabUrl: 'http://localhost:60508/injectedscript.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -188,7 +188,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -200,7 +200,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -212,8 +212,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/injectedscript.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
-      }
+        tabUrl: 'http://localhost:60508/injectedscript.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -227,7 +227,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -240,7 +240,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
+        tabUrl: 'http://localhost:60508/injectedscript.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -253,9 +253,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/injectedscript.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/injectedscript.html',
+      },
+    ],
   },
   imgtest: {
     tab: {
@@ -275,7 +275,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -287,7 +287,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -299,8 +299,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
-      }
+        tabUrl: 'http://localhost:60508/imgtest.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -313,7 +313,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -325,7 +325,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -337,8 +337,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/imgtest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
-      }
+        tabUrl: 'http://localhost:60508/imgtest.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -352,7 +352,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -365,7 +365,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
+        tabUrl: 'http://localhost:60508/imgtest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -378,9 +378,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/imgtest.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/imgtest.html',
+      },
+    ],
   },
   crossdomainxhr: {
     tab: {
@@ -400,7 +400,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -412,7 +412,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -424,7 +424,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -436,8 +436,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
-      }
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -450,7 +450,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -462,7 +462,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -474,7 +474,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -486,8 +486,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/crossdomainxhr.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
-      }
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -501,7 +501,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -514,7 +514,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -527,7 +527,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -540,9 +540,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/crossdomainxhr.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/crossdomainxhr.html',
+      },
+    ],
   },
   iframetest: {
     tab: {
@@ -562,7 +562,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -574,7 +574,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe.html',
@@ -586,7 +586,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -598,7 +598,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -610,7 +610,7 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -622,8 +622,8 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
-      }
+        tabUrl: 'http://localhost:60508/iframetest.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -636,7 +636,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -648,7 +648,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe.html',
@@ -660,7 +660,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -672,7 +672,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/iframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -684,7 +684,7 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -696,8 +696,8 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
-      }
+        tabUrl: 'http://localhost:60508/iframetest.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -711,7 +711,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -724,7 +724,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe.html',
@@ -737,7 +737,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -750,7 +750,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -763,7 +763,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
+        tabUrl: 'http://localhost:60508/iframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -776,9 +776,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/iframetest.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/iframetest.html',
+      },
+    ],
   },
   image302test: {
     tab: {
@@ -798,7 +798,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/tracker302.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -810,7 +810,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -822,8 +822,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
-      }
+        tabUrl: 'http://localhost:60508/image302test.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -836,7 +836,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/tracker302.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -848,7 +848,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -860,7 +860,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://127.0.0.1:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -872,8 +872,8 @@ module.exports = {
         originUrl: 'http://localhost:60508/image302test.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
-      }
+        tabUrl: 'http://localhost:60508/image302test.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -887,7 +887,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/tracker302.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -900,7 +900,7 @@ module.exports = {
         statusCode: 302,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://localhost:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -913,7 +913,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
+        tabUrl: 'http://localhost:60508/image302test.html',
       },
       {
         url: 'http://127.0.0.1:60508/test.gif?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -926,9 +926,9 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/image302test.html'
-      }
-    ]
+        tabUrl: 'http://localhost:60508/image302test.html',
+      },
+    ],
   },
   nestediframetest: {
     tab: {
@@ -948,7 +948,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -960,7 +960,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/proxyiframe.html',
@@ -972,7 +972,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -984,7 +984,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/vendor/jquery.min.js',
@@ -996,7 +996,7 @@ module.exports = {
         originUrl: 'http://cliqztest2.de:60508/proxyiframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe2.html',
@@ -1008,7 +1008,7 @@ module.exports = {
         originUrl: 'http://cliqztest2.de:60508/proxyiframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -1020,7 +1020,7 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe2.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -1032,8 +1032,8 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe2.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
-      }
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
+      },
     ],
     onBeforeSendHeaders: [
       {
@@ -1046,7 +1046,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -1058,7 +1058,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/proxyiframe.html',
@@ -1070,7 +1070,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -1082,7 +1082,7 @@ module.exports = {
         originUrl: 'http://localhost:60508/nestediframetest.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/vendor/jquery.min.js',
@@ -1094,7 +1094,7 @@ module.exports = {
         originUrl: 'http://cliqztest2.de:60508/proxyiframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe2.html',
@@ -1106,7 +1106,7 @@ module.exports = {
         originUrl: 'http://cliqztest2.de:60508/proxyiframe.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -1118,7 +1118,7 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe2.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -1130,8 +1130,8 @@ module.exports = {
         originUrl: 'http://127.0.0.1:60508/iframe2.html',
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
-      }
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
+      },
     ],
     onHeadersReceived: [
       {
@@ -1145,7 +1145,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/vendor/jquery.min.js',
@@ -1158,7 +1158,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/proxyiframe.html',
@@ -1171,7 +1171,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://cliqztest2.de:60508/vendor/jquery.min.js',
@@ -1184,7 +1184,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://localhost:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -1197,7 +1197,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/iframe2.html',
@@ -1210,7 +1210,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/vendor/jquery.min.js',
@@ -1223,7 +1223,7 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: true,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
       },
       {
         url: 'http://127.0.0.1:60508/test?callback=func&uid=04C2EAD03BAB7F5E-2E85855CF4C75134',
@@ -1236,8 +1236,8 @@ module.exports = {
         statusCode: 200,
         isPrivate: false,
         fromCache: false,
-        tabUrl: 'http://localhost:60508/nestediframetest.html'
-      }
-    ]
-  }
+        tabUrl: 'http://localhost:60508/nestediframetest.html',
+      },
+    ],
+  },
 };

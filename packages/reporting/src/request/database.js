@@ -157,7 +157,7 @@ export default class AttrackDatabase {
           keysStore.createIndex('lastSent', 'lastSent');
           keysStore.createIndex('created', 'created');
 
-          db.createObjectStore('keyvalue');
+          db.createObjectStore('keyval');
         }
 
         if (oldVersion > 20) {

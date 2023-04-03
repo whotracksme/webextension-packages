@@ -37,6 +37,7 @@ import {
   checkValidContext,
   checkSameGeneralDomain,
 } from './steps/check-context';
+import WebrequestPipeline from './webrequst-pipeline';
 
 export default class RequestMonitor {
   constructor(db) {
@@ -52,7 +53,7 @@ export default class RequestMonitor {
     this.tpEventInterval = null;
 
     // Web request pipelines
-    this.webRequestPipeline = null; //inject.module('webrequest-pipeline');
+    this.webRequestPipeline = new WebrequestPipeline();
     this.pipelineSteps = {};
     this.pipelines = {};
 
@@ -145,9 +146,6 @@ export default class RequestMonitor {
     const initPromises = [];
     this.config = config;
 
-    // Replace getWindow functions with window object used in init.
-    if (this.debug) console.log('Init function called:', this.LOG_KEY);
-
     this.hashProb = new HashProb();
     this.hashProb.init();
 
@@ -156,16 +154,13 @@ export default class RequestMonitor {
     // lazily propegate changes back to the browser's sqlite database.
     // Large static caches (e.g. token whitelist) are loaded from sqlite
     // Smaller caches (e.g. update timestamps) are kept in prefs
-
     this.qs_whitelist = new QSWhitelist2(
       this.config.whitelistUrl,
-      this.db.storage,
+      this.db.keyValue,
     );
 
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
-
-    this.checkInstalledAddons();
 
     this.initPacemaker();
 
@@ -671,7 +666,7 @@ export default class RequestMonitor {
     // Add steps to the global web request pipeline
     return Promise.all(
       Object.keys(this.pipelines).map((stage) =>
-        this.webRequestPipeline.action('addPipelineStep', stage, {
+        this.webRequestPipeline.addPipelineStep(stage, {
           name: `antitracking.${stage}`,
           spec: 'blocking',
           fn: (...args) => this.pipelines[stage].execute(...args),
@@ -691,22 +686,33 @@ export default class RequestMonitor {
     Object.keys(this.pipelines).forEach((stage) => {
       this.pipelines[stage].unload();
     });
+
+    // Remove steps to the global web request pipeline
+    // NOTE: this is async but the result can be ignored when the extension is
+    // unloaded. This is because the background from webrequest-pipeline has
+    // a synchronous `unload` method which will clean up everything anyway.
+    // But if we reload only the antitracking module, we need to be sure we
+    // removed the steps before we try to add them again.
+    return Promise.all(
+      Object.keys(this.pipelines).map((stage) =>
+        this.webRequestPipeline.removePipelineStep(
+          stage,
+          `antitracking.${stage}`,
+        ),
+      ),
+    ).then(() => {
+      this.pipelines = {};
+    });
   }
 
   unload() {
     // Check is active usage, was sent
     this.hashProb.unload();
     this.qs_whitelist.destroy();
-
     this.unloadPipeline();
-
     this.db.unload();
-
-    this.onSafekeysUpdated.unsubscribe();
-
     pacemaker.clearTimeout(this.hourChangedInterval);
     this.hourChangedInterval = null;
-
     pacemaker.clearTimeout(this.tpEventInterval);
     this.tpEventInterval = null;
   }
