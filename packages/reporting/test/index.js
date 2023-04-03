@@ -14,3 +14,4 @@ import './url-analyzer.spec.js';
 import './alive-check.spec.js';
 import './sanitizer.spec.js';
 import './search-extractor.spec.js';
+import './request/unit/utils-test.spec.js';
