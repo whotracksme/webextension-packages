@@ -8,7 +8,7 @@
 
 import pacemaker from './pacemaker';
 
-import logger from '../logger';
+import logger from '../../logger';
 
 /**
  * Handles a set of function pipelines. These pipelines start with an initial state

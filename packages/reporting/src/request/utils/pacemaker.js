@@ -6,7 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Logger } from '../logger';
+import { Logger } from '../../logger';
 
 // Pacemaker is a service which allows to schedule tasks (either as intervals or
 // timeouts) while doing its best to not wake-up the browser too often. To this

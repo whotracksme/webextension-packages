@@ -7,8 +7,8 @@
  */
 import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
-import PackedBloomFilter from '../utils/bloom-filter-packed';
-import pacemaker from '../utils/pacemaker';
+import PackedBloomFilter from './utils/bloom-filter-packed';
+import pacemaker from './utils/pacemaker';
 import logger from '../logger';
 
 async function fetchPackedBloomFilter(url) {

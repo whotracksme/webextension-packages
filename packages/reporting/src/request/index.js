@@ -7,13 +7,14 @@
  */
 
 /* eslint-disable no-param-reassign */
-import Pipeline from '../utils/pipeline';
-import { isPrivateIP, getName } from '../utils/url';
-import pacemaker from '../utils/pacemaker';
-import events from '../utils/events';
-import logger from '../logger';
-import TrackerCounter from '../utils/tracker-counter';
+import Pipeline from './utils/pipeline';
+import { isPrivateIP, getName } from './utils/url';
+import pacemaker from './utils/pacemaker';
+import events from './utils/events';
+import TrackerCounter from './utils/tracker-counter';
+
 import { truncatedHash } from '../md5';
+import logger from '../logger';
 
 import * as datetime from './time';
 import QSWhitelist2 from './qs-whitelist2';

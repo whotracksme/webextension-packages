@@ -7,7 +7,7 @@
  */
 
 /* eslint no-bitwise: 'off' */
-import md5 from '../md5';
+import md5 from '../../md5';
 
 /**
  * Re-implementation of core/bloom-filter using a packed ArrayBuffer to hold

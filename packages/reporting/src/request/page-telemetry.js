@@ -1,5 +1,5 @@
 import { truncatedHash } from '../md5';
-import { parse } from '../utils/url';
+import { parse } from './utils/url';
 
 function truncatePath(path) {
   // extract the first part of the page path

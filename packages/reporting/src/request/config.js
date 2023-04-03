@@ -7,7 +7,7 @@
  */
 
 import { getConfigTs } from './time';
-import pacemaker from '../utils/pacemaker';
+import pacemaker from './utils/pacemaker';
 
 const SETTINGS = {};
 const CONFIG_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/config.json`;

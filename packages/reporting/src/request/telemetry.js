@@ -9,8 +9,9 @@
 /* eslint no-param-reassign: 'off' */
 
 import random from '../random';
-import { getConfigTs } from './time';
 import logger from '../logger';
+
+import { getConfigTs } from './time';
 
 function msgSanitize(msg, channel) {
   msg.channel = channel;

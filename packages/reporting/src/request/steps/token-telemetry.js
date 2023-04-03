@@ -7,10 +7,10 @@
  */
 
 import md5, { truncatedHash } from '../../md5';
-import DefaultMap from '../../utils/default-map';
+import DefaultMap from '../utils/default-map';
 import logger from '../../logger';
 import { getConfigTs } from '../time';
-import { EventEmitter as Subject } from '../../utils/events';
+import { EventEmitter as Subject } from '../utils/events';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour

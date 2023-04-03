@@ -10,7 +10,7 @@
 /* eslint guard-for-in: 'off' */
 
 import md5 from '../md5';
-import events from '../utils/events';
+import events from './utils/events';
 import * as datetime from './time';
 
 export default class BlockLog {
