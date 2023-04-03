@@ -78,7 +78,7 @@ const listenerStub = {
   removeListener() {},
 };
 
-describe('antitracking/index', function () {
+describe('request/index', function () {
   let attrack;
   let pipeline;
   let config;

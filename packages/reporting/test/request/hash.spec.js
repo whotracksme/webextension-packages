@@ -18,7 +18,7 @@ import {
 const nonNumeric = ['', 'ithinkthereis1numberhere', '1240abcd'];
 const mostlyNumeric = ['4902', '1024x768'];
 
-describe('antitracking/hash', function () {
+describe('request/hash', function () {
   describe('#isMostlyNumeric', function () {
     nonNumeric.forEach((testInput) => {
       it(`returns false for "${testInput}"`, function () {

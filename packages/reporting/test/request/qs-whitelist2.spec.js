@@ -56,7 +56,7 @@ const createFetchMock =
     },
   });
 
-describe('antitracking/qs-whitelist2', function () {
+describe('request/qs-whitelist2', function () {
   let whitelist;
   let fetchMock = async () => {};
 
