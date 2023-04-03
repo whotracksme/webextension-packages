@@ -6,60 +6,43 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-/* global chai */
-/* global describeModule */
+import * as chai from 'chai';
 
-export default describeModule('antitracking/steps/check-context',
-  () => ({
-    'core/console': {
-      default: {
-        debug() {},
-        log() {},
-        error() {},
-      },
-    },
-    'platform/url': {
-    },
-  }),
-  () => {
-    describe('checkSameGeneralDomain', () => {
-      let checkSameGeneralDomain;
+import { checkSameGeneralDomain } from '../../../src/request/steps/check-context';
 
-      beforeEach(function () {
-        checkSameGeneralDomain = this.module().checkSameGeneralDomain;
+describe('request/steps/check-context', function () {
+  describe('checkSameGeneralDomain', function () {
+    function mockState(requestDomain, sourceDomain) {
+      return {
+        urlParts: {
+          generalDomain: requestDomain,
+        },
+        tabUrlParts: {
+          generalDomain: sourceDomain,
+        },
+      };
+    }
+
+    [
+      ['cliqz.com', 'cliqz.com'],
+      ['with.co.uk', 'with.co.uk'],
+      ['registered.co.uk', 'registered.com'],
+    ].forEach((pair) => {
+      const [a, b] = pair;
+      it(`stops pipeline with '${a}' and '${b}'`, () => {
+        chai.expect(checkSameGeneralDomain(mockState(a, b))).to.be.false;
       });
+    });
 
-      function mockState(requestDomain, sourceDomain) {
-        return {
-          urlParts: {
-            generalDomain: requestDomain,
-          },
-          tabUrlParts: {
-            generalDomain: sourceDomain,
-          }
-        };
-      }
-
-      [
-        ['cliqz.com', 'cliqz.com'],
-        ['with.co.uk', 'with.co.uk'],
-        ['registered.co.uk', 'registered.com'],
-      ].forEach((pair) => {
-        const [a, b] = pair;
-        it(`stops pipeline with '${a}' and '${b}'`, () => {
-          chai.expect(checkSameGeneralDomain(mockState(a, b))).to.be.false;
-        });
-      });
-
-      [
-        ['', 'example.com'],
-        ['localhost', '127.0.0.1'],
-        ['cliqz.com', 'kliqz.com'],
-      ].forEach((pair) => {
-        const [a, b] = pair;
-        it(`does not stop pipeline with '${a}' and '${b}'`, () => {
-          chai.expect(checkSameGeneralDomain(mockState(a, b))).to.be.true;
-        });
+    [
+      ['', 'example.com'],
+      ['localhost', '127.0.0.1'],
+      ['cliqz.com', 'kliqz.com'],
+    ].forEach((pair) => {
+      const [a, b] = pair;
+      it(`does not stop pipeline with '${a}' and '${b}'`, () => {
+        chai.expect(checkSameGeneralDomain(mockState(a, b))).to.be.true;
       });
     });
   });
+});

@@ -15,3 +15,4 @@ import './alive-check.spec.js';
 import './sanitizer.spec.js';
 import './search-extractor.spec.js';
 import './request/unit/utils-test.spec.js';
+import './request/unit/step-context-test.spec.js';
