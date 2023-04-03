@@ -16,6 +16,12 @@ export default class WebrequestPipeline {
     }
     this.stages[stage].push(step);
   }
+  removePipelineStep(stage, name) {
+    if (!this.stages[stage]) {
+      return;
+    }
+    this.stages[stage].filter((step) => step.name !== name);
+  }
   onBeforeRequest() {}
   onBeforeSendHeaders() {}
   onHeadersReceived() {}

@@ -8,7 +8,7 @@
 
 import * as chai from 'chai';
 
-import { checkSameGeneralDomain } from '../../src/request/steps/check-context';
+import { checkSameGeneralDomain } from '../../../src/request/steps/check-context';
 
 describe('request/steps/check-context', function () {
   describe('checkSameGeneralDomain', function () {
