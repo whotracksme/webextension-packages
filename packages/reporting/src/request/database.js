@@ -102,6 +102,23 @@ class PersistentState {
   }
 }
 
+class KeyValueStore {
+  constructor(db, ready) {
+    this.db = db;
+    this.ready = ready;
+  }
+
+  async get(key) {
+    await this.ready;
+    return this.db.get('keyval', key);
+  }
+
+  async set(key, val) {
+    await this.ready;
+    return this.db.put('keyval', val, key);
+  }
+}
+
 export default class AttrackDatabase {
   constructor() {
     this.db = null;
@@ -140,7 +157,7 @@ export default class AttrackDatabase {
           keysStore.createIndex('lastSent', 'lastSent');
           keysStore.createIndex('created', 'created');
 
-          db.createObjectStore('state');
+          db.createObjectStore('keyvalue');
         }
 
         if (oldVersion > 20) {
@@ -195,11 +212,7 @@ export default class AttrackDatabase {
     return new PersistentState(this.db, 'state', 'localBlocked');
   }
 
-  get hourChangedlastRun() {
-    return new PersistentState(this.db, 'state', 'hourChangedlastRun');
-  }
-
-  get config() {
-    return new PersistentState(this.db, 'state', 'config');
+  get keyValue() {
+    return new KeyValueStore(this.db, this._ready);
   }
 }

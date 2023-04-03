@@ -94,7 +94,7 @@ export default class Config {
 
   async _loadConfig() {
     await this.db.ready;
-    const lastUpdate = await this.db.config.getValue();
+    const lastUpdate = await this.db.keyValue.get('config');
     const day = getConfigTs();
     // use stored config if it was already updated today
     if (lastUpdate['config'] && lastUpdate['lastUpdate'] === day) {
@@ -105,7 +105,7 @@ export default class Config {
     try {
       const conf = await (await fetch(fetchUrl)).json();
       this._updateConfig(conf);
-      await this.db.config.getValue({
+      await this.db.keyValue.getValue('config', {
         lastUpdate: day,
         config: conf,
       });

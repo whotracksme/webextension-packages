@@ -125,7 +125,7 @@ export default class RequestMonitor {
     });
   }
 
-  telemetry({ message, raw = false, compress = false, ts = undefined }) {
+  telemetry({ message, raw = false, ts = undefined }) {
     if (!message.type) {
       message.type = telemetry.msgType;
     }
@@ -135,10 +135,6 @@ export default class RequestMonitor {
         ts,
         this.qs_whitelist.getVersion(),
       );
-    }
-    if (compress === true && compressionAvailable()) {
-      message.compressed = true;
-      message.payload = compressJSONToBase64(message.payload);
     }
     telemetry.telemetry(message);
   }
@@ -161,7 +157,10 @@ export default class RequestMonitor {
     // Large static caches (e.g. token whitelist) are loaded from sqlite
     // Smaller caches (e.g. update timestamps) are kept in prefs
 
-    this.qs_whitelist = new QSWhitelist2(this.config.whitelistUrl);
+    this.qs_whitelist = new QSWhitelist2(
+      this.config.whitelistUrl,
+      this.db.storage,
+    );
 
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
@@ -716,8 +715,9 @@ export default class RequestMonitor {
     const fidelity = 10; // hour
 
     const timestamp = datetime.getTime().slice(0, fidelity);
-    const lastHour = (await this.db.hourChangedlastRun.getValue()) || timestamp;
-    await this.db.hourChangedlastRun.setValue(timestamp);
+    const lastHour =
+      (await this.db.keyValue.get('hourChangedlastRun')) || timestamp;
+    await this.db.keyValue.set('hourChangedlastRun', timestamp);
 
     if (timestamp === lastHour) {
       return;

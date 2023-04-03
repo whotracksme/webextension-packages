@@ -6,52 +6,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-/* global chai, describeModule */
-const moment = require('moment');
-const pako = require('pako');
+import * as chai from 'chai';
+import sinon from 'sinon';
+import { sub } from 'date-fns';
 
-const mockStorage = new Map();
-
-class MockStorage {
-  constructor(filePath) {
-    this.key = [
-      'resource-loader',
-      ...filePath,
-    ].join(':');
-  }
-
-  load() {
-    return Promise.resolve(mockStorage.get(this.key));
-  }
-
-  save(data) {
-    mockStorage.set(this.key, data);
-    return Promise.resolve();
-  }
-}
-
-const mockFetchResults = new Map();
-
-function mockFetch(url) {
-  if (mockFetchResults.has(url)) {
-    const response = mockFetchResults.get(url);
-    mockFetchResults.delete(url);
-    return response;
-  }
-  return Promise.resolve({
-    ok: false,
-  });
-}
-
-function mockUpdateFile(version, useDiff = true) {
-  return {
-    ok: true,
-    json: () => ({
-      version,
-      useDiff,
-    })
-  };
-}
+import QSWhitelist from '../../../src/request/qs-whitelist2';
 
 function testWhitelist(whitelist) {
   chai.expect(whitelist.isTrackerDomain('example.com')).to.be.true;
@@ -66,254 +25,162 @@ function testWhitelist(whitelist) {
   chai.expect(whitelist.isSafeKey('facebook.com', 'uid')).to.be.false;
 }
 
-let momentMock = false;
+// source https://stackoverflow.com/a/21797381
+function base64ToArrayBuffer(base64) {
+  var binary_string = window.atob(base64);
+  var len = binary_string.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
 
-export default describeModule('antitracking/qs-whitelist2',
-  () => ({
-    'core/services/pacemaker': {
-      default: {
-        everyHour() { },
-        clearTimeout() {},
-      },
+const createFetchMock =
+  ({ version, useDiff = false }) =>
+  async (url) => ({
+    ok: true,
+    // for config
+    async json() {
+      return {
+        version,
+        useDiff,
+      };
     },
-    'core/console': {
-      default: console,
-    },
-    'platform/globals': {
-      chrome: {},
-    },
-    'platform/lib/zlib': pako,
-    'platform/resource-loader-storage': {
-      default: MockStorage,
-    },
-    'platform/lib/moment': {
-      default: (...args) => {
-        if (momentMock) {
-          return momentMock(...args);
-        }
-        return moment(...args);
-      },
-    },
-    'core/logger': {
-      default: {
-        get: () => {},
-      },
-    },
-    'antitracking/logger': {
-      default: {
-        info: () => {},
-        debug: () => {},
-        error: () => {},
+    // for bloom filter
+    async arrayBuffer() {
+      if (url.includes('diff')) {
+        return base64ToArrayBuffer('AAAAAgp4yhHUIy5ERA==');
       }
+      return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
     },
-  }), function () {
-    let whitelist;
-    let fromBase64;
-    const MOCK_CDN = 'https://cdn';
-    const MOCK_BF_B64 = 'AAAAAgrdwUcnN1113w==';
-    const MOCK_BF_DIFF_B64 = 'AAAAAgp4yhHUIy5ERA==';
+  });
 
-    beforeEach(async function () {
-      const QSWhitelist = this.module().default;
-      whitelist = new QSWhitelist(MOCK_CDN, {
-        networkFetchEnabled: true,
-        localBaseUrl: '/antitracking'
-      });
-      fromBase64 = (await this.system.import('core/encoding')).fromBase64;
+describe('antitracking/qs-whitelist2', function () {
+  let whitelist;
+  let fetchMock = async () => {};
+
+  beforeEach(async function () {
+    sinon.stub(window, 'fetch').callsFake((url) => fetchMock(url));
+    whitelist = new QSWhitelist('https://cdn', new Map());
+  });
+
+  afterEach(() => {
+    window.fetch.restore();
+    fetchMock = async () => {};
+  });
+
+  context('loading', () => {
+    afterEach(() => whitelist.destroy());
+
+    it('full load from remote', async () => {
+      const version = '2018-10-08';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
+      chai.expect(whitelist.bloomFilter).to.not.be.null;
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      testWhitelist(whitelist);
+    });
+
+    it('persists state for subsequent loads', async () => {
+      const version = '2018-10-08';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
+      await whitelist.destroy();
+      whitelist.bloomFilter = null;
+      await whitelist.init();
+      chai.expect(whitelist.bloomFilter).to.not.be.null;
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      testWhitelist(whitelist);
+    });
+
+    it('loads diff when available', async () => {
+      // do first load
+      let version = '2018-10-08';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
+      await whitelist.destroy();
+
+      // mock next day with a diff file
+      version = '2018-10-09';
+      fetchMock = createFetchMock({ version, useDiff: true });
+
+      await whitelist.init();
+
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      // all previous entries should be there
+      testWhitelist(whitelist);
+      // also new ones
+      chai.expect(whitelist.isTrackerDomain('example.org')).to.be.true;
+      chai.expect(whitelist.shouldCheckDomainTokens('example.org')).to.be.true;
+      chai.expect(whitelist.isSafeToken('', '1234567879')).to.be.true;
+    });
+
+    it('does not load diff when useDiff is false', async () => {
+      // do first load
+      let version = '2018-10-08';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
+      await whitelist.destroy();
+
+      // mock next day with a diff file
+      version = '2018-10-09';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
+
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      // all previous entries should be there
+      testWhitelist(whitelist);
+      // no new ones (because we loaded a fresh version)
+      chai.expect(whitelist.isTrackerDomain('example.org')).to.be.false;
+      chai.expect(whitelist.shouldCheckDomainTokens('example.org')).to.be.false;
+      chai.expect(whitelist.isSafeToken('', '1234567879')).to.be.false;
+    });
+  });
+
+  context('local safekey', () => {
+    beforeEach(async () => {
+      const version = '2018-10-08';
+      fetchMock = createFetchMock({ version });
+      await whitelist.init();
     });
 
     afterEach(() => {
-      mockStorage.clear();
-      mockFetchResults.clear();
+      return whitelist.destroy();
     });
 
-    context('loading', () => {
-      afterEach(() => whitelist.destroy());
-
-      it('no local or remote bf', async () => {
-        await whitelist.init();
-        // bloom filter is an empty one
-        chai.expect(whitelist.bloomFilter).to.be.not.null;
-        chai.expect(whitelist.isTrackerDomain('example.com')).to.be.false;
-      });
-
-      it('local only', async () => {
-        const version = '2018-10-08';
-        whitelist.networkFetchEnabled = false;
-        mockFetchResults.set('/antitracking/update.json', mockUpdateFile(version));
-        mockFetchResults.set('/antitracking/bloom_filter.dat', {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        chai.expect(whitelist.bloomFilter).to.not.be.null;
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        testWhitelist(whitelist);
-      });
-
-      it('local fallback when CDN fails', async () => {
-        const version = '2018-10-08';
-        mockFetchResults.set('/antitracking/update.json', mockUpdateFile(version));
-        mockFetchResults.set('/antitracking/bloom_filter.dat', {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        chai.expect(whitelist.bloomFilter).to.not.be.null;
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        testWhitelist(whitelist);
-      });
-
-      it('missing remote bloom filter file', async () => {
-        const version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: false,
-        });
-        await whitelist.init();
-        chai.expect(whitelist.bloomFilter).to.not.be.null;
-        chai.expect(whitelist.isTrackerDomain('example.com')).to.be.false;
-      });
-
-      it('full load from remote', async () => {
-        const version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        chai.expect(whitelist.bloomFilter).to.not.be.null;
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        testWhitelist(whitelist);
-      });
-
-      it('persists state for subsequent loads', async () => {
-        const version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        mockFetchResults.clear();
-        await whitelist.destroy();
-        whitelist.bloomFilter = null;
-        await whitelist.init();
-        chai.expect(whitelist.bloomFilter).to.not.be.null;
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        testWhitelist(whitelist);
-      });
-
-      it('loads diff when available', async () => {
-        // do first load
-        let version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        mockFetchResults.clear();
-        await whitelist.destroy();
-
-        // mock next day with a diff file
-        version = '2018-10-09';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bf_diff_1.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_DIFF_B64).buffer,
-        });
-        await whitelist.init();
-
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        // all previous entries should be there
-        testWhitelist(whitelist);
-        // also new ones
-        chai.expect(whitelist.isTrackerDomain('example.org')).to.be.true;
-        chai.expect(whitelist.shouldCheckDomainTokens('example.org')).to.be.true;
-        chai.expect(whitelist.isSafeToken('', '1234567879')).to.be.true;
-      });
-
-      it('does not load diff when useDiff is false', async () => {
-        // do first load
-        let version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-        mockFetchResults.clear();
-        await whitelist.destroy();
-
-        // mock next day with a diff file
-        version = '2018-10-09';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version, false));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bf_diff_1.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_DIFF_B64).buffer,
-        });
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-
-        chai.expect(whitelist.getVersion()).to.eql({ day: version });
-        // all previous entries should be there
-        testWhitelist(whitelist);
-        // no new ones (because we loaded a fresh version)
-        chai.expect(whitelist.isTrackerDomain('example.org')).to.be.false;
-        chai.expect(whitelist.shouldCheckDomainTokens('example.org')).to.be.false;
-        chai.expect(whitelist.isSafeToken('', '1234567879')).to.be.false;
-      });
+    it('#addSafeKey adds a safekey for a domain', () => {
+      const d = 'example.com';
+      const k = 'test';
+      chai.expect(whitelist.isSafeKey(d, k)).to.be.false;
+      whitelist.addSafeKey(d, k);
+      chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
     });
 
-    context('local safekey', () => {
-      beforeEach(async () => {
-        const version = '2018-10-08';
-        mockFetchResults.set(`${MOCK_CDN}/update.json.gz`, mockUpdateFile(version));
-        mockFetchResults.set(`${MOCK_CDN}/${version}/bloom_filter.gz`, {
-          ok: true,
-          arrayBuffer: () => fromBase64(MOCK_BF_B64).buffer,
-        });
-        await whitelist.init();
-      });
+    it('#cleanLocalSafekey removes safekeys after 7 days', () => {
+      const d = 'example.com';
+      const k = 'test';
 
-      afterEach(() => {
-        momentMock = false;
-        return whitelist.destroy();
-      });
+      const clock = sinon.useFakeTimers(sub(new Date(), { days: 8 }));
 
-      it('#addSafeKey adds a safekey for a domain', () => {
-        const d = 'example.com';
-        const k = 'test';
-        chai.expect(whitelist.isSafeKey(d, k)).to.be.false;
-        whitelist.addSafeKey(d, k);
-        chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
-      });
+      whitelist.addSafeKey(d, k);
+      whitelist._cleanLocalSafekey();
 
-      it('#cleanLocalSafekey removes safekeys after 7 days', () => {
-        const d = 'example.com';
-        const k = 'test';
-        momentMock = () => moment().subtract(8, 'days');
-        whitelist.addSafeKey(d, k);
-        whitelist._cleanLocalSafekey();
-        chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
-        momentMock = false;
-        whitelist._cleanLocalSafekey();
-        chai.expect(whitelist.isSafeKey(d, k)).to.be.false;
-      });
+      clock.restore();
 
-      it('localSafekeys are persisted', async () => {
-        const d = 'example.com';
-        const k = 'test';
-        whitelist.addSafeKey(d, k);
-        await whitelist.destroy();
-        whitelist.localSafeKey = {};
-        await whitelist.init();
-        chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
-      });
+      chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
+      whitelist._cleanLocalSafekey();
+      chai.expect(whitelist.isSafeKey(d, k)).to.be.false;
+    });
+
+    it('localSafekeys are persisted', async () => {
+      const d = 'example.com';
+      const k = 'test';
+      whitelist.addSafeKey(d, k);
+      await whitelist.destroy();
+      whitelist.localSafeKey = {};
+      await whitelist.init();
+      chai.expect(whitelist.isSafeKey(d, k)).to.be.true;
     });
   });
+});

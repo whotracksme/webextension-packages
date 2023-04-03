@@ -11,6 +11,9 @@ import PackedBloomFilter from './utils/bloom-filter-packed';
 import pacemaker from './utils/pacemaker';
 import logger from '../logger';
 
+const STORAGE_CONFIG_KEY = 'qs_config';
+const STORAGE_BLOOM_FILTER_KEY = 'qs_bloom_filter';
+
 async function fetchPackedBloomFilter(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -21,18 +24,48 @@ async function fetchPackedBloomFilter(url) {
 }
 
 export default class QSWhitelist2 {
-  constructor(CDN_BASE_URL) {
+  constructor(CDN_BASE_URL, storage) {
     this.CDN_BASE_URL = CDN_BASE_URL;
     this.bloomFilter = null;
     this.localSafeKey = {};
+    this.storage = storage;
   }
 
   async init() {
     try {
-      const update = await this._fetchUpdateURL();
-      await this._fullUpdate(update.version);
+      const { version, localSafeKey } = await this.storage.get(
+        STORAGE_CONFIG_KEY,
+      );
+      const buffer = await this.storage.get(STORAGE_BLOOM_FILTER_KEY);
+      this.bloomFilter = new PackedBloomFilter(buffer);
+      this.version = version;
+      this.localSafeKey = localSafeKey || {};
+      logger.debug(`[QSWhitelist2] Bloom filter loaded version ${version}`);
     } catch (e) {
-      // TODO @chrmod: consider how to deal with this situation
+      logger.info('[QSWhitelist2] Failed loading filter from local');
+    }
+
+    if (this.bloomFilter === null) {
+      // local bloom filter loading wasn't successful, grab a new version
+      try {
+        const update = await this._fetchUpdateURL();
+        await this._fullUpdate(update.version);
+      } catch (e) {
+        logger.error(
+          '[QSWhitelist2] Error fetching bloom filter from remote',
+          e,
+        );
+      }
+    } else {
+      // we loaded the bloom filter, check for updates
+      try {
+        await this._checkForUpdates();
+      } catch (e) {
+        logger.error(
+          '[QSWhitelist2] Error fetching bloom filter updates from remote',
+          e,
+        );
+      }
     }
   }
 
@@ -51,6 +84,7 @@ export default class QSWhitelist2 {
     this.bloomFilter = new PackedBloomFilter(buffer);
     this.version = version;
     logger.debug(`[QSWhitelist2] Bloom filter fetched version ${version}`);
+    await this._persistBloomFilter();
   }
 
   async _checkForUpdates() {
@@ -62,7 +96,7 @@ export default class QSWhitelist2 {
     this._cleanLocalSafekey();
     if (
       useDiff === true &&
-      differenceInDays(parseISO(this.version)).diff(parseISO(version)) === -1
+      differenceInDays(parseISO(this.version), parseISO(version)) === -1
     ) {
       logger.debug(
         `[QSWhitelist2] Updating bloom filter to version ${version} from diff file`,
@@ -73,10 +107,24 @@ export default class QSWhitelist2 {
       );
       this.bloomFilter.update(buffer);
       this.version = version;
+      await this._persistBloomFilter();
       return;
     }
     logger.debug(`[QSWhitelist2] Updating bloom filter to version ${version}`);
     await this._fullUpdate(version);
+  }
+
+  async _persistBloomFilter() {
+    if (this.bloomFilter !== null) {
+      await this.storage.set(STORAGE_CONFIG_KEY, {
+        version: this.version,
+        localSafeKey: this.localSafeKey,
+      });
+      await this.storage.set(
+        STORAGE_BLOOM_FILTER_KEY,
+        this.bloomFilter.data.buffer,
+      );
+    }
   }
 
   _cleanLocalSafekey() {
@@ -95,6 +143,7 @@ export default class QSWhitelist2 {
 
   async destroy() {
     pacemaker.clearTimeout(this._updateChecker);
+    await this._persistBloomFilter();
   }
 
   isUpToDate() {
