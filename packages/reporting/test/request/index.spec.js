@@ -7,6 +7,7 @@
  */
 
 import * as chai from 'chai';
+import chrome from 'sinon-chrome';
 
 import testPages from './test-pages.js';
 
@@ -19,7 +20,9 @@ import { truncatedHash, default as md5 } from '../../src/md5.js';
 import Config from '../../src/request/config.js';
 import Database from '../../src/request/database.js';
 import RequestMonitor from '../../src/request/index.js';
-import WebrequestPipeline from '../../src/request/webrequst-pipeline.js';
+import WebrequestPipeline from '../../src/request/webrequest-pipeline/index.js';
+
+window.chrome = chrome;
 
 const resources = {
   'prob.json': probData,
@@ -90,7 +93,7 @@ describe('request/index', function () {
     await db.init();
     config = new Config({}, db);
     await config.init();
-    attrack = new RequestMonitor(db);
+    attrack = new RequestMonitor(db, pipeline);
     await attrack.init(config);
     attrack.qs_whitelist.isUpToDate = function () {
       return true;

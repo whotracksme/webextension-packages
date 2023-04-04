@@ -37,10 +37,9 @@ import {
   checkValidContext,
   checkSameGeneralDomain,
 } from './steps/check-context';
-import WebrequestPipeline from './webrequst-pipeline';
 
 export default class RequestMonitor {
-  constructor(db) {
+  constructor(db, webRequestPipeline) {
     this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
@@ -53,7 +52,7 @@ export default class RequestMonitor {
     this.tpEventInterval = null;
 
     // Web request pipelines
-    this.webRequestPipeline = new WebrequestPipeline();
+    this.webRequestPipeline = webRequestPipeline;
     this.pipelineSteps = {};
     this.pipelines = {};
 

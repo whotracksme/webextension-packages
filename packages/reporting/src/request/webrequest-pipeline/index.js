@@ -6,10 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import WebRequest, {
-  VALID_RESPONSE_PROPERTIES,
-  EXTRA_INFO_SPEC,
-} from './utils/webrequest';
+import { VALID_RESPONSE_PROPERTIES, EXTRA_INFO_SPEC } from './utils/webrequest';
 
 import Pipeline from './pipeline';
 import WebRequestContext from './webrequest-context';
@@ -86,13 +83,14 @@ class BlockingResponse {
   }
 }
 
-export default {
-  initialized: false,
-  requiresServices: ['pacemaker'],
+export default class WebrequestPipeline {
+  constructor() {
+    this.initialized = false;
+  }
 
   enabled() {
     return true;
-  },
+  }
 
   init(_settings, browser) {
     // Optionally enable CNAME-uncloaking.
@@ -109,7 +107,7 @@ export default {
     this.pageStore.init();
 
     this.initialized = true;
-  },
+  }
 
   unload() {
     if (!this.initialized) {
@@ -128,17 +126,17 @@ export default {
 
     this.pageStore.unload();
     this.initialized = false;
-  },
+  }
 
   unloadPipeline(event) {
     if (this.pipelines.has(event)) {
       const pipeline = this.pipelines.get(event);
       this[event] = undefined;
-      WebRequest[event].removeListener(pipeline.listener);
+      chrome.webRequest[event].removeListener(pipeline.listener);
       pipeline.pipeline.unload();
       this.pipelines.delete(event);
     }
-  },
+  }
 
   getPipeline(event) {
     if (this.pipelines.has(event)) {
@@ -146,7 +144,7 @@ export default {
     }
 
     // It might be that the platform does not support all listeners:
-    if (WebRequest[event] === undefined) {
+    if (chrome.webRequest[event] === undefined) {
       return null;
     }
 
@@ -234,52 +232,45 @@ export default {
     const urls = ['http://*/*', 'https://*/*'];
 
     if (extraInfoSpec === undefined) {
-      WebRequest[event].addListener(listener, { urls });
+      chrome.webRequest[event].addListener(listener, { urls });
     } else {
-      WebRequest[event].addListener(listener, { urls }, extraInfoSpec);
+      chrome.webRequest[event].addListener(listener, { urls }, extraInfoSpec);
     }
 
     return pipeline;
-  },
+  }
 
-  events: {},
+  addPipelineStep(stage, opts) {
+    if (this.initialized) {
+      const pipeline = this.getPipeline(stage);
+      if (pipeline === null) {
+        logger.error('WebRequest pipeline (add) does not have stage', stage);
+      } else {
+        pipeline.addPipelineStep(opts);
+      }
+    }
+  }
 
-  actions: {
-    addPipelineStep(stage, opts) {
-      if (this.initialized) {
-        const pipeline = this.getPipeline(stage);
-        if (pipeline === null) {
-          logger.error('WebRequest pipeline (add) does not have stage', stage);
-        } else {
-          pipeline.addPipelineStep(opts);
+  removePipelineStep(stage, name) {
+    if (this.initialized) {
+      const pipeline = this.getPipeline(stage);
+
+      if (pipeline === null) {
+        logger.error('WebRequest pipeline (remove) does not have stage', stage);
+      } else {
+        pipeline.removePipelineStep(name);
+        if (pipeline.length === 0) {
+          this.unloadPipeline(stage);
         }
       }
-    },
+    }
+  }
 
-    removePipelineStep(stage, name) {
-      if (this.initialized) {
-        const pipeline = this.getPipeline(stage);
+  getPageStore() {
+    return this.pageStore;
+  }
 
-        if (pipeline === null) {
-          logger.error(
-            'WebRequest pipeline (remove) does not have stage',
-            stage,
-          );
-        } else {
-          pipeline.removePipelineStep(name);
-          if (pipeline.length === 0) {
-            this.unloadPipeline(stage);
-          }
-        }
-      }
-    },
-
-    getPageStore() {
-      return this.pageStore;
-    },
-
-    getPageForTab(tabId) {
-      return this.pageStore.tabs.get(tabId);
-    },
-  },
-};
+  getPageForTab(tabId) {
+    return this.pageStore.tabs.get(tabId);
+  }
+}

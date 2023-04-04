@@ -13,6 +13,7 @@ import RequestMonitor from './request/index';
 import telemetry from './request/telemetry';
 import Config from './request/config';
 import Database from './request/database';
+import WebrequestPipeline from './request/webrequest-pipeline/index';
 
 /**
  * @namespace antitracking
@@ -24,10 +25,12 @@ export default class ReportingRequest {
    * @param settings
    */
   async init() {
+    this.webRequestPipeline = new WebrequestPipeline();
+    await this.webRequestPipeline.init();
     this.db = new Database();
     await this.db.init();
     this.config = new Config({}, this.db);
-    this.attrack = new RequestMonitor(this.db);
+    this.attrack = new RequestMonitor(this.db, this.webRequestPipeline);
 
     // indicates if the antitracking background is initiated
     this.enabled = true;
@@ -36,7 +39,7 @@ export default class ReportingRequest {
     telemetry.setCommunication({ communicaton: this.communicaton });
 
     // load config
-    this.attrack.webRequestPipeline.getPageStore().then((pageStore) => {
+    this.webRequestPipeline.getPageStore().then((pageStore) => {
       this.pageStore = pageStore;
     });
     return this.config.init().then(() => {
@@ -52,7 +55,7 @@ export default class ReportingRequest {
       this.attrack.unload();
       this.attrack = null;
     }
-
+    this.webRequestPipeline.unload();
     this.enabled = false;
   }
 
