@@ -91,7 +91,12 @@ describe('request/index', function () {
     await pipeline.init();
     const db = new Database();
     await db.init();
-    config = new Config({}, db);
+    config = new Config(
+      {
+        localWhitelistUrl: '/base/assets/request',
+      },
+      db,
+    );
     await config.init();
     attrack = new RequestMonitor(db, pipeline);
     await attrack.init(config);

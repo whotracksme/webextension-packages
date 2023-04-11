@@ -37,24 +37,35 @@ function base64ToArrayBuffer(base64) {
 }
 
 const createFetchMock =
-  ({ version, useDiff = false }) =>
-  async (url) => ({
-    ok: true,
-    // for config
-    async json() {
-      return {
-        version,
-        useDiff,
-      };
-    },
-    // for bloom filter
-    async arrayBuffer() {
-      if (url.includes('diff')) {
-        return base64ToArrayBuffer('AAAAAgp4yhHUIy5ERA==');
-      }
-      return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
-    },
-  });
+  ({ version, useDiff = false, local = true, cdn = true }) =>
+  async (url) => {
+    const fail = {
+      ok: false,
+    };
+    if (url.includes('local') && !local) {
+      return fail;
+    }
+    if (url.includes('cdn') && !cdn) {
+      return fail;
+    }
+    return {
+      ok: true,
+      // for config
+      async json() {
+        return {
+          version,
+          useDiff,
+        };
+      },
+      // for bloom filter
+      async arrayBuffer() {
+        if (url.includes('diff')) {
+          return base64ToArrayBuffer('AAAAAgp4yhHUIy5ERA==');
+        }
+        return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
+      },
+    };
+  };
 
 describe('request/qs-whitelist2', function () {
   let whitelist;
@@ -62,7 +73,11 @@ describe('request/qs-whitelist2', function () {
 
   beforeEach(async function () {
     sinon.stub(window, 'fetch').callsFake((url) => fetchMock(url));
-    whitelist = new QSWhitelist('https://cdn', new Map());
+    whitelist = new QSWhitelist({
+      storage: new Map(),
+      CDN_BASE_URL: 'https://cdn/',
+      LOCAL_BASE_URL: '/local',
+    });
   });
 
   afterEach(() => {
@@ -72,6 +87,32 @@ describe('request/qs-whitelist2', function () {
 
   context('loading', () => {
     afterEach(() => whitelist.destroy());
+
+    it('no local or remote bf', async () => {
+      await whitelist.init();
+      // bloom filter is an empty one
+      chai.expect(whitelist.bloomFilter).to.be.not.null;
+      chai.expect(whitelist.isTrackerDomain('example.com')).to.be.false;
+    });
+
+    it('local only', async () => {
+      const version = '2018-10-08';
+      whitelist.networkFetchEnabled = false;
+      fetchMock = createFetchMock({ version, cdn: false });
+      await whitelist.init();
+      chai.expect(whitelist.bloomFilter).to.not.be.null;
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      testWhitelist(whitelist);
+    });
+
+    it('local fallback when CDN fails', async () => {
+      const version = '2018-10-08';
+      fetchMock = createFetchMock({ version, cdn: false });
+      await whitelist.init();
+      chai.expect(whitelist.bloomFilter).to.not.be.null;
+      chai.expect(whitelist.getVersion()).to.eql({ day: version });
+      testWhitelist(whitelist);
+    });
 
     it('full load from remote', async () => {
       const version = '2018-10-08';

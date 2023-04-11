@@ -71,10 +71,18 @@ const REMOTELY_CONFIGURED = [
 ];
 
 export default class Config {
-  constructor({ defaults = DEFAULTS, whitelistUrl = WHITELIST2_URL }, db) {
+  constructor(
+    {
+      defaults = DEFAULTS,
+      remoteWhitelistUrl = WHITELIST2_URL,
+      localWhitelistUrl,
+    },
+    db,
+  ) {
     this.db = db;
     this.debugMode = false;
-    this.whitelistUrl = whitelistUrl;
+    this.remoteWhitelistUrl = remoteWhitelistUrl;
+    this.localWhitelistUrl = localWhitelistUrl;
 
     this.tokenDomainCountThreshold = 2;
     this.safeKeyExpire = 7;

@@ -24,11 +24,13 @@ async function fetchPackedBloomFilter(url) {
 }
 
 export default class QSWhitelist2 {
-  constructor(CDN_BASE_URL, storage) {
-    this.CDN_BASE_URL = CDN_BASE_URL;
+  constructor({ storage, CDN_BASE_URL, LOCAL_BASE_URL, networkFetchEnabled }) {
     this.bloomFilter = null;
     this.localSafeKey = {};
     this.storage = storage;
+    this.CDN_BASE_URL = CDN_BASE_URL;
+    this.LOCAL_BASE_URL = LOCAL_BASE_URL;
+    this.networkFetchEnabled = networkFetchEnabled !== false;
   }
 
   async init() {
@@ -55,6 +57,20 @@ export default class QSWhitelist2 {
           '[QSWhitelist2] Error fetching bloom filter from remote',
           e,
         );
+        this.networkFetchEnabled = false;
+        try {
+          await this._fullUpdate((await this._fetchUpdateURL()).version);
+        } catch (e2) {
+          // local fetch also failed
+          // create empty bloom filter
+          const n = 1000;
+          const k = 10;
+          const buffer = new ArrayBuffer(5 + n * 4);
+          const view = new DataView(buffer);
+          view.setUint32(0, n, false);
+          view.setUint8(4, k, false);
+          this.bloomFilter = new PackedBloomFilter(buffer);
+        }
       }
     } else {
       // we loaded the bloom filter, check for updates
@@ -70,7 +86,9 @@ export default class QSWhitelist2 {
   }
 
   async _fetchUpdateURL() {
-    const url = `${this.CDN_BASE_URL}/update.json.gz`;
+    const url = this.networkFetchEnabled
+      ? `${this.CDN_BASE_URL}/update.json.gz`
+      : `${this.LOCAL_BASE_URL}/update.json`;
     const request = await fetch(url);
     if (!request.ok) {
       throw new Error(request.error);
@@ -79,7 +97,9 @@ export default class QSWhitelist2 {
   }
 
   async _fullUpdate(version) {
-    const url = `${this.CDN_BASE_URL}/${version}/bloom_filter.gz`;
+    const url = this.networkFetchEnabled
+      ? `${this.CDN_BASE_URL}/${version}/bloom_filter.gz`
+      : `${this.LOCAL_BASE_URL}/bloom_filter.dat`;
     const buffer = await fetchPackedBloomFilter(url);
     this.bloomFilter = new PackedBloomFilter(buffer);
     this.version = version;

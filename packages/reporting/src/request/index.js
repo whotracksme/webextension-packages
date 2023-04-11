@@ -153,10 +153,11 @@ export default class RequestMonitor {
     // lazily propegate changes back to the browser's sqlite database.
     // Large static caches (e.g. token whitelist) are loaded from sqlite
     // Smaller caches (e.g. update timestamps) are kept in prefs
-    this.qs_whitelist = new QSWhitelist2(
-      this.config.whitelistUrl,
-      this.db.keyValue,
-    );
+    this.qs_whitelist = new QSWhitelist2({
+      storage: this.db.keyValue,
+      CDN_BASE_URL: this.config.remoteWhitelistUrl,
+      LOCAL_BASE_URL: this.config.localWhitelistUrl,
+    });
 
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
