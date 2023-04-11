@@ -31,6 +31,9 @@ export default class QSWhitelist2 {
     this.CDN_BASE_URL = CDN_BASE_URL;
     this.LOCAL_BASE_URL = LOCAL_BASE_URL;
     this.networkFetchEnabled = networkFetchEnabled !== false;
+    this.initPromise = new Promise((resolve) => {
+      this.initPromiseResolver = resolve;
+    });
   }
 
   async init() {
@@ -38,6 +41,7 @@ export default class QSWhitelist2 {
       const { version, localSafeKey } = await this.storage.get(
         STORAGE_CONFIG_KEY,
       );
+
       const buffer = await this.storage.get(STORAGE_BLOOM_FILTER_KEY);
       this.bloomFilter = new PackedBloomFilter(buffer);
       this.version = version;
@@ -83,6 +87,7 @@ export default class QSWhitelist2 {
         );
       }
     }
+    this.initPromiseResolver();
   }
 
   async _fetchUpdateURL() {

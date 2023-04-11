@@ -8,8 +8,10 @@
 
 import * as chai from 'chai';
 import chrome from 'sinon-chrome';
+import sinon from 'sinon';
 
 import testPages from './test-pages.js';
+import { createFetchMock } from '../helpers/fetch-mock';
 
 /* eslint no-param-reassign : off */
 
@@ -85,8 +87,11 @@ describe('request/index', function () {
   let attrack;
   let pipeline;
   let config;
+  let fetchMock = createFetchMock();
 
   beforeEach(async function () {
+    sinon.stub(window, 'fetch').callsFake((url) => fetchMock(url));
+
     pipeline = new WebrequestPipeline();
     await pipeline.init();
     const db = new Database();
@@ -100,12 +105,7 @@ describe('request/index', function () {
     await config.init();
     attrack = new RequestMonitor(db, pipeline);
     await attrack.init(config);
-    attrack.qs_whitelist.isUpToDate = function () {
-      return true;
-    };
-    attrack.qs_whitelist.isReady = function () {
-      return true;
-    };
+    await attrack.qs_whitelist.initPromise;
     config.cookieEnabled = false;
     config.qsEnabled = false;
     config.placeHolder = '<removed>';
@@ -114,6 +114,8 @@ describe('request/index', function () {
   afterEach(() => {
     attrack.unload();
     pipeline.unload();
+    window.fetch.restore();
+    fetchMock = async () => {};
   });
 
   function simulatePageLoad(pageSpec) {

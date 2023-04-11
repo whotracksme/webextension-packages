@@ -26,7 +26,7 @@ export const DEFAULTS = {
   safekeyValuesThreshold: 4,
   shortTokenLength: 6,
   placeHolder: SETTINGS.antitrackingPlaceholder,
-  cliqzHeader: SETTINGS.antitrackingHeader,
+  cliqzHeader: SETTINGS.antitrackingHeader || '',
   enabled: true,
   cookieEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
     ? SETTINGS[PROTECTION]
