@@ -173,57 +173,6 @@ describe('request/index', function () {
               }
             });
           });
-
-          context('anti-tracking disabled for source domain', function () {
-            beforeEach(function () {
-              attrack.urlWhitelist.changeState('localhost', 'hostname', 'add');
-            });
-
-            afterEach(function () {
-              attrack.urlWhitelist.changeState(
-                'localhost',
-                'hostname',
-                'remove',
-              );
-            });
-
-            it('allows all cookies on whitelisted site', function () {
-              const responses = simulatePageLoad(reqs);
-              responses.onBeforeRequest.forEach(expectNoModification);
-              responses.onBeforeSendHeaders.forEach(expectNoModification);
-            });
-          });
-
-          context('anti-tracking disabled for other domain', function () {
-            beforeEach(function () {
-              attrack.urlWhitelist.changeState(
-                'cliqztest2.de',
-                'hostname',
-                'add',
-              );
-            });
-
-            afterEach(function () {
-              attrack.urlWhitelist.changeState(
-                'cliqztest2.de',
-                'hostname',
-                'remove',
-              );
-            });
-
-            it('still blocks cookies on other domains', function () {
-              const responses = simulatePageLoad(reqs);
-              responses.onBeforeRequest.forEach(expectNoModification);
-              responses.onBeforeSendHeaders.forEach(function (resp) {
-                if (isThirdParty(resp.url)) {
-                  chai.expect(resp.response).to.not.be.undefined;
-                  chai.expect(resp.response).to.have.property('requestHeaders');
-                } else {
-                  expectNoModification(resp);
-                }
-              });
-            });
-          });
         });
       });
 
@@ -299,30 +248,6 @@ describe('request/index', function () {
               const responses = simulatePageLoad(reqs);
               responses.onBeforeRequest.forEach(expectNoModification);
               responses.onBeforeSendHeaders.forEach(expectNoModification);
-            });
-
-            context('anti-tracking disabled for source domain', function () {
-              beforeEach(function () {
-                attrack.urlWhitelist.changeState(
-                  'localhost',
-                  'hostname',
-                  'add',
-                );
-              });
-
-              afterEach(function () {
-                attrack.urlWhitelist.changeState(
-                  'localhost',
-                  'hostname',
-                  'remove',
-                );
-              });
-
-              it('allows all tokens on whitelisted site', function () {
-                const responses = simulatePageLoad(reqs);
-                responses.onBeforeRequest.forEach(expectNoModification);
-                responses.onBeforeSendHeaders.forEach(expectNoModification);
-              });
             });
           });
         });

@@ -105,18 +105,6 @@ export default class ReportingRequest {
     this.init(this.settings);
   }
 
-  isWhitelisted(url) {
-    return this.attrack.urlWhitelist.isWhitelisted(url);
-  }
-
-  changeWhitelistState(url, type, action) {
-    return this.attrack.urlWhitelist.changeState(url, type, action);
-  }
-
-  getWhitelistState(url) {
-    return this.attrack.urlWhitelist.getState(url);
-  }
-
   // legacy api for mobile
   isSourceWhitelisted(domain) {
     return this.actions.isWhitelisted(domain);
@@ -156,13 +144,6 @@ export default class ReportingRequest {
         domChecker.loadedTabs[url] = true;
         domChecker.recordLinksForURL(url);
         domChecker.clearDomLinks();
-      },
-      'antitracking:whitelist:add': function (hostname, isPrivateMode) {
-        this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'add');
-        this.attrack.logWhitelist(hostname);
-      },
-      'antitracking:whitelist:remove': function (hostname, isPrivateMode) {
-        this.attrack.urlWhitelist.changeState(hostname, 'hostname', 'remove');
       },
       'control-center:antitracking-strict': () => {
         prefs.set('attrackForceBlock', !prefs.get('attrackForceBlock', false));
