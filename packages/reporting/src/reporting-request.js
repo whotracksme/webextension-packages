@@ -6,24 +6,19 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-/* eslint no-param-reassign: 'off' */
-/* eslint func-names: 'off' */
-
 import RequestMonitor from './request/index';
 import telemetry from './request/telemetry';
 import Config from './request/config';
 import Database from './request/database';
 import WebrequestPipeline from './request/webrequest-pipeline/index';
+import events from './request/utils/events';
 
-/**
- * @namespace antitracking
- * @class Background
- */
 export default class ReportingRequest {
-  /**
-   * @method init
-   * @param settings
-   */
+  constructor(settings, communicaton) {
+    this.settings = settings;
+    this.communicaton = communicaton;
+  }
+
   async init() {
     this.webRequestPipeline = new WebrequestPipeline();
     await this.webRequestPipeline.init();
@@ -42,31 +37,30 @@ export default class ReportingRequest {
     this.webRequestPipeline.getPageStore().then((pageStore) => {
       this.pageStore = pageStore;
     });
+
+    this.pageStageListener = events.subscribe(
+      'webrequest-pipeline:stage',
+      (page) => {
+        this.attrack.onPageStaged(page);
+      },
+    );
+
     return this.config.init().then(() => {
       return this.attrack.init(this.config);
     });
   }
 
-  /**
-   * @method unload
-   */
   unload() {
+    if (this.pageStageListener) {
+      this.pageStageListener.unsubscribe();
+      this.pageStageListener = null;
+    }
     if (this.attrack !== null) {
       this.attrack.unload();
       this.attrack = null;
     }
     this.webRequestPipeline.unload();
     this.enabled = false;
-  }
-
-  /**
-   * State which will be passed to the content-script
-   */
-  getState() {
-    return {
-      cookieBlockingEnabled: this.config.cookieEnabled,
-      compatibilityList: this.config.compatibilityList,
-    };
   }
 
   addPipelineStep(stage, opts) {
@@ -89,82 +83,7 @@ export default class ReportingRequest {
     }
   }
 
-  getWhitelist() {
-    return this.attrack.qs_whitelist;
-  }
-
-  isEnabled() {
-    return this.enabled;
-  }
-
-  disable() {
-    this.unload();
-  }
-
-  enable() {
-    this.init(this.settings);
-  }
-
-  // legacy api for mobile
-  isSourceWhitelisted(domain) {
-    return this.actions.isWhitelisted(domain);
-  }
-
-  addSourceDomainToWhitelist(domain) {
-    return this.actions.changeWhitelistState(domain, 'hostname', 'add');
-  }
-
-  removeSourceDomainFromWhitelist(domain) {
-    return this.actions.changeWhitelistState(domain, 'hostname', 'remove');
-  }
-
-  pause() {
-    this.config.paused = true;
-  }
-
-  resume() {
-    this.config.paused = false;
-  }
-
-  setWhiteListCheck(fn) {
-    this.attrack.isWhitelisted = fn;
-  }
-
-  constructor(settings, communicaton) {
-    this.settings = settings;
-    this.communicaton = communicaton;
-    this.eventHandlers = {
-      'content:dom-ready': function onDomReady(url) {
-        const domChecker = this.attrack.pipelineSteps.domChecker;
-
-        if (!domChecker) {
-          return;
-        }
-
-        domChecker.loadedTabs[url] = true;
-        domChecker.recordLinksForURL(url);
-        domChecker.clearDomLinks();
-      },
-      'control-center:antitracking-strict': () => {
-        prefs.set('attrackForceBlock', !prefs.get('attrackForceBlock', false));
-      },
-      'core:mouse-down': function (...args) {
-        if (this.attrack.pipelineSteps.cookieContext) {
-          this.attrack.pipelineSteps.cookieContext.setContextFromEvent.call(
-            this.attrack.pipelineSteps.cookieContext,
-            ...args,
-          );
-        }
-      },
-      'control-center:antitracking-clearcache': function (isPrivateMode) {
-        this.attrack.clearCache();
-      },
-      'webrequest-pipeline:stage': function (page) {
-        // send page-load telemetry
-        if (this.attrack) {
-          this.attrack.onPageStaged(page);
-        }
-      },
-    };
+  recordClick(...args) {
+    this.attrack.pipelineSteps.cookieContext.setContextFromEvent(...args);
   }
 }
