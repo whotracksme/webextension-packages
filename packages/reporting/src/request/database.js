@@ -23,7 +23,7 @@ class IDBWrapper {
   }
 
   async uniqueKeys() {
-    return this.db.keys(this.tableName);
+    return this.db.getAllKeys(this.tableName);
   }
 
   async count() {
@@ -157,6 +157,7 @@ export default class AttrackDatabase {
           keysStore.createIndex('lastSent', 'lastSent');
           keysStore.createIndex('created', 'created');
 
+          db.createObjectStore('state');
           db.createObjectStore('keyval');
         }
 

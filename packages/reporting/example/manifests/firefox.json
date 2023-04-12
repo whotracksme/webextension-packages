@@ -14,10 +14,9 @@
     "windows"
   ],
   "background": {
-    "scripts": ["index.bundle.js"]
+    "service_worker": "index.bundle.js"
   },
   "host_permissions": [
-    "https://cdn.ghostery.com/*",
     "https://collector-hpn.ghostery.net/*",
     "http://localhost:3001/*",
     "http://*/*",

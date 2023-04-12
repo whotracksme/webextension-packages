@@ -9,15 +9,14 @@
   "permissions": [
     "webNavigation",
     "webRequest",
-    "webRequestBlocking",
     "tabs",
     "windows"
   ],
   "background": {
-    "scripts": ["index.bundle.js"]
+    "service_worker": "index.bundle.js",
+    "type": "module"
   },
   "host_permissions": [
-    "https://cdn.ghostery.com/*",
     "https://collector-hpn.ghostery.net/*",
     "http://localhost:3001/*",
     "http://*/*",

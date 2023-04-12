@@ -16,7 +16,7 @@ import * as datetime from './time';
 export default class BlockLog {
   constructor(config, db) {
     this.config = config;
-
+    this.db = db;
     this.blocked = db.blocked;
     this.localBlocked = db.localBlocked;
   }

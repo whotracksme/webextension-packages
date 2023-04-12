@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "web-ext run -s ./example -t chromium",
+    "start": "cp example/manifests/chromium.json example/manifest.json && web-ext run -s ./example -t chromium",
+    "start.firefox": "cp example/manifests/firefox.json example/manifest.json && web-ext run -s ./example -t firefox-desktop",
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "test": "karma start --single-run --browsers ChromeHeadless karma.conf.cjs"

@@ -1,6 +1,6 @@
 {
   "env": {
-    "es2020": true,
+    "es2022": true,
     "browser": true,
     "serviceworker": true,
     "webextensions": true,

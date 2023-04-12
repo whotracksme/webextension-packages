@@ -14,29 +14,22 @@ import WebrequestPipeline from './request/webrequest-pipeline/index';
 import events from './request/utils/events';
 
 export default class ReportingRequest {
-  constructor(settings, communicaton) {
+  constructor(settings, communication) {
     this.settings = settings;
-    this.communicaton = communicaton;
+    this.communication = communication;
   }
 
   async init() {
     this.webRequestPipeline = new WebrequestPipeline();
-    await this.webRequestPipeline.init();
     this.db = new Database();
+
+    await this.webRequestPipeline.init();
     await this.db.init();
-    this.config = new Config({}, this.db);
+
+    this.config = new Config(this.settings, this.db);
     this.attrack = new RequestMonitor(this.db, this.webRequestPipeline);
 
-    // indicates if the antitracking background is initiated
-    this.enabled = true;
-    this.clickCache = {};
-
-    telemetry.setCommunication({ communicaton: this.communicaton });
-
-    // load config
-    this.webRequestPipeline.getPageStore().then((pageStore) => {
-      this.pageStore = pageStore;
-    });
+    telemetry.setCommunication({ communication: this.communication });
 
     this.pageStageListener = events.subscribe(
       'webrequest-pipeline:stage',
@@ -45,9 +38,8 @@ export default class ReportingRequest {
       },
     );
 
-    return this.config.init().then(() => {
-      return this.attrack.init(this.config);
-    });
+    await this.config.init();
+    await this.attrack.init(this.config);
   }
 
   unload() {
@@ -60,7 +52,6 @@ export default class ReportingRequest {
       this.attrack = null;
     }
     this.webRequestPipeline.unload();
-    this.enabled = false;
   }
 
   addPipelineStep(stage, opts) {

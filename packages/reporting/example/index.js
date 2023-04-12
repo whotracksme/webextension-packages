@@ -23,7 +23,9 @@ const storage = {
 };
 
 const communication = {
-  send() {},
+  send(msg) {
+    console.warn('[Communication]', msg);
+  },
   getTrustedUtcTime() {
     return Date.now();
   },
@@ -33,9 +35,14 @@ const config = {
   ALLOWED_COUNTRY_CODES: ['de'],
   PATTERNS_URL: '',
   CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
+  request: {
+    configUrl: 'https://cdn.ghostery.com/antitracking/config.json',
+    remoteWhitelistUrl: 'https://cdn.ghostery.com/antitracking/whitelist/2',
+    localWhitelistUrl: '/base/assets/request',
+  },
 };
 
-const requestMonitor = new RequestMonitor(config, communication);
+const requestMonitor = new RequestMonitor(config.request, communication);
 
 const reporting = new Reporting({
   config,

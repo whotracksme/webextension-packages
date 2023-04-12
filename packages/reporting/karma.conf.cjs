@@ -3,10 +3,7 @@ const rollupPreprocessor = require('./rollup.common-config.cjs');
 module.exports = function (config) {
   config.set({
     frameworks: ['mocha', 'chai', 'sinon'],
-    files: [
-      { pattern: 'test/index.js', watched: false },
-      { pattern: 'test/assets/**/*', watched: false, included: false },
-    ],
+    files: [{ pattern: 'test/index.js', watched: false }],
     preprocessors: {
       'test/index.js': ['rollup'],
     },

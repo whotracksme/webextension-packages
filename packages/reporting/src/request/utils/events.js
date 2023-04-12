@@ -20,8 +20,8 @@ export class EventEmitter {
       return [...subscribers, listener];
     });
     return {
-      unsubscribe() {
-        listener.update(event, (subscribers) => {
+      unsubscribe: () => {
+        this.listeners.update(event, (subscribers) => {
           return subscribers.filter((other) => other !== listener);
         });
       },

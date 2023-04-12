@@ -9,11 +9,6 @@
 import { getConfigTs } from './time';
 import pacemaker from './utils/pacemaker';
 
-const SETTINGS = {};
-const CONFIG_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/config.json`;
-const WHITELIST2_URL = `${SETTINGS.ANTITRACKING_BASE_URL}/whitelist/2`;
-const PROTECTION = 'antitrackingProtectionEnabled';
-
 export const VERSION = '0.102';
 
 export const COOKIE_MODE = {
@@ -25,37 +20,17 @@ export const COOKIE_MODE = {
 export const DEFAULTS = {
   safekeyValuesThreshold: 4,
   shortTokenLength: 6,
-  placeHolder: SETTINGS.antitrackingPlaceholder,
-  cliqzHeader: SETTINGS.antitrackingHeader || '',
+  placeHolder: 'ghostery',
+  cliqzHeader: 'Ghostery-AntiTracking',
   enabled: true,
-  cookieEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
-    ? SETTINGS[PROTECTION]
-    : true,
-  qsEnabled: Object.prototype.hasOwnProperty.call(SETTINGS, PROTECTION)
-    ? SETTINGS[PROTECTION]
-    : true,
+  cookieEnabled: true,
+  qsEnabled: true,
   bloomFilterEnabled: true,
   sendAntiTrackingHeader: true,
   blockCookieNewToken: false,
   tpDomainDepth: 2,
   firstPartyIsolation: false,
   cookieMode: COOKIE_MODE.THIRD_PARTY,
-};
-
-export const PREFS = {
-  enabled: 'modules.antitracking.enabled',
-  cookieEnabled: 'attrackBlockCookieTracking',
-  qsEnabled: 'attrackRemoveQueryStringTracking',
-  fingerprintEnabled: 'attrackCanvasFingerprintTracking',
-  referrerEnabled: 'attrackRefererTracking',
-  trackerTxtEnabled: 'trackerTxt',
-  bloomFilterEnabled: 'attrackBloomFilter',
-  forceBlockEnabled: 'attrackForceBlock',
-  overrideUserAgent: 'attrackOverrideUserAgent',
-  cookieTrustReferers: 'attrackCookieTrustReferers',
-  sendAntiTrackingHeader: 'attrackSendHeader',
-  firstPartyIsolation: 'attrack.firstPartyIsolation',
-  cookieMode: 'attrack.cookieMode',
 };
 
 /**
@@ -72,22 +47,30 @@ const REMOTELY_CONFIGURED = [
 
 export default class Config {
   constructor(
-    {
-      defaults = DEFAULTS,
-      remoteWhitelistUrl = WHITELIST2_URL,
-      localWhitelistUrl,
-    },
+    { defaults = DEFAULTS, configUrl, remoteWhitelistUrl, localWhitelistUrl },
     db,
   ) {
     this.db = db;
     this.debugMode = false;
+
+    if (!configUrl) {
+      throw new Error('Config requires configUrl');
+    }
+    this.configUrl = configUrl;
+
+    if (!remoteWhitelistUrl) {
+      throw new Error('Config requires remoteWhitelistUrl');
+    }
     this.remoteWhitelistUrl = remoteWhitelistUrl;
+
+    if (!localWhitelistUrl) {
+      throw new Error('Config requires localWhitelistUrl');
+    }
     this.localWhitelistUrl = localWhitelistUrl;
 
     this.tokenDomainCountThreshold = 2;
     this.safeKeyExpire = 7;
     this.localBlockExpire = 24;
-    this.localBaseUrl = `${SETTINGS.baseURL}antitracking`;
 
     Object.assign(this, defaults);
 
@@ -109,9 +92,12 @@ export default class Config {
       this._updateConfig(lastUpdate['config']);
       return;
     }
-    const fetchUrl = CONFIG_URL;
     try {
-      const conf = await (await fetch(fetchUrl)).json();
+      const response = await fetch(this.configUrl);
+      if (!response.ok) {
+        throw new Error(response.text());
+      }
+      const conf = await response.json();
       this._updateConfig(conf);
       await this.db.keyValue.getValue('config', {
         lastUpdate: day,

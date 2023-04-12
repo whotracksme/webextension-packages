@@ -32,7 +32,7 @@ function msgSanitize(msg, channel) {
 
 export default {
   telemetry(payl) {
-    if (!this.provider) {
+    if (!this.communication) {
       logger.error('No provider provider loaded');
       return;
     }

@@ -26,32 +26,6 @@ import WebrequestPipeline from '../../src/request/webrequest-pipeline/index.js';
 
 window.chrome = chrome;
 
-const resources = {
-  'prob.json': probData,
-  'ipv4_btree_packed.json': {
-    tree: [],
-    countries: [],
-    width: 1,
-  },
-};
-
-class MockResourceStorage {
-  constructor(path) {
-    this.name = path[path.length - 1];
-  }
-
-  load() {
-    if (resources[this.name]) {
-      return Promise.resolve(JSON.stringify(resources[this.name]));
-    }
-    return Promise.reject(new Error(`load rejected for ${this.name}`));
-  }
-
-  save() {}
-
-  delete() {}
-}
-
 const THIRD_PARTY_HOST1 = '127.0.0.1:60508';
 const THIRD_PARTY_HOST2 = 'cliqztest2.de:60508';
 
@@ -78,11 +52,6 @@ function expectNoModification(resp) {
   }
 }
 
-const listenerStub = {
-  addListener() {},
-  removeListener() {},
-};
-
 describe('request/index', function () {
   let attrack;
   let pipeline;
@@ -98,6 +67,8 @@ describe('request/index', function () {
     await db.init();
     config = new Config(
       {
+        configUrl: 'http://cdn',
+        remoteWhitelistUrl: 'http://cdn',
         localWhitelistUrl: '/base/assets/request',
       },
       db,

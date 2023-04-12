@@ -9,6 +9,9 @@
 /* eslint no-param-reassign: off */
 
 import * as chai from 'chai';
+import chrome from 'sinon-chrome';
+
+window.chrome = chrome;
 
 import Pipeline from '../../../src/request/webrequest-pipeline/pipeline';
 
