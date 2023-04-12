@@ -5,6 +5,10 @@ export class EventEmitter {
     this.listeners = new DefaultMap(() => []);
   }
 
+  clean_channel(event) {
+    this.listeners.update(event, () => []);
+  }
+
   pub(event, value) {
     this.listeners.get(event).forEach((listener) => {
       try {
