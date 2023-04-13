@@ -16,6 +16,7 @@
     "@rollup/plugin-json": "^5.0.0",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
     "fast-check": "^3.3.0",
     "karma": "^6.4.1",
     "karma-chai": "^0.1.0",
@@ -29,6 +30,7 @@
     "rollup-plugin-polyfill-node": "^0.8.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "sinon": "^13.0.2",
+    "sinon-chai": "^3.7.0",
     "sinon-chrome": "^3.0.1",
     "web-ext": "^6.8.0"
   },

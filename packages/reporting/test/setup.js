@@ -1,3 +1,10 @@
-import logger from '../src/logger.js';
+import * as chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import sinonChai from 'sinon-chai';
 
-logger.disable();
+import { setLogLevel } from '../src/logger.js';
+
+chai.use(chaiAsPromised);
+chai.use(sinonChai);
+
+setLogLevel('off');

@@ -65,7 +65,7 @@ class Task {
   }
 }
 
-class Pacemaker {
+export class Pacemaker {
   constructor() {
     this.freq = null;
     this.timer = null;
