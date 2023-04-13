@@ -20,3 +20,4 @@ import './request/utils/bloom-filter-packed.spec.js';
 import './request/utils/events.spec.js';
 import './request/utils/pacemaker.spec.js';
 import './request/utils/tldts.spec.js';
+import './request/utils/url.spec.js';
