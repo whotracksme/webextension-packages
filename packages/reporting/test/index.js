@@ -1,10 +1,5 @@
 import './setup.js';
-/**
- * reporting.spec.js has a tendency to fail due to cssom
- * race condition during commonjs module init
- */
 
-import 'cssom';
 import './reporting.spec.js';
 import './duplicate-detector.spec.js';
 import './patterns.spec.js';
@@ -24,3 +19,4 @@ import './request/index.spec.js';
 import './request/utils/bloom-filter-packed.spec.js';
 import './request/utils/events.spec.js';
 import './request/utils/pacemaker.spec.js';
+import './request/utils/tldts.spec.js';
