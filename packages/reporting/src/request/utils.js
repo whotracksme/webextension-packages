@@ -9,31 +9,6 @@
 /* eslint no-param-reassign: 'off' */
 /* eslint no-restricted-syntax: 'off' */
 
-import { VERSION } from './config';
-import { getHourTimestamp } from './time';
-
-function getCountryCode() {
-  // TODO @chrmod: wire ctry provider
-}
-
-export function generatePayload(data, ts, instant, attachAttrs) {
-  const payl = {
-    data,
-    ts,
-  };
-  if (instant) {
-    payl.instant = true;
-  }
-  if (attachAttrs) {
-    for (const k in attachAttrs) {
-      if (Object.prototype.hasOwnProperty.call(attachAttrs, k)) {
-        payl[k] = attachAttrs[k];
-      }
-    }
-  }
-  return payl;
-}
-
 export function cleanTimestampCache(cacheObj, timeout, currTime) {
   const keys = Object.keys(cacheObj);
   keys.forEach((k) => {
@@ -72,12 +47,4 @@ export function shuffle(s) {
     a[j] = tmp;
   }
   return a.join('');
-}
-
-export function generateAttrackPayload(data, ts, qsVersion) {
-  const extraAttrs = qsVersion;
-  extraAttrs.ver = VERSION;
-  extraAttrs.ctry = getCountryCode();
-  ts = ts || getHourTimestamp();
-  return generatePayload(data, ts, false, extraAttrs);
 }

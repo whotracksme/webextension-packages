@@ -65,6 +65,7 @@ export default class QSWhitelist2 {
         try {
           await this._fullUpdate((await this._fetchUpdateURL()).version);
         } catch (e2) {
+          logger.info('[QSWhitelist2] failed to load bloom filter');
           // local fetch also failed
           // create empty bloom filter
           const n = 1000;

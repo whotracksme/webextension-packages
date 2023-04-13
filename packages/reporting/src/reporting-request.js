@@ -7,16 +7,17 @@
  */
 
 import RequestMonitor from './request/index';
-import telemetry from './request/telemetry';
 import Config from './request/config';
 import Database from './request/database';
 import WebrequestPipeline from './request/webrequest-pipeline/index';
 import events from './request/utils/events';
 
 export default class ReportingRequest {
-  constructor(settings, communication) {
+  constructor(settings, { communication, countryProvider, trustedClock }) {
     this.settings = settings;
     this.communication = communication;
+    this.countryProvider = countryProvider;
+    this.trustedClock = trustedClock;
   }
 
   async init() {
@@ -26,10 +27,17 @@ export default class ReportingRequest {
     await this.webRequestPipeline.init();
     await this.db.init();
 
-    this.config = new Config(this.settings, this.db);
-    this.attrack = new RequestMonitor(this.db, this.webRequestPipeline);
-
-    telemetry.setCommunication({ communication: this.communication });
+    this.config = new Config(this.settings, {
+      db: this.db,
+      trustedClock: this.trustedClock,
+    });
+    this.attrack = new RequestMonitor(this.settings, {
+      db: this.db,
+      webRequestPipeline: this.webRequestPipeline,
+      trustedClock: this.trustedClock,
+      countryProvider: this.countryProvider,
+      communication: this.communication,
+    });
 
     this.pageStageListener = events.subscribe(
       'webrequest-pipeline:stage',

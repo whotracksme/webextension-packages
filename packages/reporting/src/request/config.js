@@ -6,8 +6,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { getConfigTs } from './time';
 import pacemaker from './utils/pacemaker';
+import logger from '../logger';
 
 export const VERSION = '0.102';
 
@@ -48,9 +48,10 @@ const REMOTELY_CONFIGURED = [
 export default class Config {
   constructor(
     { defaults = DEFAULTS, configUrl, remoteWhitelistUrl, localWhitelistUrl },
-    db,
+    { db, trustedClock },
   ) {
     this.db = db;
+    this.trustedClock = trustedClock;
     this.debugMode = false;
 
     if (!configUrl) {
@@ -86,7 +87,7 @@ export default class Config {
   async _loadConfig() {
     await this.db.ready;
     const lastUpdate = (await this.db.keyValue.get('config')) || {};
-    const day = getConfigTs();
+    const day = this.trustedClock.getTimeAsYYYYMMDD();
     // use stored config if it was already updated today
     if (lastUpdate['config'] && lastUpdate['lastUpdate'] === day) {
       this._updateConfig(lastUpdate['config']);
@@ -99,11 +100,12 @@ export default class Config {
       }
       const conf = await response.json();
       this._updateConfig(conf);
-      await this.db.keyValue.getValue('config', {
+      await this.db.keyValue.set('config', {
         lastUpdate: day,
         config: conf,
       });
     } catch (e) {
+      logger.error('could not load request config', e);
       pacemaker.setTimeout(this._loadConfig.bind(this), 30000);
     }
   }

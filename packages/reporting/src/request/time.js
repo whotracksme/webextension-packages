@@ -34,11 +34,6 @@ export function getTime() {
   return _ts;
 }
 
-export function getConfigTs() {
-  // TODO @chrmod: use trusted time
-  return getTime().substring(0, 8);
-}
-
 export function newUTCDate() {
   const dayHour = getTime();
   return new Date(
@@ -61,8 +56,4 @@ export function dateString(date) {
 export function hourString(date) {
   const hour = date.getUTCHours().toString();
   return dateString(date) + (hour[1] ? hour : `0${hour[0]}`);
-}
-
-export function getHourTimestamp() {
-  return getTime().slice(0, 10);
 }

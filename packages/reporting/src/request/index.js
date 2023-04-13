@@ -19,12 +19,12 @@ import logger from '../logger';
 import * as datetime from './time';
 import QSWhitelist2 from './qs-whitelist2';
 import TempSet from './temp-set';
-import telemetry from './telemetry';
 import { HashProb, shouldCheckToken } from './hash';
 import { VERSION, COOKIE_MODE } from './config';
-import { generateAttrackPayload, shuffle } from './utils';
+import { shuffle } from './utils';
 import buildPageLoadObject from './page-telemetry';
 import getTrackingStatus from './dnt';
+import random from '../random';
 
 import BlockRules from './steps/block-rules';
 import CookieContext from './steps/cookie-context';
@@ -39,7 +39,15 @@ import {
 } from './steps/check-context';
 
 export default class RequestMonitor {
-  constructor(db, webRequestPipeline) {
+  constructor(
+    settings,
+    { db, webRequestPipeline, trustedClock, countryProvider, communication },
+  ) {
+    this.setting = settings;
+    this.communication = communication;
+    this.trustedClock = trustedClock;
+    this.webRequestPipeline = webRequestPipeline;
+    this.countryProvider = countryProvider;
     this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
@@ -52,7 +60,6 @@ export default class RequestMonitor {
     this.tpEventInterval = null;
 
     // Web request pipelines
-    this.webRequestPipeline = webRequestPipeline;
     this.pipelineSteps = {};
     this.pipelines = {};
 
@@ -125,18 +132,24 @@ export default class RequestMonitor {
     });
   }
 
-  telemetry({ message, raw = false, ts = undefined }) {
-    if (!message.type) {
-      message.type = telemetry.msgType;
+  telemetry(message) {
+    if (!this.communication) {
+      logger.error('No provider provider loaded');
+      return;
     }
-    if (raw !== true) {
-      message.payload = generateAttrackPayload(
-        message.payload,
-        ts,
-        this.qs_whitelist.getVersion(),
-      );
-    }
-    telemetry.telemetry(message);
+
+    message.type = 'wtm.request';
+    message.platform = this.settings.platform;
+    message.userAgent = this.settings.userAgent;
+    message.ts = this.trustedClock.getTimeAsYYYYMMDD();
+    message['anti-duplicates'] = Math.floor(random() * 10000000);
+
+    message.payload.ver = VERSION;
+    message.payload.day = this.qs_whitelist.getVersion().day;
+    message.payload.ts = this.trustedClock.getTimeAsYYYYMMDDHH();
+    message.payload.ctry = this.countryProvider.getSafeCountryCode();
+
+    this.communication.send(message);
   }
 
   /** Global module initialisation.
@@ -186,6 +199,7 @@ export default class RequestMonitor {
       this.db,
       this.shouldCheckToken.bind(this),
       this.config.tokenTelemetry,
+      this.trustedClock,
     );
 
     steps.tokenExaminer = new TokenExaminer(
@@ -852,17 +866,6 @@ export default class RequestMonitor {
     return true;
   }
 
-  logWhitelist(payload) {
-    this.telemetry({
-      message: {
-        type: telemetry.msgType,
-        action: 'attrack.whitelistDomain',
-        payload,
-      },
-      raw: true,
-    });
-  }
-
   clearCache() {
     if (this.pipelineSteps.tokenExaminer) {
       this.pipelineSteps.tokenExaminer.clearCache();
@@ -883,17 +886,9 @@ export default class RequestMonitor {
         payload.scheme.startsWith('http') &&
         Object.keys(payload.tps).length > 0
       ) {
-        const wrappedPayload = generateAttrackPayload([payload], undefined, {
-          conf: {},
-          addons: this.similarAddon,
-        });
         this.telemetry({
-          message: {
-            type: telemetry.msgType,
-            action: 'attrack.tp_events',
-            payload: wrappedPayload,
-          },
-          raw: true,
+          action: 'attrack.tp_events',
+          payload,
         });
       }
     }

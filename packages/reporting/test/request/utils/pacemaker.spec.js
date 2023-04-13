@@ -194,7 +194,9 @@ describe('core/services/pacemaker', function () {
     });
 
     it('throwing task does not stop pacemaker', () => {
-      const spy = sinon.spy(() => { throw new Error('boom'); });
+      const spy = sinon.spy(() => {
+        throw new Error('boom');
+      });
       const task = pacemaker.register(spy, { timeout: 1 });
 
       expect(spy).not.to.have.been.called;

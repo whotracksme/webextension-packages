@@ -9,7 +9,6 @@
 import md5, { truncatedHash } from '../../md5';
 import DefaultMap from '../utils/default-map';
 import logger from '../../logger';
-import { getConfigTs } from '../time';
 import { EventEmitter as Subject } from '../utils/events';
 
 const DEFAULT_CONFIG = {
@@ -31,16 +30,13 @@ const DEFAULT_CONFIG = {
   LOW_COUNT_DISCARD_AGE: 1000 * 60 * 60 * 24 * 3,
 };
 
-function currentDay() {
-  return getConfigTs();
-}
-
 /**
  * Abstract part of token/key processing logic.
  */
 class CachedEntryPipeline {
-  constructor(db, primaryKey, options) {
+  constructor(db, trustedClock, primaryKey, options) {
     this.db = db;
+    this.trustedClock = trustedClock;
     this.cache = new DefaultMap(() => this.newEntry());
     this.primaryKey = primaryKey;
     this.options = options;
@@ -109,7 +105,7 @@ class CachedEntryPipeline {
         // merge existing entries from DB
         await this.loadBatchIntoCache(batch);
         // extract message and clear
-        const today = currentDay();
+        const today = this.trustedClock.getTimeAsYYYYMMDD();
         const toBeSent = batch
           .map((token) => [token, this.cache.get(token)])
           .filter(([, { lastSent }]) => lastSent !== today);
@@ -127,7 +123,7 @@ class CachedEntryPipeline {
           .filter((tup) => !overflowKeys.has(tup[0]))
           .forEach(([, _entry]) => {
             const entry = _entry;
-            entry.lastSent = currentDay();
+            entry.lastSent = this.trustedClock.getTimeAsYYYYMMDD();
           });
 
         await this.saveBatchToDb(batch);
@@ -158,7 +154,7 @@ class CachedEntryPipeline {
         (this.options.TOKEN_BATCH_SIZE * this.options.TOKEN_MESSAGE_SIZE),
     );
     // get values from the database which have not yet been sent today
-    const today = currentDay();
+    const today = this.trustedClock.getTimeAsYYYYMMDD();
     const now = Date.now();
     const notSentToday = (await this.db.where({ primaryKey: 'lastSent' }))
       .filter((token) => token.lastSent !== today)
@@ -221,8 +217,8 @@ class CachedEntryPipeline {
 }
 
 export class TokenPipeline extends CachedEntryPipeline {
-  constructor(db, options) {
-    super(db, 'token', options);
+  constructor(db, trustedClock, options) {
+    super(db, trustedClock, 'token', options);
     this.name = 'tokens';
   }
 
@@ -291,7 +287,7 @@ export class TokenPipeline extends CachedEntryPipeline {
 
   createMessagePayload([token, stats]) {
     const msg = {
-      ts: currentDay(),
+      ts: this.trustedClock.getTimeAsYYYYMMDD(),
       token,
       safe: stats.safe,
       sites: stats.sites.size,
@@ -311,8 +307,8 @@ export class TokenPipeline extends CachedEntryPipeline {
 }
 
 export class KeyPipeline extends CachedEntryPipeline {
-  constructor(db, options) {
-    super(db, 'hash', options);
+  constructor(db, trustedClock, options) {
+    super(db, trustedClock, 'hash', options);
     this.name = 'keys';
   }
 
@@ -370,7 +366,7 @@ export class KeyPipeline extends CachedEntryPipeline {
           const unsafe = [...tokens.values()].some((t) => t === false);
           const extraKey = unsafe ? `${stats.tracker}:${stats.key}` : '';
           groupedMessages.get(`${site}${extraKey}`).push({
-            ts: currentDay(),
+            ts: this.trustedClock.getTimeAsYYYYMMDD(),
             tracker: stats.tracker,
             key: stats.key,
             site,
@@ -420,6 +416,7 @@ export default class TokenTelemetry {
     database,
     shouldCheckToken,
     options,
+    trustedClock,
   ) {
     const opts = { ...DEFAULT_CONFIG, ...options };
     Object.keys(DEFAULT_CONFIG).forEach((confKey) => {
@@ -428,13 +425,14 @@ export default class TokenTelemetry {
     this.telemetry = telemetry;
     this.qsWhitelist = qsWhitelist;
     this.config = config;
+    this.trustedClock = trustedClock;
     this.shouldCheckToken = shouldCheckToken;
     this.subjectTokens = new Subject();
     this.tokenSendQueue = new Subject();
     this.keySendQueue = new Subject();
 
-    this.tokens = new TokenPipeline(database.tokens, opts);
-    this.keys = new KeyPipeline(database.keys, opts);
+    this.tokens = new TokenPipeline(database.tokens, trustedClock, opts);
+    this.keys = new KeyPipeline(database.keys, trustedClock, opts);
   }
 
   init() {
@@ -452,7 +450,7 @@ export default class TokenTelemetry {
     // token subscription pipeline takes batches of tokens (grouped by value)
     // caches their state, and pushes values for sending once they reach a sending
     // threshold.
-    const today = currentDay();
+    const today = this.trustedClock.getTimeAsYYYYMMDD();
     filteredTokens.subscribe((batch) => {
       // process a batch of entries for a specific token
       const token = batch[0].token;
@@ -560,7 +558,7 @@ export default class TokenTelemetry {
         this.qsWhitelist.isSafeToken(thirdPartyGeneralDomain, token);
 
       this.subjectTokens.pub({
-        day: currentDay(),
+        day: this.trustedClock.getTimeAsYYYYMMDD(),
         key,
         token,
         tp: thirdPartyGeneralDomain,

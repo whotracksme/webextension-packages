@@ -10,7 +10,10 @@
  */
 import Reporting from '../src/index.js';
 import RequestMonitor from '../src/reporting-request.js';
+import { setLogLevel } from '../src/logger.js';
 import rules from './rules.json';
+
+setLogLevel('debug');
 
 const storage = {
   storage: {},
@@ -26,36 +29,49 @@ const communication = {
   send(msg) {
     console.warn('[Communication]', msg);
   },
-  getTrustedUtcTime() {
-    return Date.now();
+  trustedClock: {
+    getTimeAsYYYYMMDD() {
+      return '';
+    },
+    getTimeAsYYYYMMDDHH() {
+      return '';
+    },
   },
 };
 
 const config = {
-  ALLOWED_COUNTRY_CODES: ['de'],
-  PATTERNS_URL: '',
-  CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
+  url: {
+    ALLOWED_COUNTRY_CODES: ['de'],
+    PATTERNS_URL: '',
+    CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
+  },
   request: {
+    userAgent: 'ch',
+    platform: '',
     configUrl: 'https://cdn.ghostery.com/antitracking/config.json',
     remoteWhitelistUrl: 'https://cdn.ghostery.com/antitracking/whitelist/2',
     localWhitelistUrl: '/base/assets/request',
   },
 };
 
-const requestMonitor = new RequestMonitor(config.request, communication);
-
 const reporting = new Reporting({
-  config,
+  config: config.url,
   storage,
   communication,
 });
 
+const requestMonitor = new RequestMonitor(config.request, {
+  communication,
+  countryProvider: reporting.countryProvider,
+  trustedClock: communication.trustedClock,
+});
+
 (async function () {
-  await requestMonitor.init();
   await reporting.init();
   await reporting.patterns.updatePatterns(rules);
   await reporting.analyzeUrl('https://www.google.com/search?q=shoes');
   await reporting.processPendingJobs();
+  await requestMonitor.init();
 })();
 
 globalThis.reporting = reporting;

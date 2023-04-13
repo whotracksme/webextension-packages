@@ -41,25 +41,13 @@ export class Logger {
     this._error = console.error || noop;
 
     if (prefix) {
-      this._debug = this._debug.bind(null, prefix);
-      this._log = this._log.bind(null, prefix);
-      this._warning = this._warning.bind(null, prefix);
-      this._error = this._error.bind(null, prefix);
+      this._debug = this._debug.bind(null, `${this.prefix} debug:`);
+      this._log = this._log.bind(null, `${this.prefix}   log:`);
+      this._warning = this._warning.bind(null, `${this.prefix}  warn:`);
+      this._error = this._error.bind(null, `${this.prefix} error:`);
     }
 
     loggers.add(this);
-  }
-
-  withObserverFunc(consoleFunc, level) {
-    return (...args) => {
-      let callerLoc = new Error().stack.split('\n')[1];
-      const i = callerLoc.lastIndexOf('/');
-      if (i >= 0) {
-        callerLoc = callerLoc.substring(i + 1, callerLoc.length - 1);
-      }
-      const augmentedArgs = [level, ...args, callerLoc];
-      consoleFunc(...augmentedArgs);
-    };
   }
 
   setLevel(level) {
@@ -73,7 +61,7 @@ export class Logger {
 
   get debug() {
     if (this.isEnabledFor('debug')) {
-      return this.withObserverFunc(this._debug, 'debug');
+      return this._debug;
     }
     return noop;
   }
@@ -84,7 +72,7 @@ export class Logger {
 
   get log() {
     if (this.isEnabledFor('log')) {
-      return this.withObserverFunc(this._log, 'log');
+      return this._log;
     }
     return noop;
   }
@@ -95,14 +83,14 @@ export class Logger {
 
   get warning() {
     if (this.isEnabledFor('warn')) {
-      return this.withObserverFunc(this._warning, 'warning');
+      return this._warning;
     }
     return noop;
   }
 
   get error() {
     if (this.isEnabledFor('error')) {
-      return this.withObserverFunc(this._error, 'error');
+      return this._error;
     }
     return noop;
   }

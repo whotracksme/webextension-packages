@@ -15,8 +15,6 @@ import { createFetchMock } from '../helpers/fetch-mock';
 
 /* eslint no-param-reassign : off */
 
-import probData from '../../src/request/resources/prob.js';
-
 import { truncatedHash, default as md5 } from '../../src/md5.js';
 
 import Config from '../../src/request/config.js';
@@ -61,6 +59,11 @@ describe('request/index', function () {
   beforeEach(async function () {
     sinon.stub(window, 'fetch').callsFake((url) => fetchMock(url));
 
+    const trustedClock = {
+      getTimeAsYYYYMMDD() {
+        return '';
+      },
+    };
     pipeline = new WebrequestPipeline();
     await pipeline.init();
     const db = new Database();
@@ -71,10 +74,22 @@ describe('request/index', function () {
         remoteWhitelistUrl: 'http://cdn',
         localWhitelistUrl: '/base/assets/request',
       },
-      db,
+      {
+        db,
+        trustedClock,
+      },
     );
     await config.init();
-    attrack = new RequestMonitor(db, pipeline);
+    attrack = new RequestMonitor(
+      {},
+      {
+        db,
+        webRequestPipeline: pipeline,
+        countryProvider: {},
+        trustedClock,
+        communication: {},
+      },
+    );
     await attrack.init(config);
     await attrack.qs_whitelist.initPromise;
     config.cookieEnabled = false;

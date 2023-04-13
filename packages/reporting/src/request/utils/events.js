@@ -1,4 +1,5 @@
 import DefaultMap from './default-map';
+import logger from '../../logger';
 
 export class EventEmitter {
   constructor() {
@@ -14,7 +15,7 @@ export class EventEmitter {
       try {
         listener(value);
       } catch (e) {
-        //
+        logger.error('Events: listener crashed', e);
       }
     });
   }
