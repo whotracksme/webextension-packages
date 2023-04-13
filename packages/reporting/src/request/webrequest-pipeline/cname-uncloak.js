@@ -11,11 +11,7 @@ import pacemaker from '../utils/pacemaker';
 import logger from './logger';
 
 function checkUserAgent(pattern) {
-  try {
-    return navigator.userAgent.indexOf(pattern) !== -1;
-  } catch (e) {
-    return false;
-  }
+  return navigator.userAgent.indexOf(pattern) !== -1;
 }
 
 const isFirefox = checkUserAgent('Firefox');

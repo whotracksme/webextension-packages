@@ -10,8 +10,8 @@ import { truncatedHash } from '../../md5';
 import pacemaker from '../utils/pacemaker';
 import { parse } from '../utils/url';
 import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds';
-
 import { cleanTimestampCache } from '../utils';
+import logger from '../../logger';
 
 export default class CookieContext {
   constructor(config, qsWhitelist) {
@@ -177,6 +177,7 @@ export default class CookieContext {
       pageGD = parse(sender.tab.url).generalDomain;
       cGD = parse(ev.target.baseURI).generalDomain;
     } catch (ee) {
+      logger.error('CookieContext could not parse URL', ee);
       // empty
     }
     if (!pageGD || cGD === pageGD) {

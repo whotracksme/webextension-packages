@@ -43,7 +43,7 @@ export default class RequestMonitor {
     settings,
     { db, webRequestPipeline, trustedClock, countryProvider, communication },
   ) {
-    this.setting = settings;
+    this.settings = settings;
     this.communication = communication;
     this.trustedClock = trustedClock;
     this.webRequestPipeline = webRequestPipeline;

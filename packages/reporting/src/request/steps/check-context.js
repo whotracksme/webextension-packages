@@ -16,6 +16,7 @@ export function checkValidContext(state) {
   ) {
     return false;
   }
+
   return true;
 }
 

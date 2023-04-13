@@ -7,6 +7,7 @@
  */
 
 import * as IDB from 'idb';
+import logger from '../logger';
 
 class IDBWrapper {
   constructor(db, tableName) {
@@ -63,6 +64,9 @@ class PersistentState {
     try {
       this.value = JSON.parse(value || '{}');
     } catch (e) {
+      logger.error(
+        `Database could not load stage from ${this.tableName}/${this.keyname}`,
+      );
       this.value = {};
       this.dirty = true;
     }
