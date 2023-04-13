@@ -130,8 +130,6 @@ export default class AttrackDatabase {
     this._ready = new Promise((resolve) => {
       resolver = resolve;
     });
-    // TODO @chrmod: consider moving outside of the webextesnion-packages
-    // same as other reporting database
     this.db = await IDB.openDB('antitracking', 21, {
       async upgrade(db, oldVersion) {
         if (oldVersion < 1) {
@@ -167,12 +165,6 @@ export default class AttrackDatabase {
       },
     });
     resolver();
-    // const tables = {
-    //   tokenDomain: '[token+fp], token, mtime',
-    //   tokenBlocked: 'token, expires',
-    //   tokens: 'token, lastSent, created',
-    //   keys: 'hash, lastSent, created',
-    // };
   }
 
   unload() {

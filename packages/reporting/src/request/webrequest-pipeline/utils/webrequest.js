@@ -18,19 +18,6 @@ export const VALID_RESPONSE_PROPERTIES = {
   onErrorOccurred: [],
 };
 
-// TODO @chrmod: allow non blocking pipeline
-// const VALID_RESPONSE_PROPERTIES = {
-//   onBeforeRequest: [],
-//   onBeforeSendHeaders: [],
-//   onSendHeaders: [],
-//   onHeadersReceived: [],
-//   onAuthRequired: [],
-//   onResponseStarted: [],
-//   onBeforeRedirect: [],
-//   onCompleted: [],
-//   onErrorOccurred: [],
-// };
-
 function getOptionArray(options) {
   if (!options) {
     return [];
@@ -63,15 +50,3 @@ export const EXTRA_INFO_SPEC = {
   onCompleted: getOptionArray(chrome.webRequest.OnCompletedOptions),
   onErrorOccurred: undefined,
 };
-// TODO @chrmod: make blocking optional
-// export const EXTRA_INFO_SPEC = {
-//   onBeforeRequest: [],
-//   onBeforeSendHeaders: [],
-//   onSendHeaders: [],
-//   onHeadersReceived: [],
-//   onAuthRequired: ['responseHeaders'],
-//   onResponseStarted: ['responseHeaders'],
-//   onBeforeRedirect: ['responseHeaders'],
-//   onCompleted: ['responseHeaders'],
-//   onErrorOccurred: undefined,
-// };

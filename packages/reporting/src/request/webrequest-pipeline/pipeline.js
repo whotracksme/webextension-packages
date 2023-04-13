@@ -91,11 +91,6 @@ export default class Pipeline {
       );
     }
 
-    // TODO @chrmod: allow non blocking pipeline
-    // if (spec === 'blocking' || spec === 'break') {
-    //   return;
-    // }
-
     if (fn === undefined) {
       throw new Error(
         `Every step of the pipeline should have a function ('fn' argument): ${this.name}.${name}`,
