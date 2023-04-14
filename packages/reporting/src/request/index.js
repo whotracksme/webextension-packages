@@ -314,6 +314,13 @@ export default class RequestMonitor {
           fn: (state) => steps.tokenExaminer.examineTokens(state),
         },
         {
+          name: 'tokenTelemetry.extractKeyTokens',
+          spec: 'collect', // TODO - global state
+          fn: (state) =>
+            !steps.tokenTelemetry ||
+            steps.tokenTelemetry.extractKeyTokens(state),
+        },
+        {
           name: 'tokenChecker.findBadTokens',
           spec: 'annotate',
           fn: (state) => steps.tokenChecker.findBadTokens(state),

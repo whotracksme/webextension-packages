@@ -10,9 +10,10 @@ import * as IDB from 'idb';
 import logger from '../logger';
 
 class IDBWrapper {
-  constructor(db, tableName) {
+  constructor(db, tableName, primaryKey) {
     this.db = db;
     this.tableName = tableName;
+    this.primaryKey = primaryKey;
   }
 
   async put(value) {
@@ -45,7 +46,12 @@ class IDBWrapper {
   }
 
   async where({ primaryKey, anyOf }) {
-    const rows = await this.db.getAllFromIndex(this.tableName, primaryKey);
+    let rows = [];
+    if (primaryKey === this.primaryKey) {
+      rows = await this.db.getAll(this.tableName);
+    } else {
+      rows = await this.db.getAllFromIndex(this.tableName, primaryKey);
+    }
     return rows.filter((row) => anyOf.includes(row[primaryKey]));
   }
 }
@@ -186,19 +192,19 @@ export default class AttrackDatabase {
   }
 
   get tokenDomain() {
-    return new IDBWrapper(this.db, 'tokenDomain');
+    return new IDBWrapper(this.db, 'tokenDomain', 'token,fp');
   }
 
   get tokenBlocked() {
-    return new IDBWrapper(this.db, 'tokenBlocked');
+    return new IDBWrapper(this.db, 'tokenBlocked', 'token');
   }
 
   get tokens() {
-    return new IDBWrapper(this.db, 'tokens');
+    return new IDBWrapper(this.db, 'tokens', 'token');
   }
 
   get keys() {
-    return new IDBWrapper(this.db, 'keys');
+    return new IDBWrapper(this.db, 'keys', 'hash');
   }
 
   get blocked() {

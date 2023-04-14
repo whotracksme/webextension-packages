@@ -75,3 +75,4 @@ const requestMonitor = new RequestMonitor(config.request, {
 })();
 
 globalThis.reporting = reporting;
+globalThis.requestMonitor = requestMonitor;

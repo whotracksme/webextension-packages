@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "author": "Ghostery",
   "name": "WhoTracks.Me Reporting",
   "short_name": "communication",
@@ -11,15 +11,13 @@
     "webRequest",
     "webRequestBlocking",
     "tabs",
-    "windows"
+    "windows",
+    "http://*/*",
+    "https://*/*",
+    "ws://*/*",
+    "wss://*/*"
   ],
   "background": {
-    "service_worker": "index.bundle.js"
-  },
-  "host_permissions": [
-    "https://collector-hpn.ghostery.net/*",
-    "http://localhost:3001/*",
-    "http://*/*",
-    "https://*/*"
-  ]
+    "scripts": ["index.bundle.js"]
+  }
 }

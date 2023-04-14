@@ -9,26 +9,45 @@
 import md5, { truncatedHash } from '../../md5';
 import DefaultMap from '../utils/default-map';
 import logger from '../../logger';
-import { EventEmitter as Subject } from '../utils/events';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
-  TOKEN_BATCH_INTERVAL: 50000,
+  TOKEN_BATCH_INTERVAL: 2 * 1000, // TODO @chrmod: restore default
   TOKEN_BATCH_SIZE: 2,
   TOKEN_MESSAGE_SIZE: 10,
   // key batches, max 450 messages/hour
-  KEY_BATCH_INTERVAL: 80000,
+  KEY_BATCH_INTERVAL: 2 * 1000, // TODO @chrmod: restore default
   KEY_BATCH_SIZE: 10,
   // clean every 4 mins (activity triggered)
-  CLEAN_INTERVAL: 240000,
+  CLEAN_INTERVAL: 20 * 1000, // TODO @chrmod: restore default
   // batch size of incoming tokens
-  TOKEN_BUFFER_TIME: 10000,
+  TOKEN_BUFFER_TIME: 5 * 1000, // TODO @chrmod: restore default
   // minium time to wait before a new token can be sent
   NEW_ENTRY_MIN_AGE: 60 * 60 * 1000,
   // criteria for not sending data
   MIN_COUNT: 1,
   LOW_COUNT_DISCARD_AGE: 1000 * 60 * 60 * 24 * 3,
 };
+
+class Subject {
+  constructor() {
+    this.listeners = new Set();
+  }
+
+  subscribe(callback) {
+    this.listeners.add(callback);
+  }
+
+  pub(message) {
+    this.listeners.forEach((listener) => {
+      try {
+        listener(message);
+      } catch (e) {
+        logger.error('TokenTelemtry: Subject failed to notify listener', e);
+      }
+    });
+  }
+}
 
 /**
  * Abstract part of token/key processing logic.
@@ -53,10 +72,10 @@ class CachedEntryPipeline {
    * existing values, as defined by #updateCache
    * @param keys
    */
-  loadBatchIntoCache(keys) {
-    return this.db
-      .where({ primaryKey: this.primaryKey, anyOf: keys })
-      .forEach(this.updateCache.bind(this));
+  async loadBatchIntoCache(keys) {
+    (await this.db.where({ primaryKey: this.primaryKey, anyOf: keys })).forEach(
+      this.updateCache.bind(this),
+    );
   }
 
   /**
@@ -441,7 +460,7 @@ export default class TokenTelemetry {
     setInterval(() => {
       filteredTokens.pub(filteredTokensBatch);
       filteredTokensBatch = [];
-    }, 12000);
+    }, this.TOKEN_BUFFER_TIME);
 
     this.subjectTokens.subscribe((token) => {
       filteredTokensBatch.push(token);
@@ -452,6 +471,9 @@ export default class TokenTelemetry {
     // threshold.
     const today = this.trustedClock.getTimeAsYYYYMMDD();
     filteredTokens.subscribe((batch) => {
+      if (batch.length === 0) {
+        return;
+      }
       // process a batch of entries for a specific token
       const token = batch[0].token;
 
