@@ -86,7 +86,7 @@ export default class Config {
 
   async _loadConfig() {
     await this.db.ready;
-    const lastUpdate = (await this.db.keyValue.get('config')) || {};
+    const lastUpdate = (await this.db.get('config')) || {};
     const day = this.trustedClock.getTimeAsYYYYMMDD();
     // use stored config if it was already updated today
     if (lastUpdate['config'] && lastUpdate['lastUpdate'] === day) {
@@ -100,7 +100,7 @@ export default class Config {
       }
       const conf = await response.json();
       this._updateConfig(conf);
-      await this.db.keyValue.set('config', {
+      await this.db.set('config', {
         lastUpdate: day,
         config: conf,
       });

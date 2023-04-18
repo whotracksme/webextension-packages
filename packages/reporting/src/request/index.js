@@ -167,7 +167,7 @@ export default class RequestMonitor {
     // Large static caches (e.g. token whitelist) are loaded from sqlite
     // Smaller caches (e.g. update timestamps) are kept in prefs
     this.qs_whitelist = new QSWhitelist2({
-      storage: this.db.keyValue,
+      storage: this.db,
       CDN_BASE_URL: this.config.remoteWhitelistUrl,
       LOCAL_BASE_URL: this.config.localWhitelistUrl,
     });
@@ -742,9 +742,8 @@ export default class RequestMonitor {
     const fidelity = 10; // hour
 
     const timestamp = datetime.getTime().slice(0, fidelity);
-    const lastHour =
-      (await this.db.keyValue.get('hourChangedlastRun')) || timestamp;
-    await this.db.keyValue.set('hourChangedlastRun', timestamp);
+    const lastHour = (await this.db.get('hourChangedlastRun')) || timestamp;
+    await this.db.set('hourChangedlastRun', timestamp);
 
     if (timestamp === lastHour) {
       return;

@@ -40,7 +40,10 @@ class IDBWrapper {
 
   async bulkDelete(keys, { primaryKey = null } = {}) {
     const tx = this.db.transaction(this.tableName, 'readwrite');
-    const store = primaryKey ? tx.store.index(primaryKey) : tx.store;
+    const store =
+      primaryKey && primaryKey !== this.primaryKey
+        ? tx.store.index(primaryKey)
+        : tx.store;
     await Promise.all(keys.map((key) => store.delete(key)));
     await tx.done;
   }
@@ -52,7 +55,10 @@ class IDBWrapper {
     } else {
       rows = await this.db.getAllFromIndex(this.tableName, primaryKey);
     }
-    return rows.filter((row) => anyOf.includes(row[primaryKey]));
+    if (anyOf) {
+      return rows.filter((row) => anyOf.includes(row[primaryKey]));
+    }
+    return rows;
   }
 }
 
@@ -112,25 +118,9 @@ class PersistentState {
   }
 }
 
-class KeyValueStore {
-  constructor(db, ready) {
-    this.db = db;
-    this.ready = ready;
-  }
-
-  async get(key) {
-    await this.ready;
-    return this.db.get('keyval', key);
-  }
-
-  async set(key, val) {
-    await this.ready;
-    return this.db.put('keyval', val, key);
-  }
-}
-
 export default class AttrackDatabase {
   constructor() {
+    this.tableName = 'antitracking';
     this.db = null;
     this._ready = null;
   }
@@ -140,7 +130,7 @@ export default class AttrackDatabase {
     this._ready = new Promise((resolve) => {
       resolver = resolve;
     });
-    this.db = await IDB.openDB('antitracking', 21, {
+    this.db = await IDB.openDB(this.tableName, 21, {
       async upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const tokenDomainStore = db.createObjectStore('tokenDomain', {
@@ -215,7 +205,13 @@ export default class AttrackDatabase {
     return new PersistentState(this.db, 'state', 'localBlocked');
   }
 
-  get keyValue() {
-    return new KeyValueStore(this.db, this._ready);
+  async get(key) {
+    await this._ready;
+    return this.db.get('keyval', key);
+  }
+
+  async set(key, val) {
+    await this._ready;
+    return this.db.put('keyval', val, key);
   }
 }
