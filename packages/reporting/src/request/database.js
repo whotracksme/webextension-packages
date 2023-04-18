@@ -80,7 +80,7 @@ export default class AttrackDatabase {
       resolver = resolve;
     });
     this.db = await IDB.openDB(this.tableName, 21, {
-      async upgrade(db, oldVersion) {
+      async upgrade(db, oldVersion, newVersion) {
         if (oldVersion < 1) {
           const tokenBlockedStore = db.createObjectStore('tokenBlocked', {
             keyPath: 'token',
@@ -99,10 +99,16 @@ export default class AttrackDatabase {
           keysStore.createIndex('created', 'created');
         }
 
-        if (oldVersion > 20) {
+        if (newVersion >= 21) {
           db.createObjectStore('keyval');
-          db.deleteObjectStore('requestKeyValue');
+        }
+
+        if (db.objectStoreNames.contains('tokenDomain')) {
           db.deleteObjectStore('tokenDomain');
+        }
+
+        if (db.objectStoreNames.contains('requestKeyValue')) {
+          db.deleteObjectStore('requestKeyValue');
         }
       },
     });

@@ -35,7 +35,7 @@ describe('core/services/pacemaker', function () {
     });
 
     it('adds one task', async () => {
-      const spy = sinon.spy();
+      const spy = sinon.spy(function callback() {});
       pacemaker.register(spy, { timeout: 10 });
 
       // Check state of pacemaker
@@ -47,7 +47,7 @@ describe('core/services/pacemaker', function () {
       // Check state of task
       const task = pacemaker.tasks.values().next().value;
       expect(task.args).to.have.length(0);
-      expect(task.name).to.equal('<anon>');
+      expect(task.name).to.equal('callback');
       expect(task.timeout).to.equal(10);
       expect(task.once).to.be.false;
 
@@ -67,17 +67,17 @@ describe('core/services/pacemaker', function () {
       const tickSpy = sinon.spy(pacemaker, '_tick');
       const adjustSpy = sinon.spy(pacemaker, '_adjustFrequency');
 
-      const spy1 = sinon.spy();
+      const spy1 = sinon.spy(function callback1() {});
       pacemaker.register(spy1, { timeout: 20 });
       expect(tickSpy).not.to.have.been.called;
       expect(adjustSpy).to.have.been.calledOnce;
 
-      const spy2 = sinon.spy();
+      const spy2 = sinon.spy(function callback2() {});
       pacemaker.register(spy2, { timeout: 10 });
       expect(tickSpy).not.to.have.been.called;
       expect(adjustSpy).to.have.been.calledTwice;
 
-      const spy3 = sinon.spy();
+      const spy3 = sinon.spy(function callback3() {});
       const timeout = pacemaker.setTimeout(spy3, 30);
       expect(tickSpy).not.to.have.been.called;
       expect(adjustSpy).to.have.been.calledThrice;
@@ -112,7 +112,7 @@ describe('core/services/pacemaker', function () {
 
     it('stops when no task', async () => {
       // Initialize pacemaker with one setTimeout
-      const spy = sinon.spy();
+      const spy = sinon.spy(function callback() {});
       pacemaker.setTimeout(spy, 30);
       expect(pacemaker.tasks.size).to.equal(1);
 
@@ -135,7 +135,7 @@ describe('core/services/pacemaker', function () {
       expect(pacemaker.timer).to.be.null;
 
       // Add one task with timeout 0
-      pacemaker.setTimeout(() => {}, 0);
+      pacemaker.setTimeout(function callback() {}, 0);
       expect(pacemaker.freq).to.equal(0);
       expect(pacemaker.timer).not.to.be.null;
       expect(adjustSpy).to.have.been.calledOnce;
@@ -151,16 +151,16 @@ describe('core/services/pacemaker', function () {
       expect(pacemaker.tasks.size).to.equal(0);
 
       // Make sure freq is adjusted properly
-      const t1 = pacemaker.setTimeout(() => {}, 30);
+      const t1 = pacemaker.setTimeout(function callback() {}, 30);
       expect(pacemaker.freq).to.equal(30);
 
-      const t2 = pacemaker.register(() => {}, { timeout: 29 });
+      const t2 = pacemaker.register(function callback() {}, { timeout: 29 });
       expect(pacemaker.freq).to.equal(29);
 
-      const t3 = pacemaker.register(() => {}, { timeout: 31 });
+      const t3 = pacemaker.register(function callback() {}, { timeout: 31 });
       expect(pacemaker.freq).to.equal(29);
 
-      const t4 = pacemaker.register(() => {}, { timeout: 32 });
+      const t4 = pacemaker.register(function callback() {}, { timeout: 32 });
       expect(pacemaker.freq).to.equal(29);
 
       t4.stop();
@@ -179,7 +179,7 @@ describe('core/services/pacemaker', function () {
 
     it('adds instant task', async () => {
       clock.tick(1);
-      const spy = sinon.spy();
+      const spy = sinon.spy(function callback() {});
       pacemaker.register(spy, { timeout: 5, startImmediately: true });
 
       // Trigger first on next tick (start immediately)
@@ -194,7 +194,7 @@ describe('core/services/pacemaker', function () {
     });
 
     it('throwing task does not stop pacemaker', () => {
-      const spy = sinon.spy(() => {
+      const spy = sinon.spy(function callback() {
         throw new Error('boom');
       });
       const task = pacemaker.register(spy, { timeout: 1 });

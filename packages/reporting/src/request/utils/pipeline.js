@@ -6,8 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import pacemaker from './pacemaker';
-
 import logger from '../../logger';
 
 /**
