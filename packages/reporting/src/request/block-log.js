@@ -14,7 +14,8 @@ import events from './utils/events';
 import * as datetime from './time';
 
 export default class BlockLog {
-  constructor(config, db) {
+  constructor({ config, db, telemetry }) {
+    this.telemetry = telemetry;
     this.config = config;
     this.db = db;
     this.blocked = db.blocked;
@@ -37,6 +38,7 @@ export default class BlockLog {
       const hourCutoff = datetime.hourString(hour);
 
       this._cleanLocalBlocked(hourCutoff);
+      this.sendTelemetry();
     };
     this._hourChangedListener = events.subscribe(
       'attrack:hour_changed',
@@ -177,5 +179,16 @@ export default class BlockLog {
       }
     }
     return false;
+  }
+
+  sendTelemetry() {
+    if (Object.keys(this.blocked.value).length > 0) {
+      this.telemetry({
+        action: 'attrack.blocked',
+        payload: this.blocked.value,
+      });
+      // reset the state
+      this.blocked.clear();
+    }
   }
 }

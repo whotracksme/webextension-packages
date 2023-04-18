@@ -30,14 +30,21 @@ function decodeToken(token) {
  * @namespace antitracking.steps
  */
 export default class TokenChecker {
-  constructor(qsWhitelist, privateValues, shouldCheckToken, config, db) {
+  constructor(
+    qsWhitelist,
+    privateValues,
+    shouldCheckToken,
+    config,
+    db,
+    telemetry,
+  ) {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
     this.debug = false;
     this.privateValues = privateValues;
     this.shouldCheckToken = shouldCheckToken;
     this.tokenDomain = new TokenDomain(config, db);
-    this.blockLog = new BlockLog(config, db);
+    this.blockLog = new BlockLog({ config, db, telemetry });
   }
 
   init() {
