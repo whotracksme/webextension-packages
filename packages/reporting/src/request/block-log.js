@@ -18,8 +18,8 @@ export default class BlockLog {
     this.telemetry = telemetry;
     this.config = config;
     this.db = db;
-    this.blocked = db.blocked;
-    this.localBlocked = db.localBlocked;
+    this.blocked = {};
+    this.localBlocked = {};
   }
 
   get blockReportList() {
@@ -27,9 +27,8 @@ export default class BlockLog {
   }
 
   async init() {
-    await this.db.ready;
-    this.blocked.load();
-    this.localBlocked.load();
+    this.blocked = (await this.db.get('blocked')) || {};
+    this.localBlocked = (await this.db.get('localBlocked')) || {};
 
     this.onHourChanged = () => {
       const delay = 24;
@@ -71,80 +70,77 @@ export default class BlockLog {
   }
 
   clear() {
-    this.blocked.clear();
-    this.localBlocked.clear();
+    this.localBlocked = {};
+    this.blocked = {};
+    this.db.set('blocked', {});
+    this.db.set('localBlocked', {});
   }
 
   _addBlocked(tracker, key, value, type) {
-    const bl = this.blocked.value;
-    if (!(tracker in bl)) {
-      bl[tracker] = {};
+    if (!(tracker in this.blocked)) {
+      this.blocked[tracker] = {};
     }
-    if (!(key in bl[tracker])) {
-      bl[tracker][key] = {};
+    if (!(key in this.blocked[tracker])) {
+      this.blocked[tracker][key] = {};
     }
-    if (!(value in bl[tracker][key])) {
-      bl[tracker][key][value] = {};
+    if (!(value in this.blocked[tracker][key])) {
+      this.blocked[tracker][key][value] = {};
     }
-    if (!(type in bl[tracker][key][value])) {
-      bl[tracker][key][value][type] = 0;
+    if (!(type in this.blocked[tracker][key][value])) {
+      this.blocked[tracker][key][value][type] = 0;
     }
-    bl[tracker][key][value][type] += 1;
-    this.blocked.setDirty();
+    this.blocked[tracker][key][value][type] += 1;
+    this.db.set('blocked', this.blocked);
   }
 
   _addLocalBlocked(source, s, k, v, hour) {
-    const lb = this.localBlocked.value;
-    if (!(source in lb)) {
-      lb[source] = {};
+    if (!(source in this.localBlocked)) {
+      this.localBlocked[source] = {};
     }
-    if (!(s in lb[source])) {
-      lb[source][s] = {};
+    if (!(s in this.localBlocked[source])) {
+      this.localBlocked[source][s] = {};
     }
-    if (!(k in lb[source][s])) {
-      lb[source][s][k] = {};
+    if (!(k in this.localBlocked[source][s])) {
+      this.localBlocked[source][s][k] = {};
     }
-    if (!(v in lb[source][s][k])) {
-      lb[source][s][k][v] = {};
+    if (!(v in this.localBlocked[source][s][k])) {
+      this.localBlocked[source][s][k][v] = {};
     }
-    if (!(hour in lb[source][s][k][v])) {
-      lb[source][s][k][v][hour] = 0;
+    if (!(hour in this.localBlocked[source][s][k][v])) {
+      this.localBlocked[source][s][k][v][hour] = 0;
     }
-    lb[source][s][k][v][hour] += 1;
-    this.localBlocked.setDirty();
+    this.localBlocked[source][s][k][v][hour] += 1;
+    this.db.set('localBlocker', this.localBlocked);
   }
 
   _cleanLocalBlocked(hourCutoff) {
     // localBlocked
-    for (const source in this.localBlocked.value) {
-      for (const s in this.localBlocked.value[source]) {
-        for (const k in this.localBlocked.value[source][s]) {
-          for (const v in this.localBlocked.value[source][s][k]) {
-            for (const h in this.localBlocked.value[source][s][k][v]) {
+    for (const source in this.localBlocked) {
+      for (const s in this.localBlocked[source]) {
+        for (const k in this.localBlocked[source][s]) {
+          for (const v in this.localBlocked[source][s][k]) {
+            for (const h in this.localBlocked[source][s][k][v]) {
               if (h < hourCutoff) {
-                delete this.localBlocked.value[source][s][k][v][h];
+                delete this.localBlocked[source][s][k][v][h];
               }
             }
-            if (
-              Object.keys(this.localBlocked.value[source][s][k][v]).length === 0
-            ) {
-              delete this.localBlocked.value[source][s][k][v];
+            if (Object.keys(this.localBlocked[source][s][k][v]).length === 0) {
+              delete this.localBlocked[source][s][k][v];
             }
           }
-          if (Object.keys(this.localBlocked.value[source][s][k]).length === 0) {
-            delete this.localBlocked.value[source][s][k];
+          if (Object.keys(this.localBlocked[source][s][k]).length === 0) {
+            delete this.localBlocked[source][s][k];
           }
         }
-        if (Object.keys(this.localBlocked.value[source][s]).length === 0) {
-          delete this.localBlocked.value[source][s];
+        if (Object.keys(this.localBlocked[source][s]).length === 0) {
+          delete this.localBlocked[source][s];
         }
       }
-      if (Object.keys(this.localBlocked.value[source]).length === 0) {
-        delete this.localBlocked.value[source];
+      if (Object.keys(this.localBlocked[source]).length === 0) {
+        delete this.localBlocked[source];
       }
     }
-    this.localBlocked.setDirty(true);
-    this.localBlocked.save();
+    this.db.set('localBlocked', this.localBlocked);
   }
 
   /**
@@ -182,13 +178,14 @@ export default class BlockLog {
   }
 
   sendTelemetry() {
-    if (Object.keys(this.blocked.value).length > 0) {
+    if (Object.keys(this.blocked).length > 0) {
       this.telemetry({
         action: 'attrack.blocked',
-        payload: this.blocked.value,
+        payload: this.blocked,
       });
       // reset the state
-      this.blocked.clear();
+      this.blocked = {};
+      this.db.set('blocked', {});
     }
   }
 }

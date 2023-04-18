@@ -7,7 +7,6 @@
  */
 
 import * as IDB from 'idb';
-import logger from '../logger';
 
 class IDBWrapper {
   constructor(db, tableName, primaryKey) {
@@ -62,62 +61,6 @@ class IDBWrapper {
   }
 }
 
-class PersistentState {
-  constructor(db, tableName, keyName) {
-    this.db = db;
-    this.tableName = tableName;
-    this.keyName = keyName;
-    this.value = {};
-    this.dirty = false;
-  }
-
-  async load() {
-    const value = await this.db.get(this.tableName, this.keyName);
-    try {
-      this.value = JSON.parse(value || '{}');
-    } catch (e) {
-      logger.error(
-        `Database could not load stage from ${this.tableName}/${this.keyname}`,
-      );
-      this.value = {};
-      this.dirty = true;
-    }
-    return this.value;
-  }
-
-  async save() {
-    if (this.dirty) {
-      await this.db.put(
-        this.tableName,
-        JSON.stringify(this.value),
-        this.keyName,
-      );
-      this.dirty = false;
-    }
-  }
-
-  async setValue(v) {
-    this.value = v;
-    this.dirty = true;
-    await this.save();
-  }
-
-  async getValue() {
-    await this.load();
-    return this.value;
-  }
-
-  setDirty() {
-    this.dirty = true;
-  }
-
-  async clear() {
-    this.value = {};
-    this.dirty = true;
-    await this.save();
-  }
-}
-
 export default class AttrackDatabase {
   constructor() {
     this.tableName = 'antitracking';
@@ -154,12 +97,10 @@ export default class AttrackDatabase {
           const keysStore = db.createObjectStore('keys', { keyPath: 'hash' });
           keysStore.createIndex('lastSent', 'lastSent');
           keysStore.createIndex('created', 'created');
-
-          db.createObjectStore('state');
-          db.createObjectStore('keyval');
         }
 
         if (oldVersion > 20) {
+          db.createObjectStore('keyval');
           db.deleteObjectStore('requestKeyValue');
         }
       },
@@ -195,14 +136,6 @@ export default class AttrackDatabase {
 
   get keys() {
     return new IDBWrapper(this.db, 'keys', 'hash');
-  }
-
-  get blocked() {
-    return new PersistentState(this.db, 'state', 'blocked');
-  }
-
-  get localBlocked() {
-    return new PersistentState(this.db, 'state', 'localBlocked');
   }
 
   async get(key) {
