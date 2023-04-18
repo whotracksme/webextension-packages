@@ -32,12 +32,18 @@ class IDBWrapper {
   }
 
   async bulkPut(rows) {
+    if (rows.length === 0) {
+      return;
+    }
     const tx = this.db.transaction(this.tableName, 'readwrite');
-    await Promise.all(rows.map((row) => tx.store.add(row)));
+    await Promise.all(rows.map((row) => tx.store.put(row)));
     await tx.done;
   }
 
   async bulkDelete(keys, { primaryKey = null } = {}) {
+    if (keys.length === 0) {
+      return;
+    }
     const tx = this.db.transaction(this.tableName, 'readwrite');
     const store =
       primaryKey && primaryKey !== this.primaryKey
