@@ -40,6 +40,9 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 
 class Task {
   constructor({ fn, timeout, once, startImmediately, args }) {
+    if (!fn.name || fn.name === 'fn') {
+      throw new Error('Pacemaker can register named callbacks only');
+    }
     this.name = fn.name || '<anon>';
     this.fn = fn;
     this.timeout = timeout;
@@ -245,15 +248,6 @@ export class Pacemaker {
 
   everyHour(fn) {
     return this.register(fn, { timeout: ONE_HOUR });
-  }
-
-  /**
-   * Whenever a function should run in the background without competing for
-   * resources needed by the browser, this helper can be used. It is an
-   * efficient way to batch processing.
-   */
-  nextIdle(fn, ...args) {
-    return this.register(fn, { timeout: this.freq, once: true, args });
   }
 
   setTimeout(fn, timeout, ...args) {

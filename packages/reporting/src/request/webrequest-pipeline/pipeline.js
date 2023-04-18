@@ -195,7 +195,7 @@ export default class Pipeline {
           // the response either. Because of these constraints, we can safely
           // run these steps asynchronously to not block the processing of
           // requests.
-          pacemaker.nextIdle(fn, webRequestContext);
+          requestIdleCallback(fn.bind(null, webRequestContext));
           break;
         case 'blocking':
           // A `blocking` step is used to alter the life-cycle of a request:

@@ -173,13 +173,14 @@ export default class TokenExaminer {
     if (this._syncTimer) {
       return;
     }
-    this._syncTimer = pacemaker.setTimeout(async () => {
+    const syncDb = async () => {
       try {
         await this._syncDb();
       } finally {
         this._syncTimer = null;
       }
-    }, 20000);
+    };
+    this._syncTimer = pacemaker.setTimeout(syncDb, 20000);
   }
 
   async _syncDb() {
