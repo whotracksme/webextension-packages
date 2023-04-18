@@ -24,7 +24,6 @@ export default class TokenDomain {
     // load current tokens over threshold
     const startup = this.db.ready.then(async () => {
       await this.loadBlockedTokens();
-      await this.db.tokenDomain.clear();
     });
 
     // TODO @chrmod: when cleanup is due: after startup, or when day changes
@@ -132,9 +131,6 @@ export default class TokenDomain {
     await this.db.ready;
     this.blockedTokens.clear();
     this.stagedTokenDomain.clear();
-    return Promise.all([
-      this.db.tokenBlocked.clear(),
-      this.db.tokenDomain.clear(),
-    ]);
+    return this.db.tokenBlocked.clear();
   }
 }

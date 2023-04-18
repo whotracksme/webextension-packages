@@ -82,12 +82,6 @@ export default class AttrackDatabase {
     this.db = await IDB.openDB(this.tableName, 21, {
       async upgrade(db, oldVersion) {
         if (oldVersion < 1) {
-          const tokenDomainStore = db.createObjectStore('tokenDomain', {
-            keyPath: ['token', 'fp'],
-          });
-          tokenDomainStore.createIndex('token', 'token');
-          tokenDomainStore.createIndex('mtime', 'mtime');
-
           const tokenBlockedStore = db.createObjectStore('tokenBlocked', {
             keyPath: 'token',
           });
@@ -108,6 +102,7 @@ export default class AttrackDatabase {
         if (oldVersion > 20) {
           db.createObjectStore('keyval');
           db.deleteObjectStore('requestKeyValue');
+          db.deleteObjectStore('tokenDomain');
         }
       },
     });
@@ -126,10 +121,6 @@ export default class AttrackDatabase {
       return Promise.reject(new Error('init not called'));
     }
     return this._ready;
-  }
-
-  get tokenDomain() {
-    return new IDBWrapper(this.db, 'tokenDomain', 'token,fp');
   }
 
   get tokenBlocked() {
