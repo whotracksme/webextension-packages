@@ -124,11 +124,9 @@ export default class RequestMonitor {
   }
 
   initPacemaker() {
-    const twoMinutes = 2 * 60 * 1000;
-
     // if the hour has changed
     this.hourChangedInterval = pacemaker.register(this.hourChanged.bind(this), {
-      timeout: twoMinutes,
+      timeout: 20 * 1000,
     });
   }
 

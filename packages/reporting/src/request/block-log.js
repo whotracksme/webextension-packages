@@ -110,7 +110,7 @@ export default class BlockLog {
       this.localBlocked[source][s][k][v][hour] = 0;
     }
     this.localBlocked[source][s][k][v][hour] += 1;
-    this.db.set('localBlocker', this.localBlocked);
+    this.db.set('localBlocked', this.localBlocked);
   }
 
   _cleanLocalBlocked(hourCutoff) {

@@ -40,30 +40,21 @@ class IDBWrapper {
     await tx.done;
   }
 
-  async bulkDelete(keys, { primaryKey = null } = {}) {
+  async bulkDelete(keys) {
     if (keys.length === 0) {
       return;
     }
     const tx = this.db.transaction(this.tableName, 'readwrite');
-    const store =
-      primaryKey && primaryKey !== this.primaryKey
-        ? tx.store.index(primaryKey)
-        : tx.store;
-    await Promise.all(keys.map((key) => store.delete(key)));
+    await Promise.all(keys.map((key) => tx.store.delete(key)));
     await tx.done;
   }
 
-  async where({ primaryKey, anyOf }) {
-    let rows = [];
+  async where({ primaryKey }) {
     if (primaryKey === this.primaryKey) {
-      rows = await this.db.getAll(this.tableName);
+      return await this.db.getAll(this.tableName);
     } else {
-      rows = await this.db.getAllFromIndex(this.tableName, primaryKey);
+      return await this.db.getAllFromIndex(this.tableName, primaryKey);
     }
-    if (anyOf) {
-      return rows.filter((row) => anyOf.includes(row[primaryKey]));
-    }
-    return rows;
   }
 }
 

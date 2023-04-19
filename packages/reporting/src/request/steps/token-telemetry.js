@@ -73,9 +73,13 @@ class CachedEntryPipeline {
    * @param keys
    */
   async loadBatchIntoCache(keys) {
-    (await this.db.where({ primaryKey: this.primaryKey, anyOf: keys })).forEach(
-      this.updateCache.bind(this),
-    );
+    const rows = await this.db.where({
+      primaryKey: this.primaryKey,
+      anyOf: keys,
+    });
+    rows
+      .filter((row) => keys.includes(row[this.primaryKey]))
+      .forEach((row) => this.updateCache(row));
   }
 
   /**
@@ -201,8 +205,7 @@ class CachedEntryPipeline {
     queuedForSending.splice(maxSending);
     queuedForSending.forEach((v) => this.input.next(v));
     // delete old entries
-    // TODO @chrmod: check if this is optimal
-    this.db.bulkDelete(toBeDeleted, { primaryKey: this.primaryKey });
+    this.db.bulkDelete(toBeDeleted);
     // check the cache for items to persist to the db.
     // if we already sent the data, we can remove it from the cache.
     const saveBatch = [];
