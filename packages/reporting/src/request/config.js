@@ -71,7 +71,6 @@ export default class Config {
 
     this.tokenDomainCountThreshold = 2;
     this.safeKeyExpire = 7;
-    this.localBlockExpire = 24;
 
     Object.assign(this, defaults);
 

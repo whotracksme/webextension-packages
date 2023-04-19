@@ -211,7 +211,6 @@ export default class RequestMonitor {
       this.shouldCheckToken.bind(this),
       this.config,
       this.db,
-      this.telemetry.bind(this),
     );
 
     this.pipelineSteps = steps;

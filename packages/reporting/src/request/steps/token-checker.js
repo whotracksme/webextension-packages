@@ -11,7 +11,6 @@
 import md5, { truncatedHash } from '../../md5';
 import { tryDecodeURIComponent } from '../utils/url';
 import TokenDomain from '../token-domain';
-import BlockLog from '../block-log';
 
 function decodeToken(token) {
   let decodedToken = tryDecodeURIComponent(token);
@@ -30,30 +29,21 @@ function decodeToken(token) {
  * @namespace antitracking.steps
  */
 export default class TokenChecker {
-  constructor(
-    qsWhitelist,
-    privateValues,
-    shouldCheckToken,
-    config,
-    db,
-    telemetry,
-  ) {
+  constructor(qsWhitelist, privateValues, shouldCheckToken, config, db) {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
     this.debug = false;
     this.privateValues = privateValues;
     this.shouldCheckToken = shouldCheckToken;
     this.tokenDomain = new TokenDomain(config, db);
-    this.blockLog = new BlockLog({ config, db, telemetry });
   }
 
-  init() {
-    return Promise.all([this.tokenDomain.init(), this.blockLog.init()]);
+  async init() {
+    await this.tokenDomain.init();
   }
 
   unload() {
     this.tokenDomain.unload();
-    this.blockLog.unload();
   }
 
   /**
@@ -169,14 +159,6 @@ export default class TokenChecker {
         return `${tokenType}_newToken`;
       }
 
-      // push to block log and bad tokens list
-      this.blockLog.add(
-        tabUrlParts.generalDomain,
-        urlParts.hostname,
-        key,
-        tok,
-        tokenType,
-      );
       badTokens.push(tok);
       return `${tokenType}_countThreshold`;
     });
