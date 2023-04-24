@@ -20,15 +20,11 @@ export default class TokenDomain {
     this._currentDay = null;
   }
 
-  init() {
+  async init() {
     // load current tokens over threshold
-    const startup = this.db.ready.then(async () => {
-      await this.loadBlockedTokens();
-    });
-
-    // TODO @chrmod: when cleanup is due: after startup, or when day changes
-    // this.clean();
-    return startup;
+    await this.db.ready;
+    await this.loadBlockedTokens();
+    await this.db.tokenDomain.clear();
   }
 
   unload() {}

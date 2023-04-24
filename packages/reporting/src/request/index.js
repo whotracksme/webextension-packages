@@ -10,7 +10,6 @@
 import Pipeline from './utils/pipeline';
 import { isPrivateIP, getName } from './utils/url';
 import pacemaker from './utils/pacemaker';
-import events from './utils/events';
 import TrackerCounter from './utils/tracker-counter';
 
 import { truncatedHash } from '../md5';
@@ -56,8 +55,7 @@ export default class RequestMonitor {
     this.recentlyModified = new TempSet();
 
     // Intervals
-    this.hourChangedInterval = null;
-    this.tpEventInterval = null;
+    this.dayChangedInterval = null;
 
     // Web request pipelines
     this.pipelineSteps = {};
@@ -123,13 +121,6 @@ export default class RequestMonitor {
     return this.config.forceBlockEnabled;
   }
 
-  initPacemaker() {
-    // if the hour has changed
-    this.hourChangedInterval = pacemaker.register(this.hourChanged.bind(this), {
-      timeout: 20 * 1000,
-    });
-  }
-
   telemetry(message) {
     if (!this.communication) {
       logger.error('No provider provider loaded');
@@ -152,8 +143,7 @@ export default class RequestMonitor {
 
   /** Global module initialisation.
    */
-  init(config) {
-    const initPromises = [];
+  async init(config) {
     this.config = config;
 
     this.hashProb = new HashProb();
@@ -173,11 +163,11 @@ export default class RequestMonitor {
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
 
-    this.initPacemaker();
+    this.dayChangedInterval = pacemaker.register(this.dayChanged.bind(this), {
+      timeout: 20 * 1000,
+    });
 
-    initPromises.push(this.initPipeline());
-
-    return Promise.all(initPromises);
+    await this.initPipeline();
   }
 
   async initPipeline() {
@@ -730,25 +720,19 @@ export default class RequestMonitor {
     this.qs_whitelist.destroy();
     this.unloadPipeline();
     this.db.unload();
-    pacemaker.clearTimeout(this.hourChangedInterval);
-    this.hourChangedInterval = null;
-    pacemaker.clearTimeout(this.tpEventInterval);
-    this.tpEventInterval = null;
+    this.dayChangedInterval = this.dayChangedInterval.stop();
   }
 
-  async hourChanged() {
-    const fidelity = 10; // hour
+  async dayChanged() {
+    const dayTimestamp = datetime.getTime().slice(0, 8);
+    const lastDay = (await this.db.get('dayChangedlastRun')) || dayTimestamp;
+    await this.db.set('dayChangedlastRun', dayTimestamp);
 
-    const timestamp = datetime.getTime().slice(0, fidelity);
-    const lastHour = (await this.db.get('hourChangedlastRun')) || timestamp;
-    await this.db.set('hourChangedlastRun', timestamp);
-
-    if (timestamp === lastHour) {
-      return;
+    if (dayTimestamp === lastDay) {
+      if (this.pipelineSteps.tokenChecker) {
+        this.pipelineSteps.tokenChecker.tokenDomain.clean();
+      }
     }
-
-    // trigger other hourly events
-    events.pub('attrack:hour_changed');
   }
 
   isInWhitelist(domain) {
