@@ -209,24 +209,14 @@ class CachedEntryPipeline {
     // check the cache for items to persist to the db.
     // if we already sent the data, we can remove it from the cache.
     const saveBatch = [];
-    let deleted = 0;
     this.cache.forEach((value, key) => {
       if (value.dirty) {
         saveBatch.push(key);
       } else if (value.lastSent) {
-        deleted += 1;
         this.cache.delete(key);
       }
     });
-    await this.saveBatchToDb(saveBatch, {
-      source: this.name,
-      dbSize: await this.db.count(),
-      // TODO @chrmod: check if this works
-      dbDelete: toBeDeleted,
-      cacheSize: this.cache.size,
-      cacheDeleted: deleted,
-      processed: queuedForSending.length,
-    });
+    await this.saveBatchToDb(saveBatch);
   }
 
   createMessagePayloads(toBeSent, batchLimit) {
@@ -531,7 +521,6 @@ export default class TokenTelemetry {
     );
 
     // run every x minutes while there is activity
-    // TODO @chrmod: tune it for MV3
     setInterval(async () => {
       await this.tokens.clean();
       await this.keys.clean();

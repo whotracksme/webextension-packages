@@ -24,7 +24,6 @@ export default class TokenDomain {
     // load current tokens over threshold
     await this.db.ready;
     await this.loadBlockedTokens();
-    await this.db.tokenDomain.clear();
   }
 
   unload() {}
