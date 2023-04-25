@@ -17,7 +17,6 @@ import './request/hash.spec.js';
 import './request/webrequest-pipeline/pipeline.spec.js';
 import './request/index.spec.js';
 import './request/utils/bloom-filter-packed.spec.js';
-import './request/utils/events.spec.js';
 import './request/utils/pacemaker.spec.js';
 import './request/utils/tldts.spec.js';
 import './request/utils/url.spec.js';

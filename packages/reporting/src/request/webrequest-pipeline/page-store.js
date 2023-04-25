@@ -6,7 +6,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import events from '../utils/events';
 import logger from './logger';
 import Page, { PAGE_LOADING_STATE } from './page';
 
@@ -15,9 +14,10 @@ function makeTabContext(tab) {
 }
 
 export default class PageStore {
-  constructor() {
+  constructor({ notifyPageStageListeners }) {
     this.tabs = new Map();
     this.staged = [];
+    this.notifyPageStageListeners = notifyPageStageListeners;
   }
 
   init() {
@@ -66,7 +66,7 @@ export default class PageStore {
       this.staged.shift();
     }
     page.stage();
-    events.pub('webrequest-pipeline:stage', page);
+    this.notifyPageStageListeners(page);
   }
 
   /**

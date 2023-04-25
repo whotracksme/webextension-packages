@@ -10,7 +10,6 @@ import RequestMonitor from './request/index';
 import Config from './request/config';
 import Database from './request/database';
 import WebrequestPipeline from './request/webrequest-pipeline/index';
-import events from './request/utils/events';
 
 export default class ReportingRequest {
   constructor(settings, { communication, countryProvider, trustedClock }) {
@@ -39,22 +38,15 @@ export default class ReportingRequest {
       communication: this.communication,
     });
 
-    this.pageStageListener = events.subscribe(
-      'webrequest-pipeline:stage',
-      (page) => {
-        this.attrack.onPageStaged(page);
-      },
-    );
+    this.webRequestPipeline.addOnPageStageListener((page) => {
+      this.attrack.onPageStaged(page);
+    });
 
     await this.config.init();
     await this.attrack.init(this.config);
   }
 
   unload() {
-    if (this.pageStageListener) {
-      this.pageStageListener.unsubscribe();
-      this.pageStageListener = null;
-    }
     if (this.attrack !== null) {
       this.attrack.unload();
       this.attrack = null;

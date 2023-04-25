@@ -86,6 +86,7 @@ class BlockingResponse {
 export default class WebrequestPipeline {
   constructor() {
     this.initialized = false;
+    this.onPageStagedListeners = new Set();
   }
 
   enabled() {
@@ -103,7 +104,9 @@ export default class WebrequestPipeline {
     }
 
     this.pipelines = new Map();
-    this.pageStore = new PageStore();
+    this.pageStore = new PageStore({
+      notifyPageStageListeners: this.notifyPageStageListeners.bind(this),
+    });
     this.pageStore.init();
 
     this.initialized = true;
@@ -113,6 +116,8 @@ export default class WebrequestPipeline {
     if (!this.initialized) {
       return;
     }
+
+    this.onPageStagedListeners.clear();
 
     if (this.cnameUncloaker !== null) {
       this.cnameUncloaker.unload();
@@ -126,6 +131,20 @@ export default class WebrequestPipeline {
 
     this.pageStore.unload();
     this.initialized = false;
+  }
+
+  addOnPageStageListener(listener) {
+    this.onPageStagedListeners.add(listener);
+  }
+
+  notifyPageStageListeners(page) {
+    this.onPageStagedListeners.forEach((listener) => {
+      try {
+        listener(page);
+      } catch (e) {
+        logger.error('Page stage listener failed', e);
+      }
+    });
   }
 
   unloadPipeline(event) {
