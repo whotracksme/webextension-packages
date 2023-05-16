@@ -7,7 +7,7 @@
  */
 
 /* eslint-disable no-param-reassign */
-import Pipeline from './utils/pipeline';
+import Pipeline from './webrequest-pipeline/pipeline';
 import { isPrivateIP, getName } from './utils/url';
 import pacemaker from './utils/pacemaker';
 import TrackerCounter from './utils/tracker-counter';

@@ -68,7 +68,7 @@ const requestMonitor = new RequestMonitor(config.request, {
   trustedClock: communication.trustedClock,
 });
 
-browser.runtime.onMessage.addListener((request, sender) => {
+chrome.runtime.onMessage.addListener((request, sender) => {
   if (request.action === 'mousedown') {
     requestMonitor.recordClick(
       request.event,

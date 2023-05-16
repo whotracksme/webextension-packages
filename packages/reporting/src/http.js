@@ -54,7 +54,11 @@ export async function anonymousHttpGet(
   };
   const headerNames = Object.keys(headers || {});
   if (headerNames.length > 0) {
-    if (!chrome.webRequest || !chrome.webRequest.onBeforeSendHeaders) {
+    if (
+      !chrome.webRequest ||
+      !chrome.webRequest.onBeforeSendHeaders ||
+      !chrome.runtime.getManifest().permissions.includes('webRequestBlocking')
+    ) {
       return;
     }
     webRequestHandler = (details) => {

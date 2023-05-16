@@ -19,13 +19,14 @@ export const VALID_RESPONSE_PROPERTIES = {
   onErrorOccurred: [],
 };
 
+const manifest = chrome.runtime.getManifest();
+
 function getOptionArray(options) {
   if (!options) {
     return [];
   }
   // get subset of options which are defined
-  return [
-    options.BLOCKING,
+  const optionsSubset = [
     // firefox and chrome disagree on how to name these
     options.REQUEST_HEADERS || options.REQUESTHEADERS,
     options.RESPONSE_HEADERS || options.RESPONSEHEADERS,
@@ -34,7 +35,13 @@ function getOptionArray(options) {
     options.EXTRA_HEADERS,
     // request body disabled to avoid the overhead when not needed
     // options.REQUEST_BODY,
-  ].filter((o) => !!o);
+  ];
+
+  if (manifest.permissions.includes('webRequestBlocking')) {
+    optionsSubset.push(options.BLOCKING);
+  }
+
+  return optionsSubset.filter((o) => !!o);
 }
 
 // build allowed extraInfo options from <Step>Options objects.
