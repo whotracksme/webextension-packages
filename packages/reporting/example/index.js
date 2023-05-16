@@ -66,6 +66,17 @@ const requestMonitor = new RequestMonitor(config.request, {
   trustedClock: communication.trustedClock,
 });
 
+browser.runtime.onMessage.addListener((request, sender) => {
+  if (request.action === 'mousedown') {
+    requestMonitor.recordClick(
+      request.event,
+      request.context,
+      request.href,
+      sender,
+    );
+  }
+});
+
 (async function () {
   await reporting.init();
   await reporting.patterns.updatePatterns(rules);

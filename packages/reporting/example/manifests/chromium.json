@@ -16,6 +16,13 @@
     "service_worker": "index.bundle.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.bundle.js"],
+      "all_frames": true
+    }
+  ],
   "host_permissions": [
     "https://collector-hpn.ghostery.net/*",
     "http://localhost:3001/*",

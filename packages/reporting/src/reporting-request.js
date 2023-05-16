@@ -74,7 +74,12 @@ export default class ReportingRequest {
     }
   }
 
-  recordClick(...args) {
-    this.attrack.pipelineSteps.cookieContext.setContextFromEvent(...args);
+  recordClick(event, context, href, sender) {
+    this.attrack.pipelineSteps.cookieContext.setContextFromEvent(
+      event,
+      context,
+      href,
+      sender,
+    );
   }
 }

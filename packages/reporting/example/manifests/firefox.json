@@ -17,6 +17,13 @@
     "ws://*/*",
     "wss://*/*"
   ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.bundle.js"],
+      "all_frames": true
+    }
+  ],
   "background": {
     "scripts": ["index.bundle.js"]
   }
