@@ -728,7 +728,7 @@ export default class RequestMonitor {
     const lastDay = (await this.db.get('dayChangedlastRun')) || dayTimestamp;
     await this.db.set('dayChangedlastRun', dayTimestamp);
 
-    if (dayTimestamp === lastDay) {
+    if (dayTimestamp !== lastDay) {
       if (this.pipelineSteps.tokenChecker) {
         this.pipelineSteps.tokenChecker.tokenDomain.clean();
       }
