@@ -6,6 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import guardFirstTick from '../../utils/first-tick';
 import logger from './logger';
 import Page, { PAGE_LOADING_STATE } from './page';
 
@@ -21,6 +22,7 @@ export default class PageStore {
   }
 
   init() {
+    guardFirstTick();
     chrome.tabs.onCreated.addListener(this.onTabCreated);
     chrome.tabs.onUpdated.addListener(this.onTabUpdated);
     chrome.tabs.onRemoved.addListener(this.onTabRemoved);

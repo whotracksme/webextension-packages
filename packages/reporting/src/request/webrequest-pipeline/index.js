@@ -6,7 +6,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { VALID_RESPONSE_PROPERTIES, EXTRA_INFO_SPEC } from './utils/webrequest';
+import {
+  VALID_RESPONSE_PROPERTIES,
+  addListener,
+  removeListener,
+} from './utils/webrequest';
 
 import Pipeline from './pipeline';
 import WebRequestContext from './webrequest-context';
@@ -151,7 +155,7 @@ export default class WebrequestPipeline {
     if (this.pipelines.has(event)) {
       const pipeline = this.pipelines.get(event);
       this[event] = undefined;
-      chrome.webRequest[event].removeListener(pipeline.listener);
+      removeListener(event, pipeline.listener);
       pipeline.pipeline.unload();
       this.pipelines.delete(event);
     }
@@ -161,15 +165,6 @@ export default class WebrequestPipeline {
     if (this.pipelines.has(event)) {
       return this.pipelines.get(event).pipeline;
     }
-
-    // It might be that the platform does not support all listeners:
-    if (chrome.webRequest[event] === undefined) {
-      return null;
-    }
-
-    // Get allowed options for this event (e.g.: 'blocking', 'requestHeaders',
-    // etc.)
-    const extraInfoSpec = EXTRA_INFO_SPEC[event];
 
     // Create pipeline step
     const pipeline = new Pipeline(`webRequestPipeline.${event}`, [], false);
@@ -248,13 +243,7 @@ export default class WebrequestPipeline {
     // can call it: `webRequestPipeline.background.onBeforeRequest(details)`.
     this[event] = listener;
 
-    const urls = ['http://*/*', 'https://*/*'];
-
-    if (extraInfoSpec === undefined) {
-      chrome.webRequest[event].addListener(listener, { urls });
-    } else {
-      chrome.webRequest[event].addListener(listener, { urls }, extraInfoSpec);
-    }
+    addListener(event, listener);
 
     return pipeline;
   }

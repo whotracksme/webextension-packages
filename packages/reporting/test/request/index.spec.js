@@ -50,9 +50,11 @@ function expectNoModification(resp) {
   }
 }
 
+const pipeline = new WebrequestPipeline();
+pipeline.init();
+
 describe('request/index', function () {
   let attrack;
-  let pipeline;
   let config;
   let fetchMock = createFetchMock();
 
@@ -64,8 +66,6 @@ describe('request/index', function () {
         return '';
       },
     };
-    pipeline = new WebrequestPipeline();
-    await pipeline.init();
     const db = new Database();
     await db.init();
     config = new Config(
@@ -99,7 +99,6 @@ describe('request/index', function () {
 
   afterEach(() => {
     attrack.unload();
-    pipeline.unload();
     window.fetch.restore();
     fetchMock = async () => {};
   });

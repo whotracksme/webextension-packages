@@ -171,7 +171,7 @@ export default class RequestMonitor {
   }
 
   async initPipeline() {
-    await this.unloadPipeline();
+    this.unloadPipeline();
 
     // Initialise classes which are used as steps in listeners
     const steps = {
@@ -206,25 +206,12 @@ export default class RequestMonitor {
     this.pipelineSteps = steps;
 
     // initialise step objects
-    const pendingInits = [];
     for (const key of Object.keys(steps)) {
       const step = steps[key];
       if (step.init) {
-        pendingInits.push(step.init());
+        await step.init();
       }
     }
-    // TODO: Perhaps this should throw. For now, keep the old
-    // fire-and-forget behavior. It can throw in unit tests
-    // if the Dexie database is not accessible. In production,
-    // that might also be possible (and there are fallbacks
-    // to an in-memory database). Without further research it
-    // seems risky to change the old semantic.
-    Promise.all(pendingInits).catch((e) => {
-      logger.warn(
-        'Unexpected error while initializing steps. Ignore and continue...',
-        e,
-      );
-    });
 
     // ----------------------------------- \\
     // create pipeline for onBeforeRequest \\
@@ -672,15 +659,12 @@ export default class RequestMonitor {
       },
     ]);
 
-    // Add steps to the global web request pipeline
-    return Promise.all(
-      Object.keys(this.pipelines).map((stage) =>
-        this.webRequestPipeline.addPipelineStep(stage, {
-          name: `antitracking.${stage}`,
-          spec: 'blocking',
-          fn: (...args) => this.pipelines[stage].execute(...args),
-        }),
-      ),
+    Object.keys(this.pipelines).map((stage) =>
+      this.webRequestPipeline.addPipelineStep(stage, {
+        name: `antitracking.${stage}`,
+        spec: 'blocking',
+        fn: (...args) => this.pipelines[stage].execute(...args),
+      }),
     );
   }
 
@@ -696,22 +680,13 @@ export default class RequestMonitor {
       this.pipelines[stage].unload();
     });
 
-    // Remove steps to the global web request pipeline
-    // NOTE: this is async but the result can be ignored when the extension is
-    // unloaded. This is because the background from webrequest-pipeline has
-    // a synchronous `unload` method which will clean up everything anyway.
-    // But if we reload only the antitracking module, we need to be sure we
-    // removed the steps before we try to add them again.
-    return Promise.all(
-      Object.keys(this.pipelines).map((stage) =>
-        this.webRequestPipeline.removePipelineStep(
-          stage,
-          `antitracking.${stage}`,
-        ),
+    Object.keys(this.pipelines).map((stage) =>
+      this.webRequestPipeline.removePipelineStep(
+        stage,
+        `antitracking.${stage}`,
       ),
-    ).then(() => {
-      this.pipelines = {};
-    });
+    );
+    this.pipelines = {};
   }
 
   unload() {

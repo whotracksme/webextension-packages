@@ -6,13 +6,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import logger from '../logger';
+import guardFirstTick from '../../../utils/first-tick';
+
 export const VALID_RESPONSE_PROPERTIES = {
   onBeforeRequest: ['cancel', 'redirectUrl'],
   onBeforeSendHeaders: ['cancel', 'requestHeaders'],
-  onSendHeaders: [],
   onHeadersReceived: ['cancel', 'redirectUrl', 'responseHeaders'],
   onAuthRequired: ['cancel'],
-  onResponseStarted: [],
   onBeforeRedirect: [],
   onCompleted: [],
   onErrorOccurred: [],
@@ -42,11 +43,56 @@ export const EXTRA_INFO_SPEC = {
   onBeforeSendHeaders: getOptionArray(
     chrome.webRequest.OnBeforeSendHeadersOptions,
   ),
-  onSendHeaders: getOptionArray(chrome.webRequest.OnSendHeadersOptions),
   onHeadersReceived: getOptionArray(chrome.webRequest.OnHeadersReceivedOptions),
   onAuthRequired: getOptionArray(chrome.webRequest.OnAuthRequiredOptions),
-  onResponseStarted: getOptionArray(chrome.webRequest.OnResponseStartedOptions),
   onBeforeRedirect: getOptionArray(chrome.webRequest.OnBeforeRedirectOptions),
   onCompleted: getOptionArray(chrome.webRequest.OnCompletedOptions),
   onErrorOccurred: undefined,
 };
+
+const HANDLERS = {};
+const urls = ['http://*/*', 'https://*/*'];
+
+guardFirstTick();
+
+for (const event of Object.keys(EXTRA_INFO_SPEC)) {
+  // It might be that the platform does not support all listeners:
+  if (chrome.webRequest[event] === undefined) {
+    logger.warn(`chrome.webRequest.${event} is not supported`);
+    continue;
+  }
+
+  // Get allowed options for this event (e.g.: 'blocking', 'requestHeaders',
+  // etc.)
+  const extraInfoSpec = EXTRA_INFO_SPEC[event];
+
+  const callback = (...args) => {
+    if (!HANDLERS[event]) {
+      logger.info(`webRequest.${event} called without listener being assigned`);
+      return;
+    }
+    return HANDLERS[event](...args);
+  };
+
+  if (extraInfoSpec === undefined) {
+    chrome.webRequest[event].addListener(callback, { urls });
+  } else {
+    chrome.webRequest[event].addListener(callback, { urls }, extraInfoSpec);
+  }
+}
+
+export function addListener(event, listener) {
+  if (HANDLERS[event]) {
+    throw new Error(
+      `webRequest.${event} expects only one listener as this all WebRequestPipeline should need`,
+    );
+  }
+  HANDLERS[event] = listener;
+}
+
+export function removeListener(event, listener) {
+  if (HANDLERS[event] !== listener) {
+    throw new Error(`webRequest.${event} trying to remove wrong listener`);
+  }
+  HANDLERS[event] = null;
+}

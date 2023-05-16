@@ -10,6 +10,7 @@ import RequestMonitor from './request/index';
 import Config from './request/config';
 import Database from './request/database';
 import WebrequestPipeline from './request/webrequest-pipeline/index';
+import logger from './logger';
 
 export default class ReportingRequest {
   constructor(settings, { communication, countryProvider, trustedClock }) {
@@ -17,13 +18,21 @@ export default class ReportingRequest {
     this.communication = communication;
     this.countryProvider = countryProvider;
     this.trustedClock = trustedClock;
+    this.webRequestPipeline = new WebrequestPipeline();
+    // initialize ASAP so event listenrs are assigned on a first tick
+    this.webRequestPipeline.init();
+
+    this.webRequestPipeline.addOnPageStageListener((page) => {
+      if (this.attrack) {
+        this.attrack.onPageStaged(page);
+      } else {
+        logger.warn('RequestMonitor not initilised in time');
+      }
+    });
   }
 
   async init() {
-    this.webRequestPipeline = new WebrequestPipeline();
     this.db = new Database();
-
-    await this.webRequestPipeline.init();
     await this.db.init();
 
     this.config = new Config(this.settings, {
@@ -36,10 +45,6 @@ export default class ReportingRequest {
       trustedClock: this.trustedClock,
       countryProvider: this.countryProvider,
       communication: this.communication,
-    });
-
-    this.webRequestPipeline.addOnPageStageListener((page) => {
-      this.attrack.onPageStaged(page);
     });
 
     await this.config.init();

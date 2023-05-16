@@ -38,8 +38,11 @@ export default class TokenChecker {
     this.tokenDomain = new TokenDomain(config, db);
   }
 
-  async init() {
-    await this.tokenDomain.init();
+  init() {
+    // IMPORTANT: do NOT await
+    // TokenDomain requires async startup but we cannot wait for sake of
+    // assigning webRequest listeners
+    this.tokenDomain.init();
   }
 
   unload() {
