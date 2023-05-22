@@ -10,7 +10,228 @@
  */
 
 import { expect } from 'chai';
-import { sanitizeUrl } from '../src/sanitizer.js';
+import fc from 'fast-check';
+
+import {
+  sanitizeUrl,
+  checkSuspiciousQuery,
+  isValidEAN13,
+  isValidISSN,
+} from '../src/sanitizer.js';
+
+describe('#checkSuspiciousQuery', function () {
+  function shouldBeSafe(query) {
+    const { accept, reason } = checkSuspiciousQuery(query);
+    expect(accept).to.eql(true);
+    expect(reason).to.be.undefined;
+  }
+
+  function shouldBeDropped(query) {
+    const { accept, reason } = checkSuspiciousQuery(query);
+    expect(accept).to.eql(false);
+    expect(reason).to.be.a('string').that.is.not.empty;
+  }
+
+  describe('should accept simple, normal queries', function () {
+    for (const safeQuery of [
+      'munich',
+      'joe biden',
+      'what is the meaning of life?',
+      'best android phone in 2023',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should drop queries with overly long words', function () {
+    for (const unsafeQuery of [
+      'UniversitätsverwaltungsdirektorinnenUniversitätsverwaltungsdirektorinnenUniversitätsverwaltungsdirektorinnen',
+      'universitätsverwaltungsdirektorinnenuniversitätsverwaltungsdirektorinnenuniversitätsverwaltungsdirektorinnen',
+      'Some query containing an overlong word like universitätsverwaltungsdirektorinnenuniversitätsverwaltungsdirektorinnenuniversitätsverwaltungsdirektorinnen',
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+
+    for (const safeQuery of [
+      'Abarbeitungsgeschwindigkeit',
+      'abarbeitungsgeschwindigkeit',
+      'Abgeordnetenentschädigungen',
+      'abgeordnetenentschädigungen',
+      'Unfallentschädigungsbehörde',
+      'Universitätsverwaltungsdirektorinnen',
+      'universitätsverwaltungsdirektorinnen',
+      'Some query containing a long word like Universitätsverwaltungsdirektorinnen',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should drop queries with overly long text', function () {
+    for (const unsafeQuery of [
+      'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+
+    for (const safeQuery of [
+      'how many champions league tournaments have been held',
+      'Is life an arbitrary stage in the growing complexity of matter?',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should be more conservative with limits for languages such as Chinese or Japanese', function () {
+    for (const unsafeQuery of [
+      // lorem impsum auto-translated
+      '痛苦本身是巨大的，令人悲伤的事情已经解决了，但是', // Chinese
+      '痛み自体は大きく、悲しみのエリートは解決しましたが、一時', // Japanese
+      'ความเจ็บปวดนั้นยอดเยี่ยมมาก ความทุกข์ระทมก็สงบลง', // Thai
+      '고통 자체는 크며, 슬픈 elitr은 해결되었지만 diam nonumy eirmo는 한동안 노동과 고통으로 대단한 일 이었지만', // Korean
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+
+    for (const safeQuery of [
+      // "weather munich" auto-translated
+      '天气慕尼黑',
+      '天気 ミュンヘン',
+      'สภาพอากาศ มิวนิค',
+      '날씨 뮌헨',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should support languages with different alphabets', function () {
+    for (const safeQuery of [
+      // "some dummy text" auto-translated
+      'какой-то фиктивный текст',
+      'بعض النصوص الوهمية',
+      'איזה טקסט דמה',
+      'कुछ नकली पाठ',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should support special letters', function () {
+    for (const safeQuery of [
+      'German text äößÖÄ€',
+      'French text éèêë',
+      'Swedish text åÅ',
+      'Polish text ąęśŚ',
+      'Turkish text ÇĞİÖŞÜ',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+  });
+
+  describe('should drop searches containing phone numbers', function () {
+    for (const unsafeQuery of [
+      '089 / 123 456 789',
+      '(0)89 123456789',
+      '089123456789',
+      '+4989123456789',
+      '089 - 1234 567 89',
+      'some text 089 - 1234 567 89',
+      'some 089 - 1234 567 89 text',
+      '089 - 1234 567 89 some text',
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+  });
+
+  describe('should not drop EAN numbers', function () {
+    for (const safeQuery of [
+      '9780345418913',
+      '9780345418913 some text',
+      'some 9780345418913 text',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+
+    for (const unsafeQuery of [
+      '9780345418912',
+      '9780345418912 some text',
+      'some 9780345418912 text',
+    ]) {
+      it(`should drop invalid EANs: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+  });
+
+  describe('should not drop ISSN numbers', function () {
+    for (const safeQuery of [
+      '2049-3630',
+      '2049-3630 some text',
+      'some 2049-3630 text',
+    ]) {
+      it(`should accept: ${safeQuery}`, function () {
+        shouldBeSafe(safeQuery);
+      });
+    }
+
+    for (const unsafeQuery of [
+      '2049-3631',
+      '2049-3631 some text',
+      'some 2049-3631 text',
+    ]) {
+      it(`should drop invalid ISSNs: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+  });
+
+  describe('should drop searches containing email addresses', function () {
+    for (const unsafeQuery of [
+      'my.name@example.test',
+      'some text my.name@example.test',
+      'some my.name@example.test text',
+      'my.name@example.test some text',
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+  });
+
+  describe('should drop searches containing HTTP passwords', function () {
+    for (const unsafeQuery of [
+      'user:password@example.test',
+      'some text user:password@example.text',
+      'some user:password@example.test text',
+      'user:password@example.test some text',
+    ]) {
+      it(`should reject: ${unsafeQuery}`, function () {
+        shouldBeDropped(unsafeQuery);
+      });
+    }
+  });
+});
 
 describe('#sanitizeUrl', function () {
   function shouldBeSafe(url) {
@@ -151,6 +372,118 @@ describe('#sanitizeUrl', function () {
       it(`should allow long, but safe URLs: ${url}`, function () {
         shouldBeSafe(url);
       });
+    });
+  });
+});
+
+describe('#isValidEAN13', function () {
+  for (const validEAN of [
+    '9780345418913',
+    '4006381333931',
+    '4012345678901',
+    '4012028630066',
+  ]) {
+    it(`should accept ${validEAN}`, function () {
+      expect(isValidEAN13(validEAN)).to.eql(true);
+    });
+
+    it(`should only accept full matches (testing with variations of ${validEAN})`, function () {
+      expect(isValidISSN(` ${validEAN}`)).to.eql(false);
+      expect(isValidISSN(` ${validEAN} `)).to.eql(false);
+      expect(isValidISSN(`${validEAN}$`)).to.eql(false);
+      expect(isValidISSN(`!${validEAN}`)).to.eql(false);
+    });
+  }
+
+  for (const invalidEAN of [
+    '9780345418914',
+    '1234567890123',
+    '08981912910',
+    '07890950160',
+  ]) {
+    it(`should reject ${invalidEAN}`, function () {
+      expect(isValidEAN13(invalidEAN)).to.eql(false);
+    });
+  }
+
+  describe('should handle any given string without throwing an exception', function () {
+    it('with ASCII input', function () {
+      fc.assert(
+        fc.property(fc.string(), (text) => {
+          expect(isValidEAN13(text)).to.be.oneOf([true, false]);
+        }),
+      );
+    });
+
+    it('with unicode input', function () {
+      fc.assert(
+        fc.property(fc.fullUnicodeString(), (text) => {
+          expect(isValidEAN13(text)).to.be.oneOf([true, false]);
+        }),
+      );
+    });
+  });
+});
+
+describe('#isValidISSN', function () {
+  for (const validISSN of [
+    '2049-3630',
+    '1234-5679',
+    '12345679',
+    '0975-1025',
+    '09751025',
+    '0096-9621',
+    '0378-5955',
+    '1050-124X',
+    '1050124X',
+    '1050-124x',
+    '1050124x',
+    '0317-8471',
+    '0001-253x',
+  ]) {
+    it(`should accept ${validISSN}`, function () {
+      expect(isValidISSN(validISSN)).to.eql(true);
+    });
+
+    it(`should only accept full matches (testing with variations of ${validISSN})`, function () {
+      expect(isValidISSN(` ${validISSN}`)).to.eql(false);
+      expect(isValidISSN(` ${validISSN} `)).to.eql(false);
+      expect(isValidISSN(`${validISSN}$`)).to.eql(false);
+      expect(isValidISSN(`!${validISSN}`)).to.eql(false);
+    });
+  }
+
+  for (const invalidISSN of [
+    '1234-567X',
+    '1234-567x',
+    '1234567x',
+    '1234567X',
+    '1234-567A',
+    '123-4567',
+    '0378-595X',
+    '1234-12340000',
+    'some random text but no ISSN',
+  ]) {
+    it(`should reject ${invalidISSN}`, function () {
+      expect(isValidISSN(invalidISSN)).to.eql(false);
+    });
+  }
+
+  describe('should handle any given string without throwing an exception', function () {
+    it('with ASCII input', function () {
+      fc.assert(
+        fc.property(fc.string(), (text) => {
+          expect(isValidISSN(text)).to.be.oneOf([true, false]);
+        }),
+      );
+    });
+
+    it('with unicode input', function () {
+      fc.assert(
+        fc.property(fc.fullUnicodeString(), (text) => {
+          expect(isValidISSN(text)).to.be.oneOf([true, false]);
+        }),
+      );
     });
   });
 });

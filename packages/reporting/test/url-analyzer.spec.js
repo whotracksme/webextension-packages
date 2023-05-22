@@ -8,6 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
+
 import { expect } from 'chai';
 import fc from 'fast-check';
 
@@ -353,7 +354,7 @@ describe('#UrlAnalyzer', function () {
       );
     });
 
-    it('should handle all kinds of URLs without throwing exceptions', function () {
+    it('should handle all kind of URLs without throwing an exception', function () {
       fc.assert(
         fc.property(fc.webUrl(), (url) => {
           // should not throw
