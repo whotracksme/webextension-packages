@@ -1,3 +1,15 @@
+# v2.1.6 (Tue May 23 2023)
+
+#### 🐛 Bug Fix
+
+- Improve the heuristic to decide whether queries are safe to share [#45](https://github.com/whotracksme/webextension-packages/pull/45) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.1.5 (Fri Jan 27 2023)
 
 #### 🐛 Bug Fix
