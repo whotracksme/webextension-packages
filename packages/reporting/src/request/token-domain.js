@@ -7,6 +7,7 @@
  */
 
 import * as datetime from './time';
+import logger from '../logger';
 
 const DAYS_EXPIRE = 7;
 
@@ -82,7 +83,7 @@ export default class TokenDomain {
 
   async addBlockedToken(token) {
     if (this.config.debugMode) {
-      console.log('tokenDomain', 'will be blocked:', token);
+      logger.info('tokenDomain', 'will be blocked:', token);
     }
     const day = datetime.newUTCDate();
     day.setDate(day.getDate() + DAYS_EXPIRE);

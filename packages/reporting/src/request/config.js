@@ -22,14 +22,10 @@ export const DEFAULTS = {
   shortTokenLength: 6,
   placeHolder: 'ghostery',
   cliqzHeader: 'Ghostery-AntiTracking',
-  enabled: true,
   cookieEnabled: true,
   qsEnabled: true,
-  bloomFilterEnabled: true,
   sendAntiTrackingHeader: true,
-  blockCookieNewToken: false,
-  tpDomainDepth: 2,
-  firstPartyIsolation: false,
+  // tpDomainDepth: 2,
   cookieMode: COOKIE_MODE.THIRD_PARTY,
 };
 
@@ -39,7 +35,6 @@ export const DEFAULTS = {
  */
 const REMOTELY_CONFIGURED = [
   'blockRules',
-  'reportList',
   'cookieWhitelist',
   'subdomainRewriteRules',
   'compatibilityList',

@@ -11,6 +11,7 @@
 import * as datetime from '../time';
 import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../utils/pacemaker';
+import logger from '../../logger';
 
 class TokenSet {
   constructor() {
@@ -139,7 +140,7 @@ export default class TokenExaminer {
           ) {
             reachedThreshold.add(key);
             if (this.config.debugMode) {
-              console.log(
+              logger.info(
                 'Add safekey',
                 state.urlParts.generalDomain,
                 key,

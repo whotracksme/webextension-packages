@@ -89,10 +89,6 @@ export default class RequestMonitor {
     return 'placeholder';
   }
 
-  isEnabled() {
-    return this.config.enabled;
-  }
-
   isCookieEnabled() {
     return this.config.cookieEnabled;
   }
@@ -107,14 +103,6 @@ export default class RequestMonitor {
 
   isReferrerEnabled() {
     return this.config.referrerEnabled;
-  }
-
-  isTrackerTxtEnabled() {
-    return this.config.trackerTxtEnabled;
-  }
-
-  isBloomFilterEnabled() {
-    return this.config.bloomFilterEnabled;
   }
 
   isForceBlockEnabled() {
