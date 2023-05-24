@@ -12,16 +12,16 @@ import logger from '../../logger';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
-  TOKEN_BATCH_INTERVAL: 2 * 1000, // TODO @chrmod: restore default
+  TOKEN_BATCH_INTERVAL: 50000,
   TOKEN_BATCH_SIZE: 2,
   TOKEN_MESSAGE_SIZE: 10,
   // key batches, max 450 messages/hour
-  KEY_BATCH_INTERVAL: 2 * 1000, // TODO @chrmod: restore default
+  KEY_BATCH_INTERVAL: 80000,
   KEY_BATCH_SIZE: 10,
   // clean every 4 mins (activity triggered)
-  CLEAN_INTERVAL: 20 * 1000, // TODO @chrmod: restore default
+  CLEAN_INTERVAL: 240000,
   // batch size of incoming tokens
-  TOKEN_BUFFER_TIME: 5 * 1000, // TODO @chrmod: restore default
+  TOKEN_BUFFER_TIME: 10000,
   // minium time to wait before a new token can be sent
   NEW_ENTRY_MIN_AGE: 60 * 60 * 1000,
   // criteria for not sending data
