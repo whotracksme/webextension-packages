@@ -9,6 +9,7 @@
 import md5, { truncatedHash } from '../../md5';
 import DefaultMap from '../utils/default-map';
 import logger from '../../logger';
+import Subject from '../utils/subject';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
@@ -28,26 +29,6 @@ const DEFAULT_CONFIG = {
   MIN_COUNT: 1,
   LOW_COUNT_DISCARD_AGE: 1000 * 60 * 60 * 24 * 3,
 };
-
-class Subject {
-  constructor() {
-    this.listeners = new Set();
-  }
-
-  subscribe(callback) {
-    this.listeners.add(callback);
-  }
-
-  pub(message) {
-    this.listeners.forEach((listener) => {
-      try {
-        listener(message);
-      } catch (e) {
-        logger.error('TokenTelemtry: Subject failed to notify listener', e);
-      }
-    });
-  }
-}
 
 /**
  * Abstract part of token/key processing logic.

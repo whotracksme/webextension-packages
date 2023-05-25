@@ -86,5 +86,11 @@ export default class ReportingRequest {
       href,
       sender,
     );
+    this.attrack.pipelineSteps.oAuthDetector.recordClick(
+      event,
+      context,
+      href,
+      sender,
+    );
   }
 }

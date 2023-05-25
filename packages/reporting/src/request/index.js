@@ -32,6 +32,8 @@ import RedirectTagger from './steps/redirect-tagger';
 import TokenChecker from './steps/token-checker';
 import TokenExaminer from './steps/token-examiner';
 import TokenTelemetry from './steps/token-telemetry';
+import OAuthDetector from './steps/oauth-detector';
+
 import {
   checkValidContext,
   checkSameGeneralDomain,
@@ -167,6 +169,7 @@ export default class RequestMonitor {
       blockRules: new BlockRules(this.config),
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
+      oauthDetector: new OAuthDetector(),
     };
     steps.tokenTelemetry = new TokenTelemetry(
       this.telemetry.bind(this),
@@ -211,6 +214,11 @@ export default class RequestMonitor {
           name: 'checkState',
           spec: 'break',
           fn: checkValidContext,
+        },
+        {
+          name: 'oauthDetector.checkMainFrames',
+          spec: 'break',
+          fn: (state) => steps.oauthDetector.checkMainFrames(state),
         },
         {
           name: 'redirectTagger.checkRedirect',
@@ -287,6 +295,11 @@ export default class RequestMonitor {
           name: 'tokenChecker.findBadTokens',
           spec: 'annotate',
           fn: (state) => steps.tokenChecker.findBadTokens(state),
+        },
+        {
+          name: 'oauthDetector.checkIsOAuth',
+          spec: 'break',
+          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'token'),
         },
         {
           name: 'checkShouldBlock',
@@ -424,6 +437,11 @@ export default class RequestMonitor {
           name: 'cookieContext.checkContextFromEvent',
           spec: 'break',
           fn: (state) => steps.cookieContext.checkContextFromEvent(state),
+        },
+        {
+          name: 'oauthDetector.checkIsOAuth',
+          spec: 'break',
+          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'cookie'),
         },
         {
           name: 'shouldBlockCookie',

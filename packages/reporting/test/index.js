@@ -11,6 +11,7 @@ import './alive-check.spec.js';
 import './sanitizer.spec.js';
 import './search-extractor.spec.js';
 import './request/steps/check-context.spec.js';
+import './request/steps/oauth-detector.spec.js';
 import './request/utils.spec.js';
 import './request/qs-whitelist2.spec.js';
 import './request/hash.spec.js';
