@@ -1,3 +1,14 @@
+/**
+ * WhoTracks.Me
+ * https://whotracks.me/
+ *
+ * Copyright 2017-present Ghostery GmbH. All rights reserved.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0
+ */
+
 // source https://stackoverflow.com/a/21797381
 function base64ToArrayBuffer(base64) {
   var binary_string = window.atob(base64);
