@@ -12,9 +12,7 @@ import Reporting from '../src/index.js';
 import RequestMonitor from '../src/reporting-request.js';
 import { setLogLevel } from '../src/logger.js';
 import rules from './rules.json';
-import { checkFistTick } from '../src/utils/first-tick.js';
 
-checkFistTick();
 setLogLevel('debug');
 
 const storage = {

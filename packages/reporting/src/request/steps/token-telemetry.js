@@ -96,6 +96,7 @@ class CachedEntryPipeline {
     overflowSubject,
   ) {
     const pipeline = new Subject();
+    this.input = inputObservable;
 
     let batch = [];
     setInterval(() => {
@@ -187,7 +188,7 @@ class CachedEntryPipeline {
     });
     // push first maxSending entries to input queue
     queuedForSending.splice(maxSending);
-    queuedForSending.forEach((v) => this.input.next(v));
+    queuedForSending.forEach((v) => this.input.pub(v));
     // delete old entries
     this.db.bulkDelete(toBeDeleted);
     // check the cache for items to persist to the db.

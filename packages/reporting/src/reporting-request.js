@@ -93,4 +93,21 @@ export default class ReportingRequest {
       sender,
     );
   }
+
+  getStats(tabId) {
+    if (!this.webRequestPipeline || !this.webRequestPipeline.pageStore) {
+      return { bugs: {}, others: {} };
+    }
+    const page = this.webRequestPipeline.pageStore.tabs.get(tabId);
+    if (!page || !page.annotations || !page.annotations.counter) {
+      return {
+        bugs: {},
+        others: {},
+      };
+    }
+    return {
+      bugs: page.annotations.counter.bugs,
+      others: page.annotations.counter.others,
+    };
+  }
 }

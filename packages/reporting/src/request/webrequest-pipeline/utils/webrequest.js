@@ -10,7 +10,6 @@
  */
 
 import logger from '../logger';
-import guardFirstTick from '../../../utils/first-tick';
 
 export const VALID_RESPONSE_PROPERTIES = {
   onBeforeRequest: ['cancel', 'redirectUrl'],
@@ -62,8 +61,6 @@ export const EXTRA_INFO_SPEC = {
 
 const HANDLERS = {};
 const urls = ['http://*/*', 'https://*/*'];
-
-guardFirstTick();
 
 for (const event of Object.keys(EXTRA_INFO_SPEC)) {
   // It might be that the platform does not support all listeners:

@@ -131,6 +131,8 @@ export default class RequestMonitor {
     message.payload.ts = this.trustedClock.getTimeAsYYYYMMDDHH();
     message.payload.ctry = this.countryProvider.getSafeCountryCode();
 
+    logger.debug('report', message);
+
     this.communication.send(message);
   }
 
