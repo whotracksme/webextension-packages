@@ -11,7 +11,7 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import { isIpv4Address } from './utils/url';
+import { isIpv4Address } from '../utils/url';
 import prob from './resources/prob';
 
 export class HashProb {

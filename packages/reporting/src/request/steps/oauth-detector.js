@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { parse } from '../utils/url';
+import { parse } from '../../utils/url';
 import Subject from '../utils/subject';
-import pacemaker from '../utils/pacemaker';
+import pacemaker from '../../utils/pacemaker';
 
 const DEFAULT_OPTIONS = {
   CLICK_TIMEOUT: 300000,

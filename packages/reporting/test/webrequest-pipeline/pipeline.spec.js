@@ -16,9 +16,9 @@ import chrome from 'sinon-chrome';
 
 window.chrome = chrome;
 
-import Pipeline from '../../../src/request/webrequest-pipeline/pipeline';
+import Pipeline from '../../src/webrequest-pipeline/pipeline';
 
-describe('request/webrequest-pipeline/pipeline', function () {
+describe('webrequest-pipeline/pipeline', function () {
   describe('constructor', () => {
     it('creates an empty pipeline', () => {
       const p = new Pipeline('name');

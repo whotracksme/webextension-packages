@@ -11,7 +11,7 @@
 
 import * as chai from 'chai';
 
-import { isPrivateIP, getName, parse } from '../../../src/request/utils/url';
+import { isPrivateIP, getName, parse } from '../../src/utils/url';
 
 const plainUrls = [
   {

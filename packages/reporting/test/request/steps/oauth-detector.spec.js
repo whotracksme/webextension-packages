@@ -12,7 +12,7 @@
 import * as chai from 'chai';
 
 import OAuthDetector from '../../../src/request/steps/oauth-detector.js';
-import { parse } from '../../../src/request/utils/url.js';
+import { parse } from '../../../src/utils/url.js';
 
 function mockSender(tab, url) {
   return {

@@ -90,7 +90,7 @@ class BlockingResponse {
   }
 }
 
-export default class WebrequestPipeline {
+export default class WebRequestPipeline {
   constructor() {
     this.initialized = false;
     this.onPageStagedListeners = new Set();

@@ -9,18 +9,18 @@
 import RequestMonitor from './request/index';
 import Config from './request/config';
 import Database from './request/database';
-import WebrequestPipeline from './request/webrequest-pipeline/index';
 import logger from './logger';
 
 export default class ReportingRequest {
-  constructor(settings, { communication, countryProvider, trustedClock }) {
+  constructor(
+    settings,
+    { communication, countryProvider, trustedClock, webRequestPipeline },
+  ) {
     this.settings = settings;
     this.communication = communication;
     this.countryProvider = countryProvider;
     this.trustedClock = trustedClock;
-    this.webRequestPipeline = new WebrequestPipeline();
-    // initialize ASAP so event listenrs are assigned on a first tick
-    this.webRequestPipeline.init();
+    this.webRequestPipeline = webRequestPipeline;
 
     this.webRequestPipeline.addOnPageStageListener((page) => {
       if (this.attrack) {

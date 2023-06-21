@@ -8,9 +8,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-import Reporting from '../src/index.js';
-import RequestMonitor from '../src/reporting-request.js';
-import { setLogLevel } from '../src/logger.js';
+import Reporting, {
+  RequestMonitor,
+  WebrequestPipeline,
+  setLogLevel,
+} from '../src/index.js';
 import rules from './rules.json';
 
 setLogLevel('debug');
@@ -54,6 +56,9 @@ const config = {
   },
 };
 
+const webRequestPipeline = new WebrequestPipeline();
+webRequestPipeline.init();
+
 const reporting = new Reporting({
   config: config.url,
   storage,
@@ -62,6 +67,7 @@ const reporting = new Reporting({
 
 const requestMonitor = new RequestMonitor(config.request, {
   communication,
+  webRequestPipeline,
   countryProvider: reporting.countryProvider,
   trustedClock: communication.trustedClock,
 });

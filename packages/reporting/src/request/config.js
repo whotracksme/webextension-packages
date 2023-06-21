@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import pacemaker from './utils/pacemaker';
+import pacemaker from '../utils/pacemaker';
 import logger from '../logger';
 
 export const VERSION = '0.102';

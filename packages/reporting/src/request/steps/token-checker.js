@@ -12,7 +12,7 @@
 /* eslint no-param-reassign: 'off' */
 
 import md5, { truncatedHash } from '../../md5';
-import { tryDecodeURIComponent } from '../utils/url';
+import { tryDecodeURIComponent } from '../../utils/url';
 import TokenDomain from '../token-domain';
 
 function decodeToken(token) {

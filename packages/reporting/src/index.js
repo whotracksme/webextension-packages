@@ -10,4 +10,5 @@
  */
 export { default as default } from './reporting';
 export { default as RequestMonitor } from './reporting-request';
+export { default as WebRequestPipeline } from './webrequest-pipeline';
 export { setLogLevel } from './logger';

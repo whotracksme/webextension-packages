@@ -13,7 +13,7 @@
 
 import * as datetime from '../time';
 import md5, { truncatedHash } from '../../md5';
-import pacemaker from '../utils/pacemaker';
+import pacemaker from '../../utils/pacemaker';
 import logger from '../../logger';
 
 class TokenSet {
