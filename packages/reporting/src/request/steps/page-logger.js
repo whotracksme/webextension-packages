@@ -62,7 +62,6 @@ export default class PageLogger {
         incrementStat,
         setStat,
         getPageAnnotations: state.getPageAnnotations,
-        ghosteryBug: state.ghosteryBug,
       });
     }
   }
@@ -97,10 +96,6 @@ export default class PageLogger {
 
     if (state.url.indexOf(this.config.placeHolder) > -1) {
       incrementStat('hasPlaceHolder');
-    }
-
-    if (state.ghosteryBug) {
-      setStat('ghostery_bid', state.ghosteryBug);
     }
   }
 

@@ -74,8 +74,6 @@ export default class RequestMonitor {
     // Web request pipelines
     this.pipelineSteps = {};
     this.pipelines = {};
-
-    this.ghosteryDomains = {};
   }
 
   obfuscate(s, method) {
@@ -264,15 +262,6 @@ export default class RequestMonitor {
               )
             ) {
               this.onTrackerInteraction('observed', state);
-            }
-            if (
-              state.ghosteryBug &&
-              this.config.cookieMode === COOKIE_MODE.GHOSTERY
-            ) {
-              // track domains used by ghostery rules so that we only block cookies for these
-              // domains
-              this.ghosteryDomains[state.urlParts.generalDomain] =
-                state.ghosteryBug;
             }
           },
         },
@@ -814,16 +803,6 @@ export default class RequestMonitor {
       )
     ) {
       state.incrementStat('cookie_allow_nottracker');
-      return false;
-    }
-    if (
-      mode === COOKIE_MODE.GHOSTERY &&
-      !this.ghosteryDomains[state.urlParts.generalDomain] &&
-      getName(state.urlParts) !== 'google'
-    ) {
-      // in Ghostery mode: if the domain did not match a ghostery bug we allow it. One exception
-      // are third-party google.tld cookies, which we do not allow with this mechanism.
-      state.incrementStat('cookie_allow_ghostery');
       return false;
     }
     return true;

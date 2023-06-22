@@ -17,7 +17,6 @@ export const VERSION = '0.102';
 export const COOKIE_MODE = {
   THIRD_PARTY: 'thirdparty',
   TRACKERS: 'trackers',
-  GHOSTERY: 'ghostery',
 };
 
 export const DEFAULTS = {
@@ -29,7 +28,7 @@ export const DEFAULTS = {
   qsEnabled: true,
   sendAntiTrackingHeader: true,
   // tpDomainDepth: 2,
-  cookieMode: COOKIE_MODE.THIRD_PARTY,
+  cookieMode: COOKIE_MODE.TRACKERS,
 };
 
 /**
