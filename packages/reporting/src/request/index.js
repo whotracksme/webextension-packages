@@ -54,6 +54,7 @@ export default class RequestMonitor {
       onTrackerInteraction = (event, state) => {
         logger.log(`Tracker '${event}' with url: ${state.url}`);
       },
+      isRequestAllowed,
     },
   ) {
     this.settings = settings;
@@ -63,12 +64,14 @@ export default class RequestMonitor {
     this.countryProvider = countryProvider;
     this.onTrackerInteraction = onTrackerInteraction;
     this.getBrowserInfo = getBrowserInfo;
+    this.isRequestAllowed = isRequestAllowed;
     this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
     this.msgType = 'attrack';
     this.recentlyModified = new TempSet();
+    this.whitelistedRequestCache = new Set();
 
     // Intervals
     this.dayChangedInterval = null;
@@ -76,6 +79,17 @@ export default class RequestMonitor {
     // Web request pipelines
     this.pipelineSteps = {};
     this.pipelines = {};
+  }
+
+  checkIsWhitelisted(state) {
+    if (this.whitelistedRequestCache.has(state.requestId)) {
+      return true;
+    }
+    if (this.isRequestAllowed(state)) {
+      this.whitelistedRequestCache.add(state.requestId);
+      return true;
+    }
+    return false;
   }
 
   obfuscate(s, method) {
@@ -300,9 +314,15 @@ export default class RequestMonitor {
           fn: (state) => steps.tokenChecker.findBadTokens(state),
         },
         {
-          name: 'oauthDetector.checkIsOAuth',
+          name: 'checkSourceWhitelisted',
           spec: 'break',
-          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'token'),
+          fn: (state) => {
+            if (this.checkIsWhitelisted(state)) {
+              state.incrementStat('source_whitelisted');
+              return false;
+            }
+            return true;
+          },
         },
         {
           name: 'checkShouldBlock',
@@ -311,6 +331,11 @@ export default class RequestMonitor {
             state.badTokens.length > 0 &&
             this.qs_whitelist.isUpToDate() &&
             !this.config.paused,
+        },
+        {
+          name: 'oauthDetector.checkIsOAuth',
+          spec: 'break',
+          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'token'),
         },
         {
           name: 'isQSEnabled',
@@ -446,7 +471,9 @@ export default class RequestMonitor {
           spec: 'break',
           fn: (state) => {
             const shouldBlock =
-              this.isCookieEnabled(state) && !this.config.paused;
+              !this.checkIsWhitelisted(state) &&
+              this.isCookieEnabled(state) &&
+              !this.config.paused;
             if (!shouldBlock) {
               state.incrementStat('bad_cookie_sent');
             }
@@ -547,7 +574,8 @@ export default class RequestMonitor {
         {
           name: 'shouldBlockCookie',
           spec: 'break',
-          fn: (state) => this.isCookieEnabled(state),
+          fn: (state) =>
+            !this.checkIsWhitelisted(state) && this.isCookieEnabled(state),
         },
         {
           name: 'checkIsCookieWhitelisted',
@@ -626,6 +654,7 @@ export default class RequestMonitor {
         name: 'logIsCached',
         spec: 'collect',
         fn: (state) => {
+          this.whitelistedRequestCache.delete(state.requestId);
           state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
         },
       },
@@ -646,6 +675,7 @@ export default class RequestMonitor {
         name: 'logError',
         spec: 'collect',
         fn: (state) => {
+          this.whitelistedRequestCache.delete(state.requestId);
           if (state.error && state.error.indexOf('ABORT')) {
             state.incrementStat('error_abort');
           }

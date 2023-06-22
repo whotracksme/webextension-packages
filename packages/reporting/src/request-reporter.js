@@ -23,6 +23,7 @@ export default class RequestReporter {
       webRequestPipeline,
       onTrackerInteraction,
       getBrowserInfo,
+      isRequestAllowed,
     },
   ) {
     this.settings = settings;
@@ -32,6 +33,7 @@ export default class RequestReporter {
     this.webRequestPipeline = webRequestPipeline;
     this.onTrackerInteraction = onTrackerInteraction;
     this.getBrowserInfo = getBrowserInfo;
+    this.isRequestAllowed = isRequestAllowed;
   }
 
   async init() {
@@ -50,6 +52,7 @@ export default class RequestReporter {
       communication: this.communication,
       onTrackerInteraction: this.onTrackerInteraction,
       getBrowserInfo: this.getBrowserInfo,
+      isRequestAllowed: this.isRequestAllowed,
     });
 
     await this.config.init();
