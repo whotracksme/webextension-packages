@@ -128,7 +128,6 @@ export default class RequestMonitor {
     }
 
     message.type = 'wtm.request';
-    message.platform = this.settings.platform;
     message.userAgent = this.settings.userAgent;
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
     message['anti-duplicates'] = Math.floor(random() * 10000000);

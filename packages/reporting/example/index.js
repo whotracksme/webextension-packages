@@ -50,7 +50,6 @@ const config = {
   },
   request: {
     userAgent: 'ch',
-    platform: '',
     configUrl: 'https://cdn.ghostery.com/antitracking/config.json',
     remoteWhitelistUrl: 'https://cdn.ghostery.com/antitracking/whitelist/2',
     localWhitelistUrl: '/base/assets/request',
