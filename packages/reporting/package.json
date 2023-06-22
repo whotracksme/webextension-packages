@@ -42,7 +42,8 @@
     "tldts-experimental": "^5.7.112"
   },
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./content-script": "./src/request/content-script.js"
   },
   "directories": {
     "test": "test"
