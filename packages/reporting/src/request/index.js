@@ -54,7 +54,7 @@ export default class RequestMonitor {
       onTrackerInteraction = (event, state) => {
         logger.log(`Tracker '${event}' with url: ${state.url}`);
       },
-      isRequestAllowed,
+      isRequestAllowed = () => false,
     },
   ) {
     this.settings = settings;

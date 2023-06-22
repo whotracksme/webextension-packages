@@ -69,7 +69,7 @@ const requestReporter = new RequestReporter(config.request, {
   webRequestPipeline,
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
-  getBrowserInfo: () => ({ name: 'xx' });
+  getBrowserInfo: () => ({ name: 'xx' }),
 });
 
 chrome.runtime.onMessage.addListener((request, sender) => {
