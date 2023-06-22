@@ -13,7 +13,6 @@
 import Pipeline from '../webrequest-pipeline/pipeline';
 import { isPrivateIP, getName } from '../utils/url';
 import pacemaker from '../utils/pacemaker';
-import TrackerCounter from './utils/tracker-counter';
 
 import { truncatedHash } from '../md5';
 import logger from '../logger';
@@ -45,13 +44,23 @@ import {
 export default class RequestMonitor {
   constructor(
     settings,
-    { db, webRequestPipeline, trustedClock, countryProvider, communication },
+    {
+      db,
+      webRequestPipeline,
+      trustedClock,
+      countryProvider,
+      communication,
+      onTrackerInteraction = (event, state) => {
+        logger.log(`Tracker '${event}' with url: ${state.url}`);
+      },
+    },
   ) {
     this.settings = settings;
     this.communication = communication;
     this.trustedClock = trustedClock;
     this.webRequestPipeline = webRequestPipeline;
     this.countryProvider = countryProvider;
+    this.onTrackerInteraction = onTrackerInteraction;
     this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
@@ -254,12 +263,7 @@ export default class RequestMonitor {
                 truncatedHash(state.urlParts.generalDomain),
               )
             ) {
-              const annotations = state.getPageAnnotations();
-              annotations.counter = annotations.counter || new TrackerCounter();
-              annotations.counter.addTrackerSeen(
-                state.ghosteryBug,
-                state.urlParts.hostname,
-              );
+              this.onTrackerInteraction('observed', state);
             }
             if (
               state.ghosteryBug &&
@@ -329,12 +333,7 @@ export default class RequestMonitor {
           name: 'logBlockedToken',
           spec: 'collect',
           fn: (state) => {
-            const annotations = state.getPageAnnotations();
-            annotations.counter = annotations.counter || new TrackerCounter();
-            annotations.counter.addTokenRemoved(
-              state.ghosteryBug,
-              state.urlParts.hostname,
-            );
+            this.onTrackerInteraction('fingerprint-removed', state);
           },
         },
         {
@@ -464,12 +463,7 @@ export default class RequestMonitor {
           name: 'logBlockedCookie',
           spec: 'collect',
           fn: (state) => {
-            const annotations = state.getPageAnnotations();
-            annotations.counter = annotations.counter || new TrackerCounter();
-            annotations.counter.addCookieBlocked(
-              state.ghosteryBug,
-              state.urlParts.hostname,
-            );
+            this.onTrackerInteraction('cookie-removed', state);
           },
         },
         {
@@ -595,12 +589,7 @@ export default class RequestMonitor {
           name: 'logSetBlockedCookie',
           spec: 'collect',
           fn: (state) => {
-            const annotations = state.getPageAnnotations();
-            annotations.counter = annotations.counter || new TrackerCounter();
-            annotations.counter.addCookieBlocked(
-              state.ghosteryBug,
-              state.urlParts.hostname,
-            );
+            this.onTrackerInteraction('cookie-removed', state);
           },
         },
         {

@@ -14,13 +14,20 @@ import logger from './logger';
 export default class ReportingRequest {
   constructor(
     settings,
-    { communication, countryProvider, trustedClock, webRequestPipeline },
+    {
+      communication,
+      countryProvider,
+      trustedClock,
+      webRequestPipeline,
+      onTrackerInteraction,
+    },
   ) {
     this.settings = settings;
     this.communication = communication;
     this.countryProvider = countryProvider;
     this.trustedClock = trustedClock;
     this.webRequestPipeline = webRequestPipeline;
+    this.onTrackerInteraction = onTrackerInteraction;
 
     this.webRequestPipeline.addOnPageStageListener((page) => {
       if (this.attrack) {
@@ -45,6 +52,7 @@ export default class ReportingRequest {
       trustedClock: this.trustedClock,
       countryProvider: this.countryProvider,
       communication: this.communication,
+      onTrackerInteraction: this.onTrackerInteraction,
     });
 
     await this.config.init();
@@ -92,22 +100,5 @@ export default class ReportingRequest {
       href,
       sender,
     );
-  }
-
-  getStats(tabId) {
-    if (!this.webRequestPipeline || !this.webRequestPipeline.pageStore) {
-      return { bugs: {}, others: {} };
-    }
-    const page = this.webRequestPipeline.pageStore.tabs.get(tabId);
-    if (!page || !page.annotations || !page.annotations.counter) {
-      return {
-        bugs: {},
-        others: {},
-      };
-    }
-    return {
-      bugs: page.annotations.counter.bugs,
-      others: page.annotations.counter.others,
-    };
   }
 }
