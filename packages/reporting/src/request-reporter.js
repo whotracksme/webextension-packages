@@ -1,17 +1,19 @@
-/*!
- * Copyright (c) 2014-present Cliqz GmbH. All rights reserved.
+/**
+ * WhoTracks.Me
+ * https://whotracks.me/
+ *
+ * Copyright 2017-present Ghostery GmbH. All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
 import RequestMonitor from './request/index';
 import Config from './request/config';
 import Database from './request/database';
-import logger from './logger';
 
-export default class ReportingRequest {
+export default class RequestReporter {
   constructor(
     settings,
     {
@@ -28,14 +30,6 @@ export default class ReportingRequest {
     this.trustedClock = trustedClock;
     this.webRequestPipeline = webRequestPipeline;
     this.onTrackerInteraction = onTrackerInteraction;
-
-    this.webRequestPipeline.addOnPageStageListener((page) => {
-      if (this.attrack) {
-        this.attrack.onPageStaged(page);
-      } else {
-        logger.warn('RequestMonitor not initilised in time');
-      }
-    });
   }
 
   async init() {
@@ -46,7 +40,7 @@ export default class ReportingRequest {
       db: this.db,
       trustedClock: this.trustedClock,
     });
-    this.attrack = new RequestMonitor(this.settings, {
+    this.requestMonitor = new RequestMonitor(this.settings, {
       db: this.db,
       webRequestPipeline: this.webRequestPipeline,
       trustedClock: this.trustedClock,
@@ -56,45 +50,48 @@ export default class ReportingRequest {
     });
 
     await this.config.init();
-    await this.attrack.init(this.config);
+    await this.requestMonitor.init(this.config);
   }
 
   unload() {
-    if (this.attrack !== null) {
-      this.attrack.unload();
-      this.attrack = null;
+    if (this.requestMonitor !== null) {
+      this.requestMonitor.unload();
+      this.requestMonitor = null;
     }
     this.webRequestPipeline.unload();
   }
 
   addPipelineStep(stage, opts) {
-    if (!this.attrack.pipelines || !this.attrack.pipelines[stage]) {
+    if (
+      !this.requestMonitor.pipelines ||
+      !this.requestMonitor.pipelines[stage]
+    ) {
       return Promise.reject(
         new Error(`Could not add pipeline step: ${stage}, ${opts.name}`),
       );
     }
 
-    return this.attrack.pipelines[stage].addPipelineStep(opts);
+    return this.requestMonitor.pipelines[stage].addPipelineStep(opts);
   }
 
   removePipelineStep(stage, name) {
     if (
-      this.attrack &&
-      this.attrack.pipelines &&
-      this.attrack.pipelines[stage]
+      this.requestMonitor &&
+      this.requestMonitor.pipelines &&
+      this.requestMonitor.pipelines[stage]
     ) {
-      this.attrack.pipelines[stage].removePipelineStep(name);
+      this.requestMonitor.pipelines[stage].removePipelineStep(name);
     }
   }
 
   recordClick(event, context, href, sender) {
-    this.attrack.pipelineSteps.cookieContext.setContextFromEvent(
+    this.requestMonitor.pipelineSteps.cookieContext.setContextFromEvent(
       event,
       context,
       href,
       sender,
     );
-    this.attrack.pipelineSteps.oAuthDetector.recordClick(
+    this.requestMonitor.pipelineSteps.oAuthDetector.recordClick(
       event,
       context,
       href,

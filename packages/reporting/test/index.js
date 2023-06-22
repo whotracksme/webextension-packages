@@ -12,6 +12,8 @@ import './sanitizer.spec.js';
 import './search-extractor.spec.js';
 
 // Request
+import './request/utils/tldts.spec.js';
+import './request/utils/bloom-filter-packed.spec.js';
 import './request/steps/check-context.spec.js';
 import './request/steps/oauth-detector.spec.js';
 import './request/utils.spec.js';
@@ -19,12 +21,10 @@ import './request/qs-whitelist2.spec.js';
 import './request/hash.spec.js';
 import './request/database.spec.js';
 import './request/index.spec.js';
-import './request/utils/tldts.spec.js';
-import './request/utils/bloom-filter-packed.spec.js';
 
-// Utils
+// // Utils
 import './utils/pacemaker.spec.js';
 import './utils/url.spec.js';
 
-// Webrequest-pipeline
+// // Webrequest-pipeline
 import './webrequest-pipeline/pipeline.spec.js';

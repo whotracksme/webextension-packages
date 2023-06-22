@@ -68,7 +68,7 @@ export default class PageLogger {
 
   onBeforeRequest(state) {
     this.attachCounters(state);
-    const { incrementStat, setStat, urlParts } = state;
+    const { incrementStat, urlParts } = state;
 
     incrementStat('c');
     if (urlParts.search.length > 0) {

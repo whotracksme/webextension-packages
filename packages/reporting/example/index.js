@@ -8,8 +8,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-import Reporting, {
-  RequestMonitor,
+import {
+  UrlReporter,
+  RequestReporter,
   WebrequestPipeline,
   setLogLevel,
 } from '../src/index.js';
@@ -59,22 +60,22 @@ const config = {
 const webRequestPipeline = new WebrequestPipeline();
 webRequestPipeline.init();
 
-const reporting = new Reporting({
+const urlReporter = new UrlReporter({
   config: config.url,
   storage,
   communication,
 });
 
-const requestMonitor = new RequestMonitor(config.request, {
+const requestReporter = new RequestReporter(config.request, {
   communication,
   webRequestPipeline,
-  countryProvider: reporting.countryProvider,
+  countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
 });
 
 chrome.runtime.onMessage.addListener((request, sender) => {
   if (request.action === 'mousedown') {
-    requestMonitor.recordClick(
+    requestReporter.recordClick(
       request.event,
       request.context,
       request.href,
@@ -84,12 +85,12 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 });
 
 (async function () {
-  await reporting.init();
-  await reporting.patterns.updatePatterns(rules);
-  await reporting.analyzeUrl('https://www.google.com/search?q=shoes');
-  await reporting.processPendingJobs();
-  await requestMonitor.init();
+  await urlReporter.init();
+  await urlReporter.patterns.updatePatterns(rules);
+  await urlReporter.analyzeUrl('https://www.google.com/search?q=shoes');
+  await urlReporter.processPendingJobs();
+  await requestReporter.init();
 })();
 
-globalThis.reporting = reporting;
-globalThis.requestMonitor = requestMonitor;
+globalThis.urlReporter = urlReporter;
+globalThis.requestReporter = requestReporter;

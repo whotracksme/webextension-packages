@@ -10,7 +10,6 @@
  */
 
 import * as chai from 'chai';
-import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 
 import testPages from './test-pages.js';
@@ -24,8 +23,6 @@ import Config from '../../src/request/config.js';
 import Database from '../../src/request/database.js';
 import RequestMonitor from '../../src/request/index.js';
 import WebrequestPipeline from '../../src/webrequest-pipeline/index.js';
-
-window.chrome = chrome;
 
 const THIRD_PARTY_HOST1 = '127.0.0.1:60508';
 const THIRD_PARTY_HOST2 = 'cliqztest2.de:60508';

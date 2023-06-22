@@ -11,7 +11,7 @@
 
 /* eslint-disable no-param-reassign */
 import Pipeline from '../webrequest-pipeline/pipeline';
-import { isPrivateIP, getName } from '../utils/url';
+import { isPrivateIP } from '../utils/url';
 import pacemaker from '../utils/pacemaker';
 
 import { truncatedHash } from '../md5';
@@ -167,6 +167,10 @@ export default class RequestMonitor {
 
     this.dayChangedInterval = pacemaker.register(this.dayChanged.bind(this), {
       timeout: 20 * 1000,
+    });
+
+    this.webRequestPipeline.addOnPageStageListener((page) => {
+      this.onPageStaged(page);
     });
 
     await this.initPipeline();

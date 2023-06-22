@@ -28,7 +28,7 @@ export const DEFAULTS = {
   qsEnabled: true,
   sendAntiTrackingHeader: true,
   // tpDomainDepth: 2,
-  cookieMode: COOKIE_MODE.TRACKERS,
+  cookieMode: COOKIE_MODE.THIRD_PARTY,
 };
 
 /**
