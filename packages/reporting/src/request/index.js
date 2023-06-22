@@ -50,6 +50,7 @@ export default class RequestMonitor {
       trustedClock,
       countryProvider,
       communication,
+      getBrowserInfo,
       onTrackerInteraction = (event, state) => {
         logger.log(`Tracker '${event}' with url: ${state.url}`);
       },
@@ -61,6 +62,7 @@ export default class RequestMonitor {
     this.webRequestPipeline = webRequestPipeline;
     this.countryProvider = countryProvider;
     this.onTrackerInteraction = onTrackerInteraction;
+    this.getBrowserInfo = getBrowserInfo;
     this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
@@ -121,14 +123,14 @@ export default class RequestMonitor {
     return this.config.forceBlockEnabled;
   }
 
-  telemetry(message) {
+  async telemetry(message) {
     if (!this.communication) {
       logger.error('No provider provider loaded');
       return;
     }
 
     message.type = 'wtm.request';
-    message.userAgent = this.settings.userAgent;
+    message.userAgent = (await this.getBrowserInfo()).name;
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
     message['anti-duplicates'] = Math.floor(random() * 10000000);
 

@@ -22,6 +22,7 @@ export default class RequestReporter {
       trustedClock,
       webRequestPipeline,
       onTrackerInteraction,
+      getBrowserInfo,
     },
   ) {
     this.settings = settings;
@@ -30,6 +31,7 @@ export default class RequestReporter {
     this.trustedClock = trustedClock;
     this.webRequestPipeline = webRequestPipeline;
     this.onTrackerInteraction = onTrackerInteraction;
+    this.getBrowserInfo = getBrowserInfo;
   }
 
   async init() {
@@ -47,6 +49,7 @@ export default class RequestReporter {
       countryProvider: this.countryProvider,
       communication: this.communication,
       onTrackerInteraction: this.onTrackerInteraction,
+      getBrowserInfo: this.getBrowserInfo,
     });
 
     await this.config.init();

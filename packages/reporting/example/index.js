@@ -49,7 +49,6 @@ const config = {
     CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
   },
   request: {
-    userAgent: 'ch',
     configUrl: 'https://cdn.ghostery.com/antitracking/config.json',
     remoteWhitelistUrl: 'https://cdn.ghostery.com/antitracking/whitelist/2',
     localWhitelistUrl: '/base/assets/request',
@@ -70,6 +69,7 @@ const requestReporter = new RequestReporter(config.request, {
   webRequestPipeline,
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
+  getBrowserInfo: () => ({ name: 'xx' });
 });
 
 chrome.runtime.onMessage.addListener((request, sender) => {
