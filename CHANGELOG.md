@@ -1,3 +1,15 @@
+# v2.1.7 (Tue Jul 18 2023)
+
+#### 🐛 Bug Fix
+
+- Update tldts to the latest version [#46](https://github.com/whotracksme/webextension-packages/pull/46) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v2.1.6 (Tue May 23 2023)
 
 #### 🐛 Bug Fix
