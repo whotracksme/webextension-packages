@@ -46,6 +46,6 @@
     "@ghostery/ui": "^0.3.2",
     "linkedom": "^0.14.20",
     "pako": "^2.0.4",
-    "tldts-experimental": "^5.7.74"
+    "tldts-experimental": "^6.0.11"
   }
 }
