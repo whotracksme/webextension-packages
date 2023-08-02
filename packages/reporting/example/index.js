@@ -11,7 +11,7 @@
 import {
   UrlReporter,
   RequestReporter,
-  WebrequestPipeline,
+  WebRequestPipeline,
   setLogLevel,
 } from '../src/index.js';
 import rules from './rules.json';
@@ -55,7 +55,7 @@ const config = {
   },
 };
 
-const webRequestPipeline = new WebrequestPipeline();
+const webRequestPipeline = new WebRequestPipeline();
 webRequestPipeline.init();
 
 const urlReporter = new UrlReporter({
