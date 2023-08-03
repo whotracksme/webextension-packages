@@ -1,3 +1,15 @@
+# v3.0.0 (Thu Aug 03 2023)
+
+#### 💥 Breaking Change
+
+- Import Anti-Tracking codebase [#44](https://github.com/whotracksme/webextension-packages/pull/44) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v2.1.7 (Tue Jul 18 2023)
 
 #### 🐛 Bug Fix
