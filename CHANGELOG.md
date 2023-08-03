@@ -1,3 +1,16 @@
+# v3.0.1 (Thu Aug 03 2023)
+
+#### 🐛 Bug Fix
+
+- Update auto [#48](https://github.com/whotracksme/webextension-packages/pull/48) ([@chrmod](https://github.com/chrmod))
+- Fix reporting dependencies [#47](https://github.com/whotracksme/webextension-packages/pull/47) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v3.0.0 (Thu Aug 03 2023)
 
 #### 💥 Breaking Change
