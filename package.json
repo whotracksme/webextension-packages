@@ -35,7 +35,7 @@
     "packages/reporting"
   ],
   "devDependencies": {
-    "auto": "^10.32.6",
+    "auto": "^11.0.0",
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
