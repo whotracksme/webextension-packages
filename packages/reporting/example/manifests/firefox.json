@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "author": "Ghostery",
+  "name": "WhoTracks.Me Reporting",
+  "short_name": "communication",
+  "version": "1.0.0",
+  "version_name": "1.0.0",
+  "description": "",
+  "permissions": [
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "windows",
+    "http://*/*",
+    "https://*/*",
+    "ws://*/*",
+    "wss://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.bundle.js"],
+      "all_frames": true
+    }
+  ],
+  "background": {
+    "scripts": ["index.bundle.js"]
+  }
+}

@@ -16,6 +16,6 @@ module.exports = function (config) {
     rollupPreprocessor,
     client: {
       TEST_FIXTURES_URL: process.env.TEST_FIXTURES_URL,
-    }
+    },
   });
 };
