@@ -125,7 +125,7 @@ export default class SearchExtractor {
       };
     }
 
-    const queryCheck = this.sanitizer.isSuspiciousQuery(query);
+    const queryCheck = this.sanitizer.checkSuspiciousQuery(query);
     if (!queryCheck.accept) {
       return discard(
         `Dropping suspicious query before double-fetch (${queryCheck.reason})`,

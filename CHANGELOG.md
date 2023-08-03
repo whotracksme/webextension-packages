@@ -1,3 +1,27 @@
+# v2.1.7 (Tue Jul 18 2023)
+
+#### 🐛 Bug Fix
+
+- Update tldts to the latest version [#46](https://github.com/whotracksme/webextension-packages/pull/46) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
+# v2.1.6 (Tue May 23 2023)
+
+#### 🐛 Bug Fix
+
+- Improve the heuristic to decide whether queries are safe to share [#45](https://github.com/whotracksme/webextension-packages/pull/45) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v2.1.5 (Fri Jan 27 2023)
 
 #### 🐛 Bug Fix
