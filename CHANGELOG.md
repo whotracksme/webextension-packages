@@ -1,3 +1,15 @@
+# v3.0.2 (Tue Aug 08 2023)
+
+#### 🐛 Bug Fix
+
+- Trackers preview: fix search results selector [#49](https://github.com/whotracksme/webextension-packages/pull/49) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v3.0.1 (Thu Aug 03 2023)
 
 #### 🐛 Bug Fix
