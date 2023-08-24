@@ -56,7 +56,6 @@ export default class TokenExaminer {
     this.requestKeyValue = new Map();
     this._syncTimer = null;
     this._lastPrune = null;
-    this._currentDay = null;
   }
 
   unload() {
@@ -94,17 +93,6 @@ export default class TokenExaminer {
     }
   }
 
-  get currentDay() {
-    if (!this._currentDay || Date.now() > this._nextDayCheck) {
-      const day = datetime.getTime().substr(0, 8);
-      if (day !== this._currentDay) {
-        this._nextDayCheck = Date.now() + 3600 * 1000;
-      }
-      this._currentDay = day;
-    }
-    return this._currentDay;
-  }
-
   examineTokens(state) {
     // do not do anything for private tabs and non-tracker domains
     if (
@@ -113,7 +101,7 @@ export default class TokenExaminer {
         truncatedHash(state.urlParts.generalDomain),
       )
     ) {
-      const today = this.currentDay;
+      const today = datetime.getCurrentDay();
 
       const tracker = truncatedHash(state.urlParts.generalDomain);
 

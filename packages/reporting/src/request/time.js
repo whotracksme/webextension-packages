@@ -60,3 +60,14 @@ export function hourString(date) {
   const hour = date.getUTCHours().toString();
   return dateString(date) + (hour[1] ? hour : `0${hour[0]}`);
 }
+
+export function getCurrentDay() {
+  if (!getCurrentDay._currentDay || Date.now() > getCurrentDay._nextDayCheck) {
+    const day = getTime().substr(0, 8);
+    if (day !== getCurrentDay._currentDay) {
+      getCurrentDay._nextDayCheck = Date.now() + 60 * 60 * 1000;
+    }
+    getCurrentDay._currentDay = day;
+  }
+  return getCurrentDay._currentDay;
+}
