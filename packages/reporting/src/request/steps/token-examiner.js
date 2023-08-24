@@ -16,6 +16,8 @@ import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../../utils/pacemaker';
 import logger from '../../logger';
 
+const SYNC_DB_INTERVAL = 20 * 1000;
+
 class TokenSet {
   constructor() {
     this.items = new Map();
@@ -172,7 +174,7 @@ export default class TokenExaminer {
         this._syncTimer = null;
       }
     };
-    this._syncTimer = pacemaker.setTimeout(syncDb, 20000);
+    this._syncTimer = pacemaker.setTimeout(syncDb, SYNC_DB_INTERVAL);
   }
 
   async _syncDb() {

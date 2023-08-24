@@ -14,8 +14,8 @@ import Subject from '../utils/subject';
 import pacemaker from '../../utils/pacemaker';
 
 const DEFAULT_OPTIONS = {
-  CLICK_TIMEOUT: 300000,
-  VISIT_TIMEOUT: 240000,
+  CLICK_TIMEOUT: 5 * 60 * 1000,
+  VISIT_TIMEOUT: 4 * 60 * 1000,
 };
 
 function subscribeWithTimer(subject, store, keyPath, valuePath, timeout) {
