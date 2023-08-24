@@ -25,6 +25,7 @@
     }
   ],
   "background": {
-    "scripts": ["index.bundle.js"]
+    "scripts": ["index.bundle.js"],
+    "persistent": false
   }
 }
