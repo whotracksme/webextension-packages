@@ -20,8 +20,6 @@ export default class TokenDomain {
     this.db = db;
     this.blockedTokens = new Set();
     this.stagedTokenDomain = new Map();
-    // cache of currentDay string (YYYYMMDD)
-    this._currentDay = null;
   }
 
   async init() {
@@ -31,17 +29,6 @@ export default class TokenDomain {
   }
 
   unload() {}
-
-  get currentDay() {
-    if (!this._currentDay || Date.now() > this._nextDayCheck) {
-      const day = datetime.getTime().substr(0, 8);
-      if (day !== this._currentDay) {
-        this._nextDayCheck = Date.now() + 3600 * 1000;
-      }
-      this._currentDay = day;
-    }
-    return this._currentDay;
-  }
 
   loadBlockedTokens() {
     // delete expired blocked tokens
@@ -59,7 +46,7 @@ export default class TokenDomain {
    * @param {String} day        (optional) day string (YYYYMMDD format)
    */
   addTokenOnFirstParty(token, firstParty, day) {
-    const tokenDay = day || this.currentDay;
+    const tokenDay = day || datetime.getCurrentDay();
 
     this._addTokenOnFirstParty({
       token,
