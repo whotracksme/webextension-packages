@@ -41,6 +41,9 @@ import {
   checkSameGeneralDomain,
 } from './steps/check-context';
 
+const DAY_CHANGE_INTERVAL = 20 * 1000;
+const RECENTLY_MODIFIED_TTL = 30 * 1000;
+
 export default class RequestMonitor {
   constructor(
     settings,
@@ -181,7 +184,7 @@ export default class RequestMonitor {
     this.qs_whitelist.init();
 
     this.dayChangedInterval = pacemaker.register(this.dayChanged.bind(this), {
-      timeout: 20 * 1000,
+      timeout: DAY_CHANGE_INTERVAL,
     });
 
     this.webRequestPipeline.addOnPageStageListener((page) => {
@@ -798,7 +801,7 @@ export default class RequestMonitor {
     // if (this.pipelineSteps.trackerProxy && this.pipelineSteps.trackerProxy.shouldProxy(tmpUrl)) {
     //     state.incrementStat('proxy');
     // }
-    this.recentlyModified.add(state.tabId + state.url, 30000);
+    this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
     response.redirectTo(tmpUrl);
     response.modifyHeader(this.config.cliqzHeader, ' ');

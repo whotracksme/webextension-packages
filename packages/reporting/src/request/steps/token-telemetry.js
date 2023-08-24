@@ -16,21 +16,21 @@ import Subject from '../utils/subject';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
-  TOKEN_BATCH_INTERVAL: 50000,
+  TOKEN_BATCH_INTERVAL: 50 * 1000,
   TOKEN_BATCH_SIZE: 2,
   TOKEN_MESSAGE_SIZE: 10,
   // key batches, max 450 messages/hour
-  KEY_BATCH_INTERVAL: 80000,
+  KEY_BATCH_INTERVAL: 80 * 1000,
   KEY_BATCH_SIZE: 10,
   // clean every 4 mins (activity triggered)
-  CLEAN_INTERVAL: 240000,
+  CLEAN_INTERVAL: 4 * 60 * 1000,
   // batch size of incoming tokens
-  TOKEN_BUFFER_TIME: 10000,
+  TOKEN_BUFFER_TIME: 10 * 1000,
   // minium time to wait before a new token can be sent
   NEW_ENTRY_MIN_AGE: 60 * 60 * 1000,
   // criteria for not sending data
   MIN_COUNT: 1,
-  LOW_COUNT_DISCARD_AGE: 1000 * 60 * 60 * 24 * 3,
+  LOW_COUNT_DISCARD_AGE: 1000 * 60 * 60 * 24 * 3, // 3 days
 };
 
 /**

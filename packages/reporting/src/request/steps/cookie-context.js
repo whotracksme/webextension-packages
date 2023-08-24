@@ -16,25 +16,27 @@ import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds';
 import { cleanTimestampCache } from '../utils';
 import logger from '../../logger';
 
+const TIME_AFTER_LINK = 5 * 1000;
+const TIME_CLEANING_CACHE = 180 * 1000;
+const TIME_ACTIVE = 20 * 1000;
+// how long to keep trust entries which have not been triggered
+const UNUSED_TRUST_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+// how long to keep trust entries which have been used
+const USED_TRUST_TIMEOUT = 15 * 50 * 1000; // 15 minutes
+const CLEAN_COOKIE_CACHE_TIMEOUT = 2 * 60 * 1000;
+
 export default class CookieContext {
   constructor(config, qsWhitelist) {
     this.config = config;
     this.qsWhitelist = qsWhitelist;
     this.visitCache = {};
     this.contextFromEvent = null;
-    this.timeAfterLink = 5 * 1000;
-    this.timeCleaningCache = 180 * 1000;
-    this.timeActive = 20 * 1000;
     this.trustedThirdParties = new Map();
-    // how long to keep trust entries which have not been triggered
-    this.UNUSED_TRUST_TIMEOUT = 120000; // 2 minutes
-    // how long to keep trust entries which have been used
-    this.USED_TRUST_TIMEOUT = 900000; // 15 minutes
   }
 
   init() {
     this._pmclean = pacemaker.register(this.cleanCookieCache.bind(this), {
-      timeout: 2 * 60 * 1000,
+      timeout: CLEAN_COOKIE_CACHE_TIMEOUT,
     });
   }
 
@@ -45,13 +47,13 @@ export default class CookieContext {
 
   cleanCookieCache(currTime) {
     // visit cache
-    cleanTimestampCache(this.visitCache, this.timeCleaningCache, currTime);
+    cleanTimestampCache(this.visitCache, TIME_CLEANING_CACHE, currTime);
     // trusted domain pairs
     const now = Date.now();
     this.trustedThirdParties.forEach((counter, key) => {
       const timeoutAt =
         counter.ts +
-        (counter.c > 0 ? this.USED_TRUST_TIMEOUT : this.UNUSED_TRUST_TIMEOUT);
+        (counter.c > 0 ? USED_TRUST_TIMEOUT : UNUSED_TRUST_TIMEOUT);
       if (now > timeoutAt) {
         this.trustedThirdParties.delete(key);
       }
@@ -114,10 +116,7 @@ export default class CookieContext {
     const tabId = state.tabId;
     const diff =
       Date.now() - (this.visitCache[`${tabId}:${state.hostGD}`] || 0);
-    if (
-      diff < this.timeActive &&
-      this.visitCache[`${tabId}:${state.sourceGD}`]
-    ) {
+    if (diff < TIME_ACTIVE && this.visitCache[`${tabId}:${state.sourceGD}`]) {
       state.incrementStat(`${stage}_allow_visitcache`);
       return false;
     }
@@ -135,7 +134,7 @@ export default class CookieContext {
       const hostGD = state.urlParts.generalDomain;
 
       const diff = time - (this.contextFromEvent.ts || 0);
-      if (diff < this.timeAfterLink) {
+      if (diff < TIME_AFTER_LINK) {
         if (
           hostGD === this.contextFromEvent.cGD &&
           sourceGD === this.contextFromEvent.pageGD

@@ -11,6 +11,8 @@
 
 import TempSet from '../temp-set';
 
+const CACHE_TIMEOUT = 10 * 1000;
+
 /**
  * Caches 302 redirects so that we can ensure that the resulting request is properly
  * passed through the token logic.
@@ -18,7 +20,6 @@ import TempSet from '../temp-set';
 export default class RedirectTagger {
   constructor() {
     this.redirectCache = new TempSet();
-    this.cacheTimeout = 10000;
     this.redirectTaggerCache = new TempSet();
   }
 
@@ -37,13 +38,13 @@ export default class RedirectTagger {
       if (location.startsWith('/')) {
         // relative redirect
         const redirectUrl = `${state.urlParts.protocol}://${state.urlParts.hostname}${location}`;
-        this.redirectCache.add(redirectUrl, this.cacheTimeout);
+        this.redirectCache.add(redirectUrl, CACHE_TIMEOUT);
       } else if (
         location.startsWith('http://') ||
         location.startsWith('https://')
       ) {
         // absolute redirect
-        this.redirectCache.add(location, this.cacheTimeout);
+        this.redirectCache.add(location, CACHE_TIMEOUT);
       }
     }
     return true;
@@ -51,7 +52,7 @@ export default class RedirectTagger {
 
   checkRedirect(details) {
     if (details.isRedirect && details.requestId !== undefined) {
-      this.redirectTaggerCache.add(details.requestId, this.cacheTimeout);
+      this.redirectTaggerCache.add(details.requestId, CACHE_TIMEOUT);
       return false;
     }
     return true;

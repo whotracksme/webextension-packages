@@ -12,6 +12,8 @@
 import pacemaker from '../utils/pacemaker';
 import logger from '../logger';
 
+const RETRY_TIMEOUT = 30 * 1000;
+
 export const VERSION = '0.102';
 
 export const COOKIE_MODE = {
@@ -102,7 +104,7 @@ export default class Config {
       });
     } catch (e) {
       logger.error('could not load request config', e);
-      pacemaker.setTimeout(this._loadConfig.bind(this), 30000);
+      pacemaker.setTimeout(this._loadConfig.bind(this), RETRY_TIMEOUT);
     }
   }
 
