@@ -11,40 +11,27 @@
 
 import { parse } from '../../utils/url';
 import Subject from '../utils/subject';
-import pacemaker from '../../utils/pacemaker';
+import ChromeStorageMap from '../utils/chrome-storage-map';
 
 const DEFAULT_OPTIONS = {
   CLICK_TIMEOUT: 5 * 60 * 1000,
   VISIT_TIMEOUT: 4 * 60 * 1000,
 };
 
-function subscribeWithTimer(subject, store, keyPath, valuePath, timeout) {
-  const timers = new Map();
-
-  return subject.subscribe((event) => {
-    const oldTimer = timers.get(event[keyPath]);
-    if (oldTimer) {
-      pacemaker.clearTimeout(oldTimer);
-    }
-
-    const timer = pacemaker.setTimeout(function oAuthDetectorTimeout() {
-      pacemaker.clearTimeout(timer);
-      delete store[event[keyPath]];
-    }, timeout);
-
-    timers.set(event[keyPath], timer);
-
-    store[event[keyPath]] = event[valuePath];
-  });
-}
-
 export default class OAuthDetector {
   constructor(options = DEFAULT_OPTIONS) {
-    this.clickActivity = {};
-    this.siteActivitiy = {};
+    Object.assign(this, DEFAULT_OPTIONS, options);
+
+    this.clickActivity = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:oauth-detector:click-activity',
+      ttlInMs: this.CLICK_TIMEOUT,
+    });
+    this.siteActivitiy = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:oauth-detector:site-activity',
+      ttlInMs: this.VISIT_TIMEOUT,
+    });
     this.subjectMainFrames = new Subject();
     this.tabClicks = new Subject();
-    Object.assign(this, DEFAULT_OPTIONS, options);
   }
 
   recordClick(ev, contextHTML, href, sender) {
@@ -52,22 +39,12 @@ export default class OAuthDetector {
   }
 
   init() {
-    this.tabActivitySubscription = subscribeWithTimer(
-      this.tabClicks,
-      this.clickActivity,
-      'id',
-      'url',
-      this.CLICK_TIMEOUT,
-    );
-
-    // observe pages loaded for the last VISIT_TIMEOUT ms.
-    this.pageOpenedSubscription = subscribeWithTimer(
-      this.subjectMainFrames,
-      this.siteActivitiy,
-      'hostname',
-      'tabId',
-      this.VISIT_TIMEOUT,
-    );
+    this.tabActivitySubscription = this.tabClicks.subscribe((event) => {
+      this.clickActivity.set(event.id, event.url);
+    });
+    this.pageOpenedSubscription = this.subjectMainFrames.subscribe((event) => {
+      this.siteActivitiy.set(event.hostname, event.tabId);
+    });
   }
 
   unload() {
@@ -99,17 +76,16 @@ export default class OAuthDetector {
    * @returns false if the request is an oauth request, true otherwise
    */
   checkIsOAuth(state, type) {
-    const oAuthUrls = ['/oauth', '/authorize'];
-    const mapper = (oAuthUrl) => state.urlParts.pathname.indexOf(oAuthUrl) > -1;
-    const reducer = (accumulator, currentValue) => accumulator || currentValue;
-    const isOAuthFlow = oAuthUrls.map(mapper).reduce(reducer);
+    const isOAuthFlow = ['/oauth', '/authorize'].some((pattern) =>
+      state.urlParts.pathname.includes(pattern),
+    );
 
     if (
       isOAuthFlow &&
-      this.clickActivity[state.tabId] &&
-      this.siteActivitiy[state.urlParts.hostname]
+      this.clickActivity.get(state.tabId) &&
+      this.siteActivitiy.get(state.urlParts.hostname)
     ) {
-      const clickedPage = parse(this.clickActivity[state.tabId]);
+      const clickedPage = parse(this.clickActivity.get(state.tabId));
       if (
         clickedPage !== null &&
         clickedPage.hostname === state.tabUrlParts.hostname
