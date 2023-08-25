@@ -35,6 +35,15 @@ function delayedTest(test, done, delay) {
 }
 
 describe('request/steps/oauth-detector', function () {
+  before(function () {
+    chrome.storage.local.get
+      .withArgs(['wtm-url-reporting:oauth-detector:click-activity'])
+      .yields({});
+    chrome.storage.local.get
+      .withArgs(['wtm-url-reporting:oauth-detector:site-activity'])
+      .yields({});
+  });
+
   describe('click tracking', () => {
     let detectorInstance;
 
@@ -54,9 +63,13 @@ describe('request/steps/oauth-detector', function () {
       detectorInstance.recordClick(null, '', '', sender);
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({
-            [tab]: url,
-          });
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({
+              [tab]: url,
+            });
         },
         done,
         5,
@@ -71,9 +84,13 @@ describe('request/steps/oauth-detector', function () {
       detectorInstance.recordClick(null, '', '', mockSender(tab, url2));
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({
-            [tab]: url2,
-          });
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({
+              [tab]: url2,
+            });
         },
         done,
         5,
@@ -89,10 +106,14 @@ describe('request/steps/oauth-detector', function () {
       detectorInstance.recordClick(null, '', '', mockSender(tab2, url2));
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({
-            [tab1]: url1,
-            [tab2]: url2,
-          });
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({
+              [tab1]: url1,
+              [tab2]: url2,
+            });
         },
         done,
         5,
@@ -106,7 +127,11 @@ describe('request/steps/oauth-detector', function () {
       detectorInstance.recordClick(null, '', '', sender);
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({});
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({});
         },
         done,
         15,
@@ -126,9 +151,13 @@ describe('request/steps/oauth-detector', function () {
       );
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({
-            [tab2]: url2,
-          });
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({
+              [tab2]: url2,
+            });
         },
         done,
         15,
@@ -149,9 +178,13 @@ describe('request/steps/oauth-detector', function () {
       );
       delayedTest(
         () => {
-          chai.expect(detectorInstance.clickActivity).to.eql({
-            [tab1]: url1,
-          });
+          chai
+            .expect(
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+            )
+            .to.eql({
+              [tab1]: url1,
+            });
         },
         done,
         15,
