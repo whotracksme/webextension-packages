@@ -13,11 +13,11 @@ import { truncatedHash } from '../../md5';
 import pacemaker from '../../utils/pacemaker';
 import { parse } from '../../utils/url';
 import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds';
-import { cleanTimestampCache } from '../utils';
 import logger from '../../logger';
+import ChromeStorageMap from '../utils/chrome-storage-map';
 
 const TIME_AFTER_LINK = 5 * 1000;
-const TIME_CLEANING_CACHE = 180 * 1000;
+const TIME_CLEANING_CACHE = 3 * 60 * 1000; // 3 minutes
 const TIME_ACTIVE = 20 * 1000;
 // how long to keep trust entries which have not been triggered
 const UNUSED_TRUST_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -29,25 +29,31 @@ export default class CookieContext {
   constructor(config, qsWhitelist) {
     this.config = config;
     this.qsWhitelist = qsWhitelist;
-    this.visitCache = {};
+
     this.contextFromEvent = null;
-    this.trustedThirdParties = new Map();
+    this.visitCache = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:cookie-context:visit-cache',
+      ttlInMs: TIME_CLEANING_CACHE,
+    });
+
+    this.trustedThirdParties = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:cookie-context:trusted-third-parties',
+      ttlInMs: USED_TRUST_TIMEOUT,
+    });
   }
 
   init() {
+    this.cleanCookieCache();
     this._pmclean = pacemaker.register(this.cleanCookieCache.bind(this), {
       timeout: CLEAN_COOKIE_CACHE_TIMEOUT,
     });
   }
 
   unload() {
-    pacemaker.clearTimeout(this._pmclean);
-    this._pmclean = null;
+    this._pmclean = pacemaker.clearTimeout(this._pmclean);
   }
 
-  cleanCookieCache(currTime) {
-    // visit cache
-    cleanTimestampCache(this.visitCache, TIME_CLEANING_CACHE, currTime);
+  cleanCookieCache() {
     // trusted domain pairs
     const now = Date.now();
     this.trustedThirdParties.forEach((counter, key) => {
@@ -115,8 +121,11 @@ export default class CookieContext {
     const stage = state.statusCode !== undefined ? 'set_cookie' : 'cookie';
     const tabId = state.tabId;
     const diff =
-      Date.now() - (this.visitCache[`${tabId}:${state.hostGD}`] || 0);
-    if (diff < TIME_ACTIVE && this.visitCache[`${tabId}:${state.sourceGD}`]) {
+      Date.now() - (this.visitCache.get(`${tabId}:${state.hostGD}`) || 0);
+    if (
+      diff < TIME_ACTIVE &&
+      this.visitCache.get(`${tabId}:${state.sourceGD}`)
+    ) {
       state.incrementStat(`${stage}_allow_visitcache`);
       return false;
     }
@@ -139,7 +148,7 @@ export default class CookieContext {
           hostGD === this.contextFromEvent.cGD &&
           sourceGD === this.contextFromEvent.pageGD
         ) {
-          this.visitCache[`${tabId}:${hostGD}`] = time;
+          this.visitCache.set(`${tabId}:${hostGD}`, time);
           state.incrementStat(`${stage}_allow_userinit_same_context_gd`);
           return false;
         }
@@ -147,7 +156,7 @@ export default class CookieContext {
         if (this.contextFromEvent.html.indexOf(pu) !== -1) {
           // the url is in pu
           if (urlParts && urlParts.hostname && urlParts.hostname !== '') {
-            this.visitCache[`${tabId}:${hostGD}`] = time;
+            this.visitCache.set(`${tabId}:${hostGD}`, time);
             state.incrementStat(`${stage}_allow_userinit_same_gd_link`);
             return false;
           }
@@ -157,7 +166,7 @@ export default class CookieContext {
           !this.contextFromEvent.cGD &&
           this.contextFromEvent.possibleCGD.has(hostGD)
         ) {
-          this.visitCache[`${tabId}:${hostGD}`] = time;
+          this.visitCache.set(`${tabId}:${hostGD}`, time);
           state.incrementStat(`${stage}_allow_userinit_same_script_gd`);
           return false;
         }
