@@ -11,11 +11,17 @@ import './alive-check.spec.js';
 import './sanitizer.spec.js';
 import './search-extractor.spec.js';
 
-// Request
+// Request utils
 import './request/utils/tldts.spec.js';
 import './request/utils/bloom-filter-packed.spec.js';
+import './request/utils/chrome-storage-map.spec.js';
+import './request/utils/chrome-storage-set.spec.js';
+
+// Request steps
 import './request/steps/check-context.spec.js';
 import './request/steps/oauth-detector.spec.js';
+
+// Request
 import './request/utils.spec.js';
 import './request/qs-whitelist2.spec.js';
 import './request/hash.spec.js';

@@ -65,7 +65,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({
               [tab]: url,
@@ -86,7 +86,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({
               [tab]: url2,
@@ -108,7 +108,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({
               [tab1]: url1,
@@ -129,7 +129,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({});
         },
@@ -153,7 +153,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({
               [tab2]: url2,
@@ -180,7 +180,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryMap),
+              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
             )
             .to.eql({
               [tab1]: url1,
