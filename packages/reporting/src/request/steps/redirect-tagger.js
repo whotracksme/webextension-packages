@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import TempSet from '../temp-set';
+import ChromeStorageSet from '../utils/chrome-storage-set';
 
 const CACHE_TIMEOUT = 10 * 1000;
 
@@ -19,8 +19,14 @@ const CACHE_TIMEOUT = 10 * 1000;
  */
 export default class RedirectTagger {
   constructor() {
-    this.redirectCache = new TempSet();
-    this.redirectTaggerCache = new TempSet();
+    this.redirectCache = new ChromeStorageSet({
+      storageKey: 'wtm-url-reporting:redirect-logger:redirect-cache',
+      ttlInMs: CACHE_TIMEOUT,
+    });
+    this.redirectTaggerCache = new ChromeStorageSet({
+      storageKey: 'wtm-url-reporting:redirect-logger:redirect-tagger-cache',
+      ttlInMs: CACHE_TIMEOUT,
+    });
   }
 
   isFromRedirect(url) {
@@ -38,13 +44,13 @@ export default class RedirectTagger {
       if (location.startsWith('/')) {
         // relative redirect
         const redirectUrl = `${state.urlParts.protocol}://${state.urlParts.hostname}${location}`;
-        this.redirectCache.add(redirectUrl, CACHE_TIMEOUT);
+        this.redirectCache.add(redirectUrl);
       } else if (
         location.startsWith('http://') ||
         location.startsWith('https://')
       ) {
         // absolute redirect
-        this.redirectCache.add(location, CACHE_TIMEOUT);
+        this.redirectCache.add(location);
       }
     }
     return true;
