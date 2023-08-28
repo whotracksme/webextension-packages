@@ -10,6 +10,7 @@
     "webNavigation",
     "webRequest",
     "tabs",
+    "storage",
     "windows"
   ],
   "background": {
