@@ -11,6 +11,7 @@
 
 /* eslint no-param-reassign: 'off' */
 import { truncateDomain } from '../utils';
+import ChromeStorageMap from '../utils/chrome-storage-map';
 
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {
@@ -39,7 +40,9 @@ const TYPE_LOOKUP = {
 export default class PageLogger {
   constructor(config) {
     this.config = config;
-    this._requestCounters = new Map();
+    this._requestCounters = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:page-logger:request-counter',
+    });
   }
 
   attachCounters(state) {
