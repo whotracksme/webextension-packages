@@ -14,37 +14,40 @@
 import * as datetime from '../time';
 import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../../utils/pacemaker';
+import ChromeStorageMap from '../utils/chrome-storage-map';
 import logger from '../../logger';
 
 const SYNC_DB_INTERVAL = 20 * 1000;
 
-class TokenSet {
-  constructor() {
-    this.items = new Map();
-    this.dirty = false;
+class SerializableMap extends Object {
+  add(key, value) {
+    this[key] = value;
   }
 
-  add(tok, value) {
-    this.items.set(tok, value);
-    this.dirty = true;
+  set(key, value) {
+    this.add(key, value);
+  }
+
+  get(key) {
+    return this[key];
+  }
+
+  has(key) {
+    return Object.prototype.hasOwnProperty.call(this, key);
+  }
+
+  delete(key) {
+    delete this[key];
   }
 
   size() {
-    return this.items.size;
-  }
-
-  toObject() {
-    const obj = {};
-    this.items.forEach((value, key) => {
-      obj[key] = value;
-    });
-    return obj;
-  }
-
-  setDirty(val) {
-    this.dirty = val;
+    return Object.keys(this).length;
   }
 }
+
+// own names for readibility
+class TrackerMap extends SerializableMap {}
+class TokenSet extends SerializableMap {}
 
 /**
  * Manages the local safekey list
@@ -55,7 +58,9 @@ export default class TokenExaminer {
     this.config = config;
     this.shouldCheckToken = shouldCheckToken;
     this.hashTokens = true;
-    this.requestKeyValue = new Map();
+    this.requestKeyValue = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:token-examiner:request-key-value',
+    });
     this._syncTimer = null;
     this._lastPrune = null;
   }
@@ -72,7 +77,7 @@ export default class TokenExaminer {
 
   addRequestKeyValueEntry(tracker, key, tokens) {
     if (!this.requestKeyValue.has(tracker)) {
-      this.requestKeyValue.set(tracker, new Map());
+      this.requestKeyValue.set(tracker, new TrackerMap());
     }
     const trackerMap = this.requestKeyValue.get(tracker);
     if (!trackerMap.has(key)) {
@@ -90,7 +95,7 @@ export default class TokenExaminer {
     if (trackerMap) {
       trackerMap.delete(key);
     }
-    if (trackerMap && trackerMap.size === 0) {
+    if (trackerMap && trackerMap.size() === 0) {
       this.requestKeyValue.delete(tracker);
     }
   }
@@ -108,9 +113,9 @@ export default class TokenExaminer {
       const tracker = truncatedHash(state.urlParts.generalDomain);
 
       // create a Map of key => set(values) from the url data
-      const cachedKvs = this.requestKeyValue.get(tracker) || new Map();
+      const trackerMap = this.requestKeyValue.get(tracker) || new TrackerMap();
       const reachedThreshold = new Set();
-      const kvs = state.urlParts
+      const newTrackerMap = state.urlParts
         .extractKeyValues()
         .params.reduce((hash, kv) => {
           const [k, v] = kv;
@@ -147,10 +152,10 @@ export default class TokenExaminer {
             );
           }
           return hash;
-        }, cachedKvs);
+        }, trackerMap);
 
       // push updated cache
-      this.requestKeyValue.set(tracker, kvs);
+      this.requestKeyValue.set(tracker, newTrackerMap);
       this._scheduleSync(today !== this._lastPrune);
       return true;
     }
@@ -179,26 +184,25 @@ export default class TokenExaminer {
 
   async _syncDb() {
     const cutoff = this.getPruneCutoff();
-    for (const [tracker, keys] of this.requestKeyValue.entries()) {
-      for (const [key, tokens] of keys.entries()) {
-        tokens.items.forEach((day, value) => {
+    this.requestKeyValue.forEach((trackerMap, tracker) => {
+      for (const [key, tokenSet] of Object.entries(trackerMap)) {
+        Object.entries(tokenSet).forEach(([value, day]) => {
           if (day < cutoff) {
-            tokens.items.delete(value);
+            tokenSet.delete(value);
           }
         });
-        tokens.setDirty(false);
         if (
-          tokens.size() > this.config.safekeyValuesThreshold &&
+          tokenSet.size() > this.config.safekeyValuesThreshold &&
           !this.qsWhitelist.isSafeKey(tracker, key)
         ) {
           this.qsWhitelist.addSafeKey(
             tracker,
             this.hashTokens ? key : md5(key),
-            tokens.size(),
+            tokenSet.size(),
           );
           this.removeRequestKeyValueEntry(tracker, key);
         }
       }
-    }
+    });
   }
 }

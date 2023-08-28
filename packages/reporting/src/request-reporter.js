@@ -104,4 +104,8 @@ export default class RequestReporter {
       sender,
     );
   }
+
+  clearCache() {
+    this.requestMonitor.clearCache();
+  }
 }
