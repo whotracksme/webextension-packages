@@ -9,18 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-/* eslint no-param-reassign: 'off' */
-/* eslint no-restricted-syntax: 'off' */
-
-export function cleanTimestampCache(cacheObj, timeout, currTime) {
-  const keys = Object.keys(cacheObj);
-  keys.forEach((k) => {
-    if (currTime - cacheObj[k] || timeout < 0) {
-      delete cacheObj[k];
-    }
-  });
-}
-
 export function truncateDomain(host, depth) {
   const generalDomain = host.domain;
 

@@ -100,6 +100,10 @@ export default class ChromeStorageMap {
     return this.inMemoryMap.get(key);
   }
 
+  forEach(callback) {
+    this.inMemoryMap.forEach(callback);
+  }
+
   set(_key, value) {
     this._warnIfOutOfSync();
 
