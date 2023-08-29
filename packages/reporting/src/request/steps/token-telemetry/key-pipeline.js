@@ -10,7 +10,6 @@
  */
 
 import CachedEntryPipeline from './cached-entry-pipeline';
-import DefaultMap from '../../utils/default-map';
 import SerializableMap from '../../utils/serializable-map';
 
 function getSiteTokensMap(siteTokens, key) {
@@ -69,7 +68,7 @@ export default class KeyPipeline extends CachedEntryPipeline {
 
   createMessagePayloads(toBeSent, batchLimit) {
     // grouping of key messages per site, up to batchLimit
-    const groupedMessages = new DefaultMap(() => []);
+    const groupedMessages = new Map();
     const overflow = [];
     toBeSent.forEach((tuple) => {
       const [, stats] = tuple;
@@ -80,7 +79,12 @@ export default class KeyPipeline extends CachedEntryPipeline {
           // if there are unsafe tokens in the group, make sure this entry is not grouped
           const unsafe = [...tokens.values()].some((t) => t === false);
           const extraKey = unsafe ? `${stats.tracker}:${stats.key}` : '';
-          groupedMessages.get(`${site}${extraKey}`).push({
+          let entry = groupedMessages.get(`${site}${extraKey}`);
+          if (!entry) {
+            entry = [];
+            groupedMessages.set(`${site}${extraKey}`, entry);
+          }
+          entry.push({
             ts: this.trustedClock.getTimeAsYYYYMMDD(),
             tracker: stats.tracker,
             key: stats.key,
