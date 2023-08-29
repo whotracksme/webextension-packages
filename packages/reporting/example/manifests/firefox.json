@@ -4,7 +4,6 @@
   "name": "WhoTracks.Me Reporting",
   "short_name": "communication",
   "version": "1.0.0",
-  "version_name": "1.0.0",
   "description": "",
   "permissions": [
     "webNavigation",
