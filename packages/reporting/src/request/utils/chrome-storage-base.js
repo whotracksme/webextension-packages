@@ -90,7 +90,9 @@ export default class ChromeStorageBase {
 
   _warnIfOutOfSync() {
     if (!this._initialSyncComplete) {
-      console.warn('AutoSyncingMap: out of sync (loading is too slow...)');
+      console.warn(
+        `AutoSyncingMap "${this.storageKey}": out of sync (loading is too slow...)`,
+      );
     }
   }
 

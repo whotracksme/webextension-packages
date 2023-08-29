@@ -11,8 +11,11 @@
 
 import * as datetime from './time';
 import logger from '../logger';
+import ChromeStorageMap from './utils/chrome-storage-map';
+import SerializableMap from './utils/serializable-map';
 
 const DAYS_EXPIRE = 7;
+const STAGED_TOKEN_EXPIRY = 1000 * 60 * 60 * 24 * 2; // 2 days
 
 export default class TokenDomain {
   constructor(config, db) {
@@ -20,6 +23,10 @@ export default class TokenDomain {
     this.db = db;
     this.blockedTokens = new Set();
     this.stagedTokenDomain = new Map();
+    this.stagedTokenDomain = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:token-domain:staged-token-domain',
+      ttlInMs: STAGED_TOKEN_EXPIRY,
+    });
   }
 
   async init() {
@@ -57,9 +64,10 @@ export default class TokenDomain {
 
   _addTokenOnFirstParty({ token, firstParty, day }) {
     if (!this.stagedTokenDomain.has(token)) {
-      this.stagedTokenDomain.set(token, new Map());
+      this.stagedTokenDomain.set(token, new SerializableMap());
     }
     const tokens = this.stagedTokenDomain.get(token);
+
     tokens.set(firstParty, day);
     return this._checkThresholdReached(token, tokens);
   }
