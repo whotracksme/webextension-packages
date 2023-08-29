@@ -10,18 +10,18 @@
  */
 
 import CachedEntryPipeline from './cached-entry-pipeline';
+import SerializableSet from '../../utils/serializable-set';
 
 export default class TokenPipeline extends CachedEntryPipeline {
-  constructor(db, trustedClock, options) {
-    super(db, trustedClock, 'token', options);
-    this.name = 'tokens';
+  constructor({ db, trustedClock, options, name }) {
+    super({ db, trustedClock, name, options, primaryKey: 'token' });
   }
 
   newEntry() {
     return {
       created: Date.now(),
-      sites: new Set(),
-      trackers: new Set(),
+      sites: new SerializableSet(),
+      trackers: new SerializableSet(),
       safe: true,
       dirty: true,
       count: 0,
@@ -29,7 +29,7 @@ export default class TokenPipeline extends CachedEntryPipeline {
   }
 
   updateCache({ token, lastSent, safe, created, sites, trackers, count }) {
-    const stats = this.cache.get(token);
+    const stats = this.getFromCache(token);
     if (stats.lastSent === undefined || lastSent > stats.lastSent) {
       stats.lastSent = lastSent;
     }
@@ -51,8 +51,8 @@ export default class TokenPipeline extends CachedEntryPipeline {
       created,
       safe,
       lastSent: lastSent || '',
-      sites: [...sites],
-      trackers: [...trackers],
+      sites,
+      trackers,
       count,
     };
   }

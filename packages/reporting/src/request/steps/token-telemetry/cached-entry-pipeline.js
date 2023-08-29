@@ -10,17 +10,23 @@
  */
 
 import logger from '../../../logger';
-import DefaultMap from '../../utils/default-map';
 import Subject from '../../utils/subject';
+import ChromeStorageMap from '../../utils/chrome-storage-map';
+
+const CACHE_TTL = 2 * 24 * 60 * 60 * 1000; // 2 days
 
 /**
  * Abstract part of token/key processing logic.
  */
 export default class CachedEntryPipeline {
-  constructor(db, trustedClock, primaryKey, options) {
+  constructor({ name, db, trustedClock, primaryKey, options }) {
+    this.name = name;
     this.db = db;
     this.trustedClock = trustedClock;
-    this.cache = new DefaultMap(() => this.newEntry());
+    this.cache = new ChromeStorageMap({
+      storageKey: `wtm-url-reporting:token-telemetry:${name}`,
+      ttlInMs: CACHE_TTL,
+    });
     this.primaryKey = primaryKey;
     this.options = options;
   }
@@ -46,6 +52,15 @@ export default class CachedEntryPipeline {
       .forEach((row) => this.updateCache(row));
   }
 
+  getFromCache(key) {
+    let entry = this.cache.get(key);
+    if (!entry) {
+      entry = this.newEntry();
+      this.cache.set(key, entry);
+    }
+    return entry;
+  }
+
   /**
    * Saves the values from keys in the map cache to the database. Cached entries are serialised
    * by #serialiseEntry
@@ -53,7 +68,7 @@ export default class CachedEntryPipeline {
    */
   saveBatchToDb(keys) {
     const rows = keys.map((key) => {
-      const entry = this.cache.get(key);
+      const entry = this.getFromCache(key);
       entry.dirty = false;
       return this.serialiseEntry(key, entry);
     });
@@ -95,7 +110,7 @@ export default class CachedEntryPipeline {
         // extract message and clear
         const today = this.trustedClock.getTimeAsYYYYMMDD();
         const toBeSent = batch
-          .map((token) => [token, this.cache.get(token)])
+          .map((token) => [token, this.getFromCache(token)])
           .filter(([, { lastSent }]) => lastSent !== today);
 
         // generate the set of messages to be sent from the candiate list

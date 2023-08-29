@@ -11,24 +11,33 @@
 
 import CachedEntryPipeline from './cached-entry-pipeline';
 import DefaultMap from '../../utils/default-map';
+import SerializableMap from '../../utils/serializable-map';
+
+function getSiteTokensMap(siteTokens, key) {
+  let siteTokensMap = siteTokens.get(key);
+  if (!siteTokensMap) {
+    siteTokensMap = new SerializableMap();
+    siteTokens.set(siteTokensMap);
+  }
+  return siteTokensMap;
+}
 
 export default class KeyPipeline extends CachedEntryPipeline {
-  constructor(db, trustedClock, options) {
-    super(db, trustedClock, 'hash', options);
-    this.name = 'keys';
+  constructor({ db, trustedClock, name, options }) {
+    super({ db, trustedClock, name, options, primaryKey: 'hash' });
   }
 
   newEntry() {
     return {
       created: Date.now(),
       dirty: true,
-      sitesTokens: new DefaultMap(() => new Map()),
+      sitesTokens: new SerializableMap(),
       count: 0,
     };
   }
 
   updateCache({ hash, lastSent, key, tracker, created, sitesTokens, count }) {
-    const stats = this.cache.get(hash);
+    const stats = this.getFromCache(hash);
     if (stats.lastSent === undefined || lastSent > stats.lastSent) {
       stats.lastSent = lastSent;
     }
@@ -37,7 +46,7 @@ export default class KeyPipeline extends CachedEntryPipeline {
     stats.created = Math.min(stats.created, created);
     Object.keys(sitesTokens).forEach((site) => {
       const tokenMap = sitesTokens[site];
-      const st = stats.sitesTokens.get(site);
+      const st = getSiteTokensMap(stats.sitesTokens, site);
       tokenMap.forEach((safe, token) => {
         st.set(token, safe);
       });
@@ -53,7 +62,7 @@ export default class KeyPipeline extends CachedEntryPipeline {
       tracker,
       created,
       lastSent: lastSent || '',
-      sitesTokens: sitesTokens.toObj(),
+      sitesTokens,
       count,
     };
   }
