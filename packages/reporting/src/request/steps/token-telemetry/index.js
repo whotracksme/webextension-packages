@@ -76,8 +76,18 @@ export default class TokenTelemetry {
     this.tokenSendQueue = new Subject();
     this.keySendQueue = new Subject();
 
-    this.tokens = new TokenPipeline(database.tokens, trustedClock, opts);
-    this.keys = new KeyPipeline(database.keys, trustedClock, opts);
+    this.tokens = new TokenPipeline({
+      name: 'tokens',
+      db: database.tokens,
+      trustedClock,
+      options: opts,
+    });
+    this.keys = new KeyPipeline({
+      name: 'keys',
+      db: database.keys,
+      trustedClock,
+      options: opts,
+    });
   }
 
   init() {
