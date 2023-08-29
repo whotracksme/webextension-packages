@@ -15,35 +15,10 @@ import * as datetime from '../time';
 import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../../utils/pacemaker';
 import ChromeStorageMap from '../utils/chrome-storage-map';
+import SerializableMap from '../utils/serializable-map';
 import logger from '../../logger';
 
 const SYNC_DB_INTERVAL = 20 * 1000;
-
-class SerializableMap extends Object {
-  add(key, value) {
-    this[key] = value;
-  }
-
-  set(key, value) {
-    this.add(key, value);
-  }
-
-  get(key) {
-    return this[key];
-  }
-
-  has(key) {
-    return Object.prototype.hasOwnProperty.call(this, key);
-  }
-
-  delete(key) {
-    delete this[key];
-  }
-
-  size() {
-    return Object.keys(this).length;
-  }
-}
 
 // own names for readibility
 class TrackerMap extends SerializableMap {}

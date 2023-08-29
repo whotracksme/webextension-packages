@@ -36,6 +36,12 @@ export default class ChromeStorageMap extends ChromeStorageBase {
     return this.inMemoryData.get(key);
   }
 
+  has(_key) {
+    this._warnIfOutOfSync();
+    const key = this.normalizeKey(_key);
+    return this.inMemoryData.has(key);
+  }
+
   forEach(callback) {
     this._warnIfOutOfSync();
     this.inMemoryData.forEach(callback);
