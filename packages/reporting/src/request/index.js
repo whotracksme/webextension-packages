@@ -31,7 +31,7 @@ import BlockRules from './steps/block-rules';
 import CookieContext from './steps/cookie-context';
 import PageLogger from './steps/page-logger';
 import RedirectTagger from './steps/redirect-tagger';
-import TokenChecker from './steps/token-checker';
+import TokenChecker from './steps/token-checker/index';
 import TokenExaminer from './steps/token-examiner';
 import TokenTelemetry from './steps/token-telemetry';
 import OAuthDetector from './steps/oauth-detector';
