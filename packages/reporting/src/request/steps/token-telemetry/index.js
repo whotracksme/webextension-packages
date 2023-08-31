@@ -120,8 +120,12 @@ export default class TokenTelemetry {
       tokenStats.dirty = true;
 
       batch.forEach((entry) => {
-        tokenStats.sites.add(entry.fp);
-        tokenStats.trackers.add(entry.tp);
+        if (!tokenStats.sites.includes(entry.fp)) {
+          tokenStats.sites.push(entry.fp);
+        }
+        if (!tokenStats.trackers.includes(entry.tp)) {
+          tokenStats.trackers.push(entry.tp);
+        }
         tokenStats.safe = tokenStats.safe && entry.safe;
 
         const keyKey = `${entry.tp}:${entry.key}`;
@@ -142,7 +146,7 @@ export default class TokenTelemetry {
       });
       if (
         tokenStats.lastSent !== today &&
-        (tokenStats.sites.size > 1 ||
+        (tokenStats.sites.length > 1 ||
           (tokenStats.count > this.MIN_COUNT &&
             tokenStats.created < entryCutoff))
       ) {
