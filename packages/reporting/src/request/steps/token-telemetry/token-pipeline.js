@@ -10,7 +10,6 @@
  */
 
 import CachedEntryPipeline from './cached-entry-pipeline';
-import SerializableSet from '../../utils/serializable-set';
 
 export default class TokenPipeline extends CachedEntryPipeline {
   constructor({ db, trustedClock, options, name }) {
@@ -20,8 +19,8 @@ export default class TokenPipeline extends CachedEntryPipeline {
   newEntry() {
     return {
       created: Date.now(),
-      sites: new SerializableSet(),
-      trackers: new SerializableSet(),
+      sites: [],
+      trackers: [],
       safe: true,
       dirty: true,
       count: 0,
@@ -36,10 +35,14 @@ export default class TokenPipeline extends CachedEntryPipeline {
     stats.safe = safe;
     stats.created = Math.min(stats.created, created);
     sites.forEach((site) => {
-      stats.sites.add(site);
+      if (!stats.sites.includes(site)) {
+        stats.sites.push(site);
+      }
     });
     trackers.forEach((tracker) => {
-      stats.trackers.add(tracker);
+      if (!stats.trackers.includes(tracker)) {
+        stats.trackers.push(tracker);
+      }
     });
     stats.count = Math.max(stats.count, count);
   }
@@ -85,12 +88,12 @@ export default class TokenPipeline extends CachedEntryPipeline {
       ts: this.trustedClock.getTimeAsYYYYMMDD(),
       token,
       safe: stats.safe,
-      sites: stats.sites.size,
-      trackers: stats.trackers.size,
+      sites: stats.sites.length,
+      trackers: stats.trackers.length,
     };
     // clear
-    stats.sites.clear();
-    stats.trackers.clear();
+    stats.sites.splice(0, stats.sites.length);
+    stats.trackers.splice(0, stats.trackers.length);
     /* eslint no-param-reassign: 'off' */
     stats.count = 0;
     return msg;
