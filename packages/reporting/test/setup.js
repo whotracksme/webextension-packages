@@ -17,3 +17,5 @@ chai.use(sinonChai);
 setLogLevel('off');
 
 window.chrome = chrome;
+
+chrome.storage.local.get.yields({});

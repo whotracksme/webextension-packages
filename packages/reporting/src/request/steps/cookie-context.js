@@ -42,7 +42,9 @@ export default class CookieContext {
     });
   }
 
-  init() {
+  async init() {
+    await this.visitCache.isReady;
+    await this.trustedThirdParties.isReady;
     this.cleanCookieCache();
     this._pmclean = pacemaker.register(this.cleanCookieCache.bind(this), {
       timeout: CLEAN_COOKIE_CACHE_TIMEOUT,

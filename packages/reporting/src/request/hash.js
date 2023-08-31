@@ -29,10 +29,6 @@ export class HashProb {
     this.probHashThreshold = data.thresh;
   }
 
-  init() {}
-
-  unload() {}
-
   isHashProb(str) {
     if (!this.probHashLogM || !this.probHashThreshold) {
       return 0;

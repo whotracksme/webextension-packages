@@ -90,7 +90,9 @@ export default class TokenTelemetry {
     });
   }
 
-  init() {
+  async init() {
+    await this.tokens.isReady;
+    await this.keys.isReady;
     let filteredTokensBatch = [];
     const filteredTokens = new Subject();
     setInterval(() => {

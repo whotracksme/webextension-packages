@@ -40,6 +40,10 @@ export default class TokenExaminer {
     this._lastPrune = null;
   }
 
+  async init() {
+    await this.requestKeyValue.isReady;
+  }
+
   unload() {
     pacemaker.clearTimeout(this._syncTimer);
     this._syncTimer = null;

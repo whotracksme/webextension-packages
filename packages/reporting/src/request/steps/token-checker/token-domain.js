@@ -22,7 +22,6 @@ export default class TokenDomain {
     this.config = config;
     this.db = db;
     this.blockedTokens = new Set();
-    this.stagedTokenDomain = new Map();
     this.stagedTokenDomain = new ChromeStorageMap({
       storageKey: 'wtm-url-reporting:token-domain:staged-token-domain',
       ttlInMs: STAGED_TOKEN_EXPIRY,
@@ -31,6 +30,7 @@ export default class TokenDomain {
 
   async init() {
     // load current tokens over threshold
+    await this.stagedTokenDomain.isReady;
     await this.db.ready;
     await this.loadBlockedTokens();
   }

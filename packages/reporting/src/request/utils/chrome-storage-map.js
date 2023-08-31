@@ -22,7 +22,7 @@ export default class ChromeStorageMap extends ChromeStorageBase {
     this.inMemoryData = new Map();
   }
 
-  deserialise(entries) {
+  deserialise(entries = {}) {
     return new Map(Object.entries(entries));
   }
 
