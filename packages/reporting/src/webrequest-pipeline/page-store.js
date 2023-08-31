@@ -11,19 +11,26 @@
 
 import logger from './logger';
 import Page, { PAGE_LOADING_STATE } from './page';
+import ChromeStorageMap from '../request/utils/chrome-storage-map';
 
 function makeTabContext(tab) {
   return new Page(tab);
 }
 
+const PAGE_TTL = 1000 * 60 * 60; // 1 hour
+
 export default class PageStore {
   constructor({ notifyPageStageListeners }) {
-    this.tabs = new Map();
+    this.tabs = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:page-store:tabs',
+      ttlInMs: PAGE_TTL,
+    });
     this.staged = [];
     this.notifyPageStageListeners = notifyPageStageListeners;
   }
 
-  init() {
+  async init() {
+    await this.tabs.isReady;
     chrome.tabs.onCreated.addListener(this.onTabCreated);
     chrome.tabs.onUpdated.addListener(this.onTabUpdated);
     chrome.tabs.onRemoved.addListener(this.onTabRemoved);
@@ -167,7 +174,7 @@ export default class PageStore {
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
       tabContext.updateState(PAGE_LOADING_STATE.COMMITTED);
-    } else if (tabContext && !tabContext.frames.has(frameId)) {
+    } else if (tabContext && !tabContext.frames[frameId]) {
       // frame created without request
       this.onSubFrame(details);
     }
@@ -200,7 +207,7 @@ export default class PageStore {
     }
 
     if (event === 'onBeforeRequest') {
-      tabContext.frames.clear();
+      tabContext.frames = {};
       // Detect redirect: if the last request on this tab had the same id and
       // this was from the same `onBeforeRequest` hook, we can assume this is a
       // redirection.
@@ -216,10 +223,10 @@ export default class PageStore {
 
     // Update context of tab with `url` and main frame information
     tabContext.url = url;
-    tabContext.frames.set(0, {
+    tabContext.frames[0] = {
       parentFrameId: -1,
       url,
-    });
+    };
   };
 
   onSubFrame = (details) => {
@@ -231,10 +238,10 @@ export default class PageStore {
     }
 
     // Keep track of frameUrl as well as parent frame
-    tab.frames.set(frameId, {
+    tab.frames[frameId] = {
       parentFrameId,
       url,
-    });
+    };
   };
 
   getPageForRequest({ tabId, frameId, originUrl, type, initiator }) {
@@ -244,8 +251,8 @@ export default class PageStore {
     }
     // check if the current page has the given frame id, otherwise check if it belongs to the
     // previous page
-    if (!tab.frames.has(frameId)) {
-      if (tab.previous && tab.previous.frames.has(frameId)) {
+    if (!tab.frames[frameId]) {
+      if (tab.previous && tab.previous.frames[frameId]) {
         return tab.previous;
       }
       return null;

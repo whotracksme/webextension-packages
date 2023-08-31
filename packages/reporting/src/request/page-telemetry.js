@@ -20,10 +20,7 @@ function truncatePath(path) {
 
 export default function buildPageLoadObject(page) {
   const urlParts = parse(page.url);
-  const tps = {};
-  for (const [domain, stats] of page.requestStats.entries()) {
-    tps[domain] = stats;
-  }
+  const tps = { ...page.requestStats };
   return {
     hostname: truncatedHash(urlParts.hostname),
     path: truncatedHash(truncatePath(urlParts.path)),

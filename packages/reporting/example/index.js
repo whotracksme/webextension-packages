@@ -56,7 +56,6 @@ const config = {
 };
 
 const webRequestPipeline = new WebRequestPipeline();
-webRequestPipeline.init();
 
 const urlReporter = new UrlReporter({
   config: config.url,
@@ -84,6 +83,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 });
 
 (async function () {
+  await webRequestPipeline.init();
   await urlReporter.init();
   await urlReporter.patterns.updatePatterns(rules);
   await urlReporter.analyzeUrl('https://www.google.com/search?q=shoes');
