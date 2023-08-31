@@ -12,7 +12,6 @@
 import * as datetime from '../../time';
 import logger from '../../../logger';
 import ChromeStorageMap from '../../utils/chrome-storage-map';
-import SerializableMap from '../../utils/serializable-map';
 
 const DAYS_EXPIRE = 7;
 const STAGED_TOKEN_EXPIRY = 1000 * 60 * 60 * 24 * 2; // 2 days
@@ -64,16 +63,16 @@ export default class TokenDomain {
 
   _addTokenOnFirstParty({ token, firstParty, day }) {
     if (!this.stagedTokenDomain.has(token)) {
-      this.stagedTokenDomain.set(token, new SerializableMap());
+      this.stagedTokenDomain.set(token, {});
     }
     const tokens = this.stagedTokenDomain.get(token);
 
-    tokens.set(firstParty, day);
+    tokens[firstParty] = day;
     return this._checkThresholdReached(token, tokens);
   }
 
   _checkThresholdReached(token, tokens) {
-    if (tokens.size >= this.config.tokenDomainCountThreshold) {
+    if (Object.keys(tokens).length >= this.config.tokenDomainCountThreshold) {
       this.addBlockedToken(token);
     }
     return this.blockedTokens.has(token);
@@ -107,15 +106,15 @@ export default class TokenDomain {
 
     this.stagedTokenDomain.forEach((fps, token) => {
       const toPrune = [];
-      fps.forEach((mtime, fp) => {
+      Object.entries(fps).forEach(([fp, mtime]) => {
         if (mtime < dayCutoff) {
           toPrune.push(fp);
         }
       });
       toPrune.forEach((fp) => {
-        fps.delete(fp);
+        delete fps[fp];
       });
-      if (fps.size === 0) {
+      if (Object.keys(fps).length === 0) {
         this.stagedTokenDomain.delete(token);
       }
     });

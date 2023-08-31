@@ -10,13 +10,12 @@
  */
 
 import CachedEntryPipeline from './cached-entry-pipeline';
-import SerializableMap from '../../utils/serializable-map';
 
-function getSiteTokensMap(siteTokens, key) {
-  let siteTokensMap = siteTokens.get(key);
+export function getSiteTokensMap(siteTokens, key) {
+  let siteTokensMap = siteTokens[key];
   if (!siteTokensMap) {
-    siteTokensMap = new SerializableMap();
-    siteTokens.set(siteTokensMap);
+    siteTokensMap = {};
+    siteTokens[key] = siteTokensMap;
   }
   return siteTokensMap;
 }
@@ -30,7 +29,7 @@ export default class KeyPipeline extends CachedEntryPipeline {
     return {
       created: Date.now(),
       dirty: true,
-      sitesTokens: new SerializableMap(),
+      sitesTokens: {},
       count: 0,
     };
   }
@@ -46,8 +45,8 @@ export default class KeyPipeline extends CachedEntryPipeline {
     Object.keys(sitesTokens).forEach((site) => {
       const tokenMap = sitesTokens[site];
       const st = getSiteTokensMap(stats.sitesTokens, site);
-      tokenMap.forEach((safe, token) => {
-        st.set(token, safe);
+      Object.entries(tokenMap).forEach(([token, safe]) => {
+        st[token] = safe;
       });
     });
     stats.count = Math.max(stats.count, count);
@@ -75,9 +74,9 @@ export default class KeyPipeline extends CachedEntryPipeline {
       if (groupedMessages.size >= batchLimit) {
         overflow.push(tuple);
       } else {
-        stats.sitesTokens.forEach((tokens, site) => {
+        Object.entries(stats.sitesTokens).forEach(([site, tokens]) => {
           // if there are unsafe tokens in the group, make sure this entry is not grouped
-          const unsafe = [...tokens.values()].some((t) => t === false);
+          const unsafe = Object.values(tokens).some((t) => t === false);
           const extraKey = unsafe ? `${stats.tracker}:${stats.key}` : '';
           let entry = groupedMessages.get(`${site}${extraKey}`);
           if (!entry) {
@@ -89,10 +88,12 @@ export default class KeyPipeline extends CachedEntryPipeline {
             tracker: stats.tracker,
             key: stats.key,
             site,
-            tokens: [...tokens],
+            tokens: Object.entries(tokens),
           });
         });
-        stats.sitesTokens.clear();
+        Object.keys(stats.sitesTokens).forEach(
+          (key) => delete stats.sitesTokens[key],
+        );
         stats.count = 0;
       }
     });

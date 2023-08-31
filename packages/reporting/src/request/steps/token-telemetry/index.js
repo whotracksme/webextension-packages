@@ -11,7 +11,7 @@
 
 import md5, { truncatedHash } from '../../../md5';
 import Subject from '../../utils/subject';
-import KeyPipeline from './key-pipeline';
+import KeyPipeline, { getSiteTokensMap } from './key-pipeline';
 import TokenPipeline from './token-pipeline';
 
 const DEFAULT_CONFIG = {
@@ -133,12 +133,12 @@ export default class TokenTelemetry {
         keyStats.key = entry.key;
         keyStats.tracker = entry.tp;
         keyStats.dirty = true;
-        const siteTokens = keyStats.sitesTokens.get(entry.fp);
-        siteTokens.set(entry.token, entry.safe);
+        const siteTokens = getSiteTokensMap(keyStats.sitesTokens, entry.fp);
+        siteTokens[entry.token] = entry.safe;
 
         if (
           keyStats.lastSent !== today &&
-          (keyStats.sitesTokens.size > 1 ||
+          (Object.keys(keyStats.sitesTokens).length > 1 ||
             (keyStats.count > this.MIN_COUNT && keyStats.created < entryCutoff))
         ) {
           this.keySendQueue.pub(keyKey);
