@@ -27,21 +27,18 @@ export default class Page {
     this.created = Date.now();
     this.destroyed = null;
     this.lastRequestId = null;
-    this.frames = new Map([
-      [
-        0,
-        {
-          parentFrameId: -1,
-          url,
-        },
-      ],
-    ]);
+    this.frames = {
+      0: {
+        parentFrameId: -1,
+        url,
+      },
+    };
     this.state = PAGE_LOADING_STATE.CREATED;
 
     this.activeTime = 0;
     this.activeFrom = active ? Date.now() : 0;
 
-    this.requestStats = new Map();
+    this.requestStats = {};
     this.annotations = {};
     this.counter = 0;
 
@@ -70,10 +67,10 @@ export default class Page {
   }
 
   getStatsForDomain(domain) {
-    let stats = this.requestStats.get(domain);
+    let stats = this.requestStats[domain];
     if (!stats) {
       stats = {};
-      this.requestStats.set(domain, stats);
+      this.requestStats[domain] = stats;
     }
     return stats;
   }
@@ -89,7 +86,7 @@ export default class Page {
     // Reconstruct frame ancestors
     let currentFrameId = parentFrameId;
     while (currentFrameId !== -1) {
-      const frame = this.frames.get(currentFrameId);
+      const frame = this.frames[currentFrameId];
 
       // If `frame` if undefined, this means we do not have any information
       // about the frame associated with `currentFrameId`. This can happen if
@@ -129,7 +126,7 @@ export default class Page {
   getFrameUrl(context) {
     const { frameId } = context;
 
-    const frame = this.frames.get(frameId);
+    const frame = this.frames[frameId];
 
     // In some cases, frame creation does not trigger a webRequest event (e.g.:
     // if the iframe is specified in the HTML of the page directly). In this
