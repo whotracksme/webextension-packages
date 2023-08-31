@@ -9,9 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import pacemaker from '../utils/pacemaker';
-
 import logger from './logger';
+import ChromeStorageMap from '../request/utils/chrome-storage-map';
 
 function checkUserAgent(pattern) {
   return navigator.userAgent.indexOf(pattern) !== -1;
@@ -49,35 +48,21 @@ export function isCnameUncloakSupported(browser) {
   );
 }
 
-export default class {
+export default class CnameUnloak {
   /**
    * @param {function} dnsResolve dns.resolve WebExtension API (Firefox)
    */
   constructor(dnsResolve, dnsTTL = 10 * 60 * 1000 /* 10 minutes */) {
     this.dnsResolve = dnsResolve;
-    this.dnsCache = new Map();
+    this.dnsCache = new ChromeStorageMap({
+      storageKey: 'wtm-url-reporting:webrequest-pipeline:dns-cache',
+      ttlInMs: dnsTTL,
+    });
     this.dnsPending = new Map();
     this.dnsTTL = dnsTTL;
-
-    // Check every few minutes (~10 minutes) that old cache entries are deleted.
-    this.cleanInterval = pacemaker.everyFewMinutes(() => {
-      logger.debug('[cname] clean cache');
-      const now = Date.now();
-      for (const [hostname, { ts }] of this.dnsCache) {
-        if (now - ts > this.dnsTTL) {
-          logger.debug('[cname] remove cache entry', hostname);
-          this.dnsCache.delete(hostname);
-        }
-      }
-    });
   }
 
-  unload() {
-    if (this.cleanInterval !== null) {
-      pacemaker.clearTimeout(this.cleanInterval);
-      this.cleanInterval = null;
-    }
-  }
+  unload() {}
 
   /**
    * Resolve CNAME for `hostname`.
