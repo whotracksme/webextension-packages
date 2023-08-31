@@ -15,14 +15,9 @@ import * as datetime from '../time';
 import md5, { truncatedHash } from '../../md5';
 import pacemaker from '../../utils/pacemaker';
 import ChromeStorageMap from '../utils/chrome-storage-map';
-import SerializableMap from '../utils/serializable-map';
 import logger from '../../logger';
 
 const SYNC_DB_INTERVAL = 20 * 1000;
-
-// own names for readibility
-class TrackerMap extends SerializableMap {}
-class TokenSet extends SerializableMap {}
 
 /**
  * Manages the local safekey list
@@ -56,13 +51,13 @@ export default class TokenExaminer {
 
   addRequestKeyValueEntry(tracker, key, tokens) {
     if (!this.requestKeyValue.has(tracker)) {
-      this.requestKeyValue.set(tracker, new TrackerMap());
+      this.requestKeyValue.set(tracker, {});
     }
     const trackerMap = this.requestKeyValue.get(tracker);
-    if (!trackerMap.has(key)) {
-      trackerMap.set(key, new TokenSet());
+    if (!trackerMap[key]) {
+      trackerMap[key] = {};
     }
-    const toks = trackerMap.get(key);
+    const toks = trackerMap[key];
     Object.keys(tokens).forEach((tok) => {
       toks.add(tok, tokens[tok]);
     });
@@ -72,9 +67,9 @@ export default class TokenExaminer {
   removeRequestKeyValueEntry(tracker, key) {
     const trackerMap = this.requestKeyValue.get(tracker);
     if (trackerMap) {
-      trackerMap.delete(key);
+      delete trackerMap[key];
     }
-    if (trackerMap && trackerMap.size() === 0) {
+    if (trackerMap && Object.keys(trackerMap).length === 0) {
       this.requestKeyValue.delete(tracker);
     }
   }
@@ -92,7 +87,7 @@ export default class TokenExaminer {
       const tracker = truncatedHash(state.urlParts.generalDomain);
 
       // create a Map of key => set(values) from the url data
-      const trackerMap = this.requestKeyValue.get(tracker) || new TrackerMap();
+      const trackerMap = this.requestKeyValue.get(tracker) || {};
       const reachedThreshold = new Set();
       const newTrackerMap = state.urlParts
         .extractKeyValues()
@@ -106,14 +101,14 @@ export default class TokenExaminer {
             return hash;
           }
           const tok = this.hashTokens ? md5(v) : v;
-          if (!hash.has(key)) {
-            hash.set(key, new TokenSet());
+          if (!hash[key]) {
+            hash[key] = {};
           }
-          hash.get(key).add(tok, today);
+          hash[key][tok] = today;
           // whitelist any keys which reached the threshold
           if (
             !reachedThreshold.has(key) &&
-            hash.get(key).size() > this.config.safekeyValuesThreshold
+            Object.keys(hash[key]).length > this.config.safekeyValuesThreshold
           ) {
             reachedThreshold.add(key);
             if (this.config.debugMode) {
@@ -121,7 +116,7 @@ export default class TokenExaminer {
                 'Add safekey',
                 state.urlParts.generalDomain,
                 key,
-                hash.get(key),
+                hash[key],
               );
             }
             this.qsWhitelist.addSafeKey(
@@ -167,17 +162,17 @@ export default class TokenExaminer {
       for (const [key, tokenSet] of Object.entries(trackerMap)) {
         Object.entries(tokenSet).forEach(([value, day]) => {
           if (day < cutoff) {
-            tokenSet.delete(value);
+            delete tokenSet[value];
           }
         });
         if (
-          tokenSet.size() > this.config.safekeyValuesThreshold &&
+          Object.keys(tokenSet).length > this.config.safekeyValuesThreshold &&
           !this.qsWhitelist.isSafeKey(tracker, key)
         ) {
           this.qsWhitelist.addSafeKey(
             tracker,
             this.hashTokens ? key : md5(key),
-            tokenSet.size(),
+            Object.keys(tokenSet).length,
           );
           this.removeRequestKeyValueEntry(tracker, key);
         }
