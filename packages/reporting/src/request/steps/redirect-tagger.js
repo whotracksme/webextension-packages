@@ -29,6 +29,11 @@ export default class RedirectTagger {
     });
   }
 
+  async init() {
+    await this.redirectCache.isReady;
+    await this.redirectTaggerCache.isReady;
+  }
+
   isFromRedirect(url) {
     return this.redirectCache.has(url);
   }

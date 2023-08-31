@@ -169,8 +169,9 @@ export default class RequestMonitor {
   async init(config) {
     this.config = config;
 
+    await this.recentlyModified.isReady;
+
     this.hashProb = new HashProb();
-    this.hashProb.init();
 
     // load all caches:
     // Large dynamic caches are loaded via the persist module, which will
@@ -721,7 +722,6 @@ export default class RequestMonitor {
 
   unload() {
     // Check is active usage, was sent
-    this.hashProb.unload();
     this.qs_whitelist.destroy();
     this.unloadPipeline();
     this.db.unload();

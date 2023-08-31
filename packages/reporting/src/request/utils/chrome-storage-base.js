@@ -69,12 +69,12 @@ export default class ChromeStorageBase {
     // (If that assumption does not hold, _warnIfOutOfSync will detect
     // and log it. A potential improvement could be to treat the
     // in-memory map as the source of truth in that scenario.)
-    this._pending = new Promise((resolve, reject) => {
+    this.isReady = new Promise((resolve, reject) => {
       chrome.storage.local.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
-          const { entries = {}, ttl = {} } = result[this.storageKey] || {};
+          const { entries, ttl = {} } = result[this.storageKey] || {};
           this.inMemoryData = this.deserialise(entries);
           this._ttlMap = new Map(Object.entries(ttl));
           this._initialSyncComplete = true;
@@ -196,8 +196,8 @@ export default class ChromeStorageBase {
   }
 
   _scheduleAction(action) {
-    const lastSyncPoint = this._pending;
-    this._pending = lastSyncPoint.then(action).catch(console.error);
-    return this._pending;
+    const lastSyncPoint = this.isReady;
+    this.isReady = lastSyncPoint.then(action).catch(console.error);
+    return this.isReady;
   }
 }

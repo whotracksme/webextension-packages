@@ -32,7 +32,7 @@ export default class CachedEntryPipeline {
   }
 
   get(key) {
-    const entry = this.cache.get(key);
+    const entry = this.getFromCache(key);
     entry.count += 1;
     return entry;
   }
@@ -83,13 +83,14 @@ export default class CachedEntryPipeline {
    * @param batchInterval how often to run batches
    * @param batchLimit maximum messages per batch
    */
-  init(
+  async init(
     inputObservable,
     sendMessage,
     batchInterval,
     batchLimit,
     overflowSubject,
   ) {
+    await this.cache.isReady;
     const pipeline = new Subject();
     this.input = inputObservable;
 

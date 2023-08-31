@@ -38,7 +38,9 @@ export default class OAuthDetector {
     this.tabClicks.pub(sender.tab);
   }
 
-  init() {
+  async init() {
+    await this.clickActivity.isReady;
+    await this.siteActivitiy.isReady;
     this.tabActivitySubscription = this.tabClicks.subscribe((event) => {
       this.clickActivity.set(event.id, event.url);
     });

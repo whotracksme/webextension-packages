@@ -18,7 +18,7 @@ export default class ChromeStorageSet extends ChromeStorageBase {
     this.inMemoryData = new Set();
   }
 
-  deserialise(entries) {
+  deserialise(entries = []) {
     return new Set(entries);
   }
 

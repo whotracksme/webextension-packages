@@ -47,9 +47,9 @@ describe('request/steps/oauth-detector', function () {
   describe('click tracking', () => {
     let detectorInstance;
 
-    beforeEach(function () {
+    beforeEach(async function () {
       detectorInstance = new OAuthDetector({ CLICK_TIMEOUT: 10 });
-      detectorInstance.init();
+      await detectorInstance.init();
     });
 
     afterEach(function () {
@@ -206,12 +206,12 @@ describe('request/steps/oauth-detector', function () {
       };
     }
 
-    beforeEach(function () {
+    beforeEach(async function () {
       detectorInstance = new OAuthDetector({
         CLICK_TIMEOUT: 10,
         VISIT_TIMEOUT: 8,
       });
-      detectorInstance.init();
+      await detectorInstance.init();
     });
 
     afterEach(function () {
