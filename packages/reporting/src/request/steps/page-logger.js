@@ -11,7 +11,6 @@
 
 /* eslint no-param-reassign: 'off' */
 import { truncateDomain } from '../utils';
-import ChromeStorageMap from '../utils/chrome-storage-map';
 
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {
@@ -40,12 +39,11 @@ const TYPE_LOOKUP = {
 export default class PageLogger {
   constructor(config) {
     this.config = config;
-    this._requestCounters = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:page-logger:request-counter',
-    });
+    // maintain the request metadabase between pipeline steps
+    this._requestCounters = new Map();
   }
 
-  attachCounters(state) {
+  _attachCounters(state) {
     const stats = state.page.getStatsForDomain(
       truncateDomain(state.urlParts.domainInfo, 2),
     );
@@ -58,19 +56,24 @@ export default class PageLogger {
     };
     state.incrementStat = incrementStat;
     state.setStat = setStat;
-    state.getPageAnnotations = () => state.page.annotations;
 
     if (state.requestId) {
       this._requestCounters.set(state.requestId, {
         incrementStat,
         setStat,
-        getPageAnnotations: state.getPageAnnotations,
       });
     }
   }
 
+  _loadStatCounters(state) {
+    const meta = this._requestCounters.get(state.requestId);
+    Object.keys(meta).forEach((k) => {
+      state[k] = meta[k];
+    });
+  }
+
   onBeforeRequest(state) {
-    this.attachCounters(state);
+    this._attachCounters(state);
     const { incrementStat, urlParts } = state;
 
     incrementStat('c');
@@ -104,9 +107,9 @@ export default class PageLogger {
 
   onBeforeSendHeaders(state) {
     if (state.requestId && this._requestCounters.has(state.requestId)) {
-      this.loadStatCounters(state);
+      this._loadStatCounters(state);
     } else {
-      this.attachCounters(state);
+      this._attachCounters(state);
     }
     // referer stats
     const referrer = state.getReferrer();
@@ -137,9 +140,9 @@ export default class PageLogger {
 
   onHeadersReceived(state) {
     if (state.requestId && this._requestCounters.has(state.requestId)) {
-      this.loadStatCounters(state);
+      this._loadStatCounters(state);
     } else {
-      this.attachCounters(state);
+      this._attachCounters(state);
     }
     state.incrementStat('resp_ob');
     state.incrementStat(
@@ -162,56 +165,13 @@ export default class PageLogger {
     return true;
   }
 
-  loadStatCounters(state) {
-    const meta = this._requestCounters.get(state.requestId);
-    Object.keys(meta).forEach((k) => {
-      state[k] = meta[k];
-    });
-  }
-
   reattachStatCounter(state) {
     const { requestId } = state;
     if (requestId && this._requestCounters.has(requestId)) {
-      this.loadStatCounters(state);
+      this._loadStatCounters(state);
       this._requestCounters.delete(requestId);
       return true;
     }
     return false;
-  }
-
-  logRequestMetadata(state) {
-    const urlParts = state.urlParts;
-    const incrementStat = state.incrementStat;
-
-    if (state.url.indexOf(this.tpEvents.config.placeHolder) > -1) {
-      incrementStat('hasPlaceHolder');
-    }
-
-    // add metadata for this request
-    incrementStat('c');
-    if (urlParts.search.length > 0) {
-      incrementStat('has_qs');
-    }
-    if (urlParts.hasParameterString() > 0) {
-      incrementStat('has_ps');
-    }
-    if (urlParts.hash.length > 0) {
-      incrementStat('has_fragment');
-    }
-    if (state.method === 'POST') {
-      incrementStat('has_post');
-    }
-
-    incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
-
-    // log protocol (secure or not)
-    const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
-    const scheme = isHTTP(urlParts.protocol) ? urlParts.scheme : 'other';
-    incrementStat(`scheme_${scheme}`);
-
-    // find frame depth
-    incrementStat(`window_depth_${Math.min(state.frameAncestors.length, 2)}`);
-
-    return true;
   }
 }
