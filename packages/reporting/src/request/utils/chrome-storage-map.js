@@ -22,7 +22,7 @@ export default class ChromeStorageMap {
     ttlInMs = 7 * 24 * 60 * 60 * 1000 /* 1 week */,
     maxEntries = 5000,
   }) {
-    this.inMemoryData = new Map();
+    this._inMemoryMap = new Map();
 
     if (!storageKey) {
       throw new Error('Missing storage key');
@@ -75,48 +75,51 @@ export default class ChromeStorageMap {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
-          const { entries, ttl = {} } = result[this.storageKey] || {};
-          this.inMemoryData = this.deserialise(entries);
+          const { entries = {}, ttl = {} } = result[this.storageKey] || {};
+          this._inMemoryMap = new Map(Object.entries(entries));
           this._ttlMap = new Map(Object.entries(ttl));
           this._initialSyncComplete = true;
-          this.expireOldEntries();
+          this._expireOldEntries();
           resolve();
         }
       });
     });
-    setInterval(() => {
-      this.expireOldEntries();
-    }, this.ttlInMs);
-  }
-
-  deserialise(entries = {}) {
-    return new Map(Object.entries(entries));
-  }
-
-  serialise(entries) {
-    return Object.fromEntries(entries);
   }
 
   get(_key) {
     this._warnIfOutOfSync();
     const key = this.normalizeKey(_key);
-    return this.inMemoryData.get(key);
+    if (this._expireOldEntry(key)) {
+      return;
+    }
+    return this._inMemoryMap.get(key);
+  }
+
+  entries() {
+    this._warnIfOutOfSync();
+    this._expireOldEntries();
+    return this._inMemoryMap.entries();
   }
 
   values() {
     this._warnIfOutOfSync();
-    return Object.values(this.inMemoryData);
+    this._expireOldEntries();
+    return Object.values(this._inMemoryMap);
   }
 
   has(_key) {
     this._warnIfOutOfSync();
     const key = this.normalizeKey(_key);
-    return this.inMemoryData.has(key);
+    if (this._expireOldEntry(key)) {
+      return;
+    }
+    return this._inMemoryMap.has(key);
   }
 
   forEach(callback) {
     this._warnIfOutOfSync();
-    this.inMemoryData.forEach(callback);
+    this._expireOldEntries();
+    this._inMemoryMap.forEach(callback);
   }
 
   set(_key, value) {
@@ -126,17 +129,17 @@ export default class ChromeStorageMap {
     // as a side-effect of a bug), better reset then continuing with
     // these huge maps.
     if (
-      this.inMemoryData.size >= this.maxEntries ||
+      this._inMemoryMap.size >= this.maxEntries ||
       this._ttlMap.size >= this.maxEntries
     ) {
       console.warn(
         'AutoSyncingMap: Maps are running full (maybe you found a bug?). Purging data to prevent performance impacts.',
       );
-      this.inMemoryData.clear();
+      this._inMemoryMap.clear();
       this._ttlMap.clear();
     }
     const key = this.normalizeKey(_key);
-    this.inMemoryData.set(key, value);
+    this._inMemoryMap.set(key, value);
     this._ttlMap.set(key, Date.now() + this.ttlInMs);
     this._markAsDirty();
   }
@@ -144,7 +147,7 @@ export default class ChromeStorageMap {
   delete(_key) {
     this._warnIfOutOfSync();
     const key = this.normalizeKey(_key);
-    const wasDeleted = this.inMemoryData.delete(key);
+    const wasDeleted = this._inMemoryMap.delete(key);
     if (wasDeleted) {
       this._ttlMap.delete(key);
       this._markAsDirty();
@@ -152,17 +155,9 @@ export default class ChromeStorageMap {
     return wasDeleted;
   }
 
-  _warnIfOutOfSync() {
-    if (!this._initialSyncComplete) {
-      console.warn(
-        `AutoSyncingMap "${this.storageKey}": out of sync (loading is too slow...)`,
-      );
-    }
-  }
-
   clear() {
     this._warnIfOutOfSync();
-    this.inMemoryData.clear();
+    this._inMemoryMap.clear();
     this._ttlMap.clear();
 
     this._scheduleAction(
@@ -193,12 +188,20 @@ export default class ChromeStorageMap {
     throw new Error(`Unexpected key type (type: ${typeof key}, value: ${key})`);
   }
 
-  expireOldEntries() {
+  _warnIfOutOfSync() {
+    if (!this._initialSyncComplete) {
+      console.warn(
+        `AutoSyncingMap "${this.storageKey}": out of sync (loading is too slow...)`,
+      );
+    }
+  }
+
+  _expireOldEntries() {
     const now = Date.now();
     let count = 0;
     for (const [key, expireAt] of this._ttlMap.entries()) {
       if (now >= expireAt) {
-        this.inMemoryData.delete(key);
+        this._inMemoryMap.delete(key);
         this._ttlMap.delete(key);
         count += 1;
       }
@@ -208,6 +211,16 @@ export default class ChromeStorageMap {
       this._markAsDirty();
     }
     return count;
+  }
+
+  _expireOldEntry(key) {
+    const now = Date.now();
+    const expireAt = this._ttlMap.get(key);
+    if (expireAt && now >= expireAt) {
+      this.delete(key);
+      return true;
+    }
+    return false;
   }
 
   _markAsDirty() {
@@ -244,7 +257,7 @@ export default class ChromeStorageMap {
 
         this._dirty = false;
         const serialized = {
-          entries: this.serialise(this.inMemoryData),
+          entries: Object.fromEntries(this._inMemoryMap),
           ttl: Object.fromEntries(this._ttlMap),
         };
         chrome.storage.session.set({ [this.storageKey]: serialized }, () => {
