@@ -1,3 +1,40 @@
+# v3.1.0 (Fri Sep 01 2023)
+
+#### 🚀 Enhancement
+
+- Cleanup [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- ChromeStorageMap check ttl on get [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- ChromeStorageMap stored in chrome.storage.session [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Bring back TempSet [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Backporting fixes from ghostery/common [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- WebRequestPipeline MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- CnameUnloak MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Remove SerializableMap [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Remove SerializableSet [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Await chrome storage maps and sets [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Cleanup and fix page-logger [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Remove DefaultMap [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Clean Firefox manifest for example extension [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- TokenTelemetry MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Reorganise token-telemetry [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- reorganise token checker [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- TokenDomain MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- TokenExaminer MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Replace TempSet with ChromeStorageSet [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- General purpose stored Map and Set [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- PageLogger MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- CookieContext MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Oauth-detector MV3 ready [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Expose time constants [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Encapsulate currentDay logic [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+- Non persistant background for firefox example [#51](https://github.com/whotracksme/webextension-packages/pull/51) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v3.0.2 (Tue Aug 08 2023)
 
 #### 🐛 Bug Fix
