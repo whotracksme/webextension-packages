@@ -37,9 +37,10 @@ function delayedTest(test, done, delay) {
 describe('request/steps/oauth-detector', function () {
   describe('click tracking', () => {
     let detectorInstance;
+    const CLICK_TIMEOUT = 20;
 
     beforeEach(async function () {
-      detectorInstance = new OAuthDetector({ CLICK_TIMEOUT: 10 });
+      detectorInstance = new OAuthDetector({ CLICK_TIMEOUT });
       await detectorInstance.init();
     });
 
@@ -56,14 +57,14 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({
               [tab]: url,
             });
         },
         done,
-        5,
+        1,
       );
     });
 
@@ -77,7 +78,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({
               [tab]: url2,
@@ -99,7 +100,7 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({
               [tab1]: url1,
@@ -120,12 +121,12 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({});
         },
         done,
-        15,
+        CLICK_TIMEOUT + 5,
       );
     });
 
@@ -144,14 +145,14 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({
               [tab2]: url2,
             });
         },
         done,
-        15,
+        CLICK_TIMEOUT + 5,
       );
     });
 
@@ -171,14 +172,14 @@ describe('request/steps/oauth-detector', function () {
         () => {
           chai
             .expect(
-              Object.fromEntries(detectorInstance.clickActivity.inMemoryData),
+              Object.fromEntries(detectorInstance.clickActivity.entries()),
             )
             .to.eql({
               [tab1]: url1,
             });
         },
         done,
-        15,
+        CLICK_TIMEOUT + 5,
       );
     });
   });
