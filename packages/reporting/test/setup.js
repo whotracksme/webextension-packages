@@ -18,4 +18,5 @@ setLogLevel('off');
 
 window.chrome = chrome;
 
-chrome.storage.local.get.yields({});
+chrome.storage.session = chrome.storage.local;
+chrome.storage.session.get.yields({});
