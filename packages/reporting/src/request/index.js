@@ -19,7 +19,7 @@ import logger from '../logger';
 
 import * as datetime from './time';
 import QSWhitelist2 from './qs-whitelist2';
-import ChromeStorageSet from './utils/chrome-storage-set';
+import TempSet from './utils/temp-set';
 import { HashProb, shouldCheckToken } from './hash';
 import { VERSION, COOKIE_MODE } from './config';
 import { shuffle } from './utils';
@@ -73,10 +73,7 @@ export default class RequestMonitor {
     this.LOG_KEY = 'attrack';
     this.debug = false;
     this.msgType = 'attrack';
-    this.recentlyModified = new ChromeStorageSet({
-      storageKey: 'wtm-url-reporting:request-monitor:recently-modified',
-      ttlInMs: RECENTLY_MODIFIED_TTL,
-    });
+    this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
 
     // Intervals
@@ -168,9 +165,6 @@ export default class RequestMonitor {
    */
   async init(config) {
     this.config = config;
-
-    await this.recentlyModified.isReady;
-
     this.hashProb = new HashProb();
 
     // load all caches:
@@ -804,7 +798,7 @@ export default class RequestMonitor {
     // if (this.pipelineSteps.trackerProxy && this.pipelineSteps.trackerProxy.shouldProxy(tmpUrl)) {
     //     state.incrementStat('proxy');
     // }
-    this.recentlyModified.add(state.tabId + state.url);
+    this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
     response.redirectTo(tmpUrl);
     response.modifyHeader(this.config.cliqzHeader, ' ');
