@@ -35,15 +35,6 @@ function delayedTest(test, done, delay) {
 }
 
 describe('request/steps/oauth-detector', function () {
-  before(function () {
-    chrome.storage.local.get
-      .withArgs(['wtm-url-reporting:oauth-detector:click-activity'])
-      .yields({});
-    chrome.storage.local.get
-      .withArgs(['wtm-url-reporting:oauth-detector:site-activity'])
-      .yields({});
-  });
-
   describe('click tracking', () => {
     let detectorInstance;
 
