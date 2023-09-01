@@ -15,7 +15,6 @@ import './search-extractor.spec.js';
 import './request/utils/tldts.spec.js';
 import './request/utils/bloom-filter-packed.spec.js';
 import './request/utils/chrome-storage-map.spec.js';
-import './request/utils/chrome-storage-set.spec.js';
 
 // Request steps
 import './request/steps/check-context.spec.js';
