@@ -133,7 +133,7 @@ export default class ChromeStorageMap {
       this._ttlMap.size >= this.maxEntries
     ) {
       console.warn(
-        'AutoSyncingMap: Maps are running full (maybe you found a bug?). Purging data to prevent performance impacts.',
+        'ChromeStorageMap: Maps are running full (maybe you found a bug?). Purging data to prevent performance impacts.',
       );
       this._inMemoryMap.clear();
       this._ttlMap.clear();

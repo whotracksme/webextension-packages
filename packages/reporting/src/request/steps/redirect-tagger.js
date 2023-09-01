@@ -23,11 +23,6 @@ export default class RedirectTagger {
     this.redirectTaggerCache = new TempSet();
   }
 
-  async init() {
-    await this.redirectCache.isReady;
-    await this.redirectTaggerCache.isReady;
-  }
-
   isFromRedirect(url) {
     return this.redirectCache.has(url);
   }
