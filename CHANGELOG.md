@@ -1,3 +1,15 @@
+# v4.0.0 (Tue Sep 05 2023)
+
+#### 💥 Breaking Change
+
+- Clean up `trackers-preview` and `prevent-serp-tracking` [#52](https://github.com/whotracksme/webextension-packages/pull/52) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v3.1.0 (Fri Sep 01 2023)
 
 #### 🚀 Enhancement
