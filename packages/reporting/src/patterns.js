@@ -24,6 +24,12 @@ function expectInteger(arg) {
   }
 }
 
+function expectBoolean(arg) {
+  if (arg !== true && arg !== false) {
+    throw new Error(`Expected boolean argument but got: ${arg}`);
+  }
+}
+
 /**
  * A list of predefined string transformations that can be specified
  * in the DSL in the "transforms" definition.
@@ -169,6 +175,37 @@ const TRANSFORMS = new Map(
         return decodeURIComponent(x);
       } catch (e) {
         return x;
+      }
+    },
+
+    /**
+     * Takes a JSON string object, parses it and extract the data under the
+     * given path. By default, it will only extract safe types (strings,
+     * numbers, booleans), mostly to prevent accidentally extracting
+     * more than intended.
+     */
+    json: (x, path, extractObjects = false) => {
+      expectString(x);
+      expectString(path);
+      expectBoolean(extractObjects);
+      try {
+        let obj = JSON.parse(x);
+        for (const field of path.split('.')) {
+          obj = obj[field];
+        }
+        if (typeof obj === 'string') {
+          return obj;
+        }
+        if (typeof obj === 'number' || typeof obj === 'boolean') {
+          return obj.toString();
+        }
+        if (extractObjects && obj) {
+          return JSON.stringify(obj);
+        }
+        // prevent uncontrolled text extraction
+        return '';
+      } catch (e) {
+        return '';
       }
     },
   }),
