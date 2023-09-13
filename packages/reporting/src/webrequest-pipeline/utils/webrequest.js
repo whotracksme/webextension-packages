@@ -73,9 +73,15 @@ for (const event of Object.keys(EXTRA_INFO_SPEC)) {
   // etc.)
   const extraInfoSpec = EXTRA_INFO_SPEC[event];
 
+  let firstCall = true;
   const callback = (...args) => {
     if (!HANDLERS[event]) {
-      logger.info(`webRequest.${event} called without listener being assigned`);
+      if (firstCall) {
+        firstCall = false;
+        logger.info(
+          `webRequest.${event} called without listener being assigned`,
+        );
+      }
       return;
     }
     return HANDLERS[event](...args);
