@@ -1,3 +1,17 @@
+# v4.0.1 (Wed Sep 13 2023)
+
+#### 🐛 Bug Fix
+
+- Added "json" primitive to handle JSON data [#53](https://github.com/whotracksme/webextension-packages/pull/53) ([@philipp-classen](https://github.com/philipp-classen))
+- Only warn once about missing listeners [#55](https://github.com/whotracksme/webextension-packages/pull/55) ([@philipp-classen](https://github.com/philipp-classen))
+- fixed: unload should not throw if it called before the object is initialized [#54](https://github.com/whotracksme/webextension-packages/pull/54) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v4.0.0 (Tue Sep 05 2023)
 
 #### 💥 Breaking Change
