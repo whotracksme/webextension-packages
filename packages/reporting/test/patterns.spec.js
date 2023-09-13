@@ -370,4 +370,78 @@ describe('Test builtin primitives', function () {
       });
     });
   });
+
+  describe('#json', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('json');
+    });
+
+    describe('core functionality', function () {
+      it('should extract fields from JSON', function () {
+        expect(uut('{"a":1}', 'a')).to.equal('1');
+        expect(uut('{"a":1, "b":"2"}', 'b')).to.equal('2');
+      });
+
+      it('should extract nested fields from JSON', function () {
+        expect(uut('{ "a": { "nested": true } }', 'a.nested')).to.equal('true');
+        expect(uut('{ "a": { "b": { "c": "3" } } }', 'a.b.c')).to.equal('3');
+      });
+
+      it('should reject unexpected normal text', function () {
+        expect(uut('Some example text', '')).to.equal('');
+        expect(uut('Some example text', 'key')).to.equal('');
+        expect(uut('Some example text {"key":"1"}', 'key')).to.equal('');
+      });
+
+      it('should by default not extract non-trivial objects', function () {
+        expect(uut('{"a":[1,2,3]}', 'a')).to.equal('');
+        expect(uut('{"a":{"b":1}"}', 'a')).to.equal('');
+      });
+
+      it('should extract non-trivial objects when enabled', function () {
+        expect(JSON.parse(uut('{"a":[1,2,3]}', 'a', true))).to.deep.equal([
+          1, 2, 3,
+        ]);
+        expect(JSON.parse(uut('{"a":[1,2,3]}', 'a', true))).to.deep.equal([
+          1, 2, 3,
+        ]);
+        expect(JSON.parse(uut('{"a":{"b":1}}', 'a', true))).to.deep.equal({
+          b: 1,
+        });
+      });
+
+      it('should ignore incorrect JSON', function () {
+        expect(uut('', 'a')).to.equal('');
+        expect(uut('][', 'a')).to.equal('');
+        expect(uut('a:3', 'a')).to.equal('');
+        expect(uut('a:3}', 'a')).to.equal('');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, string, [bool]]', function () {
+        expect(() => uut()).to.throw();
+        expect(() => uut('foo')).to.throw();
+        expect(() => uut({ wrong: 'types' }, { wrong: 'types' })).to.throw();
+      });
+
+      it('should not fail on well-formed but arbitrary text', function () {
+        fc.assert(
+          fc.property(
+            fc.fullUnicodeString(),
+            fc.string(),
+            fc.boolean(),
+            (untrustedText, path, extractObjects) => {
+              expect(uut(untrustedText, path)).to.be.a('string');
+              expect(uut(untrustedText, path, extractObjects)).to.be.a(
+                'string',
+              );
+            },
+          ),
+        );
+      });
+    });
+  });
 });
