@@ -60,7 +60,7 @@ export default class RequestReporter {
   }
 
   unload() {
-    if (this.requestMonitor !== null) {
+    if (this.requestMonitor) {
       this.requestMonitor.unload();
       this.requestMonitor = null;
     }
