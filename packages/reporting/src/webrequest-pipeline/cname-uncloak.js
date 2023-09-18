@@ -55,7 +55,7 @@ export default class CnameUnloak {
   constructor(dnsResolve, dnsTTL = 10 * 60 * 1000 /* 10 minutes */) {
     this.dnsResolve = dnsResolve;
     this.dnsCache = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:webrequest-pipeline:dns-cache',
+      storageKey: 'wtm-request-reporting:webrequest-pipeline:dns-cache',
       ttlInMs: dnsTTL,
     });
     this.dnsPending = new Map();

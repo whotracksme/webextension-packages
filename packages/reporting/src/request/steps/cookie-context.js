@@ -32,12 +32,12 @@ export default class CookieContext {
 
     this.contextFromEvent = null;
     this.visitCache = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:cookie-context:visit-cache',
+      storageKey: 'wtm-request-reporting:cookie-context:visit-cache',
       ttlInMs: TIME_CLEANING_CACHE,
     });
 
     this.trustedThirdParties = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:cookie-context:trusted-third-parties',
+      storageKey: 'wtm-request-reporting:cookie-context:trusted-third-parties',
       ttlInMs: USED_TRUST_TIMEOUT,
     });
   }

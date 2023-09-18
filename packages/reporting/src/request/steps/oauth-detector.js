@@ -23,11 +23,11 @@ export default class OAuthDetector {
     Object.assign(this, DEFAULT_OPTIONS, options);
 
     this.clickActivity = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:oauth-detector:click-activity',
+      storageKey: 'wtm-request-reporting:oauth-detector:click-activity',
       ttlInMs: this.CLICK_TIMEOUT,
     });
     this.siteActivitiy = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:oauth-detector:site-activity',
+      storageKey: 'wtm-request-reporting:oauth-detector:site-activity',
       ttlInMs: this.VISIT_TIMEOUT,
     });
     this.subjectMainFrames = new Subject();
