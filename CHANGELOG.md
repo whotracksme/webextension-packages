@@ -1,3 +1,15 @@
+# v4.0.2 (Mon Sep 18 2023)
+
+#### 🐛 Bug Fix
+
+- Introduce new messages for MV3 anti-tracking. [#56](https://github.com/whotracksme/webextension-packages/pull/56) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v4.0.1 (Wed Sep 13 2023)
 
 #### 🐛 Bug Fix
