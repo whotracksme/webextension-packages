@@ -72,7 +72,6 @@ export default class RequestMonitor {
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
-    this.msgType = 'attrack';
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
 
@@ -864,7 +863,7 @@ export default class RequestMonitor {
         Object.keys(payload.tps).length > 0
       ) {
         this.telemetry({
-          action: 'attrack.tp_events',
+          action: 'wtm.attrack.tp_events',
           payload,
         });
       }

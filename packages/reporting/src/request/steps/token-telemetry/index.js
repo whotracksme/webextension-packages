@@ -156,14 +156,14 @@ export default class TokenTelemetry {
 
     this.tokens.init(
       this.tokenSendQueue,
-      (payload) => this.telemetry({ action: 'attrack.tokensv2', payload }),
+      (payload) => this.telemetry({ action: 'wtm.attrack.tokensv2', payload }),
       this.TOKEN_BATCH_INTERVAL,
       this.TOKEN_BATCH_SIZE,
       this.subjectTokens,
     );
     this.keys.init(
       this.keySendQueue,
-      (payload) => this.telemetry({ action: 'attrack.keysv2', payload }),
+      (payload) => this.telemetry({ action: 'wtm.attrack.keysv2', payload }),
       this.KEY_BATCH_INTERVAL,
       this.KEY_BATCH_SIZE,
       this.subjectTokens,
