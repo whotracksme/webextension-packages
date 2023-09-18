@@ -24,7 +24,7 @@ export default class CachedEntryPipeline {
     this.db = db;
     this.trustedClock = trustedClock;
     this.cache = new ChromeStorageMap({
-      storageKey: `wtm-url-reporting:token-telemetry:${name}`,
+      storageKey: `wtm-request-reporting:token-telemetry:${name}`,
       ttlInMs: CACHE_TTL,
     });
     this.primaryKey = primaryKey;

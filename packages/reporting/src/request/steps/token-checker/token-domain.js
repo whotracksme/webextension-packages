@@ -22,7 +22,7 @@ export default class TokenDomain {
     this.db = db;
     this.blockedTokens = new Set();
     this.stagedTokenDomain = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:token-domain:staged-token-domain',
+      storageKey: 'wtm-request-reporting:token-domain:staged-token-domain',
       ttlInMs: STAGED_TOKEN_EXPIRY,
     });
   }

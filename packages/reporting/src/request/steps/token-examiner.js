@@ -29,7 +29,7 @@ export default class TokenExaminer {
     this.shouldCheckToken = shouldCheckToken;
     this.hashTokens = true;
     this.requestKeyValue = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:token-examiner:request-key-value',
+      storageKey: 'wtm-request-reporting:token-examiner:request-key-value',
     });
     this._syncTimer = null;
     this._lastPrune = null;
