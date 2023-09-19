@@ -1,3 +1,15 @@
+# v4.0.3 (Tue Sep 19 2023)
+
+#### 🐛 Bug Fix
+
+- Naming consistency (request-reporter != url-reporter) [#57](https://github.com/whotracksme/webextension-packages/pull/57) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v4.0.2 (Mon Sep 18 2023)
 
 #### 🐛 Bug Fix
