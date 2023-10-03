@@ -37,9 +37,6 @@ export default class PageStore {
     chrome.tabs.onActivated.addListener(this.onTabActivated);
     chrome.webNavigation.onBeforeNavigate.addListener(this.onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.onNavigationCommitted);
-    chrome.webNavigation.onDOMContentLoaded.addListener(
-      this.onNavigationLoaded,
-    );
     chrome.webNavigation.onCompleted.addListener(this.onNavigationComplete);
     if (chrome.windows && chrome.windows.onFocusChanged) {
       chrome.windows.onFocusChanged.addListener(this.onWindowFocusChanged);
@@ -62,9 +59,6 @@ export default class PageStore {
     chrome.tabs.onActivated.removeListener(this.onTabActivated);
     chrome.webNavigation.onBeforeNavigate.removeListener(this.onBeforeNavigate);
     chrome.webNavigation.onCommitted.removeListener(this.onNavigationCommitted);
-    chrome.webNavigation.onDOMContentLoaded.removeListener(
-      this.onNavigationLoaded,
-    );
     chrome.webNavigation.onCompleted.removeListener(this.onNavigationComplete);
     if (chrome.windows && chrome.windows.onFocusChanged) {
       chrome.windows.onFocusChanged.removeListener(this.onWindowFocusChanged);
@@ -177,13 +171,6 @@ export default class PageStore {
     } else if (tabContext && !tabContext.frames[frameId]) {
       // frame created without request
       this.onSubFrame(details);
-    }
-  };
-
-  onNavigationLoaded = ({ frameId, tabId }) => {
-    const tabContext = this.tabs.get(tabId);
-    if (frameId === 0 && tabContext) {
-      tabContext.updateState(PAGE_LOADING_STATE.LOADED);
     }
   };
 

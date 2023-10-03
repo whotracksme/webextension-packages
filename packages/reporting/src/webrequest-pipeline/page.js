@@ -13,7 +13,6 @@ export const PAGE_LOADING_STATE = {
   CREATED: 'created',
   NAVIGATING: 'navigating',
   COMMITTED: 'committed',
-  LOADED: 'loaded',
   COMPLETE: 'complete',
 };
 
