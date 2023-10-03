@@ -1,3 +1,15 @@
+# v4.0.4 (Tue Oct 03 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Fix type in oAuthDetector ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v4.0.3 (Tue Sep 19 2023)
 
 #### 🐛 Bug Fix
