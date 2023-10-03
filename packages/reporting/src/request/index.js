@@ -200,7 +200,7 @@ export default class RequestMonitor {
       blockRules: new BlockRules(this.config),
       cookieContext: new CookieContext(this.config, this.qs_whitelist),
       redirectTagger: new RedirectTagger(),
-      oauthDetector: new OAuthDetector(),
+      oAuthDetector: new OAuthDetector(),
     };
     steps.tokenTelemetry = new TokenTelemetry(
       this.telemetry.bind(this),
@@ -247,9 +247,9 @@ export default class RequestMonitor {
           fn: checkValidContext,
         },
         {
-          name: 'oauthDetector.checkMainFrames',
+          name: 'oAuthDetector.checkMainFrames',
           spec: 'break',
-          fn: (state) => steps.oauthDetector.checkMainFrames(state),
+          fn: (state) => steps.oAuthDetector.checkMainFrames(state),
         },
         {
           name: 'redirectTagger.checkRedirect',
@@ -333,9 +333,9 @@ export default class RequestMonitor {
             !this.config.paused,
         },
         {
-          name: 'oauthDetector.checkIsOAuth',
+          name: 'oAuthDetector.checkIsOAuth',
           spec: 'break',
-          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'token'),
+          fn: (state) => steps.oAuthDetector.checkIsOAuth(state, 'token'),
         },
         {
           name: 'isQSEnabled',
@@ -462,9 +462,9 @@ export default class RequestMonitor {
           fn: (state) => steps.cookieContext.checkContextFromEvent(state),
         },
         {
-          name: 'oauthDetector.checkIsOAuth',
+          name: 'oAuthDetector.checkIsOAuth',
           spec: 'break',
-          fn: (state) => steps.oauthDetector.checkIsOAuth(state, 'cookie'),
+          fn: (state) => steps.oAuthDetector.checkIsOAuth(state, 'cookie'),
         },
         {
           name: 'shouldBlockCookie',
