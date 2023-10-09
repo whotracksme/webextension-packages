@@ -17,13 +17,13 @@ export const PAGE_LOADING_STATE = {
 };
 
 export default class Page {
-  constructor({ id, active, url, incognito }) {
+  constructor({ id, active, url, incognito, created }) {
     this.id = id || 0;
     this.url = url;
     this.isRedirect = false;
     this.isPrivate = incognito;
     this.isPrivateServer = false;
-    this.created = Date.now();
+    this.created = created || Date.now();
     this.destroyed = null;
     this.lastRequestId = null;
     this.frames = {
