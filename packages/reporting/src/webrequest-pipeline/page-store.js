@@ -144,7 +144,7 @@ export default class PageStore {
     const { frameId, tabId, url, timeStamp } = details;
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0) {
-      // ignore dupilcated onBeforeNavigate https://bugzilla.mozilla.org/show_bug.cgi?id=1732564
+      // ignore duplicated onBeforeNavigate https://bugzilla.mozilla.org/show_bug.cgi?id=1732564
       if (
         tabContext &&
         tabContext.id === tabId &&
