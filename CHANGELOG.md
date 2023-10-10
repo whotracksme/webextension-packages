@@ -1,3 +1,15 @@
+# v4.0.5 (Tue Oct 10 2023)
+
+#### 🐛 Bug Fix
+
+- Fix stats leakage [#58](https://github.com/whotracksme/webextension-packages/pull/58) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v4.0.4 (Tue Oct 03 2023)
 
 #### ⚠️ Pushed to `main`
