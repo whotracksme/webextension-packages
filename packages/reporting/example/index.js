@@ -16,6 +16,13 @@ import {
 } from '../src/index.js';
 import rules from './rules.json';
 
+(chrome.action || chrome.browserAction).onClicked.addListener(() => {
+  chrome.tabs.create({
+    active: true,
+    url: chrome.runtime.getURL('inspector/index.html'),
+  });
+});
+
 setLogLevel('debug');
 
 const storage = {
@@ -71,7 +78,7 @@ const requestReporter = new RequestReporter(config.request, {
   getBrowserInfo: () => ({ name: 'xx' }),
 });
 
-chrome.runtime.onMessage.addListener((request, sender) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'mousedown') {
     requestReporter.recordClick(
       request.event,
@@ -79,6 +86,10 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       request.href,
       sender,
     );
+  } else if (request.action === 'debug') {
+    sendResponse({
+      tabs: [...webRequestPipeline.pageStore.tabs._inMemoryMap.values()],
+    });
   }
 });
 
@@ -91,5 +102,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   await requestReporter.init();
 })();
 
+globalThis.webRequestPipeline = webRequestPipeline;
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;

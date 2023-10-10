@@ -16,6 +16,10 @@
     "ws://*/*",
     "wss://*/*"
   ],
+  "browser_action": {
+    "default_title": "WTM/Reporting Inspector",
+    "default_area": "navbar"
+  },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],

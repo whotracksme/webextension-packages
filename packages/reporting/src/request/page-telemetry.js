@@ -38,7 +38,5 @@ export default function buildPageLoadObject(page) {
     tsv: page.tsv,
     tsv_id: page.tsvId !== undefined,
     frames: {},
-    cmp: page.annotations.cmp,
-    hiddenElements: page.annotations.hiddenElements,
   };
 }

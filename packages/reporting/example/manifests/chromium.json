@@ -13,6 +13,9 @@
     "storage",
     "windows"
   ],
+  "action": {
+    "default_title": "WTM/Reporting Inspector"
+  },
   "background": {
     "service_worker": "index.bundle.js",
     "type": "module"

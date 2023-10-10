@@ -37,9 +37,6 @@ export default class PageStore {
     chrome.tabs.onActivated.addListener(this.onTabActivated);
     chrome.webNavigation.onBeforeNavigate.addListener(this.onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.onNavigationCommitted);
-    chrome.webNavigation.onDOMContentLoaded.addListener(
-      this.onNavigationLoaded,
-    );
     chrome.webNavigation.onCompleted.addListener(this.onNavigationComplete);
     if (chrome.windows && chrome.windows.onFocusChanged) {
       chrome.windows.onFocusChanged.addListener(this.onWindowFocusChanged);
@@ -62,9 +59,6 @@ export default class PageStore {
     chrome.tabs.onActivated.removeListener(this.onTabActivated);
     chrome.webNavigation.onBeforeNavigate.removeListener(this.onBeforeNavigate);
     chrome.webNavigation.onCommitted.removeListener(this.onNavigationCommitted);
-    chrome.webNavigation.onDOMContentLoaded.removeListener(
-      this.onNavigationLoaded,
-    );
     chrome.webNavigation.onCompleted.removeListener(this.onNavigationComplete);
     if (chrome.windows && chrome.windows.onFocusChanged) {
       chrome.windows.onFocusChanged.removeListener(this.onWindowFocusChanged);
@@ -147,9 +141,18 @@ export default class PageStore {
   };
 
   onBeforeNavigate = (details) => {
-    const { frameId, tabId, url } = details;
+    const { frameId, tabId, url, timeStamp } = details;
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0) {
+      // ignore duplicated onBeforeNavigate https://bugzilla.mozilla.org/show_bug.cgi?id=1732564
+      if (
+        tabContext &&
+        tabContext.id === tabId &&
+        tabContext.url === url &&
+        tabContext.created + 200 > timeStamp
+      ) {
+        return;
+      }
       // We are starting a navigation to a new page - if the previous page is complete (i.e. fully
       // loaded), stage it before we create the new page info.
       if (tabContext && tabContext.state === PAGE_LOADING_STATE.COMPLETE) {
@@ -162,6 +165,7 @@ export default class PageStore {
         active: false,
         url,
         incognito: tabContext ? tabContext.isPrivate : false,
+        created: timeStamp,
       });
       nextContext.previous = tabContext;
       this.tabs.set(tabId, nextContext);
@@ -177,13 +181,6 @@ export default class PageStore {
     } else if (tabContext && !tabContext.frames[frameId]) {
       // frame created without request
       this.onSubFrame(details);
-    }
-  };
-
-  onNavigationLoaded = ({ frameId, tabId }) => {
-    const tabContext = this.tabs.get(tabId);
-    if (frameId === 0 && tabContext) {
-      tabContext.updateState(PAGE_LOADING_STATE.LOADED);
     }
   };
 
@@ -244,7 +241,8 @@ export default class PageStore {
     };
   };
 
-  getPageForRequest({ tabId, frameId, originUrl, type, initiator }) {
+  getPageForRequest(context) {
+    const { tabId, frameId, originUrl, type, initiator } = context;
     const tab = this.tabs.get(tabId);
     if (!tab) {
       return null;
@@ -260,6 +258,7 @@ export default class PageStore {
 
     const couldBePreviousPage =
       frameId === 0 && type !== 'main_frame' && tab.previous;
+
     // for main frame requests: check if the origin url is from the previous page (Firefox)
     if (
       couldBePreviousPage &&
