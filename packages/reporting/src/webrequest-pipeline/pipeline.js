@@ -221,7 +221,7 @@ export default class Pipeline {
       // steps.
       if (cont === false) {
         if (this.isBreakable === true) {
-          logger.debug(this.name, webRequestContext.url, 'Break at', name);
+          // logger.debug(this.name, webRequestContext.url, 'Break at', name);
           break;
         }
         // we only reach here if the pipeline is not breakable: show a warning
