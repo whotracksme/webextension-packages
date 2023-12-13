@@ -819,7 +819,7 @@ export default class RequestMonitor {
     const tpGd = state.urlParts.generalDomain;
     const fpGd = state.tabUrlParts.generalDomain;
     if (
-      this.config.compabilityList &&
+      this.config.compatibilityList &&
       this.config.compatibilityList[tpGd] &&
       this.config.compatibilityList[tpGd].indexOf(fpGd) !== -1
     ) {
