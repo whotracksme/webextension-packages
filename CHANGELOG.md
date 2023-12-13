@@ -1,3 +1,15 @@
+# v4.0.6 (Wed Dec 13 2023)
+
+#### 🐛 Bug Fix
+
+- Fix compatibility list check [#60](https://github.com/whotracksme/webextension-packages/pull/60) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v4.0.5 (Tue Oct 10 2023)
 
 #### 🐛 Bug Fix
