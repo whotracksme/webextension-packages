@@ -25,15 +25,29 @@ import rules from './rules.json';
 
 setLogLevel('debug');
 
-const storage = {
-  storage: {},
-  async get(key) {
-    return this.storage[key];
-  },
-  async set(key, value) {
-    this.storage[key] = value;
-  },
-};
+function createStorage() {
+  const storage = {
+    storage: {},
+    async get(key) {
+      return this.storage[key];
+    },
+    async set(key, value) {
+      this.storage[key] = value;
+    },
+    async remove(key) {
+      delete this.storage[key];
+    },
+    async clear() {
+      this.storage = {};
+    },
+    async keys() {
+      return Object.keys(this.storage);
+    },
+    open() {},
+    close() {},
+  };
+  return storage;
+}
 
 const communication = {
   send(msg) {
@@ -66,7 +80,8 @@ const webRequestPipeline = new WebRequestPipeline();
 
 const urlReporter = new UrlReporter({
   config: config.url,
-  storage,
+  storage: createStorage(),
+  connectDatabase: createStorage,
   communication,
 });
 
