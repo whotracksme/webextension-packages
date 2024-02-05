@@ -31,9 +31,7 @@ describe('#PersistedHashes', function () {
   };
 
   const initMocks = () => {
-    if (clock) {
-      clock.restore();
-    }
+    clock?.restore();
     clock = sinon.useFakeTimers(new Date('2020-01-17'));
     uut = new PersistedHashes({ storage, storageKey: 'dummy-key' });
   };
@@ -43,7 +41,7 @@ describe('#PersistedHashes', function () {
   });
 
   afterEach(function () {
-    clock.restore();
+    clock?.restore();
     clock = null;
   });
 

@@ -27,6 +27,7 @@ export default class Pipeline {
   constructor(name, steps = [], isBreakable = true) {
     this.name = name;
     this.isBreakable = isBreakable;
+    this.verboseLogging = false;
 
     // Init empty pipeline
     this.unload({ shallow: true });
@@ -221,7 +222,9 @@ export default class Pipeline {
       // steps.
       if (cont === false) {
         if (this.isBreakable === true) {
-          logger.debug(this.name, webRequestContext.url, 'Break at', name);
+          if (this.verboseLogging) {
+            logger.debug(this.name, webRequestContext.url, 'Break at', name);
+          }
           break;
         }
         // we only reach here if the pipeline is not breakable: show a warning

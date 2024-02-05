@@ -14,6 +14,10 @@ import sinon from 'sinon';
 
 import Reporting from '../src/reporting.js';
 
+function waitForPromisesToFinish() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe('#Reporting', function () {
   let uut;
 
@@ -31,6 +35,7 @@ describe('#Reporting', function () {
       async send() {},
       trustedClock: {},
     };
+    const connectDatabase = () => {};
     sinon.stub(window, 'fetch').callsFake(async (url) => ({
       ok: false,
       statusText: `Stub server has been configured to fail (this is expected): request to ${url}`,
@@ -39,6 +44,7 @@ describe('#Reporting', function () {
       config,
       storage,
       communication,
+      connectDatabase,
     });
   });
 
@@ -69,6 +75,7 @@ describe('#Reporting', function () {
       uut.unload();
       uut.unload();
       uut.unload();
+      expect(uut.isActive).to.be.false;
     });
 
     it('multiple mixed init/unloads should be OK', async () => {
@@ -96,6 +103,102 @@ describe('#Reporting', function () {
 
       uut.unload();
       expect(uut.isActive).to.be.false;
+    });
+
+    describe('should make ensure that "unload" at the end always wins', () => {
+      it('when calling init once', async () => {
+        const pending = uut.init();
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+
+        await pending;
+        await waitForPromisesToFinish();
+        expect(uut.isActive).to.be.false;
+      });
+
+      it('when calling init multiple times', async () => {
+        const pending = [];
+        pending.push(uut.init());
+        pending.push(uut.init());
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+
+        await Promise.all(pending);
+        await waitForPromisesToFinish();
+        expect(uut.isActive).to.be.false;
+
+        // and addition unload operations should not change anything
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        uut.unload();
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+      });
+
+      it('when calling unload multiple times', async () => {
+        const pending = [];
+        pending.push(uut.init());
+        pending.push(uut.init());
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+
+        await Promise.all(pending);
+        await waitForPromisesToFinish();
+        expect(uut.isActive).to.be.false;
+
+        // and addition unload operations should not change anything
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        uut.unload();
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+      });
+    });
+
+    describe('should make ensure that "init" at the end always wins', () => {
+      it('in a simple example', async () => {
+        const pending = [];
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        pending.push(uut.init());
+
+        await Promise.all([pending]);
+        await waitForPromisesToFinish();
+        expect(uut.isActive).to.be.true;
+      });
+
+      it('in a complex example', async () => {
+        const pending = [];
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        pending.push(uut.init());
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        pending.push(uut.init());
+        pending.push(uut.init());
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        uut.unload();
+        expect(uut.isActive).to.be.false;
+        pending.push(uut.init());
+
+        await Promise.all([pending]);
+        await waitForPromisesToFinish();
+        expect(uut.isActive).to.be.true;
+
+        await uut.init();
+        expect(uut.isActive).to.be.true;
+
+        await uut.init();
+        expect(uut.isActive).to.be.true;
+      });
     });
   });
 });

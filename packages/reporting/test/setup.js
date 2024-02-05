@@ -10,6 +10,7 @@ import chrome from 'sinon-chrome';
 import 'cssom';
 
 import { setLogLevel } from '../src/logger.js';
+import { eventListenerQueue } from '../src/pages.js';
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -18,5 +19,6 @@ setLogLevel('off');
 
 window.chrome = chrome;
 
-chrome.storage.session = chrome.storage.local;
-chrome.storage.session.get.yields({});
+// This global object installs a timeout, which will confuse tests that mock
+// timers. By immediately closing it, the native timer will be cleared.
+eventListenerQueue.close();

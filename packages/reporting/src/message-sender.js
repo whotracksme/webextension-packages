@@ -20,9 +20,13 @@ import logger from './logger';
  * on Mobile as well, but it is a project on its own to port it.
  */
 export default class MessageSender {
-  constructor(duplicateDetector, communication) {
+  constructor({ duplicateDetector, communication, jobScheduler }) {
     this.duplicateDetector = duplicateDetector;
     this.communication = communication;
+
+    jobScheduler.registerHandler('send-message', async (job) => {
+      await this.send(job.args);
+    });
   }
 
   async send(message) {

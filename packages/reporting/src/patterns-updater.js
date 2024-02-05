@@ -11,6 +11,7 @@
 
 import logger from './logger';
 import { randBetween, clamp } from './utils';
+import SelfChecks from './self-check';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -52,7 +53,7 @@ export default class PatternsUpdater {
 
     // Update intervals:
     // 1) standard polling interval
-    //   (it can be configured conservatively to safe bandwidth)
+    //   (it can be configured conservatively to save bandwidth)
     this.defaultUpdateInterval = {
       min: 8 * HOUR,
       max: 24 * HOUR,
@@ -73,9 +74,9 @@ export default class PatternsUpdater {
   _initEmptyCache() {
     this._persistedState = {
       patterns: null, // string (unmodified as it came from the server)
-      skipAttemptsUntil: 0, // unix epoche
-      lastFetchAttempt: 0, // unix epoche
-      lastConfirmedModification: 0, // unix epoche
+      skipAttemptsUntil: 0, // Unix epoch
+      lastFetchAttempt: 0, // Unix epoch
+      lastConfirmedModification: 0, // Unix epoch
       failedAttemptsInARow: 0,
       dbVersion: DB_VERSION,
     };
@@ -284,5 +285,26 @@ export default class PatternsUpdater {
       isOK(persistedState.lastConfirmedModification) &&
       isOK(persistedState.lastFetchAttempt)
     );
+  }
+
+  async selfChecks(check = new SelfChecks()) {
+    if (this._persistedState.failedAttemptsInARow > 0) {
+      check.warn('unable to update patterns', {
+        errorsInARow: this._persistedState.failedAttemptsInARow,
+      });
+    }
+
+    const patternAge = Date.now() - this._persistedState.lastFetchAttempt;
+    if (patternAge > this.defaultUpdateInterval.max) {
+      check.fail('patterns are outdated', {
+        ageInHours: patternAge / HOUR,
+        maxAgeInHours: this.defaultUpdateInterval.max / HOUR,
+      });
+    } else {
+      check.pass('patterns are up to date', {
+        lastUpdated: `${patternAge / HOUR} hours ago`,
+      });
+    }
+    return check;
   }
 }

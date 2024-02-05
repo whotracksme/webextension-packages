@@ -140,6 +140,23 @@ const TRANSFORMS = new Map(
       }
     },
 
+    /**
+     * Like "maskU", but more conservative.
+     *
+     * Note: in general, "maskU" should be the best trade-off. But if you have
+     * URLs that can be dropped without causing much harm, using "strictMaskU"
+     * can be useful. However, it will drop many harmless URLs; in other words,
+     * expect a high number of false-positives.
+     */
+    strictMaskU: (x) => {
+      expectString(x);
+      try {
+        return sanitizeUrl(x, { strict: true }).safeUrl;
+      } catch (e) {
+        return null;
+      }
+    },
+
     split: (x, splitON, arrPos) => {
       expectString(x);
       expectString(splitON);

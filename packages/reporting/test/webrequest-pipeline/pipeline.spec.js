@@ -14,11 +14,20 @@
 import * as chai from 'chai';
 import chrome from 'sinon-chrome';
 
-window.chrome = chrome;
-
 import Pipeline from '../../src/webrequest-pipeline/pipeline';
 
 describe('webrequest-pipeline/pipeline', function () {
+  let oldWindowChrome;
+
+  beforeEach(() => {
+    oldWindowChrome = window.chrome;
+    window.chrome = chrome;
+  });
+
+  afterEach(() => {
+    window.chrome = oldWindowChrome;
+  });
+
   describe('constructor', () => {
     it('creates an empty pipeline', () => {
       const p = new Pipeline('name');

@@ -10,12 +10,14 @@
  */
 
 import * as chai from 'chai';
+import FakeSessionApi from '../../helpers/fake-session-storage.js';
 
 import ChromeStorageMap from '../../../src/request/utils/chrome-storage-map';
 
 describe('utils/chrome-storage-map', function () {
   it('set / get', function () {
     const map = new ChromeStorageMap({
+      sessionApi: new FakeSessionApi(),
       storageKey: 'test',
     });
     const key = 1;

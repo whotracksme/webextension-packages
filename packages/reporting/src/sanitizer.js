@@ -10,6 +10,8 @@
  */
 
 import logger from './logger';
+import { isHash } from './hash-detector';
+//import { isHash } from './hash-detector-new';
 
 function isCharNumber(char) {
   const code = char.charCodeAt(0);
@@ -68,7 +70,7 @@ function checkForEmail(str) {
  * product IDs (EAN, ISSN), which are common in search, but don't have personal
  * information.
  *
- * Otherwise, it discard query that contain numbers longer than 7 digits.
+ * Otherwise, it discard queries that contain numbers longer than 7 digits.
  * So, 123456 is still allowed, but phone numbers like (090)90-2 or 5555 3235
  * will be dropped.
  *
@@ -131,8 +133,8 @@ function isLogogramChar(char) {
 /**
  * Most languages have an alphabet where a word consist of multiple characters.
  * But other languages (e.g. Chinese) use logograms, where a single character
- * is equivalent to a word. Thus, heuristics need to adjusted if they count the
- * number of characters or words ("words" being defined as characters not
+ * is equivalent to a word. Thus, heuristics need to be adjusted if they count
+ * the number of characters or words ("words" being defined as characters not
  * separated by whitespace).
  *
  * Note: texts in Arabic or European languages should not trigger this check.
@@ -224,6 +226,10 @@ function checkForInternalIp(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1';
 }
 
+function looksLikeSafeUrlParameter(key, value) {
+  return value.length < 18 || /^[a-z-_]+$/.test(value);
+}
+
 /**
  * There should be no reason for these URLs to show up, but if they do
  * we should never send them to the backend. Especially, "moz-extension"
@@ -235,6 +241,51 @@ function urlLeaksExtensionId(url) {
     url.startsWith('moz-extension://') || url.startsWith('chrome-extension://')
   );
 }
+
+function normalizeUrlPart(urlPart) {
+  return urlPart.toLowerCase().replace(/_/g, '-');
+}
+
+// Note: matches URL parts (https://example.test/foo/bar/baz -> ['foo', 'bar', 'baz]).
+// Before matching, URL match will be normalized (see "normalizeUrlPart").
+const RISKY_URL_PATH_PARTS = new Set([
+  // login related:
+  'login',
+  'login.php',
+  'login-actions',
+  'logout',
+  'signin',
+  'recover',
+  'forgot',
+  'forgot-password',
+  'reset-credentials',
+  'authenticate',
+  'not-confirmed',
+  'reset',
+  'oauth',
+  'password',
+
+  // potential tokens
+  'token',
+
+  // could leak account:
+  'edit',
+  'checkout',
+  'account',
+  'share',
+  'sharing',
+
+  // Admin accounts
+  'admin',
+  'console',
+
+  // Wordpress
+  'wp-admin',
+  'wp-admin.php',
+
+  // Oracle WebLogic
+  'weblogic',
+]);
 
 /**
  * Sanity checks to protect against accidentially sending sensitive URLs.
@@ -253,9 +304,19 @@ function urlLeaksExtensionId(url) {
  * When changing new rules here, it is OK to be conservative. Since
  * classification error are expected, rather err on the side of
  * dropping (or truncating) too much.
+ *
+ * Parameters:
+ * - strict [default=false]:
+ *     Enables additional checks that will truncate more ULRs, but will lead to
+ *     false-positives. Generally, the default of skipping these checks should
+ *     be best for most use cases; but in situations where the URL is not critical,
+ *     you can enable it for extra safety. Note that static filters will never be
+ *     perfect, but quorum should be used as an additional step; quorum is effective
+ *     in dropping unique identifiers like unique tokens that may slip through
+ *     static rules.
  */
-export function sanitizeUrl(url) {
-  const accept = () => ({ result: 'safe', safeUrl: url });
+export function sanitizeUrl(url, { strict = false } = {}) {
+  let accept = () => ({ result: 'safe', safeUrl: url });
   const drop = (reason) => ({ result: 'dropped', safeUrl: null, reason });
 
   // first run some sanity check on the structure of the URL
@@ -301,12 +362,23 @@ export function sanitizeUrl(url) {
       };
     };
 
-    // TODO: these rules could use some polishing
-    if (url.hostname > 50) {
+    // 50 is somewhat arbitrary, but appears to be an acceptable compromise.
+    // There are valid websites with domains longer than 50 characters
+    // (up to over 130 chars), but it is rare. Looking at relevant examples,
+    // 99 percent fell in to 50 character range. If you need to tweaking
+    // this value, it might be possible to increase it at bit.
+    if (parsedUrl.hostname.length > 50) {
       return drop('hostname too long');
     }
+
     if (url.length > 800) {
       return truncate('url too long');
+    }
+    if (parsedUrl.search.length > 150) {
+      return truncate('url search part too long');
+    }
+    if (parsedUrl.searchParams.size > 8) {
+      return truncate('too many url search parameters');
     }
 
     const decodedUrl = decodeURIComponent(url);
@@ -314,8 +386,62 @@ export function sanitizeUrl(url) {
       return truncate('potential email found');
     }
 
-    // TODO: check each path and query parameter and truncate if there
-    // are fields that could be tokens, secrets, names or logins.
+    const pathParts = parsedUrl.pathname.split('/');
+    if (pathParts.length > 8) {
+      return truncate('too many parts in the url path');
+    }
+    for (const part of pathParts) {
+      const normalizedPart = normalizeUrlPart(part);
+      if (RISKY_URL_PATH_PARTS.has(normalizedPart)) {
+        return truncate(`Found a problematic part in the URL path: ${part}`);
+      }
+
+      if (strict && isHash(part, { threshold: 0.015 })) {
+        return truncate(
+          `Found URL path that could be an identifier: <<${part}>>`,
+        );
+      }
+    }
+
+    const regexps = [
+      /[&?]redirect(?:-?url)?=/i,
+      /[&?#/=;](?:http|https)(?::[/]|%3A%2F)/,
+      /[/]order[/]./i,
+      /[/]auth[/]realms[/]/i,
+      /[/]protocol[/]openid-connect[/]/i,
+    ];
+    for (const regexp of regexps) {
+      if (regexp.test(url)) {
+        return truncate(`matches ${regexp}`);
+      }
+    }
+
+    for (const [key, value] of parsedUrl.searchParams) {
+      if (value.length > 18 && !looksLikeSafeUrlParameter(key, value)) {
+        const { accept: ok, reason } = checkSuspiciousQuery(value);
+        if (!ok) {
+          return truncate(
+            `Found problematic URL parameter ${key}=${value}: ${reason}`,
+          );
+        }
+      }
+      if (strict && isHash(value, { threshold: 0.015 })) {
+        return truncate(
+          `Found URL parameter that could be an identifier ${key}=${value}`,
+        );
+      }
+    }
+
+    if (parsedUrl.hash) {
+      parsedUrl.hash = '';
+      const safeUrl = `${parsedUrl} (PROTECTED)`;
+      logger.debug('sanitizeUrl truncated URL:', url, '->', safeUrl);
+      return {
+        result: 'truncated',
+        safeUrl,
+        reason: 'URL fragment found',
+      };
+    }
 
     return accept();
   } catch (e) {
@@ -354,10 +480,6 @@ export default class Sanitizer {
       );
     }
     return result;
-  }
-
-  maskURL(url) {
-    return sanitizeUrl(url).safeUrl;
   }
 
   getSafeCountryCode() {

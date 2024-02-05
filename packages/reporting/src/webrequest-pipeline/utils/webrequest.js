@@ -21,7 +21,9 @@ export const VALID_RESPONSE_PROPERTIES = {
   onErrorOccurred: [],
 };
 
-const manifest = chrome.runtime.getManifest();
+const HAS_WEB_REQUEST_BLOCKING = chrome?.runtime
+  ?.getManifest()
+  ?.permissions.includes('webRequestBlocking');
 
 function getOptionArray(options) {
   if (!options) {
@@ -39,7 +41,7 @@ function getOptionArray(options) {
     // options.REQUEST_BODY,
   ];
 
-  if (manifest.permissions.includes('webRequestBlocking')) {
+  if (HAS_WEB_REQUEST_BLOCKING) {
     optionsSubset.push(options.BLOCKING);
   }
 

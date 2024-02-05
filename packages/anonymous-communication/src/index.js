@@ -55,4 +55,22 @@ export default class AnonymousCommunication {
       body: JSON.stringify(sortObjectKeys(fullMessage)),
     });
   }
+
+  async sendInstant({ action, path = '', payload = '', method = 'POST' }) {
+    if (!action) {
+      throw new InvalidMessageError('Mandatory field "action" is missing');
+    }
+    if (typeof path !== 'string') {
+      throw new InvalidMessageError('"path" must be a string');
+    }
+    if (typeof payload !== 'string') {
+      throw new InvalidMessageError('"payload" must be a string');
+    }
+    if (!method || typeof method !== 'string') {
+      throw new InvalidMessageError('"method" must be a string');
+    }
+    return this.proxiedHttp.send({
+      body: JSON.stringify({ action, path, payload, method }),
+    });
+  }
 }

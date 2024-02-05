@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { truncatedHash } from './md5';
 import logger from './logger';
 import random from './random';
+import { fastHash } from './utils';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -69,7 +69,7 @@ function extractPath(obj, path, pos = 0) {
     return { match: false };
   }
 
-  if (!Object.prototype.hasOwnProperty.call(obj, nextKey)) {
+  if (!Object.hasOwn(obj, nextKey)) {
     return { match: false };
   }
 
@@ -201,7 +201,7 @@ export default class DuplicateDetector {
       };
     }
 
-    const hash = truncatedHash(key);
+    const hash = fastHash(key, { truncate: true });
     const expireAt = this._chooseExpiration();
     const wasAdded = await this.persistedHashes.add(hash, expireAt);
     if (!wasAdded) {

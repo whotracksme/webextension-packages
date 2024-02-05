@@ -16,12 +16,14 @@
 // context (background script or service worker).
 export default class ChromeStorageMap {
   constructor({
+    sessionApi = typeof chrome !== 'undefined' && chrome?.storage?.session,
     storageKey,
     softFlushIntervalInMs = 200,
     hardFlushIntervalInMs = 1000,
     ttlInMs = 7 * 24 * 60 * 60 * 1000 /* 1 week */,
     maxEntries = 5000,
   }) {
+    this.sessionApi = sessionApi;
     this._inMemoryMap = new Map();
 
     if (!storageKey) {
@@ -71,7 +73,7 @@ export default class ChromeStorageMap {
     // and log it. A potential improvement could be to treat the
     // in-memory map as the source of truth in that scenario.)
     this.isReady = new Promise((resolve, reject) => {
-      chrome.storage.session.get([this.storageKey], (result) => {
+      this.sessionApi.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -162,7 +164,7 @@ export default class ChromeStorageMap {
 
     this._scheduleAction(
       new Promise((resolve, reject) => {
-        chrome.storage.session.remove(this.storageKey, () => {
+        this.sessionApi.remove(this.storageKey, () => {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
@@ -260,7 +262,7 @@ export default class ChromeStorageMap {
           entries: Object.fromEntries(this._inMemoryMap),
           ttl: Object.fromEntries(this._ttlMap),
         };
-        chrome.storage.session.set({ [this.storageKey]: serialized }, () => {
+        this.sessionApi.set({ [this.storageKey]: serialized }, () => {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {

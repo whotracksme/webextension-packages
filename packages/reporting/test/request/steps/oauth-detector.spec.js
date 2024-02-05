@@ -13,6 +13,7 @@ import * as chai from 'chai';
 
 import OAuthDetector from '../../../src/request/steps/oauth-detector.js';
 import { parse } from '../../../src/utils/url.js';
+// import FakeSessionApi from '../../helpers/fake-session-storage.js'; // TODO: see comments below
 
 function mockSender(tab, url) {
   return {
@@ -35,6 +36,35 @@ function delayedTest(test, done, delay) {
 }
 
 describe('request/steps/oauth-detector', function () {
+  let monkeyPatchedChromeStorage;
+  let oldChromeStorageSession;
+  let oldChromeStorage;
+
+  beforeEach(() => {
+    if (!chrome?.storage?.session) {
+      monkeyPatchedChromeStorage = true;
+      oldChromeStorage = chrome?.storage;
+      oldChromeStorageSession = chrome?.storage?.session;
+      chrome.storage = chrome.storage || {};
+
+      // Note: monkey patching with a real implementation fails.
+      // Thus, leaving the old way to monkey patch, even though it may
+      // indicate that there are bugs in the implementation or in the tests.
+      chrome.storage.session = chrome.storage.local;
+      chrome.storage.session.get.yields({});
+
+      // to test against a real (promised-based) in-memory implementation:
+      // chrome.storage.session = new FakeSessionApi();
+    }
+  });
+
+  afterEach(() => {
+    if (monkeyPatchedChromeStorage) {
+      chrome.storage.session = oldChromeStorageSession;
+      chrome.storage = oldChromeStorage;
+    }
+  });
+
   describe('click tracking', () => {
     let detectorInstance;
     const CLICK_TIMEOUT = 20;

@@ -56,15 +56,21 @@ class Task {
     // task will be triggerd, no matter how big the `timeout` is.
     this.last = startImmediately ? -timeout : Date.now();
     this.startImmediately = startImmediately;
+
+    this.verboseLogging = false;
   }
 
   run(now) {
-    logger.debug('run task:', this.name);
+    if (this.verboseLogging) {
+      logger.debug('run task:', this.name);
+    }
     const t0 = Date.now();
     try {
       this.fn(...this.args);
       this.last = now;
-      logger.debug('task', this.name, 'took', Date.now() - t0, 'ms');
+      if (this.verboseLogging) {
+        logger.debug('task', this.name, 'took', Date.now() - t0, 'ms');
+      }
     } catch (e) {
       logger.error('error executing task', this.name, e);
     }
@@ -94,7 +100,9 @@ export class Pacemaker {
    * If there is currently no registered task, then stop the interval completely.
    */
   _adjustFrequency({ added = [], removed = [] } = {}) {
-    logger.debug('_adjustFrequency', { added, removed });
+    if (this.verboseLogging) {
+      logger.debug('_adjustFrequency', { added, removed });
+    }
 
     if (this.tasks.size === 0) {
       logger.log('no task in pacemaker, stop interval');
@@ -173,7 +181,9 @@ export class Pacemaker {
    */
   _tick() {
     const now = Date.now();
-    logger.debug('_tick', now);
+    if (this.verboseLogging) {
+      logger.debug('_tick', now);
+    }
 
     // Check all tasks
     const removedTasks = [];
@@ -188,7 +198,9 @@ export class Pacemaker {
         }
       }
     }
-    logger.debug('duration sync', Date.now() - now);
+    if (this.verboseLogging) {
+      logger.debug('duration sync', Date.now() - now);
+    }
 
     // Register timout for next _tick
     this._scheduleNextTick(this.freq);
