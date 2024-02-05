@@ -62,13 +62,13 @@ async function loadTestFixtures(url) {
   );
 }
 
-describe('#SearchExtractor', async function () {
+describe('#SearchExtractor', function () {
   allSupportedParsers.forEach((htmlParser) => {
     describe(`using ${htmlParser} as HTML parser`, function () {
       function runScenario({
         url,
-        type,
         query,
+        category,
         ctry = '--',
         html,
         patterns,
@@ -77,8 +77,8 @@ describe('#SearchExtractor', async function () {
       }) {
         try {
           expect(url, '<url>').to.be.a('string');
-          expect(type, '<type>').to.be.a('string');
           expect(query, '<query>').to.be.a('string');
+          expect(category, '<category>').to.be.a('string');
           expect(ctry, '<ctry>').to.be.a('string');
           expect(html, '<html>').to.be.a('string');
           expect(patterns, '<patterns>').to.be.an('object');
@@ -101,6 +101,9 @@ describe('#SearchExtractor', async function () {
             },
           },
           persistedHashes: {},
+          jobScheduler: {
+            registerHandler() {},
+          },
         });
         const { window: mockWindow, document: doc } =
           mockDocumentWith[htmlParser](html);
@@ -108,8 +111,8 @@ describe('#SearchExtractor', async function () {
         try {
           results = extractor.extractMessages({
             doc,
-            type,
             query,
+            category,
             doublefetchRequest: {
               url,
             },
@@ -166,8 +169,8 @@ describe('#SearchExtractor', async function () {
       it('should not throw on an empty page with empty patterns', function () {
         runScenario({
           url: 'http://example.test/x?q=foo',
-          type: 'test-action',
           query: 'foo',
+          category: 'test-action',
           html: EMPTY_HTML_PAGE,
           patterns: {},
           mustNotContain: [{ action: '*' }],
@@ -177,8 +180,8 @@ describe('#SearchExtractor', async function () {
       it('should extract some dummy test', function () {
         runScenario({
           url: 'http://example.test/x?q=some-query',
-          type: 'example-test',
           query: 'some-query',
+          category: 'example-test',
           ctry: 'de',
           html: `
 <!DOCTYPE html>
@@ -241,8 +244,8 @@ describe('#SearchExtractor', async function () {
 
         runScenario({
           url: 'http://example.test/x?q=some-query',
-          type: 'example-test',
           query: 'some-query',
+          category: 'example-test',
           ctry: 'de',
           html: `
 <!DOCTYPE html>
@@ -293,8 +296,8 @@ describe('#SearchExtractor', async function () {
       it('should resolve relative links based to the real URL, not extension ID', function () {
         runScenario({
           url: 'http://example.test/x?q=some-query',
-          type: 'example-test',
           query: 'some-query',
+          category: 'example-test',
           ctry: 'de',
           html: `
 <!DOCTYPE html>
@@ -374,6 +377,7 @@ describe('#SearchExtractor', async function () {
               const { name, scenario, pendingHtml } = fixtures.shift();
               scenario.html = await pendingHtml;
               try {
+                scenario.category = scenario.category || scenario.type; // TODO: remove after migrating tests
                 runScenario(scenario);
                 testsPassed.push(name);
                 console.log(`test ${name}: PASSED`);

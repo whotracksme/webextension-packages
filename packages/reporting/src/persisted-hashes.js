@@ -97,10 +97,9 @@ export default class PersistedHashes {
     this.entries.set(key, expireAt);
     this._dirty = true;
 
-    // Be more aggressive with flushing add operation, which
-    // is the critical operation. False negatives (lost delete options)
-    // are typically harmless as they will only lead to retry updates
-    // being skipped.
+    // Be more aggressive with flushing add operation, which is the
+    // critical operation. In contrast, lost delete options are typically
+    // harmless as they can be later retried without information loss.
     setTimeout(() => {
       this.flush();
     }, 0);

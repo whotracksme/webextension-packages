@@ -15,7 +15,8 @@ module.exports = function (config) {
     concurrency: 0,
     rollupPreprocessor,
     client: {
-      TEST_FIXTURES_URL: process.env.TEST_FIXTURES_URL,
+      TEST_FIXTURES_URL: process.env.TEST_FIXTURES_URL, // for test/search-extractor.spec.js
+      REPLAY_FIXTURES_URL: process.env.REPLAY_FIXTURES_URL, // for test/pages.spec.js
     },
   });
 };

@@ -26,13 +26,13 @@ const noop = () => {};
 let DEFAULT_LOG_LEVEL = 'log';
 
 export class Logger {
-  static get(name) {
-    return new Logger(name);
+  static get(name, ...options) {
+    return new Logger(name, ...options);
   }
 
-  constructor(prefix) {
+  constructor(prefix, { level = DEFAULT_LOG_LEVEL } = {}) {
     this.prefix = `WTM [${prefix}]`;
-    this.logLevel = DEFAULT_LOG_LEVEL;
+    this.logLevel = level;
 
     // Define loggers
     this._debug = console.debug || noop;
@@ -96,7 +96,7 @@ export class Logger {
   }
 }
 
-export default Logger.get('reporting');
+export default Logger.get('reporting', { level: 'debug' });
 
 export function setLogLevel(level) {
   if (!SUPPORTED_LOG_LEVELS.has(level)) {

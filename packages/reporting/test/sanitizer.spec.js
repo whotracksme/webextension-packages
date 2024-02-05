@@ -234,27 +234,117 @@ describe('#checkSuspiciousQuery', function () {
 });
 
 describe('#sanitizeUrl', function () {
+  // to test URLs that are generally safe and should be accepted both in
+  // normal mode and strict mode
   function shouldBeSafe(url) {
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url);
+      if (result !== 'safe') {
+        expect.fail(
+          `Expected the URL ${url} to be safe, but it was rejected: ${reason}`,
+        );
+      }
+      expect(safeUrl).to.eql(url);
+      expect(reason).to.be.undefined;
+    }
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url, { strict: true });
+      if (result !== 'safe') {
+        expect.fail(
+          `Expected the URL ${url} to be safe, but it was rejected: ${reason}`,
+        );
+      }
+      expect(safeUrl).to.eql(url);
+      expect(reason).to.be.undefined;
+    }
+  }
+
+  // to test URLs that are generally safe, but may lead to false-positives in strict mode
+  function shouldBeSafeInNonStrictMode(url) {
     const { result, safeUrl, reason } = sanitizeUrl(url);
-    expect(result).to.eql('safe');
+    if (result !== 'safe') {
+      expect.fail(
+        `Expected the URL ${url} to be safe, but it was rejected: ${reason}`,
+      );
+    }
     expect(safeUrl).to.eql(url);
     expect(reason).to.be.undefined;
   }
 
+  // to test URLs that should be always dropped
   function shouldBeDropped(url) {
-    const { result, safeUrl, reason } = sanitizeUrl(url);
-    expect(result).to.eql('dropped');
-    expect(safeUrl).to.eql(null);
-    expect(reason).to.be.a('string').that.is.not.empty;
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url);
+      expect(result).to.eql('dropped');
+      expect(safeUrl).to.eql(null);
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url, { strict: true });
+      expect(result).to.eql('dropped');
+      expect(safeUrl).to.eql(null);
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
   }
 
+  // to test URLs that should be always truncated (or even dropped in strict mode)
   function shouldBeTruncated(url) {
-    const { result, safeUrl, reason } = sanitizeUrl(url);
-    expect(result).to.eql('truncated');
-    expect(safeUrl).to.be.a('string').that.is.not.empty;
-    expect(safeUrl.endsWith(' (PROTECTED)'), 'ends with "(PROTECTED)"').to.be
-      .true;
-    expect(reason).to.be.a('string').that.is.not.empty;
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url);
+      expect(result).to.eql('truncated');
+      expect(safeUrl).to.be.a('string').that.is.not.empty;
+      expect(safeUrl.endsWith(' (PROTECTED)'), 'ends with "(PROTECTED)"').to.be
+        .true;
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url, { strict: true });
+      expect(result).to.be.oneOf(['truncated', 'dropped']);
+      if (result === 'truncated') {
+        expect(safeUrl).to.be.a('string').that.is.not.empty;
+        expect(safeUrl.endsWith(' (PROTECTED)'), 'ends with "(PROTECTED)"').to
+          .be.true;
+      } else {
+        expect(safeUrl).to.eql(null);
+      }
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
+  }
+
+  // to test URLs that should be always truncated or dropped
+  function shouldBeDroppedOrTruncated(url) {
+    let originalResult;
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url);
+      expect(result).to.be.oneOf(['truncated', 'dropped']);
+      expect(safeUrl).to.not.eql(url);
+      expect(reason).to.be.a('string').that.is.not.empty;
+      originalResult = result;
+    }
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url, { strict: true });
+      if (originalResult === 'dropped' && result !== 'dropped') {
+        expect.fail(
+          'Expected the URL ${url} that was dropped in default mode to also be dropped in strict mode',
+        );
+      }
+      expect(result).to.be.oneOf(['truncated', 'dropped']);
+      expect(safeUrl).to.not.eql(url);
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
+  }
+
+  // to test URLs that should be truncated in strict mode
+  // (but may be accepted in non-strict mode)
+  function shouldBeTruncatedInStrictMode(url) {
+    {
+      const { result, safeUrl, reason } = sanitizeUrl(url, { strict: true });
+      expect(result).to.eql('truncated');
+      expect(safeUrl).to.be.a('string').that.is.not.empty;
+      expect(safeUrl.endsWith(' (PROTECTED)'), 'ends with "(PROTECTED)"').to.be
+        .true;
+      expect(reason).to.be.a('string').that.is.not.empty;
+    }
   }
 
   describe('should accept trivial URLs', function () {
@@ -337,6 +427,34 @@ describe('#sanitizeUrl', function () {
     });
   });
 
+  describe('should drop URLs with extremly long hostnames', function () {
+    [
+      'https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.foo.test/',
+      'https://optsokzkgaqmvplqrcjfkgpnfxuluhmfaklxfvsfeyvwavsrqrhtvkvxhskjjraibwfzau.foo.test/',
+      'https://aaaaa.aaaaaaaaaaaa.aaaaaaaaaaaa.aaaaaaaaaaaa.aaaaaaaaaaaaaa.aaaaaaaaaa.foo.test/',
+      'https://optso.zkgaqmvplqrc.fkgpnfxuluhm.aklxfvsfeyvw.vsrqrhtvkvxhsk.jraibwfzau.foo.test/',
+      'https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.foo.test/bar?x=y',
+      'https://optso.zkgaqmvplqrc.fkgpnfxuluhm.aklxfvsfeyvw.vsrqrhtvkvxhsk.jraibwfzau.foo.test/bar?x=y',
+      'http://1couriersdeliveryservicesusanycnybostonmawashingtondcnewarknjct.1esamedaycourieranddeliveryserviceinnewyorknybostonmawashington.com/',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeDropped(url);
+      });
+    });
+  });
+
+  describe('should drop URLs of onion services', function () {
+    [
+      'https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/',
+      'https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/login',
+      'https://www.nytimesn7cgmftshazwhfgzm37qxb44r64ytbb2dj3x62d2lljsciiyd.onion/',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeDropped(url);
+      });
+    });
+  });
+
   describe('should truncate long URLs', function () {
     it('should truncate URLs by preserving only the hostname', function () {
       const url =
@@ -349,6 +467,7 @@ describe('#sanitizeUrl', function () {
     [
       'https://www.example.com/foo-106783?cep=C6SNdZ-JdYgfxMe-Ew0e8PbCNBIeJNwcVsgDmQGentDzy4rUEIYTxZt6797urbzd-X5xoFI8QMYyZkHfIevGn3BMV0PZ2myYl6UB65r7iChjOeqLXibqpfGtFNt55Pe68Bi1qnbbHfJ10nNDib54gnog3PEKDMC6G95iU8o7wKTCIHPsL52Vs1pQrdh8eB_ETPDzRCPmJ-QIOKfdBb3RmXkC7EEAO3nG7dhHR3sD60tlU9c-O9mKA73w3p0Er9HEFnibX8QVkoostBEZob5WtfiIgTdiYFWtc0jnBtJQdfRiYbForVoYlkm6eUReWgKRGxmCr8tU6p9GANbZf8QMRyFp0LnK9FaPi3Ti2J99ZMKKxCsCrczjz-0lE-bOtnpAcQ1Kq3CFne4T4_PfF68UhJ3QMQlZK5592M_fOgeCem6g0bDRfWRhva4HV-1PY2ccp4i_olg3mnJhQn1NWLLgOVMDKgWM4zneB_SlBWpZ0FjIIqU6mpAtmx33x6vF9A5qQWKginNWJETV3BZvspcVU47wBxdIMmHPwxIFuVcu1uoS1u_HmEVbsmrIPzCqgmej_Rz0zIMdpB_CUCI6gVHLCUmLhtb0rYCPfRT71L25idEyOOzuhLJd-caBlQWR3D_d54suQZ0YtPk_VtMIUtejmNOVkNJ_XemssaWb0flUKDuypAqogHwhT3GbGC3V_O-AlX1aO92nfo1dP46CMGT9lg8GizI-NRic1_NLy2hMkwmrhtkZjdvqgc-gRLAryB8ayHKEFy-ggfqaK0Dz0lrGgBcEPslee84q6ZQ6DVzkViq-razGQce5BTpD1ee8IxRnKgtxvQLK_i4qfcXLP9xP0vKmg7NjzKc0bre4eG8JiY8EoareMOwEdCb72gWyPOwM9MwR4Q4E8_N93qWRpBfHN_0bKrR9t-OunSr1kCW65qBylJa_bvpJ5UztYXQ8ijbE0gLU4TANyekzY-eYVcXues3dDr3Uso9RNA2BxKwiS7qE8sdI1h9yIHt8JAv3jWAwqvuD6Htv4Fnw2ZKgdYB--it9jYJEAId1SVyMyWjtySpTzYvsf1XDXxl2uOEOHHp67p39xE4XA4fuPBuAhTef9YZgP4qVIPhoTXywyjMQKP0uF09MoOuKCaX4yWNRzTe-3jEA6rSV9KrffnCzbS0UHSLy6zkNnUTulO_rOZ1HLDtslljN7iBNpBeBFg87qAMu0_-h2tFfblBnzcIYAFxfVRPS5Si-RWsaU62yS9R354q9ugncvBBzSHceVLcAMa6-4yvK8qAplqfJXmH8tNz5q6fVMhkxbl-JlNLFOUW0a-mhLglQCl_vr3twJ5HCOnvdiOq2GU3KqUBbIG63ZtNuw-ai8BHIYh1X49gW-s3fgQAbvihJWt3Nuc4wzfQg0KLQE4NQ9c-yYRtEh2PnocC0CHzvgapVQeiuW2e8d7-sJvFELPuCitEQbRBSTvVMEIjiCqhwtGNn5uQw5bvVN2i0ysGw3ebmb-Vg91y965jo0FEmAArJ4OwswS-_dXBYX6lvUZ688yaKPPEzcpgiEyXa-k4mFz60IVjFQROoRmYOZbbg9_PBo5mj2SjMB2-EOvp4_YV8h2JDNk7X7a-AcEUE60VaJkWE3SBcS45VsiAT8-y2Lkyfuq-lbCpBLw1gT1Mm6cdbqCaZ3hX7C_doCBjh3lnQNfCkDtEqUWa1xHULbaDDxxRzZb9R13Ua3YVOJF-DY0KFWxrMgBA_NjRosJEz0Lcji7LN9wmQktyoO5nZrAdQgtogMaiByqMNhjE8agj7FO8S2qItbCDiRg0pbKnes6bTBCw7_y1putoG31uTKcd6Z72Tn7kFyYib8eH_1N8Y',
       'https://www.ebay.com/itm/163578162904?_trkparms=aid=1110006&algo=HOMESPLICE.SIM&ao=1&asc=20200818143132&meid=c742ec041c2a472fb37e5619938525f4&pid=101198&rk=4&rkt=12&b=1&sd=183714353142&itm=163578162904&pmt=1&noa=0&pg=2047675&algv=SimplAMLCvipPairwiseWebWithBBEV2bDemotion&brand=GPR&_trksid=p2047675.c101198.m1985&amdata=cksum:163578162904c742ec041c2a472fb37e5619938525f4|enc:AQAFAAACEO1gRbE4sAI38m6EZRpzbYHt9+yQk5vBehmhugFgnd17OkYn0W555gLuJgoGFdYmC+BHEJ3b1mSo549wwtufJLAdy0dMBi9iAdXKeADjcgjm71kyFYVvAgt/0a+xOvYAqJMv2z3Ygpiux3Ba2KyLymWzBtI8d0dJFza/2IQKhhiibQtAh8AGWxt3i5/GcPW6d8+P36eLlNPC14uobuNPxmA7pxRunrP4xwNkQ7qod9RWebQ4+iBVr8/OBmp8ulmR+toSAD4WEySHQf62yBtANWEAvc7s77XgdgzjIhcxBMz5nBrwEe3ZPwVMiit6Kcnwg5S9bxJchrGh74nQTH3HwEOYN1qghIRC8Me3cOsdF4LFEeZtxiPHvjizNX2RO9+jnwluy0wq7dZeZiM+doqTSxbsh78ah0ZctrGMrMYO3OhY5ptxXsxL0eL5flyRRsXyNzKO/0EtLGzuwZd87pu0/c/B6mI4/JAqfs2+sFpmVW2q+/GnrgaTs0iXK4YdwdSOXd5cn1HTvp2cL18aedatm29/QsP0ZSheuHQAKZCASY4rASb6H1XaYApfOLa0yzU4fwVWCEoTc+5mO55+UxUYwZ0ZX+NWRCrQEjCHkdY+qfIs2JDvCpXQC0PTr571yWFgcQTv3RwYBZlHIqC5aTEYKAVeNQm5HP0udq9Q/pq2uASBXqYldCNh2M0bI0MsvuvFfg==|ampid:PL_CLK|clp:2047675&epid=10029966056',
+      'https://pulsar.ebay.de/plsr/mpe/0/SAND/9?pld=%5B%7B%22ef%22%3A%22SAND%22%2C%22ea%22%3A%223PADS%22%2C%22pge%22%3A2367355%2C%22plsUBT%22%3A1%2C%22app%22%3A%22Sandwich%22%2C%22callingEF%22%3A%22SAND%22%2C%22difTS%22%3A60000%2C%22eventOrder%22%3A0%2C%22scandal_imp%22%3A%22meid%3A01HF9D6M05QAY12A7PXJCQC3DA%2Cplid%3A100562%2Cscorid%3A01HF9D5N3RHX8Y5JHFCN6A89J2%2Cprvdr%3Ahybrid%2Cafs%3A1700049145742%2Cade%3A0%7Cmeid%3A01HF9D6M2EBTS39V0893V2KVS1%2Cplid%3A100938%2Cscorid%3A01HF9D5N3RSYG09WFT7RWTDNC0%2Cprvdr%3Ahybrid%2Cafs%3A1700049145804%2Cade%3A0%22%7D%2C%20%7B%22ef%22%3A%22SAND%22%2C%22ea%22%3A%223PADS%22%2C%22pge%22%3A2367355%2C%22plsUBT%22%3A1%2C%22app%22%3A%22Sandwich%22%2C%22callingEF%22%3A%22SAND%22%2C%22difTS%22%3A29996%2C%22eventOrder%22%3A1%2C%22scandal_imp%22%3A%22meid%3A01HF9D7H9X7EC48AM748JF6Q4E%2Cplid%3A100562%2Cscorid%3A01HF9D6M05WNWMZ7GGSXQX7RAD%2Cprvdr%3Ahybrid%2Cafs%3A1700049175742%2Cade%3A0%7Cmeid%3A01HF9D7HBFS4EGX20SGQ0RW8SS%2Cplid%3A100938%2Cscorid%3A01HF9D6M2EDGBZG3Y2PCZ1722Q%2Cprvdr%3Ahybrid%2Cafs%3A1700049175804%2Cade%3A0%22%7D%5D',
     ].forEach((url) => {
       it(`should truncated: ${url}`, function () {
         shouldBeTruncated(url);
@@ -364,7 +483,6 @@ describe('#sanitizeUrl', function () {
       'https://www.bestbuy.ca/en-ca/product/motiongrey-standing-desk-height-adjustable-electric-motor-sit-to-stand-desk-computer-for-home-and-office-black-frame-55x24-tabletop-included-only-at-best-buy/15766135?cmp=seo-15766135',
       'https://www.darty.com/nav/achat/sports_loisirs/gyropode/gyropode/evercross_evercross_hoverboard_overboard_gyropode_tout_terrain_8_5_self_balancing_scooter_hummer_suv_bluetooth_app_700w_camouflege_hoverkart_kart_camouflage__MK461561901.html?ofmp=52559053',
       'https://www.medion.com/de/shop/p/notebook-zubehoer-medion-life-e83265-usb-headset-stereo-kopfhoerer-fuer-ein-perfektes-klangerlebnis-integriertes-mikrofon-mit-glasklarer-tonaufnahme-pratkischer-lautstaerkeregler-am-kabel-leicht-und-bequem-plug--play-fuer-pcs-und-notebooks-50066287A1',
-      'https://www.amazon.de/SUNNYBAG-Solar-Modul-umweltfreundlich-Solar-Energie-Ultra-leicht/dp/B08FRL5G5S?source=ps-sl-shoppingads-lpcontext&psc=1&smid=AFDDCQLX14EDY?source=ps-sl-shoppingads-lpcontext&psc=1',
       'https://www.elektronik-star.de/Haushalt-Wohnen/Kuechengeraete/Kuechenhelfer-Kuechenaccessoires/Glaeser-Becher/DUOS-doppelwandiges-Glas-Thermoglas-80-ml-Trinkglas-Espressoglas-Teeglas-Shotglas-fuer-heisse-und-kalte-Getraenke-Borosilikatglas-hitze-und-kaeltebestaendig-handgemacht-spuelmaschinenfest-Schwebe-Effekt-4er-Set.html',
       'https://business.currys.co.uk/catalogue/computing/servers-networking/networking/modem-routers/startech-com-m-2-pci-e-nvme-to-u-2-sff-8639-adapter-not-compatible-with-sata-drives-or-sas-controllers-for-m-2-pcie-nvme-ssds-pcie-m-2-drive-to-u-2-host-adapter-m2-ssd-converter-u2m2e125-interface-adapter-m-2-card-u-2/P272563P?cidp=Froogle&affiliate=ppc',
       'http://britain.desertcart.com/products/484923669-bezgar-tc141-toy-grade-1-14-scale-remote-control-car-all-terrains-electric-toy-off-road-rc-truck-remote-control-monster-truck-for-kids-boys-3-4-5-6-7-8-with-rechargeable-battery-bezgar-remote-control-construction-excavator-rc-toys-with-2-rechargeable-batteries-for-kids-age-6-7-8-9-10-11-rc-construction-truck-vehicle-toys-with-light-for-boys-and-girls-tk181-bezgar-hs181-hobby-grade-1-18-scale-remote-control-trucks-4wd-top-speed-35-km-h-all-terrains-off-road-short-course-rc-truck-waterproof-rc-car-with-2-rechargeable-batteries-for-kids-and-adults-bezgar-hm161-hobby-grade-1-16-scale-remote-control-truck-4wd-high-speed-40-kmh-all-terrains-electric-toy-off-road-rc-vehicle-car-crawler-with-2-rechargeable-batteries-for-boys-kids-and-adults',
@@ -373,7 +491,384 @@ describe('#sanitizeUrl', function () {
         shouldBeSafe(url);
       });
     });
+
+    [
+      'https://www.amazon.de/SUNNYBAG-Solar-Modul-umweltfreundlich-Solar-Energie-Ultra-leicht/dp/B08FRL5G5S',
+    ].forEach((url) => {
+      it(`should allow long, but safe URLs (strict mode exceptions): ${url}`, function () {
+        shouldBeSafeInNonStrictMode(url);
+      });
+    });
   });
+
+  describe('should truncate login specific URLs', function () {
+    [
+      'https://access.ing.de/delogin/w/login?t=https://access.ing.de/delogin/oauth/authorize?response_type%3Dcode%26client_id%3Dibbr%26scope%3Dbanking%2520postlogin%2520tpa%2520openid%26state%3DAXHw4viZF1ntx4i3gOcflIUKUK80Yix3Hr5LNsb0j0I%253D%26redirect_uri%3Dhttps://banking.ing.de/app/login/oauth2/code/ibbr%26nonce%3D9WjJS-aqnwAoAFd8fF4t5nNLuO-DsPA0ql-oKMGZ6zo%26claims%3D%257B%2522id_token%2522%253A%257B%2522customer_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522partner_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522last_login%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522authentication_means%2522%253A%257B%2522essential%2522%253Atrue%257D%257D%257D',
+      'https://web.verimi.de/dipp/api/authenticate?login_challenge=498830e1f9734aebab6f382f673a20e5',
+      'https://accounts.google.com/signin/v2/usernamerecovery?continue=https%3A%2F%2Fgroups.google.com%2Fmy-groups&dsh=S285380746%3A1697710203082833&flowEntry=ServiceLogin&flowName=GlifWebSignIn&followup=https%3A%2F%2Fgroups.google.com%2Fmy-groups&ifkv=AVQVeyyeWVx_JoNaqej1zdzdZjDsJ1zQCgD0KdudwHwmez4dVJkWw_4bZVCCj46vLQVUVJGrBIxj&osid=1&theme=glif',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F&ec=65620&hl=en&ifkv=AVQVeyyBkkwVyKEUa4Ul-Mll2WwmLVdi14ivGA8Cyxy2zYPVY1nAWoGydpfvNuPwgbFGJB9QrlpO&passive=true&service=youtube&uilel=3&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1006818886%3A1697723402009676&theme=glif',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fgroups.google.com%2Fmy-groups&followup=https%3A%2F%2Fgroups.google.com%2Fmy-groups&ifkv=AVQVeyyBm7cgqI8WYA9rOCycOcMyWoz7q8f1d0PTs9qu6Xj7evUrAr2u1DvlW9XklbfNlH4B324E&osid=1&passive=1209600&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S285380746%3A1697710203082833&theme=glif',
+      'https://access.ing.de/delogin/w/login?x=sym2BPHMFmqV2hYUXnMw-YbrjfmV2Rsq2JfGZpNH1SnjUKBT1RYcA4A&t=https://access.ing.de/delogin/oauth/authorize%3Fresponse_type%3Dcode%26client_id%3Dibbr%26scope%3Dbanking%2520postlogin%2520tpa%2520openid%26state%3DAXHw4viZF1ntx4i3gOcflIUKUK80Yix3Hr5LNsb0j0I%253D%26redirect_uri%3Dhttps://banking.ing.de/app/login/oauth2/code/ibbr%26nonce%3D9WjJS-aqnwAoAFd8fF4t5nNLuO-DsPA0ql-oKMGZ6zo%26claims%3D%257B%2522id_token%2522%253A%257B%2522customer_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522partner_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522last_login%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522authentication_means%2522%253A%257B%2522essential%2522%253Atrue%257D%257D%257D',
+      'https://www.facebook.com/recover/initiate/?privacy_mutation_token=eyJ0eXBlIjowLCJjcmVhdGlvbl90aW1lIjoxNjk3NzEyMTMyLCJjYWxsc2l0ZV9pZCI6MzgxMjI5MDc5NTc1OTQ2fQ==&ars=facebook_login',
+      'https://www.facebook.com/login/identify/?ctx=recover&ars=facebook_login&from_login_screen=0#',
+      'https://signon.ghostery.com/en/password/forgot?redirect=https%3A%2F%2Faccount.ghostery.com%2Fen%2F',
+      'https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fconsole.aws.amazon.com%2Fconsole%2Fhome%3FhashArgs%3D%2523%26isauthcode%3Dtrue%26nc2%3Dh_ct%26src%3Dheader-signin%26state%3DhashArgsFromTB_eu-north-1_7bbe8829a3606007&client_id=arn%3Aaws%3Asignin%3A%3A%3Aconsole%2Fcanvas&forceMobileApp=0&code_challenge=LfgbfGbtRHU3oaW7r8IvAWwD2OYiD-yJqcfaXtAijew&code_challenge_method=SHA-256',
+      'https://panel.bunny.net/user/login/verifycode?ReturnUrl=',
+      'https://panel.bunny.net/user/logout',
+      'https://www.faz.net/mein-faz-net/?redirectUrl=%2Faktuell%2F',
+      'https://account.booking.com/sign-in?op_token=LvIxMDI1yXO0RvfKdo4gV2Seyld5HAi1IH5pM7YyWZGVXHZ9dQcxnji0EFf9yUF1nUG0Op8lEHN9njKaMj8xy2iaEp3uh21xhQ8byH5ayUFshA8xnA9xMDI1yZ8pEDF9nj5qjTSIno9XkQdIHDG3niFrMiY7WUSFE9GsnlN0EIi5CHs9dUcQkKK2N19DVbd7GoFeVX1tkQNEVoc3IKLpVKSuD9S5D2ZBKQMlG2fpEH8YdlNtVZiiVKSET7dcTH8Tn13FdlcDHLdoKudSh1ZXEIElD7ZfkUo1Go3yFAEITbwgV9IWEjctTj8CWIwfMi8KOIZPFiiNhX9eI7YSNiTghuiiKLi5IQdsFoISdWSVnQsiGj8SViRtd7conANNNLe7NQ8jdjFUF2cqOHgEVKEFHogtWDwSVLNaHDZoyKIWTogoMIYKdHZwhQsmdQwKFWM2diEEVuZiNLL8BjI3VbYyT1o2VH3VkIiMHjgmF7ceM2t3h9wDFjsyHLiwEiL8JKPLM28oEVfwXP6PLuX-r_Ob6dPjCvYXRZmdu6aqYwPYLUFpMDEihQgini8fEHZoEDP',
+      'https://chat.openai.com/auth/login',
+      'https://auth0.openai.com/u/login/identifier?state=oWEi8YOHNHjyQ8Cyr3OsZ3jUH3QHXHQsIsjaPI1WLIxLCUcEjbEpt5QpbHCyeqDorS3ur8jxrgD9bUXCTGQbLQy7zqjwb83nUEOwKfcTUEysrf3BefxfDJoLP8cXi8DxCDmdQVKWYUDlCXB8Q81IYJKLLXQpzHy5bGQEDJyMrsCAjBe',
+      'https://auth0.openai.com/u/mfa-otp-challenge?state=pRHj6MZWGSpWY5GGMSqbdaqaq414GYZHW6GVdrqQUvqDdSpuwRHfhF1cPM1pqYVjWJ94dJNpqFJaqFrv6MO1JarWmBs5Y6nnwHpLY4WhMHpWw69nVBXiWaV7AcNhU3NadJAWCHVvMvraPcUbNrqtGSp4Aav1ekr9q6g1VAV9A686MYVB',
+      'https://www.otto.de/user/login?uri=/myaccount/dashboard?entryPoint%3DloginArea&tk=-109064015',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F85ZW1T2ORppdfp23J8Ff8uzBM_s1AxUk4j2EjEjpUCKY%2Fedit%3Fskip_itp2_check%3Dtrue&followup=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F85ZW1T2ORppdfp23J8Ff8uzBM_s1AxUk4j2EjEjpUCKY%2Fedit%3Fskip_itp2_check%3Dtrue&ifkv=AVQVeyz9TNpWfqpigNtYCi6bils8e4UV1vVMccyjcYtaeCwWd13k7rhQK8E-1NoMyjq7AQpx1cBdow&ltmpl=sheets&osid=1&passive=1209600&service=wise&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-7251167306%3A3477788878142089&theme=glif#gid=0',
+      'https://bezpiecznedane.gov.pl/auth/realms/DGWEYGSWOGTAOG/login-actions/first-broker-login?client_id=knxzfnmxtndvtn-pn&tab_id=dHvCjad6CwW',
+      'https://account.proton.me/authorize?app=proton-mail&state=ipbfP1pSOwS2N236jXMnEQ-zkpWoK06cUtvikQ7qyXq&u=0',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  describe('should truncate login specific URLs', function () {
+    [
+      'https://access.ing.de/delogin/w/login?t=https://access.ing.de/delogin/oauth/authorize?response_type%3Dcode%26client_id%3Dibbr%26scope%3Dbanking%2520postlogin%2520tpa%2520openid%26state%3DAXHw4viZF1ntx4i3gOcflIUKUK80Yix3Hr5LNsb0j0I%253D%26redirect_uri%3Dhttps://banking.ing.de/app/login/oauth2/code/ibbr%26nonce%3D9WjJS-aqnwAoAFd8fF4t5nNLuO-DsPA0ql-oKMGZ6zo%26claims%3D%257B%2522id_token%2522%253A%257B%2522customer_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522partner_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522last_login%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522authentication_means%2522%253A%257B%2522essential%2522%253Atrue%257D%257D%257D',
+      'https://web.verimi.de/dipp/api/authenticate?login_challenge=498830e1f9734aebab6f382f673a20e5',
+      'https://accounts.google.com/signin/v2/usernamerecovery?continue=https%3A%2F%2Fgroups.google.com%2Fmy-groups&dsh=S285380746%3A1697710203082833&flowEntry=ServiceLogin&flowName=GlifWebSignIn&followup=https%3A%2F%2Fgroups.google.com%2Fmy-groups&ifkv=AVQVeyyeWVx_JoNaqej1zdzdZjDsJ1zQCgD0KdudwHwmez4dVJkWw_4bZVCCj46vLQVUVJGrBIxj&osid=1&theme=glif',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F&ec=65620&hl=en&ifkv=AVQVeyyBkkwVyKEUa4Ul-Mll2WwmLVdi14ivGA8Cyxy2zYPVY1nAWoGydpfvNuPwgbFGJB9QrlpO&passive=true&service=youtube&uilel=3&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1006818886%3A1697723402009676&theme=glif',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fgroups.google.com%2Fmy-groups&followup=https%3A%2F%2Fgroups.google.com%2Fmy-groups&ifkv=AVQVeyyBm7cgqI8WYA9rOCycOcMyWoz7q8f1d0PTs9qu6Xj7evUrAr2u1DvlW9XklbfNlH4B324E&osid=1&passive=1209600&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S285380746%3A1697710203082833&theme=glif',
+      'https://access.ing.de/delogin/w/login?x=sym2BPHMFmqV2hYUXnMw-YbrjfmV2Rsq2JfGZpNH1SnjUKBT1RYcA4A&t=https://access.ing.de/delogin/oauth/authorize%3Fresponse_type%3Dcode%26client_id%3Dibbr%26scope%3Dbanking%2520postlogin%2520tpa%2520openid%26state%3DAXHw4viZF1ntx4i3gOcflIUKUK80Yix3Hr5LNsb0j0I%253D%26redirect_uri%3Dhttps://banking.ing.de/app/login/oauth2/code/ibbr%26nonce%3D9WjJS-aqnwAoAFd8fF4t5nNLuO-DsPA0ql-oKMGZ6zo%26claims%3D%257B%2522id_token%2522%253A%257B%2522customer_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522partner_number%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522last_login%2522%253A%257B%2522essential%2522%253Atrue%257D%252C%2522authentication_means%2522%253A%257B%2522essential%2522%253Atrue%257D%257D%257D',
+      'https://www.facebook.com/recover/initiate/?privacy_mutation_token=eyJ0eXBlIjowLCJjcmVhdGlvbl90aW1lIjoxNjk3NzEyMTMyLCJjYWxsc2l0ZV9pZCI6MzgxMjI5MDc5NTc1OTQ2fQ==&ars=facebook_login',
+      'https://www.facebook.com/login/identify/?ctx=recover&ars=facebook_login&from_login_screen=0#',
+      'https://signon.ghostery.com/en/password/forgot?redirect=https%3A%2F%2Faccount.ghostery.com%2Fen%2F',
+      'https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fconsole.aws.amazon.com%2Fconsole%2Fhome%3FhashArgs%3D%2523%26isauthcode%3Dtrue%26nc2%3Dh_ct%26src%3Dheader-signin%26state%3DhashArgsFromTB_eu-north-1_7bbe8829a3606007&client_id=arn%3Aaws%3Asignin%3A%3A%3Aconsole%2Fcanvas&forceMobileApp=0&code_challenge=LfgbfGbtRHU3oaW7r8IvAWwD2OYiD-yJqcfaXtAijew&code_challenge_method=SHA-256',
+      'https://panel.bunny.net/user/login/verifycode?ReturnUrl=',
+      'https://panel.bunny.net/user/logout',
+      'https://www.faz.net/mein-faz-net/?redirectUrl=%2Faktuell%2F',
+      'https://www.linkedin.com/authwall?trk=gf&trkInfo=ZBP-qZA0VYwULcZZZXcGa-IBpJOvTmi8dPOR8ko77BJLmkKxvMbI4TEk4rr0gbxqkLN1kKQaWGMb10uEdpF_o5_WyIHxZVft5xLgXHsd68beuKzKDoALJ-Vh8OfiHZ8rrNnEiB7=&original_referer=&sessionRedirect=https%3A%2F%2Fuk.linkedin.com%2Fin%2Fzhaohan-daniel-guo-22475b15',
+      'https://www.dolce-gusto.be/m/customer/account/login/referer/oVW4hVY5Lr70i0heHD7bK8NxH0OmiD9eKaNsfJ7xkSAsfcOm/?___store=ndg_be_nl_mobile&___from_store=ndg_be_fr_mobile',
+      'https://www.dolce-gusto.ch/m/customer/account/login/referer/fKT4oKX9Iv18n8ouZC1mQ2WcZ8AdnC7uQ2krbJ1mnB6wbv4vXd1qUMYqHxNcoGcdfC18URHlnxlln01dnB0cQRH6R2Hmb2Dp/?___store=ndg_ch_fr_mobile&___from_store=ndg_ch_de_mobile',
+      'https://billtobox.zendesk.com/auth/v2/login/signin?auth_origin=114094533013,false,true&brand_id=114094533013&return_to=https://billtobox.zendesk.com/&theme=hc',
+      'https://authentication.cardexchangecloud.com/Account/ForgetPassword?returnUrl=/connect/authorize/callback?client_id=spa&redirect_uri=https://controller.cardexchangecloud.com/auth/controller/login&response_type=id_token token&scope=openid profile email roles customer api1 restricted_resources&nonce=N0.787868080387803273027583911101&state=90251394777337.1094681119101925',
+      'https://authentication.cardexchangecloud.com/Account/ForgetPassword?returnUrl=/connect/authorize/callback?client_id=spa&redirect_uri=https://controller.cardexchangecloud.com/auth/controller/login&response_type=id_token%20token&scope=openid%20profile%20email%20roles%20customer%20api1%20restricted_resources&nonce=N0.787868080387803273027583911101&state=90251394777337.1094681119101925',
+      'https://weibo.com/login.php?url=https%3A%2F%2Fus.weibo.com%2Findex',
+      'https://weibo.com/newlogin?tabtype=weibo&gid=102803&openLoginLayer=0&url=https%3A%2F%2Fweibo.com%2F',
+      'https://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&su=&rsakt=mod&client=ssologin.js(v1.4.19)&_=1702040031979',
+      'https://audit.verified-data.com/email/verify/4769/6v2h6102n8f226979f0p981n327v3p061vf4ff2v?expires=1702297704&signature=67m0m205375800m7605j0m6j13wrr328r0q24j3wy127wjj52y417r82414189jy',
+      'https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fghostery',
+      'https://us-east-1.signin.aws/platform/resetpassword?workflowStateHandle=51u55f00-u9u2-27d3-1575-dd80947u0541',
+    ].forEach((url) => {
+      it(`should truncate URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  describe('should truncate URLs containing account information', function () {
+    [
+      'https://foobar.awsapps.com/start/#/saml/custom/813451362916%20%28Foobarry%29/XA25oDRyH4Y6MWP4L2karl4lX1LmJwF5NTXzXKm7N3yJZ9ByAnL1N4IaGmDrN1J0GDn51R',
+      'https://www.otto.de/order/checkout/order/confirmation/1bqz64511y17d1b72zs8yys9120sbs6d71syz643q188syq3dsdq8393483d3176',
+    ].forEach((url) => {
+      it(`should truncate URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  describe('should truncate URLs with redirect links', function () {
+    [
+      'https://consent.youtube.com/m?continue=https%3A%2F%2Fm.youtube.com%2Fchannel%2FYZZlacy1v-3NY4gUUiQXLiZu%3Fcbrd%3D1&gl=DE&m=1&pc=yt&cm=2&hl=en&src=1',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  // TODO: how to deal with shorteners?
+  // describe('should truncate URL shortener links in strict mode', function () {
+  //   [
+  //     't.ly/PKKKy',
+  //     'is.gd/PazNcR',
+  //     'bit.ly/1h0ceQI',
+  //     'goo.gl/bdkh1L',
+  //     't.co/RUiFUYKzkz',
+  //     'buff.ly/2LrnrP8',
+  //   ].forEach((url) => {
+  //     it(`should truncate URL: ${url}`, function () {
+  //       shouldBeTruncatedInStrictMode(`http://${url}`);
+  //       shouldBeTruncatedInStrictMode(`https://${url}`);
+  //     });
+  //   });
+  // });
+
+  describe('should truncate URLs with long IDs', function () {
+    [
+      'https://www.bing.com/ck/a?!&&p=badf679299367c84JmltdHM9MTY5NzY3MzYwMCZpZ3VpZD0xNDY2M2EzMS1kMjdlLTY1YTQtMzhlYy0yOTY4ZDM5NTY0ZTkmaW5zaWQ9NTIxMg&ptn=3&hsh=3&fclid=14663a31-d27e-65a4-38ec-2968d39564e9&u=a1aHR0cHM6Ly9ibG9nLnRlbnNvcmZsb3cub3JnLzIwMjEvMDEvY3VzdG9tLW9iamVjdC1kZXRlY3Rpb24taW4tYnJvd3Nlci5odG1s&ntb=1',
+      'https://travel.cytric.net/env-a/ibe/?id=512837228%7E0%7Er&prg=112853-2272319397102-3&_dp_=ANHVXLQx_JaKkRxyLHTNkSO3NLHXu92NjHNiHX4bN2H',
+      'https://www.youtube.com/redirect?event=video_description&redir_token=QUXFLUhra7ZsRUQ3NKxZX2tUNmxzTjdjS2zZUGk7SZMYd3xBZ4Jnl3tud3JxSTRCXFI2R1o4M2yXRXd0fVQ8ZFY0dxJxRCFFZHprVWtjem53RPR0OUlYQxZEXzNiNmhELTcwbXVibEdMgmNbcml5YblXZAsiYgFoKG15NutRcC74LAtNczW2X22JZFABc2GZWFRvWjgsbXkxR2&q=https%3A%2F%2Farxiv.org%2Fabs%2F2310.08560&v=AITOuXUi9pg',
+      'https://pvn.mediamarkt.de/trck/eclick/40907yqy0glbl95qll57qbb59by842yl?subid=7248708625399259997&mfadid=adm',
+      'https://timeline.google.com/maps/timeline?authuser=0&hl=de&pli=1&rapt=SOfYD4WykrYUYAj2H0pCAn7cYzQ24k4GQIbQ5UVKER0YlVY54F420EMqcT7yl084f_b0O0-NdKY3lnWR0csEGZOAqkVzc7UXR0KKwZsooOFB4vu5xW7p8QU&pb',
+      'https://img.search.brave.com/U4gou0jGxeFs9qethbxRGqeOMRcOH4enMRstvUnSSqq/rs:fit:640:904:1/g:ce/jZY2xZI4Vm0dVvFd/julwGz9ej75mAaZ7/qI1lAz1gAB39UB1l/A7F8UJllUOM8ZJRl/PeCeAOCyZJs8PJVu/UOstGeCsPB5wjTD5/YWxoZWFkLWFsaXNz/VF18dRu5XF1obTA0/LmpwZw',
+      'https://consent.yahoo.com/v2/collectConsent?sessionId=3_cc-session_14392mo1-s856-4sk6-2986-28o5k4o1p429',
+      'https://www.bloomberg.com/tosv2.html?vid=34g704g1-99yy-66jj-q27m-3m1qqsq454qq&uuid=784qc164-33qq-77ff-5n7q-fn47462b6933&url=L25ld3MvdGVybWluYWwvUloyNE1FTUIyU0pR',
+      'https://www.dolce-gusto.es/m/customer/account/login/referer/iDL9uDF7Ve52k2ujJI5xC1UzJ2KtkI8jJWFasT5wC1Egu15eiG5tV1bwuvkgVWkwkIKekIMjie3qiGEls1ba',
+      'https://bezpiecznedane.gov.pl/sprawdz-email?state=fKtjCqpHfo00Eut6UvELEqigtwA3lPGMG9uzOZ7pCSEoFYNpaz9ixqtJER9g&session_state=bd3865bg-g5i1-85g6-254z-9b2jd4z02z12&code=4398735i-7741-40t9-i1l9-30761t6t0bt0.xt64i8xj-jyl3-42j7-9l1i-5x9bi1i09i39.773i9865-7x4l-4x5i-7625-9207j4l31884',
+      'https://bildungsportal.sachsen.de/opal/auth/RepositoryEntry/762071641/CourseNode/58610245676829/wiki/Index;jsessionid=N048JED1779324348E7E8C39EE9C7445.opalN5?0',
+      'https://docs.google.com/spreadsheets/d/3TJlhj3Zi09g-gwshAljvTdZUz2iXauEo5q9vprZM-GA/edit#gid=0',
+      'https://docs.google.com/spreadsheets/d/3TJlhj3Zi09g-gwshAljvTdZUz2iXauEo5q9vprZM-GA/edit',
+      'https://www.aliexpress.com/gcp/300001278/Mainvenue?disableNav=YES&pha_manifest=ssr&_immersiveMode=true&aff_fcid=34774b22fc3b4bdb9b1027ab41d31022-1703165608590-05507-_DlRCXbX&tt=CPS_NORMAL&aff_fsk=_DlRCXbX&aff_platform=portals-promotion&sk=_DlRCXbX&aff_trace_key=34774b22fc3b4bdb9b1027ab41d31022-1703165608590-05507-_DlRCXbX&terminal_id=33248a347d6f4043bd1041b4151973e6',
+      'http://agenciahabitatge.gencat.cat/wps/portal/!ut/p/z1/sXWWm8JoYJm_Quo3UlVWGcJlineL1FlGLbZB5QZcLWGClhQW_fy91tqOcQAB1JbcSO0bvFYOHFltt9eiWUeM46oSZl3BY20xUlL2QJ8YLe1x2-29LdOIlEjSI8HveoaOLD2f2IAVEHqupBGTvovFHduHz0VKEzLHMCoIbz7z1lqigHsaf-89USmo3COcow2LrGXxkUvP1QtlHwQLrnohqViRyOW8KD2XIcwuPsWWuwZnwIUo5op3kzG_IPP-BVucpSSYyrIix4F9EXV5XShRk6JkUvoIZ0fr45iKTivqcpuYh_q9H5FLyZM5ZKgEXbBquz9aupp97dksk78uJrUF2A9OIhM5trZ9u27V2SiElsAudfEnGvQI6tDoVBxMDDQj5_rzLUpgVG3BVmSoXwEtHk_XhbRrWB-h_CcNprkqkdkKYybGy4RuM0_VFgsALY7dF290trAri9JadCEe80c6z95_Lpw-Qyk!/qh/q5/K1qLJHExX7VLJH6gZHEu/?urile=wcm:path:/ahcca/web/serveis/programes socials/xarxa mediacio lloguer social',
+      'http://agenciahabitatge.gencat.cat/wps/portal/!ut/p/z1/sXWWm8JoYJm_Quo3UlVWGcJlineL1FlGLbZB5QZcLWGClhQW_fy91tqOcQAB1JbcSO0bvFYOHFltt9eiWUeM46oSZl3BY20xUlL2QJ8YLe1x2-29LdOIlEjSI8HveoaOLD2f2IAVEHqupBGTvovFHduHz0VKEzLHMCoIbz7z1lqigHsaf-89USmo3COcow2LrGXxkUvP1QtlHwQLrnohqViRyOW8KD2XIcwuPsWWuwZnwIUo5op3kzG_IPP-BVucpSSYyrIix4F9EXV5XShRk6JkUvoIZ0fr45iKTivqcpuYh_q9H5FLyZM5ZKgEXbBquz9aupp97dksk78uJrUF2A9OIhM5trZ9u27V2SiElsAudfEnGvQI6tDoVBxMDDQj5_rzLUpgVG3BVmSoXwEtHk_XhbRrWB-h_CcNprkqkdkKYybGy4RuM0_VFgsALY7dF290trAri9JadCEe80c6z95_Lpw-Qyk!/qh/q5/K1qLJHExX7VLJH6gZHEu/?urile=wcm:path:/ahcca/web/serveis/programes+socials/xarxa+mediacio+lloguer+social',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+
+    [
+      'https://r.mail.ghostery.com/tr/op/gmGv_I5hqw15bLLyxG0g_FhuZlFYDvGtTVorqzYSqVLR3RLxY4m0GJdAImute2xfJAes2ji4QY4WKRYcsxAKf2dhr5Cdy4RLIyjFhBnoqV5iRyfKuCFYA_czVe-otbPjOWKmpLbZLbAlsVY84mTElAaDexyEuR5ckuyewGMFQpYdvpzl7xQfF-73YkWJHIPGz3B8a_uLLs_mqcIc6NfdkwHRecKOwWoarMIZ',
+      'https://beethoven-viur.appspot.com/file/download/AMIfv94I1TCuh-LQwE0klfULZBhalx4up4WpLqX_Etc-TcWqZUjb6NfQw1_t6g_YkGzFMNV34YJh7C0xg5JJIPeWloEE91HDLpPAKQxiVbh6DpGyjYnXcnt9BpMPrMCCuAOeNbZnTL5XEGFbQPP3c5HmotrmnePPcyMD1ieFE0ABr2Tbfxb5LSIgcEh6U8N8l-V-7-UZqEsfqngbNdfpPm2tbndF5mdZaokbBjHirguv0Tj--Yzms_WfrVmvllxKgyG97QFptkf3OWTZzwFkmw80xn52EvRMRzfpc7YjewUX8ctZ4bLW5Cc/Beethoven_Diskographie_10.pdf',
+    ].forEach((url) => {
+      it(`should drop URL (in strict mode): ${url}`, function () {
+        shouldBeTruncatedInStrictMode(url);
+      });
+    });
+  });
+
+  describe('should truncate URLs with base64 content', function () {
+    [
+      'https://www.e-recht24.de/websitescanner?hash=LIcnBHJ80eL1vZzFQJYUCgkwR3uB0yFtKwIrTb8uQC4Ibu7Yn1CeebupSJhPbIYV&u=aHR0cHM6Ly93d3cuZ2hvc3RlcnkuY29tLw==',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  describe('should support news sites', function () {
+    describe('that use UUIDs in their article URLs', function () {
+      [
+        'https://www.ft.com/content/b08c3159-982e-4831-8897-e35f8aca49e1',
+        'https://www.ft.com/content/820e66cc-fc8a-4ca9-811d-66cf2c6f0439',
+        'https://www.ft.com/content/95d47316-b357-4fc3-b25d-34645eef8abc',
+        'https://www.ft.com/content/2699f3c0-78b4-4f73-880e-629375282f73',
+        'https://www.propublica.org/article/warren-buffett-privately-traded-stocks-berkshire-hathaway-ethics-irs',
+        'https://www.spiegel.de/international/world/forgotten-in-kyiv-support-slides-for-ukraine-following-attack-on-israel-a-68f0b813-d558-4506-9354-5b632d9cf97a',
+        'https://www.spiegel.de/ausland/mrbeasts-100-brunnen-ein-beruehmter-youtuber-will-afrika-retten-a-9bf428b2-6ca2-419e-9623-d5983eb710fd',
+        'https://www.rnd.de/medien/mrbeast-youtuber-stellt-einkommensrekord-auf-XQDPXC2VVVAN7JYQ7SCWJJQZBY.html',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafeInNonStrictMode(url);
+        });
+      });
+    });
+
+    describe('that use hashes in their article URLs', function () {
+      [
+        'https://www.huffpost.com/entry/peter-thiel-trump-2024_n_654ddddee4b0373d70b196d1',
+        'https://www.lbc.co.uk/world-news/1fe04e54197741a9accba85a1abaf21c/',
+        'https://www.ouest-france.fr/monde/israel/ce-que-lon-sait-des-journalistes-accuses-davoir-couvert-lattaque-du-hamas-le-7-octobre-en-israel-e30b9f18-7fd5-11ee-a407-397218b61e71',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafe(url);
+        });
+      });
+    });
+
+    describe('that use numbers in their article URLs', function () {
+      [
+        'https://www.wsj.com/personal-finance/mortgage-home-buying-rent-down-payment-41308669',
+        'https://taz.de/CDU-beendet-Schwarz-Gruen-in-Hessen/!5969307/',
+        'https://taz.de/Taylor-Swift-in-Argentinien/!5969351/',
+        'https://www.focus.de/sport/fussball/2-bundesliga-schwere-ausschreitungen-in-hamburg-hannover-fans-pruegeln-sich-mit-der-polizei_id_243186606.html',
+        'https://www.wiwo.de/my/politik/ausland/usa-vs-china-das-duell-der-giganten/29490956.html',
+        'https://www.handelsblatt.com/politik/konjunktur/sinkende-verbraucherpreise-china-rutscht-wieder-in-die-deflation/29491072.html',
+        'https://www.unilad.com/film-and-tv/news/martin-scorsese-daughter-tiktok-never-film-372949-20231110',
+        'https://www.bristolpost.co.uk/news/bristol-news/support-bristols-island-neighbourhood-after-8898769',
+        'https://de.finance.yahoo.com/nachrichten/tailg-pr%C3%A4sentiert-neue-tlg-marke-202500300.html',
+        'https://de.nachrichten.yahoo.com/prosieben-magazin-zervakis-opdenh%C3%B6vel-live-204617336.html',
+        'https://www.tagesspiegel.de/politik/bundeswehrtagung-und-wehretat-bald-knallt-es-zwischen-pistorius-und-scholz-10762537.html',
+        'https://www.t-online.de/nachrichten/deutschland/innenpolitik/id_100278508/muss-die-bundeswehr-kriegstuechtig-sein-stimmen-aus-dem-bundestag.html',
+        'https://www.nzz.ch/feuilleton/israel-zeigt-bilder-des-grauens-auch-hamas-kennt-ihre-wirkmacht-ld.1764329',
+        'https://www.bild.de/bild-plus/regional/berlin/berlin-aktuell/pflegedienst-berlin-falsche-medikamente-misshandlung-zwei-tote-senioren-ermittlu-86042368.bild.html',
+        'https://www.dailymail.co.uk/news/article-12735811/Why-Charles-great-pain-Harry-King-host-small-party-close-friends-not-family-celebrate-75th-birthday-marks-occasion-striking-portrait.html',
+        'https://www.motorsport-total.com/auto/news/royal-enfield-himalayan-452-2024-feiert-premiere-auf-der-eicma-23111005',
+        'https://sportowefakty.wp.pl/koszykowka/fototemat/1090963/kosmiczne-pieniadze-zobacz-ile-zarabiaja-gwiazdy-nba-sochan-daleko',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafe(url);
+        });
+      });
+    });
+
+    describe('that use dates for their article URLs', function () {
+      [
+        'https://www.nytimes.com/2023/11/10/nyregion/adams-fbi-investigation-phones.html',
+        'https://www.npr.org/sections/health-shots/2023/11/09/1211610533/science-says-teens-need-more-sleep-so-why-is-it-so-hard-to-start-school-later',
+        'https://www.npr.org/2023/11/09/953342565/nasa-apollo-gemini-astronaut-frank-borman-dies',
+        'https://www.washingtonpost.com/food/2023/11/09/american-tipping-confusion-culture-study/',
+        'https://www.forbes.com/sites/willskipworth/2023/11/10/billionaire-investor-predicts-spacexs-starlink-will-go-public-around-2027/',
+        'https://www.bbc.com/worklife/article/20231108-three-big-reasons-americans-havent-rapidly-adopted-evs',
+        'https://edition.cnn.com/2023/11/10/asia/pakistan-india-pollution-new-delhi-lahore-intl-hnk/index.html',
+        'https://www.theguardian.com/us-news/2023/nov/10/trump-classified-documents-trial-date-aileen-cannon',
+        'https://www.bfmtv.com/pratique/shopping/black-friday-les-dates-officielles-de-l-edition-2023_AB-202310280026.html',
+        'https://www.lefigaro.fr/politique/emmanuel-macron-ne-se-rendra-pas-a-la-marche-contre-l-antisemitisme-dimanche-a-paris-20231110',
+        'https://www.lemonde.fr/politique/article/2023/11/10/emmanuel-macron-ne-se-rendra-pas-a-la-marche-contre-l-antisemitisme-mais-salue-des-rassemblements-qui-sont-un-motif-d-esperance_6199414_823448.html',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafe(url);
+        });
+      });
+    });
+
+    describe('that use long text in their article URLs', function () {
+      [
+        'https://www.foxnews.com/entertainment/dwayne-rock-johnson-says-political-parties-approached-run-president-one-other',
+        'https://www.gbnews.com/royal/princess-eugenie-princess-beatrice-prince-william-working-royals-latest',
+        'https://www.propublica.org/article/warren-buffett-privately-traded-stocks-berkshire-hathaway-ethics-irs',
+        'https://www.lbc.co.uk/news/cenotah-armistice-ring-of-steel-sunak-bans-smaller-protests/',
+        'https://pressgazette.co.uk/media-audience-and-business-data/media_metrics/most-popular-websites-news-us-monthly-3/',
+        'https://www.radiotimes.com/tv/sci-fi/doctor-who-60th-anniversary-special-flux-connection-newsupdate/',
+        'https://screenrant.com/star-wars-bo-katan-the-mandalorian-season-4-return-tease/',
+        'https://www.swr.de/swraktuell/baden-wuerttemberg/suedbaden/trauer-in-offenburg-um-erschossenen-schueler-100.html',
+        'https://www.lto.de/recht/justiz/j/geisterstunde-arbeitsgericht-koeln-videoverhandlung-ton-bild-urteil-erfunden-mysterioes/',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafe(url);
+        });
+      });
+    });
+  });
+
+  // TODO: reconsider these tests (yes, the pages should not be shared,
+  // but there are other factors that come into play:
+  // - Google Translate defines a safe canonical URL, which should be preferred
+  // - DeepL encodes its information as an anchor tag (which we arguably should drop)
+  describe('should truncate URLs that encode translations', function () {
+    [
+      'https://www.deepl.com/translator#en/de/This%20is%20a%20test',
+      'https://www.deepl.com/translator#de/en/Das%20ist%20ein%20Test',
+      "https://www.deepl.com/translator#fr/de/C'est%20un%20test",
+      'https://translate.google.com/?sl=en&tl=de&text=Lorem%20ipsum%20dolor%20sit%20amet%2C%20consetetur%20sadipscing%20elitr%2C%20sed%20diam%20nonumy%20eirmod%20tempor%20invidunt%20ut%20labore%20et%20dolore%20magna%20aliquyam%20erat%2C%20sed%20diam%20voluptua.%20At%20vero%20eos%20et%20accusam%20et%20justo%20duo%20dolores%20et%20ea%20rebum.%20Stet%20clita%20kasd%20gubergren%2C%20no%20sea%20takimata%20sanctus%20est%20Lorem%20ipsum%20dolor%20sit%20amet.%20Lorem%20ipsum%20dolor%20sit%20amet%2C%20consetetur%20sadipscing%20elitr%2C%20sed%20diam%20nonumy%20eirmod%20tempor%20invidunt%20ut%20labore%20et%20dolore%20magna%20aliquyam%20erat%2C%20sed%20diam%20voluptua.%20At%20vero%20eos%20et%20accusam%20et%20justo%20duo%20dolores%20et%20ea%20rebum.%20Stet%20clita%20kasd%20gubergren%2C%20no%20sea%20takimata%20sanctus%20est%20Lorem%20ipsum%20dolor%20sit%20amet.&op=translate',
+      'https://fanyi.baidu.com/#en/zh/This%20is%20a%20test',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
+  describe('should truncate complex URLs but accept their simpler canononical URL counterparts', function () {
+    [
+      {
+        originalUrl:
+          'https://www.temu.com/uk/usb-global-travel-converter-multifunctional-plug-socket-u-s-british-standard-conversion-power-adapter-charger-g-601099519482147.html?_bg_fs=1&_p_rfs=1&_x_ads_channel=google&_x_ads_sub_channel=shopping&_x_login_type=Google&_x_vst_scene=adg&mkt_rec=1&goods_id=601099519482147&sku_id=17592228839019&_x_ns_sku_id=17592228839019&_x_gmc_account=435423729&locale_override=210~en~GBP&_x_ads_risk=1',
+        canonicalUrl:
+          'https://www.temu.com/uk/usb-global-travel-converter-multifunctional-plug-socket-u-s-british-standard-conversion-power-adapter-charger-g-601099519482147.html',
+      },
+      {
+        originalUrl:
+          'https://www.temu.com/uk/international-travel-universal-adapter-electrical-plug-for-uk-us-eu-au-to-eu-european-socket-converter-white-black-g-601099518817648.html?_bg_fs=1&_p_rfs=1&_x_ads_channel=google&_x_ads_sub_channel=shopping&_x_login_type=Google&_x_vst_scene=adg&mkt_rec=1&goods_id=601099518817648&sku_id=17592225932210&_x_ns_sku_id=17592225932210&_x_gmc_account=978927325&locale_override=210~en~GBP&_x_ads_risk=1',
+        canonicalUrl:
+          'https://www.temu.com/uk/international-travel-universal-adapter-electrical-plug-for-uk-us-eu-au-to-eu-european-socket-converter-white-black-g-601099518817648.html',
+      },
+      {
+        originalUrl:
+          'https://www.argos.co.uk/product/8586117?storeID=4483&istCompanyId=a74d8886-5df9-4baa-b776-166b3bf9111c&istFeedId=30f62ea9-9626-4cac-97c8-9ff3921f8558&istItemId=ixilqptpw&istBid=t',
+        canonicalUrl: 'https://www.argos.co.uk/product/8586117',
+      },
+      {
+        originalUrl:
+          'https://www.ebay.com.au/itm/133106580436?_trkparms=ispr%3D1&hash=item1efdc53bd4:g:ugAAAOSwgc5fGpCc&amdata=enc%3AAQAGAAACkPYe5NmHp%252B2JMhMi7yxGiTJkPrKr5t53CooMSQt2orsSHYXPhGXR5uguexJBeHwfgWEntFLFCxG9TnUVZwSLeR7C%252BXHym%252BGM0VtJnLB1L1eR4sX5KzW12iami5Zp40SkFEAuZbk8BKox9l34zLETKOY5zHrJmwt%252Bv9Oa3afvMrzG7kPBDRmPkCAmhJpB0bb%252F7gWc8mNyQWlz6R2Fha5nnLjR03AvMwyvh65v%252F86iijR3hKE8VU45h2kamfYKHaWQE6mpviuYvcgJHhvf%252FWUMCHQDgyXmy0p5U4TISywwdYkI3NnU89HQswzEz8gMcnR6iYskEQEokJChwYiEQnymzZc%252F4fx7vnheSDB%252BOSkmCIsd901xz%252BY2r8cG3eDqI90nHtl5vyCarwdiCJjFgsCoaLWYwvdgACkivSfO6gDV1PhbYqoh1Ke%252BnONygKkK9V%252BkasLxk3CSVAQSzJuYtypdQNAZ8wwyRG9qbfZkByOzyuvhqG1yrUEdj94c1YamtdctisISVOv%252FFC19XkhKfpvcMM5A%252F1OPGTnmyEGDjWo9DMi%252FoX7l7hyWHg0tCbmvNYdp%252ByS9Iw903LHf9dfCWYC7PsOLcSnrC2Sw6IZ1EM1ZW96So9HauMwJS55me0HVXyIOVvxbRrDqiSfbwBZk7SLP25F%252BCRmFSMTPybpZlC2%252FfsKb8I5ZFtd3MAvRJhDIRSGQx48v2Pep7Aey4f4N9Po1kgW61WyMs%252FJWkEkBdgVc%252Bd08T3Ceh2d6lkEbBNw2jiafYD9uN6ii%252BfC6nxj7qa1jMLJ9aBMnM6tWEsjczdeCmWsPhRh9ant9GUcDcfaXX2ygBvSgiT1SgDnHjCzm9tzhrrxrvO8o1RzvZE6xSr8n5OCg%7Campid%3APL_CLK%7Cclp%3A2334524',
+        canonicalUrl: 'https://www.ebay.com.au/itm/133106580436',
+      },
+      {
+        originalUrl:
+          'https://www.amazon.de/-/en/Lubluelu-Saugroboter-Wischfunktion-Lasernavigation-Roboterstaubsauger/dp/B0BQBQJ784/?_encoding=UTF8&ref_=dlx_gate_dd_dcl_tlt_20e77cb4_dt_pd_gw_unk&pd_rd_w=u0Mp3&content-id=amzn1.sym.c3d3e926-d22d-4baf-8520-b539a55dc072&pf_rd_p=c3d3e926-d22d-4baf-8520-b539a55dc072&pf_rd_r=XQVAFVHSAQ7Y8C84KBJ7&pd_rd_wg=mzrvx&pd_rd_r=63a47cb2-0408-49d9-8a2d-c04c23ae0c8b&th=1',
+        canonicalUrl:
+          'https://www.amazon.de/-/en/Lubluelu-Cleaner-Function-Navigation-Control/dp/B0BQBQJ784',
+      },
+    ].forEach(({ originalUrl, canonicalUrl }) => {
+      it(`- originalUrl: ${originalUrl} with canonicalUrl: ${canonicalUrl}`, function () {
+        shouldBeTruncated(originalUrl);
+        shouldBeSafeInNonStrictMode(canonicalUrl);
+      });
+    });
+  });
+
+  describe('for URLs that do not fit in other categories', function () {
+    describe('but should be safe', function () {
+      [
+        'https://search.brave.com/search?q=ship+tensorflow+model+in+webextension',
+        'https://www.bing.com/search?q=youtube+anti-adblock+linux+os',
+        'https://x.com/foobar/status/1713305785659211991',
+        'https://help.adblockplus.org/hc/en-us/articles/4402789017747-A-site-asks-me-to-disable-ABP-What-to-do-',
+        'https://help.adblockplus.org/hc/en-us/articles/1500002533742-Adblock-Plus-breaks-the-websites-I-visit',
+        'https://mastodon.social/@campuscodi/111218275545652125?utm_source=substack&utm_medium=email',
+        'https://mastodon.social/@campuscodi/111218275545652125',
+        'https://netzpolitik.org/2021/privatsphaere-jugendschuetzerinnen-wollen-ausweiskontrolle-vor-pornoseiten/',
+        'https://twitter.com/gorhill/status/1713305785659211991',
+        'https://biblehub.com/sermons/auth/aitken/king_of_kings_and_lord_of_lords.htm',
+        'https://biblehub.com/sermons/auth/benson/an_acquaintance_with_christ_the_foundation_of_experimental_and_practical_religion.htm',
+        'https://akveo.github.io/nebular/docs/auth/getting-user-token',
+      ].forEach((url) => {
+        it(`should allow URL: ${url}`, function () {
+          shouldBeSafe(url);
+        });
+      });
+
+      [
+        'https://www.amazon.co.uk/Unidapt-Adapter-European-Adaptor-Visitor/dp/B08MWRNYXL',
+        'https://www.amazon.co.uk/Universal-Adapter-Worldwide-International-European-Black/dp/B0BVZ8VHHH',
+        'https://www.amazon.co.uk/Converter-Universal-Standard-Grounded-Portable/dp/B09PBH4JT1',
+      ].forEach((url) => {
+        it(`should allow URL (in non-strict mode): ${url}`, function () {
+          shouldBeSafeInNonStrictMode(url);
+        });
+      });
+    });
+
+    describe('but should be rejected', function () {
+      [
+        // (currently empty)
+      ].forEach((url) => {
+        it(`should reject URL: ${url}`, function () {
+          shouldBeDroppedOrTruncated(url);
+        });
+      });
+    });
+  });
+
+  // drop: https://www.figma.com/file/qHERAPVK1MBBMLWKqDufzf/Ghostery-Web?type=design&node-id=5911-4407&mode=design
+  // drop: https://github.com/ghostery/trackerdb/actions/runs/6593033743/job/17914820142?pr=156
+
+  // TODO: what about URLs like that? ("edit" links should arguably be dropped)
+  // https://docs.google.com/spreadsheets/d/94SK3U2OChhcjh28A9Xj9ktND_p3MaLs0r2BrBrhLZTJ/edit#gid=0
+
+  // // TODO: clean this up
+  // describe('TODO: unclassified category of links that most likely should be dropped', function () {
+  //   [
+  //     'http://www.google.co.uk/shopping/product/11805004825607945131?lsf=seller:8225840,store:14181573453232501404&prds=oid:17944033554668872566&hl=en',
+  //   ].forEach((url) => {
+  //     it.only(`should drop URL: ${url}`, function () {
+  //       shouldBeDroppedOrTruncated(url);
+  //     });
+  //   });
+  // });
+  // // TODO: clean this up
+  // describe('TODO: unclassified category of links that most likely should be allowed', function () {
+  //   [
+  //     'https://example.com/',
+  //     'https://example.com/',
+  //     'https://example.com/',
+  //   ].forEach((url) => {
+  //     it.only(`should allow URL: ${url}`, function () {
+  //       shouldBeSafe(url);
+  //     });
+  //   });
+  // });
 });
 
 describe('#isValidEAN13', function () {

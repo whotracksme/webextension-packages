@@ -11,6 +11,7 @@
 
 import * as chai from 'chai';
 import sinon from 'sinon';
+// import FakeSessionApi from '../helpers/fake-session-storage.js'; // TODO: see comments below
 
 import testPages from './test-pages.js';
 import { createFetchMock } from '../helpers/fetch-mock';
@@ -50,10 +51,44 @@ function expectNoModification(resp) {
   }
 }
 
-const pipeline = new WebrequestPipeline();
-pipeline.init();
-
 describe('request/index', function () {
+  let monkeyPatchedChromeStorage;
+  let oldChromeStorageSession;
+  let oldChromeStorage;
+
+  let pipeline;
+
+  beforeEach(() => {
+    if (!chrome?.storage?.session) {
+      monkeyPatchedChromeStorage = true;
+      oldChromeStorage = chrome?.storage;
+      oldChromeStorageSession = chrome?.storage?.session;
+      chrome.storage = chrome.storage || {};
+
+      // Note: monkey patching with a real implementation fails.
+      // Thus, leaving the old way to monkey patch, even though it may
+      // indicate that there are bugs in the implementation or in the tests.
+      chrome.storage.session = chrome.storage.local;
+      chrome.storage.session.get.yields({});
+
+      // to test against a real in-memory implementation:
+      // chrome.storage.session = new FakeSessionApi();
+    }
+
+    pipeline = new WebrequestPipeline();
+    pipeline.init();
+  });
+
+  afterEach(() => {
+    pipeline?.unload();
+    pipeline = null;
+
+    if (monkeyPatchedChromeStorage) {
+      chrome.storage.session = oldChromeStorageSession;
+      chrome.storage = oldChromeStorage;
+    }
+  });
+
   let attrack;
   let config;
   let fetchMock = createFetchMock();

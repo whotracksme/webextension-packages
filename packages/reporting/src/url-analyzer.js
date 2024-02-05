@@ -12,20 +12,30 @@
 import { ImmutableURL } from '@cliqz/url-parser';
 import logger from './logger';
 
+/**
+ * Can be used to add search engines. Detecting search engines enables
+ * some optimizations (e.g. quorum checks can be skipped).
+ */
 const URL_PATTERNS = [
   {
-    type: 'search-goi',
+    category: 'search-goi',
     regexp:
       /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*tbm=isch)|(tbm=isch&([^&]+&)*q=[^&]+))/,
     prefix: 'search?tbm=isch&gbv=1&q=',
   },
   {
-    type: 'search-go',
+    category: 'search-gov',
+    regexp:
+      /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*tbm=vid)|(tbm=vid&([^&]+&)*q=[^&]+))/,
+    prefix: 'search?tbm=vid&q=',
+  },
+  {
+    category: 'search-go',
     regexp: /^https:[/][/][^/]*[.]google[.].*?[#?&;]/,
     prefix: 'search?q=',
   },
   {
-    type: 'search-ya',
+    category: 'search-ya',
     regexp: /^https:[/][/][^/]*[.]search[.]yahoo[.].*?[#?&;][pq]=[^$&]+/,
     prefix: 'search?q=',
     queryFinder(parsedUrl) {
@@ -33,17 +43,17 @@ const URL_PATTERNS = [
     },
   },
   {
-    type: 'search-bii',
+    category: 'search-bii',
     regexp: /^https:[/][/][^/]*[.]bing[.][^/]+[/]images[/]search[?]q=[^$&]+/,
     prefix: 'images/search?q=',
   },
   {
-    type: 'search-bi',
+    category: 'search-bi',
     regexp: /^https:[/][/][^/]*[.]bing[.].*?[#?&;]q=[^$&]+/,
     prefix: 'search?q=',
   },
   {
-    type: 'search-am',
+    category: 'search-am',
     regexp:
       /^https:[/][/][^/]*[.]amazon[.][^/]+[/](s[?]k=[^$&]+|.*[?&]field-keywords=[^$&]+)/,
     prefix: 's/?field-keywords=',
@@ -55,10 +65,45 @@ const URL_PATTERNS = [
     },
   },
   {
-    type: 'search-dd',
+    category: 'search-dd',
     regexp:
       /^https:[/][/]duckduckgo.com[/](?:html$|.*[?&]q=[^&]+.*&ia=web|[?]q=[^&]+$)/,
     prefix: '?q=',
+  },
+  {
+    category: 'search-gh',
+    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]search[?]q=[^&]+/,
+    prefix: 'search?q=',
+  },
+  {
+    category: 'search-ghi',
+    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]images[?]q=[^&]+/,
+    prefix: 'search?q=',
+  },
+  {
+    category: 'search-ghv',
+    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]videos[?]q=[^&]+/,
+    prefix: 'search?q=',
+  },
+  {
+    category: 'search-br',
+    regexp: /^https:[/][/]search.brave.com[/]search[?]q=[^&]+/,
+    prefix: 'search?q=',
+  },
+  {
+    category: 'search-bri',
+    regexp: /^https:[/][/]search.brave.com[/]images[?]q=[^&]+/,
+    prefix: 'images?q=',
+  },
+  {
+    category: 'search-brn',
+    regexp: /^https:[/][/]search.brave.com[/]news[?]q=[^&]+/,
+    prefix: 'news?q=',
+  },
+  {
+    category: 'search-brv',
+    regexp: /^https:[/][/]search.brave.com[/]videos[?]q=[^&]+/,
+    prefix: 'videos?q=',
   },
 ];
 
@@ -70,7 +115,7 @@ export default class UrlAnalyzer {
 
   parseSearchLinks(url) {
     for (const {
-      type,
+      category,
       regexp,
       prefix,
       queryFinder = (parsedUrl) => parsedUrl.searchParams.get('q'),
@@ -85,26 +130,26 @@ export default class UrlAnalyzer {
 
         const query = queryFinder(parsedUrl);
         if (!query) {
-          return { found: false };
+          return { isSupported: false };
         }
         const query_ = encodeURIComponent(query).replaceAll('%20', '+');
         const doublefetchUrl = `https://${parsedUrl.host}/${prefix}${query_}`;
         const doublefetchRequest = this.patterns.createDoublefetchRequest(
-          type,
+          category,
           doublefetchUrl,
         );
         if (!doublefetchRequest) {
-          logger.info(
+          logger.debug(
             'Matching rule for',
             url,
             'skipped (no matching server side rules exist)',
           );
-          return { found: false };
+          return { isSupported: false, category, query };
         }
-        return { found: true, type, query, doublefetchRequest };
+        return { isSupported: true, category, query, doublefetchRequest };
       }
     }
 
-    return { found: false };
+    return { isSupported: false };
   }
 }

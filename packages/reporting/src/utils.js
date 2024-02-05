@@ -9,10 +9,284 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import logger from './logger';
+import cyrb53 from './cyrb53';
+import SeqExecutor from './seq-executor';
+
+export function isNil(x) {
+  return x === undefined || x === null;
+}
+
+export function requireParam(x, name) {
+  if (isNil(x)) {
+    throw new Error(
+      name
+        ? `Required parameter "${name}" is missing`
+        : 'Required parameter is missing',
+    );
+  }
+  return x;
+}
+
+export function requireInt(value, name) {
+  if (!Number.isInteger(value)) {
+    throw new Error(
+      name
+        ? `${name} should be integer but got: ${value}`
+        : `Parameter should be integer but got: ${value}`,
+    );
+  }
+  return value;
+}
+
+export function requireIntOrNull(value, name) {
+  if (value !== null && !Number.isInteger(value)) {
+    throw new Error(
+      name
+        ? `${name} should be integer or null but got: ${value}`
+        : `Parameter should be integer or null but got: ${value}`,
+    );
+  }
+  return value;
+}
+
+export function requireString(value, name) {
+  if (typeof value !== 'string') {
+    throw new Error(
+      name
+        ? `${name} should be string but got: ${value}`
+        : `Parameter should be string but got: ${value}`,
+    );
+  }
+  return value;
+}
+
+export function requireStringOrNull(value, name) {
+  if (value !== null && typeof value !== 'string') {
+    throw new Error(
+      name
+        ? `${name} should be string or null but got: ${value}`
+        : `Parameter should be string or null but got: ${value}`,
+    );
+  }
+  return value;
+}
+
+// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+export function nextPow2(_v) {
+  let v = _v | 0;
+  v -= 1;
+  v |= v >> 1;
+  v |= v >> 2;
+  v |= v >> 4;
+  v |= v >> 8;
+  v |= v >> 16;
+  v += 1;
+  return v;
+}
+
+/**
+ * If you need cryptographically safe randomness, consider using
+ * randomBetween from './random.js'.
+ */
 export function randBetween(min, max) {
   return min + Math.random() * (max - min);
 }
 
 export function clamp({ min, max, value }) {
   return Math.min(Math.max(min, value), max);
+}
+
+export function intersectMapKeys(map1, map2) {
+  const small = map1.size <= map2.size ? map1 : map2;
+  const big = map1.size <= map2.size ? map2 : map1;
+  return [...small.keys()].filter((x) => big.has(x));
+}
+
+// Hint: enable for better local debugging
+//
+// Normally, we store only hashes (often intentionally weakened) to give users
+// limited protection if an attacker gets access to their profile (on their
+// local machine). Yet for local development, preserving the original values
+// as keys can be beneficial, since it makes inspecting the local state easier.
+const USE_CLEARTEXT_HASHES_IF_POSSIBLE = false;
+if (USE_CLEARTEXT_HASHES_IF_POSSIBLE) {
+  logger.error(
+    'cleartext hashes enabled (should never be shown in a production profile!)',
+  );
+}
+
+/**
+ * A non-cryptographic hash function for strings.
+ *
+ * Limitations:
+ * - Expect the output space to be (at most) 53 bits.
+ * - Expect the implementation to change at any point, and use it only
+ *   for hashes that are stored locally on the profile.
+ *
+ * Options:
+ * - seed: overwrites the seed (may be ignored)
+ * - truncate: weakens the hash to 32 bits to make collisions more likely
+ * - output: 'string', 'number', but by default unspecified
+ *
+ * If you require the output to string or number, you should set the
+ * output parameter. Otherwise, leave it empty, so that the implementation
+ * can chose (see USE_CLEARTEXT_HASHES_IF_POSSIBLE).
+ */
+export function fastHash(str, { seed = 0, truncate = false, output } = {}) {
+  let hash = cyrb53(str, seed);
+  if (truncate) {
+    // converts to unsigned 32-bit
+    hash = (hash & 0xffffffff) >>> 0;
+  }
+  if (USE_CLEARTEXT_HASHES_IF_POSSIBLE) {
+    if (output !== 'number') {
+      return str;
+    }
+    // If the caller requires an integer, the trick to keep the original string
+    // does not work. Logging is the best that we can do to help debugging.
+    logger.debug('fastHash:', str, '->', hash);
+  }
+  if (output === 'string') {
+    // No particular reason to use base36 encoding. It makes the strings
+    // a bit smaller, but you can anything here (e.g. hash.toString()).
+    return hash.toString(36);
+  }
+  return hash;
+}
+
+/**
+ * Example: chunk([1, 2, 3, 4, 5], 3) ==> [[1, 2, 3], [4, 5]]
+ */
+export function chunk(array, size) {
+  if (size <= 0) {
+    throw new Error(`Batch size must be strictly positive, but got ${size}`);
+  }
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + Math.min(array.length - i, size)));
+  }
+  return result;
+}
+
+/**
+ * Example: flattenObject({ x: 1, y: { z: 2 } }) ==> [{ path: ['x'], value: 1 }, { path: ['y', 'z'], value: 2 }]
+ */
+export function flattenObject(obj, parentPath = []) {
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    const path = [...parentPath, key];
+    if (typeof value === 'object' && value !== null) {
+      acc.push(...flattenObject(value, path));
+    } else {
+      acc.push({ path, value });
+    }
+    return acc;
+  }, []);
+}
+
+/**
+ * This is not a full deepEqual implementation. But it should be
+ * able to detect common data objects with primitive types.
+ *
+ * If it returns true, you may assume that both inputs represent
+ * the same data.
+
+ * WARN: This implemenation will not detect identity in all situations;
+ * you may still get false for identical objects.
+ * If you need stronger guarantees, use a real deepEqual implementation.
+ *
+ * Note: the implementation assumes that objects are free of cycles
+ */
+export function equalityCanBeProven(x, y) {
+  if (
+    x === true ||
+    x === false ||
+    x === null ||
+    x === undefined ||
+    typeof x === 'string' ||
+    Number.isFinite(x)
+  ) {
+    return x === y;
+  }
+  if (x.constructor === Date) {
+    return y?.constructor === Date && +x === +y;
+  }
+
+  if (Array.isArray(x)) {
+    if (!Array.isArray(y) || x.length !== y.length) {
+      return false;
+    }
+    for (let i = 0; i < x.length; i += 1) {
+      if (!equalityCanBeProven(x[i], y[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (x.constructor === Object) {
+    if (y?.constructor !== Object) {
+      return false;
+    }
+    return (
+      y.constructor === Object &&
+      equalityCanBeProven(Object.entries(x).sort(), Object.entries(y).sort())
+    );
+  }
+
+  // we failed to prove identity, but we did not prove inequality either
+  return false;
+}
+
+export function roundUpToNextUTCMidnight(unixEpoch) {
+  const date = new Date(unixEpoch);
+  date.setUTCHours(24, 0, 0, 0);
+  return date.getTime();
+}
+
+/**
+ * split0(str, on) === str.split(on)[0]
+ */
+export function split0(str, on) {
+  const pos = str.indexOf(on);
+  return pos < 0 ? str : str.slice(0, pos);
+}
+
+/**
+ * Lazy initialized variables:
+ * - evaluated once at the first request
+ * - never evaluated more than once
+ * - never evaluated unless requested
+ *
+ * Usage:
+ * const fooProvider = lazyInitAsync(async () => 1 + 1);
+ * const foo = await fooProvider(); // foo === 2
+ *
+ * Warning: avoid cyclic dependencies in the initialization; otherwise,
+ * you risk deadlocks. The implementation will not attempt to detect it.
+ */
+export function lazyInitAsync(func) {
+  const criticalSection = new SeqExecutor();
+  let isFirstCall = true;
+  let initFailed = false;
+  let value;
+  let error;
+
+  return () => {
+    return criticalSection.run(async () => {
+      if (isFirstCall) {
+        try {
+          value = await func();
+        } catch (e) {
+          initFailed = true;
+          error = e;
+        }
+        isFirstCall = false;
+      }
+      if (initFailed) {
+        throw error;
+      }
+      return value;
+    });
+  };
 }

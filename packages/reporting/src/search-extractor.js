@@ -11,17 +11,17 @@
 
 /* eslint-disable no-continue */
 
-import parseHtml from './html-parser';
 import logger from './logger';
-import { truncatedHash } from './md5';
+import parseHtml from './html-parser';
+import { fastHash } from './utils';
 import random from './random';
 import { anonymousHttpGet } from './http';
 import { lookupBuiltinTransform } from './patterns';
 
-function doublefetchQueryHash(query, type) {
+function doublefetchQueryHash(query, category) {
   // defines a cooldown to avoid performing unnecessary
   // doublefetch requests in short order
-  return truncatedHash(`dfq:${type}:${query.trim()}`);
+  return fastHash(`dfq:${category}:${query.trim()}`, { truncate: true });
 }
 
 const HOUR = 60 * 60 * 1000;
@@ -110,13 +110,21 @@ function findFirstMatch(rootItem, selectorDef, baseURI) {
 }
 
 export default class SearchExtractor {
-  constructor({ patterns, sanitizer, persistedHashes }) {
+  constructor({ patterns, sanitizer, persistedHashes, jobScheduler }) {
     this.patterns = patterns;
     this.sanitizer = sanitizer;
     this.persistedHashes = persistedHashes;
+
+    jobScheduler.registerHandler('doublefetch-query', async (job) => {
+      const { messages } = await this.runJob(job.args);
+      return messages.map((message) => ({
+        type: 'send-message',
+        args: message,
+      }));
+    });
   }
 
-  async runJob({ type, query, doublefetchRequest }) {
+  async runJob({ query, category, doublefetchRequest }) {
     function discard(reason = '') {
       logger.debug('No messages found for query:', query, 'Reason:', reason);
       return {
@@ -132,7 +140,7 @@ export default class SearchExtractor {
       );
     }
 
-    const queryHash = doublefetchQueryHash(query, type);
+    const queryHash = doublefetchQueryHash(query, category);
     const expireAt = chooseExpiration();
     const wasAdded = await this.persistedHashes.add(queryHash, expireAt);
     if (!wasAdded) {
@@ -144,6 +152,7 @@ export default class SearchExtractor {
       const html = await anonymousHttpGet(doublefetchRequest.url, {
         headers: doublefetchRequest.headers,
         redirect: doublefetchRequest.redirect,
+        treat429AsPermanentError: true,
       });
       doc = await parseHtml(html);
     } catch (e) {
@@ -154,30 +163,40 @@ export default class SearchExtractor {
       await this.persistedHashes.delete(queryHash).catch(() => {});
       throw e;
     }
-    const messages = this.extractMessages({
-      doc,
-      type,
-      query,
-      doublefetchRequest,
-    });
-    if (messages.length === 0) {
-      return discard('No content found.');
+    try {
+      const messages = this.extractMessages({
+        doc,
+        query,
+        category,
+        doublefetchRequest,
+      });
+      if (messages.length === 0) {
+        return discard('No content found.');
+      }
+      return { messages };
+    } catch (e) {
+      // There are two ways to reach it:
+      // - The pattern is not supported or there is a logical bug. In both
+      //   cases, retrying the job does not make sense. Note that unsupported
+      //   pattern will become more likely on clients that never update.
+      // - Doublefetch hit a rate limit (possible but unlikely). On a
+      //   first glance, retrying looks like a valid strategy, but it may
+      //   harm the user experience. Thus, it is best to give up at this point.
+      logger.warn('Processing failed:', e);
+      return discard(`Unsupported pattern: ${e}`);
     }
-
-    logger.info(messages.length, 'messages found for query:', query);
-    return { messages };
   }
 
-  extractMessages({ doc, type, query, doublefetchRequest }) {
+  extractMessages({ doc, query, category, doublefetchRequest }) {
     const rules = this.patterns.getRulesSnapshot();
-    if (!rules[type]) {
+    if (!rules[category]) {
       return [];
     }
 
     const found = {};
     const baseURI = doublefetchRequest.url;
 
-    const { input = {}, output = {} } = rules[type];
+    const { input = {}, output = {} } = rules[category];
     for (const [selector, selectorDef] of Object.entries(input)) {
       found[selector] = found[selector] || {};
       if (selectorDef.first) {
@@ -296,7 +315,7 @@ export default class SearchExtractor {
       const body = {
         action,
         payload,
-        ver: '2.9',
+        ver: '2.9', // TODO: eliminate code duplication (especially, the magic constant '2.9')
         'anti-duplicates': Math.floor(random() * 10000000),
       };
       messages.push({ body, deduplicateBy });
