@@ -1,3 +1,15 @@
+# v5.0.0 (Mon Feb 05 2024)
+
+#### 💥 Breaking Change
+
+- wtm.page messages [#61](https://github.com/whotracksme/webextension-packages/pull/61) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v4.0.6 (Wed Dec 13 2023)
 
 #### 🐛 Bug Fix
