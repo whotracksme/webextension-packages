@@ -1,3 +1,15 @@
+# v5.0.1 (Tue Feb 06 2024)
+
+#### 🐛 Bug Fix
+
+- Fixed: detect more types of opaque requests in doublefetch [#63](https://github.com/whotracksme/webextension-packages/pull/63) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.0 (Mon Feb 05 2024)
 
 #### 💥 Breaking Change
