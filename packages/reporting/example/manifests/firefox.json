@@ -11,6 +11,7 @@
     "webRequestBlocking",
     "tabs",
     "storage",
+    "scripting",
     "http://*/*",
     "https://*/*",
     "ws://*/*",
