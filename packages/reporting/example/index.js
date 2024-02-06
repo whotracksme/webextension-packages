@@ -54,6 +54,14 @@ const communication = {
   send(msg) {
     console.warn('[Communication]', msg);
   },
+  // TODO: use actuall anonymous-communication to access quorum
+  sendInstant(msg) {
+    console.warn('[Communication instant]', msg);
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ result: true }),
+    });
+  },
   trustedClock: {
     getTimeAsYYYYMMDD() {
       return '';
