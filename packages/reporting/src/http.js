@@ -186,9 +186,12 @@ export async function anonymousHttpGet(url, params = {}) {
     } finally {
       uninstallHandler();
     }
-    if (response.status === 0 && response.type == 'opaqueredirect') {
+    if (
+      response.status === 0 &&
+      (response.type == 'opaqueredirect' || response.type == 'opaque')
+    ) {
       throw new PermanentlyUnableToFetchUrlError(
-        `Failed to fetch url ${url}: not allowed to follow redirects`,
+        `Failed to fetch url ${url}: not allowed to follow redirects (response.type=${response.type})`,
       );
     }
     if (response.url !== url && !shouldFollowRedirect(response.url)) {
