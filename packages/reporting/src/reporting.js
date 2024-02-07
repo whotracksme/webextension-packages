@@ -255,10 +255,6 @@ export default class Reporting {
     await this.patternsUpdater.update();
   }
 
-  enableLogging() {
-    logger.enable();
-  }
-
   async selfChecks(check = new SelfCheck()) {
     if (!this.isActive) {
       check.warn('reporting is not enabled');

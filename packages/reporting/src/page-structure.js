@@ -174,7 +174,6 @@ export async function analyzePageStructure(doc) {
       requestedIndex,
     };
   } catch (e) {
-    console.error('[Ghostery]', e);
     return {
       error: true,
       details: (e.stack || e).toString(),
