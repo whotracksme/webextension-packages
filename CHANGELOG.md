@@ -1,3 +1,15 @@
+# v5.0.2 (Wed Feb 07 2024)
+
+#### 🐛 Bug Fix
+
+- Improve logging [#64](https://github.com/whotracksme/webextension-packages/pull/64) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.1 (Tue Feb 06 2024)
 
 #### 🐛 Bug Fix
