@@ -11,4 +11,4 @@
 export { default as UrlReporter } from './reporting';
 export { default as RequestReporter } from './request-reporter';
 export { default as WebRequestPipeline } from './webrequest-pipeline';
-export { setLogLevel } from './logger';
+export { setLogLevel, describeLoggers } from './logger';

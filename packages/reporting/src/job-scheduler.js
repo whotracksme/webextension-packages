@@ -437,13 +437,13 @@ export default class JobScheduler {
           this.notifyObservers('jobSucceeded', jobEntry);
         } catch (e) {
           if (e.isPermanentError) {
-            // ?
+            logger.warn('Job failed:', jobEntry.job, e.message);
+          } else if (e.isRecoverableError) {
+            // TODO: implement retry
+            logger.warn('Job failed (skip retry):', jobEntry.job, e);
+          } else {
+            logger.error('Job failed (unexpected error):', jobEntry.job, e);
           }
-          logger.error(
-            '[STUB] job failed (retry mechanism not implemented)',
-            jobEntry.job,
-            e,
-          );
           this.notifyObservers('jobFailed', jobEntry);
         } finally {
           now = Date.now();

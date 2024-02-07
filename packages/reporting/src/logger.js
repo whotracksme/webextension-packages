@@ -31,7 +31,7 @@ export class Logger {
   }
 
   constructor(prefix, { level = DEFAULT_LOG_LEVEL } = {}) {
-    this.prefix = `WTM [${prefix}]`;
+    this.prefix = prefix;
     this.logLevel = level;
 
     // Define loggers
@@ -41,17 +41,18 @@ export class Logger {
     this._error = console.error || noop;
 
     if (prefix) {
-      this._debug = this._debug.bind(null, `${this.prefix} debug:`);
-      this._log = this._log.bind(null, `${this.prefix}   log:`);
-      this._warning = this._warning.bind(null, `${this.prefix}  warn:`);
-      this._error = this._error.bind(null, `${this.prefix} error:`);
+      const prefix = `WTM [${this.prefix}]`;
+      this._debug = this._debug.bind(null, `${prefix} debug:`);
+      this._log = this._log.bind(null, `${prefix} log:`);
+      this._warning = this._warning.bind(null, `${prefix} warn:`);
+      this._error = this._error.bind(null, `${prefix} error:`);
     }
 
     loggers.add(this);
   }
 
   setLevel(level) {
-    return this.setLevel(level);
+    this.setLevel = level;
   }
 
   isEnabledFor(level) {
@@ -96,13 +97,25 @@ export class Logger {
   }
 }
 
-export default Logger.get('reporting', { level: 'debug' });
+export default Logger.get('reporting', { level: 'info' });
 
-export function setLogLevel(level) {
+export function setLogLevel(level, { prefix = '*' } = {}) {
   if (!SUPPORTED_LOG_LEVELS.has(level)) {
     throw new Error(`Unknow log level '${level}'`);
   }
 
-  DEFAULT_LOG_LEVEL = level;
-  loggers.forEach((logger) => (logger.logLevel = level));
+  if (prefix === '*') {
+    DEFAULT_LOG_LEVEL = level;
+  }
+  loggers.forEach((logger) => {
+    if (prefix === '*' || prefix === logger.prefix) {
+      logger.logLevel = level;
+    }
+  });
+}
+
+export function describeLoggers() {
+  return Object.fromEntries(
+    [...loggers].map((logger) => [logger.prefix, logger.logLevel]),
+  );
 }
