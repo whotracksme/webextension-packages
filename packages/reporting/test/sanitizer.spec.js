@@ -840,35 +840,6 @@ describe('#sanitizeUrl', function () {
       });
     });
   });
-
-  // drop: https://www.figma.com/file/qHERAPVK1MBBMLWKqDufzf/Ghostery-Web?type=design&node-id=5911-4407&mode=design
-  // drop: https://github.com/ghostery/trackerdb/actions/runs/6593033743/job/17914820142?pr=156
-
-  // TODO: what about URLs like that? ("edit" links should arguably be dropped)
-  // https://docs.google.com/spreadsheets/d/94SK3U2OChhcjh28A9Xj9ktND_p3MaLs0r2BrBrhLZTJ/edit#gid=0
-
-  // // TODO: clean this up
-  // describe('TODO: unclassified category of links that most likely should be dropped', function () {
-  //   [
-  //     'http://www.google.co.uk/shopping/product/11805004825607945131?lsf=seller:8225840,store:14181573453232501404&prds=oid:17944033554668872566&hl=en',
-  //   ].forEach((url) => {
-  //     it.only(`should drop URL: ${url}`, function () {
-  //       shouldBeDroppedOrTruncated(url);
-  //     });
-  //   });
-  // });
-  // // TODO: clean this up
-  // describe('TODO: unclassified category of links that most likely should be allowed', function () {
-  //   [
-  //     'https://example.com/',
-  //     'https://example.com/',
-  //     'https://example.com/',
-  //   ].forEach((url) => {
-  //     it.only(`should allow URL: ${url}`, function () {
-  //       shouldBeSafe(url);
-  //     });
-  //   });
-  // });
 });
 
 describe('#isValidEAN13', function () {

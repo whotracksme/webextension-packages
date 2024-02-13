@@ -10,8 +10,12 @@
  */
 
 import { expect } from 'chai';
+import * as fc from 'fast-check';
 
-import { titlesMatchAfterDoublefetch } from '../src/doublefetch-page-handler.js';
+import {
+  titlesMatchAfterDoublefetch,
+  sanitizeActivity,
+} from '../src/doublefetch-page-handler.js';
 
 describe('#titlesMatchAfterDoublefetch', function () {
   function shouldMatch(before, after) {
@@ -88,5 +92,103 @@ describe('#titlesMatchAfterDoublefetch', function () {
         shouldNotMatch(after, before);
       });
     }
+  });
+});
+
+describe('#sanitizeActivity', function () {
+  function ensureInRange(x) {
+    expect(x).to.be.a('string');
+    expect(Number(x)).to.be.within(0, 1);
+  }
+
+  it('should map bad inputs to "0"', function () {
+    expect(sanitizeActivity(null)).to.eql('0');
+    expect(sanitizeActivity(undefined)).to.eql('0');
+    expect(sanitizeActivity({})).to.eql('0');
+    expect(sanitizeActivity('x')).to.eql('0');
+    expect(sanitizeActivity('1')).to.eql('0');
+  });
+
+  it('should reasonably normalize values like 0.33333...', function () {
+    const result = sanitizeActivity(1 / 3);
+    ensureInRange(result);
+    expect(Number(result)).to.be.greaterThan(0.2);
+    expect(Number(result)).to.be.lessThan(0.45);
+    expect(result.length).to.be.lessThanOrEqual('0.1234'.length);
+  });
+
+  describe('[property based testing]', function () {
+    it('should keep values between 0 and 1', function () {
+      fc.assert(
+        fc.property(fc.double(), (x) => {
+          ensureInRange(sanitizeActivity(x));
+        }),
+      );
+    });
+
+    it('should not change numbers too drastically', function () {
+      fc.assert(
+        fc.property(fc.double({ min: 0, max: 1, noNaN: true }), (x) => {
+          const result = sanitizeActivity(x);
+          ensureInRange(result);
+          expect(Number(result)).to.be.within(x - 0.1, x + 0.1);
+        }),
+      );
+    });
+
+    it('should not drastically change the ordering', function () {
+      fc.assert(
+        fc.property(fc.double({ min: 0, max: 0.4, noNaN: true }), (low) => {
+          const high = 1.0 - low;
+          const low_ = sanitizeActivity(low);
+          const high_ = sanitizeActivity(high);
+          ensureInRange(low_);
+          ensureInRange(high_);
+          expect(Number(low_)).to.be.lessThan(Number(high_));
+        }),
+      );
+    });
+
+    it('should not round up small numbers to 1', function () {
+      fc.assert(
+        fc.property(fc.double({ min: 0, max: 0.85, noNaN: true }), (x) => {
+          const result = sanitizeActivity(x);
+          expect(Number(result)).to.be.lessThan(1.0);
+        }),
+      );
+    });
+
+    it('should not round up big numbers to 0', function () {
+      fc.assert(
+        fc.property(fc.double({ min: 0.15, max: 1, noNaN: true }), (x) => {
+          const result = sanitizeActivity(x);
+          expect(Number(result)).to.be.greaterThan(0.0);
+        }),
+      );
+    });
+
+    it('should map bad inputs to "0"', function () {
+      fc.assert(
+        fc.property(fc.anything(), (x) => {
+          if (!Number.isFinite(x)) {
+            expect(sanitizeActivity(x)).to.eql('0');
+          }
+        }),
+      );
+    });
+
+    it('should not change the mean too much', function () {
+      fc.assert(
+        fc.property(fc.double({ min: 0, max: 1, noNaN: true }), (x) => {
+          const numRuns = 1000;
+          let sum = 0;
+          for (let i = 0; i < numRuns; i += 1) {
+            sum += Number(sanitizeActivity(x));
+          }
+          const mean = sum / numRuns;
+          expect(mean).to.be.within(x - 0.03, x + 0.03);
+        }),
+      );
+    });
   });
 });
