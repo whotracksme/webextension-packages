@@ -14,14 +14,14 @@ import { BadJobError } from './errors';
 import random from './random';
 
 function createPageMessage(safePage, ctry) {
-  const { url, title, ref = null, red = null, search, lang } = safePage;
+  const { url, title, ref = null, redirects = null, search, lang } = safePage;
   const { activity } = safePage.aggregator;
 
   const payload = {
     url,
     t: title,
     ref,
-    red,
+    redirects,
     lang,
     ctry,
     activity,
