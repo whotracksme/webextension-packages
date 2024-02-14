@@ -1,3 +1,19 @@
+# v5.0.3 (Wed Feb 14 2024)
+
+#### 🐛 Bug Fix
+
+- Improve sanitizers [#67](https://github.com/whotracksme/webextension-packages/pull/67) ([@philipp-classen](https://github.com/philipp-classen))
+- Fixed missing redirects [#66](https://github.com/whotracksme/webextension-packages/pull/66) ([@philipp-classen](https://github.com/philipp-classen))
+- Limit assumption about browser APIs [#65](https://github.com/whotracksme/webextension-packages/pull/65) ([@philipp-classen](https://github.com/philipp-classen))
+- Reporting: fix example [#62](https://github.com/whotracksme/webextension-packages/pull/62) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.2 (Wed Feb 07 2024)
 
 #### 🐛 Bug Fix
