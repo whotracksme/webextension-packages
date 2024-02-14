@@ -839,11 +839,17 @@ export default class Pages {
           this.chrome.webRequest[type]?.addListener &&
           this.chrome.webRequest[type]?.removeListener
         ) {
-          this.chrome.webRequest[type].addListener(
-            handler,
-            { urls: ['<all_urls>'] },
-            ['responseHeaders'],
-          );
+          try {
+            this.chrome.webRequest[type].addListener(
+              handler,
+              { urls: ['<all_urls>'] },
+              ['responseHeaders'],
+            );
+          } catch (e) {
+            this.chrome.webRequest[type].addListener(handler, {
+              urls: ['<all_urls>'],
+            });
+          }
           cleanup.push(() =>
             this.chrome.webRequest[type].removeListener(handler),
           );
