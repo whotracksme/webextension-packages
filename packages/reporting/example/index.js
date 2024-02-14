@@ -8,6 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
+import './setup.js';
 import {
   UrlReporter,
   RequestReporter,
@@ -25,19 +26,41 @@ import rules from './rules.json';
 
 setLogLevel('debug');
 
-const storage = {
-  storage: {},
-  async get(key) {
-    return this.storage[key];
-  },
-  async set(key, value) {
-    this.storage[key] = value;
-  },
-};
+function createStorage() {
+  const storage = {
+    storage: {},
+    async get(key) {
+      return this.storage[key];
+    },
+    async set(key, value) {
+      this.storage[key] = value;
+    },
+    async remove(key) {
+      delete this.storage[key];
+    },
+    async clear() {
+      this.storage = {};
+    },
+    async keys() {
+      return Object.keys(this.storage);
+    },
+    open() {},
+    close() {},
+  };
+  return storage;
+}
 
 const communication = {
   send(msg) {
     console.warn('[Communication]', msg);
+  },
+  // TODO: use actuall anonymous-communication to access quorum
+  sendInstant(msg) {
+    console.warn('[Communication instant]', msg);
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ result: true }),
+    });
   },
   trustedClock: {
     getTimeAsYYYYMMDD() {
@@ -66,7 +89,8 @@ const webRequestPipeline = new WebRequestPipeline();
 
 const urlReporter = new UrlReporter({
   config: config.url,
-  storage,
+  storage: createStorage(),
+  connectDatabase: createStorage,
   communication,
 });
 

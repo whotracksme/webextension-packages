@@ -1,0 +1,1 @@
+globalThis.chrome = browser || chrome;
