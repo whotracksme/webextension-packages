@@ -11,6 +11,7 @@
 
 import logger from './logger';
 import { isNil, lazyInitAsync } from './utils';
+import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
 import parseHtml from './html-parser';
@@ -68,6 +69,38 @@ export function titlesMatchAfterDoublefetch({
   }
 
   return false;
+}
+
+/**
+ * The activity should be number between 0 and 1. To avoid suprises like
+ * leaking details such as clock resolution or floating point rounding,
+ * apply a bit of noise, truncate after a few digits, and represent it
+ * as a string.
+ */
+export function sanitizeActivity(activity) {
+  if (!Number.isFinite(activity) || activity < 0) {
+    logger.warn(
+      'Corrupted "activity" value detected:',
+      activity,
+      'Replacing by 0',
+    );
+    return '0';
+  }
+  if (activity >= 1) {
+    return '1';
+  }
+  if (activity <= 0) {
+    return '0';
+  }
+
+  const noisyActivity = activity * randomBetween(0.9, 1.1);
+  if (noisyActivity >= 1) {
+    return '1';
+  }
+  if (noisyActivity <= 0) {
+    return '0';
+  }
+  return noisyActivity.toFixed(4);
 }
 
 class PageCache {
@@ -359,7 +392,7 @@ export default class DoublefetchPageHandler {
         detect: page.lang || null,
       },
       aggregator: {
-        activity: page.aggregator.activity,
+        activity: sanitizeActivity(page.aggregator.activity),
       },
     };
     if (safePage.url !== page.url) {
