@@ -27,15 +27,22 @@ import SearchExtractor from './search-extractor';
 import JobScheduler from './job-scheduler';
 import PersistedHashes from './persisted-hashes';
 import AliveCheck from './alive-check';
+import AliveMessageGenerator from './alive-message-generator';
 import SessionStorageWrapper from './session-storage';
 import logger from './logger';
 import SelfCheck from './self-check';
-import { BloomFilter } from './bloom-filters'; // for testing only
+import { BloomFilter } from './bloom-filters';
 
 const SECOND = 1000;
 
 export default class Reporting {
-  constructor({ config, storage, communication, connectDatabase }) {
+  constructor({
+    config,
+    storage,
+    communication,
+    connectDatabase,
+    browserInfoProvider,
+  }) {
     // Defines whether Reporting is fully initialized and has permission
     // to collect data.
     this.isActive = false;
@@ -130,10 +137,18 @@ export default class Reporting {
       persistedHashes: this.persistedHashes,
       jobScheduler: this.jobScheduler,
     });
+
+    const aliveMessageGenerator = new AliveMessageGenerator({
+      browserInfoProvider,
+      quorumChecker: this.quorumChecker,
+      storage,
+      storageKey: 'alive_config',
+    });
     this.aliveCheck = new AliveCheck({
       communication,
       countryProvider: this.countryProvider,
       trustedClock: this.communication.trustedClock,
+      aliveMessageGenerator,
       storage,
       storageKey: 'alive_check',
     });

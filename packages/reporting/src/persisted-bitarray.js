@@ -232,7 +232,7 @@ export default class PersistedBitarray {
 
   _automaticallyChooseShardSize(numBytes) {
     // Increase the version if you change this function. It will force a reset
-    // on the client. As this data structure does not/ provide any consistency
+    // on the client. As this data structure does not provide any consistency
     // guarantees, users of the class should be anticipated to loss data.
     //
     // But if losing the old state is not an option, you can explicitly pass

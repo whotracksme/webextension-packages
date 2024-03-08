@@ -20,9 +20,10 @@ const DAY = 24 * HOUR;
 
 describe('#AliveCheck', function () {
   const storageKey = 'some-storage-key';
-  let trustedClock;
   let communication;
   let countryProvider;
+  let trustedClock;
+  let aliveMessageGenerator;
   let storage;
   let uut;
 
@@ -31,6 +32,7 @@ describe('#AliveCheck', function () {
       communication,
       countryProvider,
       trustedClock,
+      aliveMessageGenerator,
       storage,
       storageKey,
     });
@@ -59,9 +61,6 @@ describe('#AliveCheck', function () {
   }
 
   beforeEach(() => {
-    trustedClock = {
-      getTimeAsYYYYMMDDHH: () => '<some timestamp>',
-    };
     communication = {
       _message: [],
       async send(msg) {
@@ -70,6 +69,21 @@ describe('#AliveCheck', function () {
     };
     countryProvider = {
       getSafeCountryCode: () => 'de',
+    };
+    trustedClock = {
+      getTimeAsYYYYMMDDHH: () => '<some timestamp>',
+    };
+    aliveMessageGenerator = {
+      async generateMessage(ctry, hour) {
+        return {
+          browser: '',
+          version: '',
+          os: '',
+          language: '',
+          ctry: '--',
+          t: hour,
+        };
+      },
     };
     storage = {
       async get(key) {

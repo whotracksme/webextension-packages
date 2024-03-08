@@ -94,7 +94,7 @@ export default class QuorumChecker {
       const quorumKey = `[incQuorum]|${text}`;
 
       // If we already voted but failed to update the state, we should
-      // not vote again. Instead, we can try to write again, but if it
+      // not vote again. Instead, we can try to write again; but if it
       // fails again, count it as an error since it can be safely retried.
       if (this._badKeys.has(text)) {
         try {
@@ -210,7 +210,8 @@ export default class QuorumChecker {
           await this._restorePersistedState(now);
         } catch (e) {
           logger.warn(
-            'Failed to restore the quorum config from disk. The configu will be reloaded from the the server...',
+            'Failed to restore the quorum config from disk.',
+            'The configuration will be reloaded from the the server...',
             e,
           );
         }

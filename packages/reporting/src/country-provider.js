@@ -111,7 +111,7 @@ export default class CountryProvider {
       // check here as well.
       //
       // Note: It is clear that the update here will at best affect the next call of
-      // "getSafeCountryCode" (even that is not/ guaranteed though). In the rare case
+      // "getSafeCountryCode" (even that is not guaranteed though). In the rare case
       // that you need to ensure that an update finished, the caller should instead
       // explicitly trigger an update ("await countryProvider.update()") before
       // calling "getSafeCountryCode".
