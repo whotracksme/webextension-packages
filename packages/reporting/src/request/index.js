@@ -866,7 +866,7 @@ export default class RequestMonitor {
       ) {
         this.telemetry({
           action: 'wtm.attrack.tp_events',
-          payload,
+          payload: [payload],
         });
       }
     }
