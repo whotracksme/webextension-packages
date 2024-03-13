@@ -150,6 +150,8 @@ export default class RequestMonitor {
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
     message['anti-duplicates'] = Math.floor(random() * 10000000);
 
+    const data = message.payload;
+    message.payload = { data };
     message.payload.ver = VERSION;
     message.payload.day = this.qs_whitelist.getVersion().day;
     message.payload.ts = this.trustedClock.getTimeAsYYYYMMDDHH();
@@ -864,7 +866,7 @@ export default class RequestMonitor {
       ) {
         this.telemetry({
           action: 'wtm.attrack.tp_events',
-          payload,
+          payload: [payload],
         });
       }
     }
