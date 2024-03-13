@@ -92,6 +92,7 @@ const urlReporter = new UrlReporter({
   storage: createStorage(),
   connectDatabase: createStorage,
   communication,
+  browserInfoProvider: async () => ({ browser: 'test' }),
 });
 
 const requestReporter = new RequestReporter(config.request, {

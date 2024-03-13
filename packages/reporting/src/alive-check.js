@@ -10,6 +10,7 @@
  */
 
 import logger from './logger';
+import { requireString, requireParam } from './utils';
 
 const HOUR = 1000 * 60 * 60;
 
@@ -37,14 +38,16 @@ export default class AliveCheck {
     communication,
     countryProvider,
     trustedClock,
+    aliveMessageGenerator,
     storage,
     storageKey,
   }) {
-    this.communication = communication;
-    this.countryProvider = countryProvider;
-    this.trustedClock = trustedClock;
-    this.storage = storage;
-    this.storageKey = storageKey;
+    this.communication = requireParam(communication);
+    this.countryProvider = requireParam(countryProvider);
+    this.trustedClock = requireParam(trustedClock);
+    this.aliveMessageGenerator = requireParam(aliveMessageGenerator);
+    this.storage = requireParam(storage);
+    this.storageKey = requireString(storageKey);
     this._skipChecksUntil = 0; // Unix timestamp
   }
 
@@ -113,19 +116,20 @@ export default class AliveCheck {
   }
 
   async _reportAlive() {
-    // TODO: here we start with a minimal message. In a later step,
-    // we should include information about the browser. When we add
-    // more fields here, best be conservative and add a check for
-    // quorum. since the message is minimal hour+country, we don't
-    // need that extra step for now.
+    const ctry = this.countryProvider.getSafeCountryCode();
+    const hour = this.trustedClock.getTimeAsYYYYMMDDHH();
+    const payload = await this.aliveMessageGenerator.generateMessage(
+      ctry,
+      hour,
+    );
     const message = {
       action: 'wtm.alive',
-      ver: 1,
-      payload: {
-        t: this.trustedClock.getTimeAsYYYYMMDDHH(),
-        ctry: this.countryProvider.getSafeCountryCode(),
-      },
+      payload,
     };
+
+    // Note that it is intentional here to bypass the job scheduler.
+    // Alive signals should serve as a health check; thus it is best to
+    // send in "fire-and-forget" style (without delays or retries).
     logger.debug('Sending alive:', message);
     await this.communication.send(message);
   }
