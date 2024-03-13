@@ -32,7 +32,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "auto": "^11.0.0",
+    "auto": "^11.1.1",
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
