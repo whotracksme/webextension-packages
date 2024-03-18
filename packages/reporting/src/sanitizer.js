@@ -409,6 +409,7 @@ export function sanitizeUrl(url, { strict = false } = {}) {
       /[/]order[/]./i,
       /[/]auth[/]realms[/]/i,
       /[/]protocol[/]openid-connect[/]/i,
+      /((maps|route[^r-]).*|@)\d{1,2}[^\d]-?\d{6}.+\d{1,2}[^\d]-?\d{6}/i,
     ];
     for (const regexp of regexps) {
       if (regexp.test(url)) {

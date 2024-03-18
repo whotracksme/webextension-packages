@@ -455,6 +455,44 @@ describe('#sanitizeUrl', function () {
     });
   });
 
+  describe('should drop URLs that contain geo-coordinates', function () {
+    [
+      'https://www.google.com/maps/dir//Spring,+TX+77373/@30.095431,-95.6501944,10z/data=!4m18!1m8!3m7!1s0x8640ccc646dfdb4b:0x496129fbe4b11b29!2sSpring,+TX+77373!3b1!8m2!3d30.0799405!4d-95.4171601!16zL20vMDEwMnFx!4m8!1m0!1m5!1m1!1s0x8640ccc646dfdb4b:0x496129fbe4b11b29!2m2!1d-95.4171601!2d30.0799405!3e0?entry=ttu',
+      'https://www.google.com/maps/search/correios+curitiba+joao+negrao+telefone/@-25.4393609,-49.2639141,17z/data=!3m1!4b1?entry=ttu',
+      'https://www.google.com/maps/dir//London+Stansted+Airport+(STN),+Bassingbourn+Rd,+Stansted+CM24+1QW,+United+Kingdom/@51.8863747,0.2387409,17z/data=!3m1!5s0x47d88fb4f87490e3:0x165d2ba117eb3309!4m17!1m7!3m6!1s0x487604b8a52a1bb7:0x30a4d0976b352648!2sLondon+Stansted+Airport!8m2!3d51.8863747!4d0.2413158!16zL20vMGhjc2g!4m8!1m0!1m5!1m1!1s0x487604b8a52a1bb7:0x30a4d0976b352648!2m2!1d0.2413158!2d51.8863747!3e2?entry=ttu',
+
+      'https://www.google.com/maps/search/somesearch+querythat+may+point+tosomething/@-33.6278509,-39.2539141,17z/data=!3m1!4b1?entry=ttu',
+      'https://www.google.com/maps/place/Klinikum+rechts+der+Isar+der+Technischen+Universit%C3%A4t+M%C3%BCnchen/@48.1379612,11.5936122,16z/data=!3m1!5s0x479e75825cd00d45:0xd2ae74823f848e47!4m9!1m2!2m1!1sfriedensengel!3m5!1s0x479e7582085e4a3f:0xa3dffab473c868fe!8m2!3d48.1369622!4d11.5987872!16s%2Fm%2F027drtc?entry=ttu',
+      'https://www.google.com/maps/dir/54.7925405,9.4078768/47.664786,12.4509673/@51.0971126,5.652494,6z/data=!3m1!4b1!4m2!4m1!3e1?entry=ttu',
+      'https://www.google.com/maps/dir/54.7925405,9.4078768/47.664786,12.4509673/@52.1471636,10.5343305,15z/am=t/data=!4m6!4m5!3e2!6m3!1i0!2i0!3i292?entry=ttu',
+      'https://www.google.sk/maps/@48.7418457,19.1206357,17z',
+      'https://www.google.sk/maps/@48.7418457,19.1206357,17z?hl=sk',
+
+      'https://earth.google.com/web/search/Friedensengel,+Munich/@48.13744933,11.57593029,543.01680528a,198.36981833d,35y,56.31537172h,63.30010268t,0r/data=CigiJgokCbWQ8mGJyElAEaUBKqw4vUlAGbBzvV65kbq_IUBAl4LnwMe_',
+      'https://earth.google.com/web/@52.51681316,13.37854689,36.02282027a,264.60462944d,35y,-85.81195214h,67.15515115t,0r/data=ClQaUhJMCiUweDQ3YTg1MWM2NTVmMjA5ODk6MHgyNmJiZmI0ZTg0Njc0YzYzGbNgPUkVQkpAIQMjL2tiwSpAKhFCcmFuZGVuYnVyZ2VyIFRvchgCIAE',
+
+      'https://www.bing.com/maps?osid=e0523a41-9eb1-41f0-b11c-82e4df1dd657&cp=52.216391~20.965831&lvl=14.48&pi=0&imgid=326a2db2-988d-4b37-b7ee-c6171118f522&v=2&sV=2&form=S00027',
+      'https://www.bing.com/maps?osid=e0523a41-9eb1-41f0-b11c-82e4df1dd657&cp=52.217702%7E20.975582&lvl=17.1&imgid=326a2db2-988d-4b37-b7ee-c6171118f522&v=2&sV=2&form=S00027',
+
+      'https://yandex.com/maps/org/untersbergstra_e/186631167268/?ll=11.591015%2C48.108343&z=15',
+      'https://yandex.com/maps/99/munich/?ll=11.513703%2C48.114106&mode=routes&rtext=48.088307%2C11.645045~48.116376%2C11.502502&rtt=auto&ruri=~&z=13',
+
+      'https://map.baidu.com/dir/%E6%B9%96%E5%8C%97%E7%9C%81%E8%8D%86%E5%B7%9E%E5%B8%82%E7%9B%91%E5%88%A9%E5%B8%82/%E6%B9%96%E5%8C%97%E7%9C%81%E6%AD%A6%E6%B1%89%E5%B8%82%E6%B1%9F%E5%A4%8F%E5%8C%BA/@12583662.48,3523702.875,10z?querytype=bt&c=1713&sn=1$$$$12549545.96,3485268.75$$%E6%B9%96%E5%8C%97%E7%9C%81%E8%8D%86%E5%B7%9E%E5%B8%82%E7%9B%91%E5%88%A9%E5%B8%82$$0$$$$&en=1$$$$12708649.959999993,3508820.7624418424$$%E6%B9%96%E5%8C%97%E7%9C%81%E6%AD%A6%E6%B1%89%E5%B8%82%E6%B1%9F%E5%A4%8F%E5%8C%BA$$0$$$$&sc=1713&ec=1713&pn=0&rn=5&exptype=dep&exptime=2024-03-04%2017:24&version=5&da_src=shareurl',
+
+      'https://www.openstreetmap.org/search?whereami=1&query=48.13664%2C11.57526#map=19/48.13664/11.57526',
+      'https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=48.13697%2C11.57475%3B48.13758%2C11.57521#map=19/48.13635/11.57565',
+
+      'https://citymapper.com/london/superrouter?end=51.5112932884513,-0.117667260852045&eaddr=Somerset House, Strand, London, WC2R 1LA',
+      'https://citymapper.com/london/superrouter?end=51.5112932884513,-0.117667260852045&eaddr=Somerset%20House,%20Strand,%20London,%20WC2R%201LA',
+      'https://www.seeker.info/index.php/location/fr-DE/Hambourg,_Allemagne@53.5510846,9.99368179999999/theme/18514__Toilettes_publiques/detail/osm_node_264990234__Europa Passage?lang=fr',
+      'https://www.timeanddate.com/sun/@12.5781879602632,122.268390655518',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeTruncated(url);
+      });
+    });
+  });
+
   describe('should truncate long URLs', function () {
     it('should truncate URLs by preserving only the hostname', function () {
       const url =
@@ -468,6 +506,7 @@ describe('#sanitizeUrl', function () {
       'https://www.example.com/foo-106783?cep=C6SNdZ-JdYgfxMe-Ew0e8PbCNBIeJNwcVsgDmQGentDzy4rUEIYTxZt6797urbzd-X5xoFI8QMYyZkHfIevGn3BMV0PZ2myYl6UB65r7iChjOeqLXibqpfGtFNt55Pe68Bi1qnbbHfJ10nNDib54gnog3PEKDMC6G95iU8o7wKTCIHPsL52Vs1pQrdh8eB_ETPDzRCPmJ-QIOKfdBb3RmXkC7EEAO3nG7dhHR3sD60tlU9c-O9mKA73w3p0Er9HEFnibX8QVkoostBEZob5WtfiIgTdiYFWtc0jnBtJQdfRiYbForVoYlkm6eUReWgKRGxmCr8tU6p9GANbZf8QMRyFp0LnK9FaPi3Ti2J99ZMKKxCsCrczjz-0lE-bOtnpAcQ1Kq3CFne4T4_PfF68UhJ3QMQlZK5592M_fOgeCem6g0bDRfWRhva4HV-1PY2ccp4i_olg3mnJhQn1NWLLgOVMDKgWM4zneB_SlBWpZ0FjIIqU6mpAtmx33x6vF9A5qQWKginNWJETV3BZvspcVU47wBxdIMmHPwxIFuVcu1uoS1u_HmEVbsmrIPzCqgmej_Rz0zIMdpB_CUCI6gVHLCUmLhtb0rYCPfRT71L25idEyOOzuhLJd-caBlQWR3D_d54suQZ0YtPk_VtMIUtejmNOVkNJ_XemssaWb0flUKDuypAqogHwhT3GbGC3V_O-AlX1aO92nfo1dP46CMGT9lg8GizI-NRic1_NLy2hMkwmrhtkZjdvqgc-gRLAryB8ayHKEFy-ggfqaK0Dz0lrGgBcEPslee84q6ZQ6DVzkViq-razGQce5BTpD1ee8IxRnKgtxvQLK_i4qfcXLP9xP0vKmg7NjzKc0bre4eG8JiY8EoareMOwEdCb72gWyPOwM9MwR4Q4E8_N93qWRpBfHN_0bKrR9t-OunSr1kCW65qBylJa_bvpJ5UztYXQ8ijbE0gLU4TANyekzY-eYVcXues3dDr3Uso9RNA2BxKwiS7qE8sdI1h9yIHt8JAv3jWAwqvuD6Htv4Fnw2ZKgdYB--it9jYJEAId1SVyMyWjtySpTzYvsf1XDXxl2uOEOHHp67p39xE4XA4fuPBuAhTef9YZgP4qVIPhoTXywyjMQKP0uF09MoOuKCaX4yWNRzTe-3jEA6rSV9KrffnCzbS0UHSLy6zkNnUTulO_rOZ1HLDtslljN7iBNpBeBFg87qAMu0_-h2tFfblBnzcIYAFxfVRPS5Si-RWsaU62yS9R354q9ugncvBBzSHceVLcAMa6-4yvK8qAplqfJXmH8tNz5q6fVMhkxbl-JlNLFOUW0a-mhLglQCl_vr3twJ5HCOnvdiOq2GU3KqUBbIG63ZtNuw-ai8BHIYh1X49gW-s3fgQAbvihJWt3Nuc4wzfQg0KLQE4NQ9c-yYRtEh2PnocC0CHzvgapVQeiuW2e8d7-sJvFELPuCitEQbRBSTvVMEIjiCqhwtGNn5uQw5bvVN2i0ysGw3ebmb-Vg91y965jo0FEmAArJ4OwswS-_dXBYX6lvUZ688yaKPPEzcpgiEyXa-k4mFz60IVjFQROoRmYOZbbg9_PBo5mj2SjMB2-EOvp4_YV8h2JDNk7X7a-AcEUE60VaJkWE3SBcS45VsiAT8-y2Lkyfuq-lbCpBLw1gT1Mm6cdbqCaZ3hX7C_doCBjh3lnQNfCkDtEqUWa1xHULbaDDxxRzZb9R13Ua3YVOJF-DY0KFWxrMgBA_NjRosJEz0Lcji7LN9wmQktyoO5nZrAdQgtogMaiByqMNhjE8agj7FO8S2qItbCDiRg0pbKnes6bTBCw7_y1putoG31uTKcd6Z72Tn7kFyYib8eH_1N8Y',
       'https://www.ebay.com/itm/163578162904?_trkparms=aid=1110006&algo=HOMESPLICE.SIM&ao=1&asc=20200818143132&meid=c742ec041c2a472fb37e5619938525f4&pid=101198&rk=4&rkt=12&b=1&sd=183714353142&itm=163578162904&pmt=1&noa=0&pg=2047675&algv=SimplAMLCvipPairwiseWebWithBBEV2bDemotion&brand=GPR&_trksid=p2047675.c101198.m1985&amdata=cksum:163578162904c742ec041c2a472fb37e5619938525f4|enc:AQAFAAACEO1gRbE4sAI38m6EZRpzbYHt9+yQk5vBehmhugFgnd17OkYn0W555gLuJgoGFdYmC+BHEJ3b1mSo549wwtufJLAdy0dMBi9iAdXKeADjcgjm71kyFYVvAgt/0a+xOvYAqJMv2z3Ygpiux3Ba2KyLymWzBtI8d0dJFza/2IQKhhiibQtAh8AGWxt3i5/GcPW6d8+P36eLlNPC14uobuNPxmA7pxRunrP4xwNkQ7qod9RWebQ4+iBVr8/OBmp8ulmR+toSAD4WEySHQf62yBtANWEAvc7s77XgdgzjIhcxBMz5nBrwEe3ZPwVMiit6Kcnwg5S9bxJchrGh74nQTH3HwEOYN1qghIRC8Me3cOsdF4LFEeZtxiPHvjizNX2RO9+jnwluy0wq7dZeZiM+doqTSxbsh78ah0ZctrGMrMYO3OhY5ptxXsxL0eL5flyRRsXyNzKO/0EtLGzuwZd87pu0/c/B6mI4/JAqfs2+sFpmVW2q+/GnrgaTs0iXK4YdwdSOXd5cn1HTvp2cL18aedatm29/QsP0ZSheuHQAKZCASY4rASb6H1XaYApfOLa0yzU4fwVWCEoTc+5mO55+UxUYwZ0ZX+NWRCrQEjCHkdY+qfIs2JDvCpXQC0PTr571yWFgcQTv3RwYBZlHIqC5aTEYKAVeNQm5HP0udq9Q/pq2uASBXqYldCNh2M0bI0MsvuvFfg==|ampid:PL_CLK|clp:2047675&epid=10029966056',
       'https://pulsar.ebay.de/plsr/mpe/0/SAND/9?pld=%5B%7B%22ef%22%3A%22SAND%22%2C%22ea%22%3A%223PADS%22%2C%22pge%22%3A2367355%2C%22plsUBT%22%3A1%2C%22app%22%3A%22Sandwich%22%2C%22callingEF%22%3A%22SAND%22%2C%22difTS%22%3A60000%2C%22eventOrder%22%3A0%2C%22scandal_imp%22%3A%22meid%3A01HF9D6M05QAY12A7PXJCQC3DA%2Cplid%3A100562%2Cscorid%3A01HF9D5N3RHX8Y5JHFCN6A89J2%2Cprvdr%3Ahybrid%2Cafs%3A1700049145742%2Cade%3A0%7Cmeid%3A01HF9D6M2EBTS39V0893V2KVS1%2Cplid%3A100938%2Cscorid%3A01HF9D5N3RSYG09WFT7RWTDNC0%2Cprvdr%3Ahybrid%2Cafs%3A1700049145804%2Cade%3A0%22%7D%2C%20%7B%22ef%22%3A%22SAND%22%2C%22ea%22%3A%223PADS%22%2C%22pge%22%3A2367355%2C%22plsUBT%22%3A1%2C%22app%22%3A%22Sandwich%22%2C%22callingEF%22%3A%22SAND%22%2C%22difTS%22%3A29996%2C%22eventOrder%22%3A1%2C%22scandal_imp%22%3A%22meid%3A01HF9D7H9X7EC48AM748JF6Q4E%2Cplid%3A100562%2Cscorid%3A01HF9D6M05WNWMZ7GGSXQX7RAD%2Cprvdr%3Ahybrid%2Cafs%3A1700049175742%2Cade%3A0%7Cmeid%3A01HF9D7HBFS4EGX20SGQ0RW8SS%2Cplid%3A100938%2Cscorid%3A01HF9D6M2EDGBZG3Y2PCZ1722Q%2Cprvdr%3Ahybrid%2Cafs%3A1700049175804%2Cade%3A0%22%7D%5D',
+      'https://www.skyscrapercity.com/showthread.php?t=1674676:@0.119399:0.238103:0.547455:0.238103:0.547455:0.222531:0.119399:0.222531:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000:0.000000',
     ].forEach((url) => {
       it(`should truncated: ${url}`, function () {
         shouldBeTruncated(url);
@@ -696,6 +735,7 @@ describe('#sanitizeUrl', function () {
         'https://www.dailymail.co.uk/news/article-12735811/Why-Charles-great-pain-Harry-King-host-small-party-close-friends-not-family-celebrate-75th-birthday-marks-occasion-striking-portrait.html',
         'https://www.motorsport-total.com/auto/news/royal-enfield-himalayan-452-2024-feiert-premiere-auf-der-eicma-23111005',
         'https://sportowefakty.wp.pl/koszykowka/fototemat/1090963/kosmiczne-pieniadze-zobacz-ile-zarabiaja-gwiazdy-nba-sochan-daleko',
+        'https://www.sueddeutsche.de/wissen/technik-radargeraete-koennen-router-funkband-lahmlegen-dpa.urn-newsml-dpa-com-20090101-170322-99-767363',
       ].forEach((url) => {
         it(`should allow URL: ${url}`, function () {
           shouldBeSafe(url);
@@ -716,6 +756,7 @@ describe('#sanitizeUrl', function () {
         'https://www.bfmtv.com/pratique/shopping/black-friday-les-dates-officielles-de-l-edition-2023_AB-202310280026.html',
         'https://www.lefigaro.fr/politique/emmanuel-macron-ne-se-rendra-pas-a-la-marche-contre-l-antisemitisme-dimanche-a-paris-20231110',
         'https://www.lemonde.fr/politique/article/2023/11/10/emmanuel-macron-ne-se-rendra-pas-a-la-marche-contre-l-antisemitisme-mais-salue-des-rassemblements-qui-sont-un-motif-d-esperance_6199414_823448.html',
+        'https://www.washingtonpost.com/world/asia_pacific/climate-change-crowding-imperil-iconic-route-to-top-of-mount-everest/2018/05/16/4d975094-547a-11e8-a6d4-ca1d035642ce_story.html',
       ].forEach((url) => {
         it(`should allow URL: ${url}`, function () {
           shouldBeSafe(url);
@@ -823,6 +864,7 @@ describe('#sanitizeUrl', function () {
         'https://www.amazon.co.uk/Unidapt-Adapter-European-Adaptor-Visitor/dp/B08MWRNYXL',
         'https://www.amazon.co.uk/Universal-Adapter-Worldwide-International-European-Black/dp/B0BVZ8VHHH',
         'https://www.amazon.co.uk/Converter-Universal-Standard-Grounded-Portable/dp/B09PBH4JT1',
+        'https://www.homedepot.com/p/Makita-Dust-Extracting-Nozzle-for-use-with-Makita-1-1-4-HP-Compact-Router-and-Plunge-Base-model-RT0701C-194733-8/205182383',
       ].forEach((url) => {
         it(`should allow URL (in non-strict mode): ${url}`, function () {
           shouldBeSafeInNonStrictMode(url);
