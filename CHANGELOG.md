@@ -1,3 +1,15 @@
+# v5.0.5 (Mon Mar 18 2024)
+
+#### 🐛 Bug Fix
+
+- Improve static URL filtering [#71](https://github.com/whotracksme/webextension-packages/pull/71) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.4 (Wed Mar 13 2024)
 
 #### 🐛 Bug Fix
