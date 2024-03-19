@@ -42,8 +42,8 @@
     "@cliqz/url-parser": "^1.1.5",
     "date-fns": "^2.29.3",
     "idb": "^7.1.1",
-    "linkedom": "^0.14.20",
-    "pako": "^2.0.4",
+    "linkedom": "^0.16.10",
+    "pako": "^2.1.0",
     "tldts-experimental": "^6.0.11"
   }
 }
