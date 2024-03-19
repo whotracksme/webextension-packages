@@ -13,28 +13,6 @@
 // It must not depend on no external functions (only the DOM API is safe to use).
 // Also, it should work on all supported browsers.
 export async function analyzePageStructure(doc) {
-  function countNodes(doc) {
-    let count = 0;
-    if (doc.body) {
-      const stack = [doc.body];
-
-      while (stack.length > 0) {
-        const curr = stack.pop();
-        count++;
-
-        let child = curr.firstElementChild;
-        while (child) {
-          stack.push(child);
-          if (child.shadowRoot) {
-            stack.push(child.shadowRoot);
-          }
-          child = child.nextElementSibling;
-        }
-      }
-    }
-    return count;
-  }
-
   function getTitle(doc) {
     if (doc.title) {
       return doc.title;
@@ -115,14 +93,6 @@ export async function analyzePageStructure(doc) {
     return og;
   }
 
-  function detectCsrfToken(doc) {
-    const elem = doc.querySelector('html > head > meta[name="csrf-token"]');
-    if (elem && elem.getAttribute('content')) {
-      return true;
-    }
-    return false;
-  }
-
   doc = doc || document;
 
   try {
@@ -144,15 +114,6 @@ export async function analyzePageStructure(doc) {
     const language = parseHtmlLangAttribute(doc);
     const og = parseOpenGraphMetaTags(doc);
 
-    const numNodes = countNodes(doc);
-    const numLinks = doc.querySelectorAll('a').length;
-    const numInputs = doc.querySelectorAll('input').length;
-    const numHiddenInputs = doc.querySelectorAll('input[type="hidden"]').length;
-    const numPasswordFields = doc.querySelectorAll(
-      'input[type="password"]',
-    ).length;
-    const hasCsrfToken = detectCsrfToken(doc);
-
     return {
       title,
       url,
@@ -161,14 +122,6 @@ export async function analyzePageStructure(doc) {
         language,
         contentType,
         og,
-      },
-      content: {
-        numNodes,
-        numLinks,
-        numInputs,
-        numHiddenInputs,
-        numPasswordFields,
-        hasCsrfToken,
       },
       noindex: false,
       requestedIndex,
