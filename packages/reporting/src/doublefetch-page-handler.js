@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { isNil, lazyInitAsync } from './utils';
+import { lazyInitAsync } from './utils';
 import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
@@ -341,13 +341,13 @@ export default class DoublefetchPageHandler {
       return discard('noindex must be false (after)');
     }
 
-    if (isNil(page.title)) {
+    if (!page.title) {
       return discard('page title missing');
     }
-    if (isNil(before.title)) {
+    if (!before.title) {
       return discard('title missing (before)');
     }
-    if (isNil(after.title)) {
+    if (!after.title) {
       return discard('title missing (after)');
     }
 
