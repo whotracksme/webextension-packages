@@ -1,3 +1,18 @@
+# v5.0.6 (Fri Mar 22 2024)
+
+#### 🐛 Bug Fix
+
+- Fixed: empty strings should also be treated as missing titles [#72](https://github.com/whotracksme/webextension-packages/pull/72) ([@philipp-classen](https://github.com/philipp-classen))
+- Remove unused fields in the page structure analyzer [#73](https://github.com/whotracksme/webextension-packages/pull/73) ([@philipp-classen](https://github.com/philipp-classen))
+- Enable linkedom caching. [#73](https://github.com/whotracksme/webextension-packages/pull/73) ([@philipp-classen](https://github.com/philipp-classen))
+- Upgrade linkedom and pako [#73](https://github.com/whotracksme/webextension-packages/pull/73) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.5 (Mon Mar 18 2024)
 
 #### 🐛 Bug Fix
