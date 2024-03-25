@@ -1,6 +1,6 @@
 {
   "name": "@whotracksme/webextension-packages",
-  "version": "5.0.6",
+  "version": "5.0.7",
   "type": "module",
   "description": "",
   "scripts": {
