@@ -1,3 +1,15 @@
+# v5.0.7 (Mon Mar 25 2024)
+
+#### 🐛 Bug Fix
+
+- Update to latest linkedom (fixes empty document.title) [#74](https://github.com/whotracksme/webextension-packages/pull/74) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.6 (Fri Mar 22 2024)
 
 #### 🐛 Bug Fix
