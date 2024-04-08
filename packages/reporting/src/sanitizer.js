@@ -314,8 +314,18 @@ const RISKY_URL_PATH_PARTS = new Set([
  *     perfect, but quorum should be used as an additional step; quorum is effective
  *     in dropping unique identifiers like unique tokens that may slip through
  *     static rules.
+ * - tryPreservePath [default=false]:
+ *     If the URL fails and gets truncated, it will normally keep only keep the
+ *     the scheme and the domain. With this option, it does an extra pass to
+ *     test if adding the URL path would be safe.
+ *     For instance, given "https://example.test/foo/bar?arg=1&...#hash..."),
+ *     it will check again with "https://example.test/foo/bar". If the latter URL
+ *     passes all (strict) checks, it will be used for the truncated URL; instead of
+ *     "https://example.test (PROTECTED)", the result will be
+ *     "https://example.test/foo/bar (PROTECTED)".
  */
-export function sanitizeUrl(url, { strict = false } = {}) {
+export function sanitizeUrl(url, options = {}) {
+  const { strict = false, tryPreservePath = false } = options;
   let accept = () => ({ result: 'safe', safeUrl: url });
   const drop = (reason) => ({ result: 'dropped', safeUrl: null, reason });
 
@@ -353,6 +363,26 @@ export function sanitizeUrl(url, { strict = false } = {}) {
     // so it is less likely that sites include secrets or personal
     // identifiers in the hostname.
     const truncate = (reason) => {
+      if (tryPreservePath && (parsedUrl.search || parsedUrl.hash)) {
+        // if the URL with only the URL path left is safe, than we can mask the
+        // URL less aggressively. Instead of leaving only the domain, we can
+        // keep also the URL path.
+        parsedUrl.search = '';
+        parsedUrl.hash = '';
+        const urlWithoutPath = parsedUrl.toString();
+        const { result, safeUrl } = sanitizeUrl(urlWithoutPath, {
+          ...options,
+          tryPreservePath: false,
+        });
+        if (result === 'safe') {
+          return {
+            result: 'truncated',
+            safeUrl: `${safeUrl} (PROTECTED)`,
+            reason,
+          };
+        }
+      }
+
       const safeUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}/ (PROTECTED)`;
       logger.debug('sanitizeUrl truncated URL:', url, '->', safeUrl);
       return {

@@ -486,6 +486,7 @@ describe('#sanitizeUrl', function () {
       'https://citymapper.com/london/superrouter?end=51.5112932884513,-0.117667260852045&eaddr=Somerset%20House,%20Strand,%20London,%20WC2R%201LA',
       'https://www.seeker.info/index.php/location/fr-DE/Hambourg,_Allemagne@53.5510846,9.99368179999999/theme/18514__Toilettes_publiques/detail/osm_node_264990234__Europa Passage?lang=fr',
       'https://www.timeanddate.com/sun/@12.5781879602632,122.268390655518',
+      'http://busqueda.lavoztx.com/en/garden-grove-ca/local/.a_5.c_bingo-halls/?p=2&coords=33.773905300000003,-117.941447699999998',
     ].forEach((url) => {
       it(`should drop URL: ${url}`, function () {
         shouldBeTruncated(url);
@@ -835,6 +836,90 @@ describe('#sanitizeUrl', function () {
       it(`- originalUrl: ${originalUrl} with canonicalUrl: ${canonicalUrl}`, function () {
         shouldBeTruncated(originalUrl);
         shouldBeSafeInNonStrictMode(canonicalUrl);
+      });
+    });
+  });
+
+  describe('should support tracking-free landing pages of ads', function () {
+    [
+      'https://www.krankenversicherung-vergleiche.info/versicherungen/private-krankenversicherung/vergleich/k/',
+      'https://www.hansemerkur.de/angebote/private-krankenversicherung-selbststaendige',
+      'https://www.ottonova.de/ml/pkv-sparen-finanzen-top-leistungen',
+      'https://www.check24.de/private-krankenversicherung/',
+    ].forEach((url) => {
+      it(`should allow URL: ${url}`, function () {
+        shouldBeSafe(url);
+      });
+    });
+  });
+
+  describe('when using the "tryPreservePath" option on a path that is safe', function () {
+    [
+      {
+        url: 'https://www.bauhaus.info/bodenfliesen/c/10000500?q=%3AAnwendungsbereich00000035%3AInnen',
+        whenEnabled:
+          'https://www.bauhaus.info/bodenfliesen/c/10000500 (PROTECTED)',
+        whenDisabled: 'https://www.bauhaus.info/ (PROTECTED)',
+      },
+      {
+        url: 'https://www.bauhaus.info/bodenfliesen/c/10000500?q=%3AAnwendungsbereich00000035%3AInnen#some-hash-that-should-be-removed',
+        whenEnabled:
+          'https://www.bauhaus.info/bodenfliesen/c/10000500 (PROTECTED)',
+        whenDisabled: 'https://www.bauhaus.info/ (PROTECTED)',
+      },
+    ].forEach(({ url, whenEnabled, whenDisabled }) => {
+      describe(`for ${url}`, function () {
+        [true, false, undefined].forEach((strictFlag) => {
+          describe(`and strict=<${strictFlag}>`, function () {
+            it(`truncates to path ("${whenEnabled}") when "tryPreservePath" is enabled explicitly`, function () {
+              const option = { tryPreservePath: true };
+              if (strictFlag !== undefined) {
+                option.strict = strictFlag;
+              }
+              expect(sanitizeUrl(url, option).safeUrl).to.eql(whenEnabled);
+            });
+
+            it(`truncates to domain ("${whenDisabled}") when "tryPreservePath" is disabled explicitly`, function () {
+              const option = { tryPreservePath: false };
+              if (strictFlag !== undefined) {
+                option.strict = strictFlag;
+              }
+              expect(sanitizeUrl(url, option).safeUrl).to.eql(whenDisabled);
+            });
+
+            it(`truncates to domain ("${whenDisabled}") when "tryPreservePath" is disabled implicitly (by default)`, function () {
+              const option = {};
+              if (strictFlag !== undefined) {
+                option.strict = strictFlag;
+              }
+              expect(sanitizeUrl(url, option).safeUrl).to.eql(whenDisabled);
+            });
+          });
+        });
+      });
+    });
+  });
+
+  describe('when using the "tryPreservePath" option on a path that is NOT safe', function () {
+    [
+      {
+        url: 'https://example.test/this.should.trigger.a.violation@email.test/1234567890-1234567890-1234567890',
+        truncated: 'https://example.test/ (PROTECTED)',
+      },
+    ].forEach(({ url, truncated }) => {
+      describe(`for ${url}`, function () {
+        [true, false, undefined].forEach((strictFlag) => {
+          it(`and strict=<${strictFlag}>`, function () {
+            const option = { tryPreservePath: true };
+            if (strictFlag !== undefined) {
+              option.strict = strictFlag;
+            }
+            const { result, safeUrl, reason } = sanitizeUrl(url, option);
+            expect(result).to.eql('truncated');
+            expect(safeUrl).to.eql(truncated);
+            expect(reason).to.be.a('string').that.is.not.empty;
+          });
+        });
       });
     });
   });

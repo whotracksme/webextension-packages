@@ -71,6 +71,212 @@ describe('Test builtin primitives', function () {
     });
   });
 
+  describe('#removeParams', function () {
+    let removeParams;
+
+    beforeEach(function () {
+      removeParams = lookupBuiltinTransform('removeParams');
+    });
+
+    describe('core functionality', function () {
+      it('should allow to remove one query parameter', function () {
+        expect(
+          removeParams('https://example.test/path?foo=remove&bar=keep', [
+            'foo',
+          ]),
+        ).to.eql('https://example.test/path?bar=keep');
+      });
+
+      it('should allow to remove multiple parameter', function () {
+        expect(
+          removeParams('https://example.test/path?foo=remove&bar=remove#keep', [
+            'foo',
+            'bar',
+          ]),
+        ).to.eql('https://example.test/path#keep');
+      });
+
+      it('should accept empty list', function () {
+        expect(
+          removeParams('https://example.test/path?foo=foo&bar=bar#hash', []),
+        ).to.eql('https://example.test/path?foo=foo&bar=bar#hash');
+      });
+
+      it('should remove all occurrences of a query parameter', function () {
+        expect(
+          removeParams('https://example.test/path?foo=first&foo=second', [
+            'foo',
+          ]),
+        ).to.eql('https://example.test/path');
+      });
+
+      describe('should preserve information in the query string', function () {
+        it('should keep plus-encoded white spaces untouched', function () {
+          expect(
+            removeParams(
+              'https://example.test/path?foo=one+two+three&bar=one+two+three',
+              ['foo'],
+            ),
+          ).to.eql('https://example.test/path?bar=one+two+three');
+        });
+
+        it('should keep percent-encoded white spaces untouched', function () {
+          expect(
+            removeParams(
+              'https://example.test/path?foo=one%20two%20three&bar=one%20two%20three',
+              ['foo'],
+            ),
+          ).to.eql('https://example.test/path?bar=one%20two%20three');
+        });
+
+        it('should preserve information in the query string', function () {
+          expect(
+            removeParams(
+              'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
+              [],
+            ),
+          ).to.eql(
+            'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
+          );
+        });
+
+        it('should handle (illegal) white spaces gracefully by converting to "%20"', function () {
+          expect(
+            removeParams(
+              'https://example.test/path?foo=one%20two%+three four++5&bar,baz',
+              [],
+            ),
+          ).to.eql(
+            'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
+          );
+        });
+      });
+
+      // To get some confidence, the hand-written code should behave identical
+      // in simple cases, when there are only simple strings ([a-z0-9]*).
+      // Using simple string, avoid all problematic encoding issues.
+      it('should behave like searchParams in simple cases', function () {
+        fc.assert(
+          fc.property(
+            fc.webUrl({ withQueryParameters: true, withFragments: true }),
+            fc.array(fc.tuple(fc.hexaString(), fc.hexaString())),
+            fc.array(fc.hexaString()),
+            (url, paramsToAdd, paramsToRemove) => {
+              const tmp1 = new URL(url);
+              tmp1.search = new URLSearchParams(paramsToAdd);
+              const urlPlusParams = tmp1.toString();
+
+              const tmp2 = new URL(urlPlusParams);
+              for (const param of paramsToRemove) {
+                tmp2.searchParams.delete(param);
+              }
+
+              const expected = tmp2.toString();
+              const actual = removeParams(urlPlusParams, paramsToRemove);
+              expect(actual).to.eql(expected);
+            },
+          ),
+        );
+      });
+
+      describe('should return null for invalid URIs', function () {
+        ['This is a string but not an URL', '%', '%%', '-%-'].forEach(
+          (invalidURI) => {
+            it(`invalid URI: ${invalidURI}`, function () {
+              expect(removeParams(invalidURI, ['foo'])).to.be.null;
+            });
+          },
+        );
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string] (more parameters are ignored)', function () {
+        expect(() => removeParams()).to.throw();
+        expect(() => removeParams('too few arguments')).to.throw();
+        expect(() => removeParams({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on well-formed but arbitrary text', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+            const result = removeParams(untrustedText, ['someTrustedParam']);
+            if (result !== null) {
+              expect(result).to.be.a('string');
+              expect(URL.canParse(result)).to.be.true;
+            }
+          }),
+        );
+      });
+
+      it('should not fail on well-formed but arbitrary URLs', function () {
+        fc.assert(
+          fc.property(
+            fc.webUrl({ withQueryParameters: true, withFragments: true }),
+            (untrustedUrl) => {
+              const result = removeParams(untrustedUrl, ['someTrustedParam']);
+              if (result !== null) {
+                expect(result).to.be.a('string');
+                expect(URL.canParse(result)).to.be.true;
+              }
+            },
+          ),
+        );
+      });
+    });
+  });
+
+  describe('#requireURL', function () {
+    let requireURL;
+
+    beforeEach(function () {
+      requireURL = lookupBuiltinTransform('requireURL');
+    });
+
+    describe('core functionality', function () {
+      it('should accept a valid URL', function () {
+        const url = 'https://example.test/some?valid=url#foo';
+        expect(requireURL(url)).to.eql(url);
+      });
+
+      it('should replace an invalid URL by null', function () {
+        expect(requireURL('This is text. It is not an url.')).to.be.null;
+        expect(requireURL('/also/not/an/url')).to.be.null;
+        expect(requireURL('')).to.be.null;
+        expect(requireURL('%')).to.be.null;
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string] (more parameters are ignored)', function () {
+        expect(() => requireURL()).to.throw();
+        expect(() => requireURL({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on well-formed but arbitrary text', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+            const result = requireURL(untrustedText);
+            if (result !== null) {
+              expect(result).to.eql(untrustedText);
+            }
+          }),
+        );
+      });
+
+      it('should not fail on well-formed but arbitrary URLs', function () {
+        fc.assert(
+          fc.property(
+            fc.webUrl({ withQueryParameters: true, withFragments: true }),
+            (untrustedUrl) => {
+              expect(requireURL(untrustedUrl)).to.eql(untrustedUrl);
+            },
+          ),
+        );
+      });
+    });
+  });
+
   describe('#maskU', function () {
     let maskU;
 
@@ -84,7 +290,7 @@ describe('Test builtin primitives', function () {
         expect(maskU('https://example.test/')).to.eql('https://example.test/');
       });
 
-      it('should return null on non URLs', function () {
+      it('should return null for non URLs', function () {
         expect(maskU('some text')).to.be.null;
         expect(maskU('/some/text')).to.be.null;
       });
@@ -141,13 +347,23 @@ describe('Test builtin primitives', function () {
       it('should return null if there is a match but the index is out of bounds', function () {
         expect(split('abc_def_ghi', '_', 100)).to.be.null;
       });
+
+      it('should allow to remove URL hashes', function () {
+        expect(
+          split('https://example.test/foo/bar?x=1&y=2#some-hash', '#', 0),
+        ).to.eql('https://example.test/foo/bar?x=1&y=2');
+        expect(split('https://example.test/#', '#', 0)).to.eql(
+          'https://example.test/',
+        );
+      });
     });
 
     describe('robustness on untrusted data', function () {
       it('should fail if input is not [string, string, integer] (more parameters are ignored)', function () {
         expect(() => split()).to.throw();
         expect(() => split('too few arguments')).to.throw();
-        expect(() => split({ wrong: 'types' }, 42)).to.throw();
+        expect(() => split('too few arguments', 'still too few')).to.throw();
+        expect(() => split({ wrong: 'types' }, 42, 'wrong')).to.throw();
       });
 
       it('should not fail on well-formed but arbitrary text', function () {

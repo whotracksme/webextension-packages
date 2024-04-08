@@ -17,6 +17,7 @@ import { fastHash } from './utils';
 import random from './random';
 import { anonymousHttpGet } from './http';
 import { lookupBuiltinTransform } from './patterns';
+import { BadPatternError } from './errors';
 
 function doublefetchQueryHash(query, category) {
   // defines a cooldown to avoid performing unnecessary
@@ -77,7 +78,7 @@ function runSelector(item, selector, attr, baseURI) {
 
 function runTransforms(value, transformSteps = []) {
   if (!Array.isArray(transformSteps)) {
-    throw new Error('Transform definitions must be array.');
+    throw new BadPatternError('Transform definitions must be array.');
   }
   if (value === undefined || value === null) {
     return null;
@@ -220,9 +221,7 @@ export default class SearchExtractor {
           }
         }
       } else {
-        throw new Error(
-          'Internal error: bad selector (expected "first" or "all")',
-        );
+        throw new BadPatternError('Bad selector (expected "first" or "all")');
       }
     }
 
@@ -266,7 +265,7 @@ export default class SearchExtractor {
       } of schema.fields) {
         if (source) {
           if (!input[source]) {
-            throw new Error(
+            throw new BadPatternError(
               `Output rule for action=${action} references invalid input source=${source}`,
             );
           }
@@ -298,7 +297,7 @@ export default class SearchExtractor {
             }
             payload[key] = { ...cleanedResults };
           } else {
-            throw new Error(
+            throw new BadPatternError(
               `Output rule for action=${action} does not match input key=${key}`,
             );
           }

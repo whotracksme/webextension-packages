@@ -9,7 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import * as linkedom from 'linkedom/cached';
+import * as linkedomCached from 'linkedom/cached';
+import * as linkedomUncached from 'linkedom';
 
 /**
  * Different implementations of the DOM API.
@@ -20,8 +21,16 @@ import * as linkedom from 'linkedom/cached';
  */
 export const mockDocumentWith = {
   // https://github.com/WebReflection/linkedom
-  linkedom(html) {
-    const { window, document } = linkedom.parseHTML(html);
+  linkedomCached(html) {
+    const { window, document } = linkedomCached.parseHTML(html);
+    const noop = () => {};
+    window.close = window.close || noop;
+    return { window, document };
+  },
+
+  // Like linkedom, but with caching disabled (not recommended for our use cases)
+  linkedomUncached(html) {
+    const { window, document } = linkedomUncached.parseHTML(html);
     const noop = () => {};
     window.close = window.close || noop;
     return { window, document };

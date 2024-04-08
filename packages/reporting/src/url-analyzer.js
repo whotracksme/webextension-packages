@@ -20,8 +20,8 @@ const URL_PATTERNS = [
   {
     category: 'search-goi',
     regexp:
-      /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*tbm=isch)|(tbm=isch&([^&]+&)*q=[^&]+))/,
-    prefix: 'search?tbm=isch&gbv=1&q=',
+      /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*udm=2)|(udm=2&([^&]+&)*q=[^&]+))/,
+    prefix: 'search?udm=2&q=',
   },
   {
     category: 'search-gov',
@@ -67,43 +67,49 @@ const URL_PATTERNS = [
   {
     category: 'search-dd',
     regexp:
-      /^https:[/][/]duckduckgo.com[/](?:html$|.*[?&]q=[^&]+.*&ia=web|[?]q=[^&]+$)/,
+      /^https:[/][/]duckduckgo[.]com[/](?:html$|.*[?&]q=[^&]+.*&ia=web|[?]q=[^&]+$)/,
     prefix: '?q=',
   },
   {
     category: 'search-gh',
-    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]search[?]q=[^&]+/,
+    regexp: /^https:[/][/](glowstery|ghosterysearch)[.]com[/]search[?]q=[^&]+/,
     prefix: 'search?q=',
   },
   {
     category: 'search-ghi',
-    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]images[?]q=[^&]+/,
+    regexp: /^https:[/][/](glowstery|ghosterysearch)[.]com[/]images[?]q=[^&]+/,
     prefix: 'search?q=',
   },
   {
     category: 'search-ghv',
-    regexp: /^https:[/][/](glowstery|ghosterysearch).com[/]videos[?]q=[^&]+/,
+    regexp: /^https:[/][/](glowstery|ghosterysearch)[.]com[/]videos[?]q=[^&]+/,
     prefix: 'search?q=',
   },
   {
     category: 'search-br',
-    regexp: /^https:[/][/]search.brave.com[/]search[?]q=[^&]+/,
+    regexp: /^https:[/][/]search[.]brave[.]com[/]search[?]q=[^&]+/,
     prefix: 'search?q=',
   },
   {
     category: 'search-bri',
-    regexp: /^https:[/][/]search.brave.com[/]images[?]q=[^&]+/,
+    regexp: /^https:[/][/]search[.]brave[.]com[/]images[?]q=[^&]+/,
     prefix: 'images?q=',
   },
   {
     category: 'search-brn',
-    regexp: /^https:[/][/]search.brave.com[/]news[?]q=[^&]+/,
+    regexp: /^https:[/][/]search[.]brave[.]com[/]news[?]q=[^&]+/,
     prefix: 'news?q=',
   },
   {
     category: 'search-brv',
-    regexp: /^https:[/][/]search.brave.com[/]videos[?]q=[^&]+/,
+    regexp: /^https:[/][/]search[.]brave[.]com[/]videos[?]q=[^&]+/,
     prefix: 'videos?q=',
+  },
+  {
+    category: 'search-ec',
+    regexp:
+      /^https:[/][/]www[.]ecosia[.]org[/]search[?](?:method=index&)?q=[^&]+/,
+    prefix: 'search?q=',
   },
 ];
 
