@@ -1,3 +1,15 @@
+# v5.0.8 (Mon Apr 08 2024)
+
+#### ⚠️ Pushed to `main`
+
+- Request reporting ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.0.7 (Mon Mar 25 2024)
 
 #### 🐛 Bug Fix
