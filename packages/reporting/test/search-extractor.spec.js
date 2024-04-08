@@ -15,6 +15,7 @@ import {
   allSupportedParsers,
   mockDocumentWith,
 } from './helpers/dom-parsers.js';
+import { lookupBuiltinTransform } from '../src/patterns.js';
 
 const EMPTY_HTML_PAGE = `
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -343,6 +344,58 @@ describe('#SearchExtractor', function () {
             },
           ],
         });
+      });
+
+      it('should fail with a permanent error if a primitive is not supported', function () {
+        const nonExistingPrimitive = 'thisBuiltinDoesNotExist';
+        expect(() => lookupBuiltinTransform(nonExistingPrimitive)).to.throw();
+
+        expect(() => {
+          runScenario({
+            url: 'http://example.test/x?q=some-query',
+            query: 'some-query',
+            category: 'example-test',
+            ctry: 'de',
+            html: `
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+  <html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Test page</title>
+  </head>
+  <body>
+    <div>Some text</div>
+  </body>
+  </html>`,
+            patterns: {
+              'example-test': {
+                input: {
+                  'html > body > div': {
+                    first: {
+                      title: {
+                        attr: 'textContent',
+                        transform: [[nonExistingPrimitive]],
+                      },
+                    },
+                  },
+                },
+                output: {
+                  'test-action': {
+                    fields: [
+                      {
+                        key: 'extractedText',
+                        source: 'html > body > div',
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            mustNotContain: [{ action: '*' }],
+          });
+        })
+          .to.throw()
+          .with.property('isPermanentError');
       });
 
       // This are optional tests that can be enabled if the TEST_FIXTURES_URL

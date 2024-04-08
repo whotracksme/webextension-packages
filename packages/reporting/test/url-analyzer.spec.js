@@ -40,23 +40,21 @@ describe('#UrlAnalyzer', function () {
 
         for (const [expectedType, examples] of Object.entries({
           'search-goi': {
-            'https://www.google.com/search?q=cat&source=lnms&tbm=isch&sa=X&ved=2ahUKEwi7hP-jm4b8AhVXxgIHHQdcCAcQ_AUoAXoECAEQAw&biw=1916&bih=991':
+            'https://www.google.com/search?q=cat&sca_upv=1&hl=de&iflsig=ANes7DEAAAAAZhQcpulunO2PBVNfBmacf9LnDZWNgzgJ&uact=5&udm=2':
               {
                 query: 'cat',
-                doublefetchUrl:
-                  'https://www.google.com/search?tbm=isch&gbv=1&q=cat',
+                doublefetchUrl: 'https://www.google.com/search?udm=2&q=cat',
               },
-            'https://www.google.de/search?q=katze&source=lnms&tbm=isch&sa=X&ved=2ahUKEwiOqNirm4b8AhVf57sIHXF3CboQ_AUoAXoECAEQAw&biw=1916&bih=991':
+            'https://www.google.de/search?q=katze&hl=de&iflsig=ANes7DEAAAAAZhQcxZexib5tF0Ax5VRmScZNSAk8vwuf&uact=5&udm=2':
               {
                 query: 'katze',
-                doublefetchUrl:
-                  'https://www.google.de/search?tbm=isch&gbv=1&q=katze',
+                doublefetchUrl: 'https://www.google.de/search?udm=2&q=katze',
               },
-            'https://www.google.co.uk/search?q=British+Shorthair&source=lnms&tbm=isch&sa=X&ved=2ahUKEwiP1Yu5_Ib8AhUOhf0HHV39Bl8Q_AUoAXoECAEQAw&biw=1916&bih=950':
+            'https://www.google.co.uk/search?q=British+Shorthair&sca_upv=1&hl=de&iflsig=ANes7DEAAAAAZhQc4Y-TK94jMXG4FKSKMv6955MgSYqS&uact=5&udm=2':
               {
                 query: 'British Shorthair',
                 doublefetchUrl:
-                  'https://www.google.co.uk/search?tbm=isch&gbv=1&q=British+Shorthair',
+                  'https://www.google.co.uk/search?udm=2&q=British+Shorthair',
               },
           },
           'search-gov': {

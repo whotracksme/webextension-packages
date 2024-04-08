@@ -11,22 +11,37 @@
 
 import logger from './logger';
 import { sanitizeUrl } from './sanitizer';
+import { split0 } from './utils';
+import { UnsupportedTransformationError } from './errors';
 
 function expectString(arg) {
   if (typeof arg !== 'string') {
-    throw new Error(`Expected string argument but got: ${arg}`);
+    throw new Error(`Expected string argument, but got: ${arg}`);
   }
+}
+
+function expectArrayOfStrings(arg) {
+  if (!Array.isArray(arg)) {
+    throw new Error(`Expected array of strings, but got: ${arg}`);
+  }
+  arg.forEach((x, idx) => {
+    if (typeof x !== 'string') {
+      throw new Error(
+        `Expected array of string, but got: ${arg} (stopped at pos #${idx}: ${x})`,
+      );
+    }
+  });
 }
 
 function expectInteger(arg) {
   if (typeof arg !== 'number' || arg % 1 !== 0) {
-    throw new Error(`Expected integer argument but got: ${arg}`);
+    throw new Error(`Expected integer argument, but got: ${arg}`);
   }
 }
 
 function expectBoolean(arg) {
   if (arg !== true && arg !== false) {
-    throw new Error(`Expected boolean argument but got: ${arg}`);
+    throw new Error(`Expected boolean argument, but got: ${arg}`);
   }
 }
 
@@ -127,6 +142,53 @@ const TRANSFORMS = new Map(
     },
 
     /**
+     * Given a URL and a list of query parameters, it returns an equivalent
+     * URL, but with those query parameters removed.
+     *
+     * Notes:
+     * - If the parameter occurs multiple times, all of them will be removed.
+     * - If the URL is invalid, null is returned.
+     *
+     * Example ["removeParams", ["foo"]]:
+     * - "https://example.test/path?foo=remove&bar=keep" -> "https://example.test/path?bar=keep"
+     * - "This is a string but not an URL" -> null
+     * - "/example.test/path" -> null (relative URLs are not supported)
+     *
+     * Example ["removeParams", ["foo", "bar"]]:
+     * - "https://example.test/path?foo=1&bar=2" -> "https://example.test/path"
+     */
+    removeParams: (x, queryParams) => {
+      expectString(x);
+      expectArrayOfStrings(queryParams);
+      try {
+        const url = new URL(x);
+
+        // Why not url.searchParams? The parsing step in url.searchParams
+        // loses information (see https://stackoverflow.com/a/45516812/783510).
+        if (!url.search) {
+          return x;
+        }
+        const parts = url.search
+          .slice(1)
+          .split('&')
+          .filter((x) => !queryParams.includes(split0(x, '=')));
+        url.search = parts.length === 0 ? '' : `?${parts.join('&')}`;
+        return url.toString();
+      } catch (e) {
+        return null;
+      }
+    },
+
+    /**
+     * Given text, it will verify that it is a well-formed URL;
+     * otherwise, it will end the processing by "nulling" it out.
+     */
+    requireURL: (x) => {
+      expectString(x);
+      return URL.canParse(x) ? x : null;
+    },
+
+    /**
      * Given a URL, it runs a set of extra checks to filter out
      * parts that may be sensitive (i.e. keeping only the hostname),
      * or even drop it completely.
@@ -152,6 +214,18 @@ const TRANSFORMS = new Map(
       expectString(x);
       try {
         return sanitizeUrl(x, { strict: true }).safeUrl;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    /**
+     * Like "maskU", but tries to preserve the URL path when truncating.
+     */
+    relaxedMaskU: (x) => {
+      expectString(x);
+      try {
+        return sanitizeUrl(x, { strict: false, tryPreservePath: true }).safeUrl;
       } catch (e) {
         return null;
       }
@@ -233,7 +307,7 @@ export function lookupBuiltinTransform(name) {
   if (transform) {
     return transform;
   }
-  throw new Error(`Unknown transformation: "${name}"`);
+  throw new UnsupportedTransformationError(`Unknown transformation: "${name}"`);
 }
 
 /**

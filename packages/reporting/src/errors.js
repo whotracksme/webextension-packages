@@ -70,3 +70,15 @@ export class PermanentlyUnableToFetchUrlError extends PermanentError {}
  * For 429 (too many request) errors that should be retried.
  */
 export class RateLimitedByServerError extends TemporarilyUnableToFetchUrlError {}
+
+/**
+ * Thrown if patterns are invalid. This could either be because they are
+ * corrupted, or if the client is too outdated.
+ */
+export class BadPatternError extends PermanentError {}
+
+/**
+ * Thrown when an unknown transformation builtin is referrenced.
+ * In most situation, it means the client is outdated.
+ */
+export class UnsupportedTransformationError extends PermanentError {}
