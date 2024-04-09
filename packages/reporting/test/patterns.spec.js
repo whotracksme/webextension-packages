@@ -110,6 +110,31 @@ describe('Test builtin primitives', function () {
         ).to.eql('https://example.test/path');
       });
 
+      it('should work on simple URLs without query parameters', function () {
+        expect(removeParams('https://example.test/', [])).to.eql(
+          'https://example.test/',
+        );
+        expect(removeParams('https://example.test/', ['x'])).to.eql(
+          'https://example.test/',
+        );
+      });
+
+      it('should work on key-only query parameters', function () {
+        expect(removeParams('https://example.test/foo?bar', [])).to.eql(
+          'https://example.test/foo?bar',
+        );
+        expect(removeParams('https://example.test/foo?bar', ['x'])).to.eql(
+          'https://example.test/foo?bar',
+        );
+
+        expect(removeParams('https://example.test/foo?bar=', [])).to.eql(
+          'https://example.test/foo?bar=',
+        );
+        expect(removeParams('https://example.test/foo?bar=', ['x'])).to.eql(
+          'https://example.test/foo?bar=',
+        );
+      });
+
       describe('should preserve information in the query string', function () {
         it('should keep plus-encoded white spaces untouched', function () {
           expect(
@@ -129,25 +154,41 @@ describe('Test builtin primitives', function () {
           ).to.eql('https://example.test/path?bar=one%20two%20three');
         });
 
-        it('should preserve information in the query string', function () {
-          expect(
-            removeParams(
-              'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
-              [],
-            ),
-          ).to.eql(
-            'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
-          );
+        it('should preserve different representations of white spaces', function () {
+          const url =
+            'https://example.test/path?foo=one%20two%+three four++5&bar,baz';
+          for (const nonExistingParams of [
+            [],
+            ['does-not-exist'],
+            ['does', 'not', 'exist'],
+          ]) {
+            expect(removeParams(url, nonExistingParams)).to.eql(url);
+          }
         });
+      });
 
-        it('should handle (illegal) white spaces gracefully by converting to "%20"', function () {
+      describe('should support ULRs with non-ascii letters', function () {
+        it('should handle Arabic', function () {
+          const url =
+            'http://abouwadi3-music.blogspot.com/search/label/مالوف تونسي?updated-max=2013-07-09T19:13:00-07:00&max-results=20&start=19&by-date=false&m=0';
+          expect(removeParams(url, [])).to.eql(url);
+          expect(removeParams(url, ['does-not-exist'])).to.eql(url);
+          expect(removeParams(url, ['updated-max'])).to.eql(
+            'http://abouwadi3-music.blogspot.com/search/label/مالوف تونسي?max-results=20&start=19&by-date=false&m=0',
+          );
+          expect(removeParams(url, ['updated-max', 'max-results'])).to.eql(
+            'http://abouwadi3-music.blogspot.com/search/label/مالوف تونسي?start=19&by-date=false&m=0',
+          );
           expect(
-            removeParams(
-              'https://example.test/path?foo=one%20two%+three four++5&bar,baz',
-              [],
-            ),
+            removeParams(url, [
+              'updated-max',
+              'max-results',
+              'start',
+              'by-date',
+              'm',
+            ]),
           ).to.eql(
-            'https://example.test/path?foo=one%20two%+three%20four++5&bar,baz',
+            'http://abouwadi3-music.blogspot.com/search/label/مالوف تونسي',
           );
         });
       });
@@ -188,6 +229,53 @@ describe('Test builtin primitives', function () {
           },
         );
       });
+    });
+
+    it('the order of the parameters should not impact the results', function () {
+      fc.assert(
+        fc.property(
+          fc.webUrl({ withQueryParameters: true, withFragments: true }),
+          fc.array(fc.string()),
+          (url, extraParams) => {
+            const allParams = extraParams.concat(
+              [...new URL(url).searchParams].map((x) => x[0]),
+            );
+            for (let i = 0; i < allParams.length; i += 1) {
+              const params = allParams.slice(0, i);
+              const result1 = removeParams(url, params);
+              const result2 = removeParams(url, [...params, ...params]);
+              const result3 = removeParams(url, [
+                ...params.toSorted(),
+                ...params.toReversed(),
+              ]);
+              expect(result1).to.eql(result2);
+              expect(result1).to.eql(result3);
+            }
+          },
+        ),
+      );
+    });
+
+    it('listing parameters multiple times should not impact the results', function () {
+      fc.assert(
+        fc.property(
+          fc.webUrl({ withQueryParameters: true, withFragments: true }),
+          fc.array(fc.string()),
+          (url, extraParams) => {
+            const allParams = extraParams.concat(
+              [...new URL(url).searchParams].map((x) => x[0]),
+            );
+            for (let i = 0; i < allParams.length; i += 1) {
+              const params = allParams.slice(0, i);
+              const result1 = removeParams(url, params);
+              const result2 = removeParams(url, params.toSorted());
+              const result3 = removeParams(url, params.toReversed());
+              expect(result1).to.eql(result2);
+              expect(result1).to.eql(result3);
+            }
+          },
+        ),
+      );
     });
 
     describe('robustness on untrusted data', function () {
