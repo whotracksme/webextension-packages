@@ -11,7 +11,7 @@
 
 import logger from './logger';
 import { sanitizeUrl } from './sanitizer';
-import { split0 } from './utils';
+import { removeQueryParams } from './url-cleaner';
 import { UnsupportedTransformationError } from './errors';
 
 function expectString(arg) {
@@ -129,13 +129,13 @@ const TRANSFORMS = new Map(
      * - "/example.test/path" -> null
      * - "This is a string but not an URL" -> null
      */
-    queryParam: (x, queryParam) => {
-      expectString(x);
+    queryParam: (url, queryParam) => {
+      expectString(url);
       expectString(queryParam);
       try {
         // we only need the query parameter, but to handle relative
         // URLs we have to pass a base URL (any domain will work)
-        return new URL(x, 'http://x').searchParams.get(queryParam);
+        return new URL(url, 'http://x').searchParams.get(queryParam);
       } catch (e) {
         return null;
       }
@@ -157,24 +157,12 @@ const TRANSFORMS = new Map(
      * Example ["removeParams", ["foo", "bar"]]:
      * - "https://example.test/path?foo=1&bar=2" -> "https://example.test/path"
      */
-    removeParams: (x, queryParams) => {
-      expectString(x);
+    removeParams: (url, queryParams) => {
+      expectString(url);
       expectArrayOfStrings(queryParams);
-      try {
-        const url = new URL(x);
-
-        // Why not url.searchParams? The parsing step in url.searchParams
-        // loses information (see https://stackoverflow.com/a/45516812/783510).
-        if (!url.search) {
-          return x;
-        }
-        const parts = url.search
-          .slice(1)
-          .split('&')
-          .filter((x) => !queryParams.includes(split0(x, '=')));
-        url.search = parts.length === 0 ? '' : `?${parts.join('&')}`;
-        return url.toString();
-      } catch (e) {
+      if (URL.canParse(url)) {
+        return removeQueryParams(url, queryParams);
+      } else {
         return null;
       }
     },
@@ -183,9 +171,9 @@ const TRANSFORMS = new Map(
      * Given text, it will verify that it is a well-formed URL;
      * otherwise, it will end the processing by "nulling" it out.
      */
-    requireURL: (x) => {
-      expectString(x);
-      return URL.canParse(x) ? x : null;
+    requireURL: (url) => {
+      expectString(url);
+      return URL.canParse(url) ? url : null;
     },
 
     /**
@@ -193,10 +181,10 @@ const TRANSFORMS = new Map(
      * parts that may be sensitive (i.e. keeping only the hostname),
      * or even drop it completely.
      */
-    maskU: (x) => {
-      expectString(x);
+    maskU: (url) => {
+      expectString(url);
       try {
-        return sanitizeUrl(x).safeUrl;
+        return sanitizeUrl(url).safeUrl;
       } catch (e) {
         return null;
       }
@@ -210,10 +198,10 @@ const TRANSFORMS = new Map(
      * can be useful. However, it will drop many harmless URLs; in other words,
      * expect a high number of false-positives.
      */
-    strictMaskU: (x) => {
-      expectString(x);
+    strictMaskU: (url) => {
+      expectString(url);
       try {
-        return sanitizeUrl(x, { strict: true }).safeUrl;
+        return sanitizeUrl(url, { strict: true }).safeUrl;
       } catch (e) {
         return null;
       }
@@ -222,50 +210,51 @@ const TRANSFORMS = new Map(
     /**
      * Like "maskU", but tries to preserve the URL path when truncating.
      */
-    relaxedMaskU: (x) => {
-      expectString(x);
+    relaxedMaskU: (url) => {
+      expectString(url);
       try {
-        return sanitizeUrl(x, { strict: false, tryPreservePath: true }).safeUrl;
+        return sanitizeUrl(url, { strict: false, tryPreservePath: true })
+          .safeUrl;
       } catch (e) {
         return null;
       }
     },
 
-    split: (x, splitON, arrPos) => {
-      expectString(x);
+    split: (text, splitON, arrPos) => {
+      expectString(text);
       expectString(splitON);
       expectInteger(arrPos);
 
-      const parts = x.split(splitON);
+      const parts = text.split(splitON);
       if (parts.length === 1) {
         return null;
       }
       return parts[arrPos] ?? null;
     },
 
-    trySplit: (x, splitON, arrPos) => {
-      expectString(x);
+    trySplit: (text, splitON, arrPos) => {
+      expectString(text);
       expectString(splitON);
       expectInteger(arrPos);
 
-      return x.split(splitON)[arrPos] || x;
+      return text.split(splitON)[arrPos] || text;
     },
 
-    decodeURIComponent: (x) => {
-      expectString(x);
+    decodeURIComponent: (text) => {
+      expectString(text);
       try {
-        return decodeURIComponent(x);
+        return decodeURIComponent(text);
       } catch (e) {
         return null;
       }
     },
 
-    tryDecodeURIComponent: (x) => {
-      expectString(x);
+    tryDecodeURIComponent: (text) => {
+      expectString(text);
       try {
-        return decodeURIComponent(x);
+        return decodeURIComponent(text);
       } catch (e) {
-        return x;
+        return text;
       }
     },
 
@@ -275,12 +264,12 @@ const TRANSFORMS = new Map(
      * numbers, booleans), mostly to prevent accidentally extracting
      * more than intended.
      */
-    json: (x, path, extractObjects = false) => {
-      expectString(x);
+    json: (text, path, extractObjects = false) => {
+      expectString(text);
       expectString(path);
       expectBoolean(extractObjects);
       try {
-        let obj = JSON.parse(x);
+        let obj = JSON.parse(text);
         for (const field of path.split('.')) {
           obj = obj[field];
         }

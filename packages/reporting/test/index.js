@@ -20,6 +20,7 @@ import './sanitizer.spec.js';
 import './search-extractor.spec.js';
 import './session-storage.spec.js';
 import './seq-executor.spec.js';
+import './url-cleaner.spec.js';
 import './utils.spec.js';
 
 // Request utils
