@@ -184,6 +184,14 @@ export function flattenObject(obj, parentPath = []) {
   }, []);
 }
 
+function sortedObjectEntries(x) {
+  return Object.entries(x).sort((a, b) => {
+    if (a[0] < b[0]) return -1;
+    if (a[0] > b[0]) return 1;
+    return 0;
+  });
+}
+
 /**
  * This is not a full deepEqual implementation. But it should be
  * able to detect common data objects with primitive types.
@@ -230,7 +238,7 @@ export function equalityCanBeProven(x, y) {
     }
     return (
       y.constructor === Object &&
-      equalityCanBeProven(Object.entries(x).sort(), Object.entries(y).sort())
+      equalityCanBeProven(sortedObjectEntries(x), sortedObjectEntries(y))
     );
   }
 

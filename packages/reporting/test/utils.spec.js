@@ -133,6 +133,24 @@ describe('#equalityCanBeProven', function () {
       }),
     );
   });
+
+  describe('should handle edge cases found by property based testing', function () {
+    it('should not throw if "toString" is set to undefined', function () {
+      expect(
+        equalityCanBeProven(
+          {},
+          {
+            '': {},
+            ' ': [
+              {
+                'toString': undefined,
+              },
+            ],
+          },
+        ),
+      ).to.eql(false);
+    });
+  });
 });
 
 describe('#lazyInitAsync', function () {
