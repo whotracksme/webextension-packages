@@ -1,3 +1,17 @@
+# v5.0.9 (Fri Apr 12 2024)
+
+#### 🐛 Bug Fix
+
+- Fixed: do not depend on Array.toString for sorting Object.entries [#77](https://github.com/whotracksme/webextension-packages/pull/77) ([@philipp-classen](https://github.com/philipp-classen))
+- * Rename "accumulator" argument in the builtins [#76](https://github.com/whotracksme/webextension-packages/pull/76) ([@philipp-classen](https://github.com/philipp-classen))
+- Improvements to patterns and URL detection. Includes [#76](https://github.com/whotracksme/webextension-packages/pull/76) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.8 (Mon Apr 08 2024)
 
 #### ⚠️ Pushed to `main`
