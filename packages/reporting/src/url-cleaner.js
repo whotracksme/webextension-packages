@@ -45,3 +45,16 @@ export function removeQueryParams(url, queryParams) {
     return `${beforeSearch}?${parts.join('&')}${hash}`;
   }
 }
+
+/**
+ * Given a URL, it returns an equivalent URL, but with the hash removed.
+ * If the URL did not have a hash, the unmodifed URL will be returned.
+ *
+ * Note: this function will not do any decoding. Instead, it will try
+ * to preserve the original URL as best as it can (e.g. the invalid URL
+ * "https://example.test?q=x y" will not be normalized to the valid URL
+ * "https://example.test/?q=x%20y").
+ */
+export function removeSearchHash(url) {
+  return split0(url, '#');
+}
