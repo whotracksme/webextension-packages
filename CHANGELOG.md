@@ -1,3 +1,15 @@
+# v5.0.11 (Mon Apr 22 2024)
+
+#### 🐛 Bug Fix
+
+- Improve the heuristic that compares URLs before and after double-fetch. [#79](https://github.com/whotracksme/webextension-packages/pull/79) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.10 (Mon Apr 22 2024)
 
 #### 🐛 Bug Fix
