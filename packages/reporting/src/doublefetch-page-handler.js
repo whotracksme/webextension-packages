@@ -17,6 +17,7 @@ import { anonymousHttpGet } from './http';
 import parseHtml from './html-parser';
 import { analyzePageStructure } from './page-structure';
 import { sanitizeUrl } from './sanitizer';
+import { removeSearchHash } from './url-cleaner';
 
 const SECOND = 1000;
 
@@ -253,6 +254,7 @@ export default class DoublefetchPageHandler {
           before: preDoublefetch,
           after: pageStructure,
           page,
+          log,
         });
         if (!accept) {
           return { ok: false, details };
@@ -326,7 +328,7 @@ export default class DoublefetchPageHandler {
    * include credentials or session tokens (required to access the email).
    * Thus, the title should no longer match, and the message will be dropped.
    */
-  _structureMatches({ before, after, page }) {
+  _structureMatches({ before, after, page, log }) {
     const accept = () => ({ accept: true });
     const discard = (reason) => ({ accept: false, details: reason });
 
@@ -352,9 +354,27 @@ export default class DoublefetchPageHandler {
     }
 
     if (page.url !== before.url) {
-      return discard(
-        `inconsistency detected: page url does not match url (before): page.url=<<${page.url}>> !== before.url=<<${before.url}>>`,
-      );
+      // Before giving up, try a relaxed match where the URL hash of the original URL
+      // is ignored. Note that for the page itself, the hash should have been already
+      // removed in a previous step.
+      // Note: this is relevant to handle URLs like "https://pytorch.org/docs/stable/torch.html#tensors"
+      const safeToIgnoreHash =
+        page.pageLoadMethod === 'full-page-load' ||
+        (page.title === before.title && before.title === after.title);
+      if (safeToIgnoreHash && page.url === removeSearchHash(before.url)) {
+        log(
+          'The page url',
+          page.url,
+          'does not exactly match the original URL',
+          before.url,
+          'However, it is identical when ignoring the hash in the original URL.',
+          'Based on the other information, it looks safe to continue.',
+        );
+      } else {
+        return discard(
+          `inconsistency detected: page url does not match url (before): page.url=<<${page.url}>> !== before.url=<<${before.url}>>`,
+        );
+      }
     }
 
     if (

@@ -11,7 +11,7 @@
 
 import { expect } from 'chai';
 
-import { removeQueryParams } from '../src/url-cleaner.js';
+import { removeQueryParams, removeSearchHash } from '../src/url-cleaner.js';
 
 /**
  * Note: this function is also used to implement the "removeParams" builtin.
@@ -57,5 +57,46 @@ describe('#removeQueryParams', function () {
         );
       });
     });
+  });
+});
+
+describe('#removeSearchHash', function () {
+  it('should work in the happy path', function () {
+    expect(removeSearchHash('https://example.test/foo#')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo#remove-me')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo?x=y#')).to.eql(
+      'https://example.test/foo?x=y',
+    );
+    expect(removeSearchHash('https://example.test/foo?x=y#remove-me')).to.eql(
+      'https://example.test/foo?x=y',
+    );
+  });
+
+  it('should not change URLs without hashes', function () {
+    expect(removeSearchHash('https://example.test/foo')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo?x=y')).to.eql(
+      'https://example.test/foo?x=y',
+    );
+  });
+
+  it('should work with multiple hashes', function () {
+    expect(removeSearchHash('https://example.test/foo#remove#me')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo##remove#me')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo##')).to.eql(
+      'https://example.test/foo',
+    );
+    expect(removeSearchHash('https://example.test/foo#remove#me#')).to.eql(
+      'https://example.test/foo',
+    );
   });
 });
