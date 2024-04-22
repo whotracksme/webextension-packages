@@ -1,3 +1,15 @@
+# v5.0.10 (Mon Apr 22 2024)
+
+#### 🐛 Bug Fix
+
+- reporting still had an overwrite of linkedom with an old version. [#78](https://github.com/whotracksme/webextension-packages/pull/78) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.9 (Fri Apr 12 2024)
 
 #### 🐛 Bug Fix
