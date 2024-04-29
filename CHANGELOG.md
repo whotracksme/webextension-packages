@@ -1,3 +1,15 @@
+# v5.0.12 (Mon Apr 29 2024)
+
+#### 🐛 Bug Fix
+
+- Do not use sub-millisecond resolution for times. [#80](https://github.com/whotracksme/webextension-packages/pull/80) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.11 (Mon Apr 22 2024)
 
 #### 🐛 Bug Fix
