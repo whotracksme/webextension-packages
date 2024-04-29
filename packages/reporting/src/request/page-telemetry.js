@@ -26,7 +26,7 @@ export default function buildPageLoadObject(page) {
     path: truncatedHash(truncatePath(urlParts.path)),
     scheme: urlParts.scheme,
     c: 1,
-    t: page.destroyed - page.created,
+    t: Math.round(page.destroyed - page.created),
     active: page.activeTime,
     counter: page.counter,
     ra: 0,
