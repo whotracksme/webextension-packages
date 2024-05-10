@@ -32,8 +32,8 @@ export function requireInt(value, name) {
   if (!Number.isInteger(value)) {
     throw new Error(
       name
-        ? `${name} should be integer but got: ${value}`
-        : `Parameter should be integer but got: ${value}`,
+        ? `${name} should be integer, but got: <${value}>`
+        : `Parameter should be integer, but got: <${value}>`,
     );
   }
   return value;
@@ -43,8 +43,8 @@ export function requireIntOrNull(value, name) {
   if (value !== null && !Number.isInteger(value)) {
     throw new Error(
       name
-        ? `${name} should be integer or null but got: ${value}`
-        : `Parameter should be integer or null but got: ${value}`,
+        ? `${name} should be integer or null, but got: <${value}>`
+        : `Parameter should be integer or null, but got: <${value}>`,
     );
   }
   return value;
@@ -54,8 +54,8 @@ export function requireString(value, name) {
   if (typeof value !== 'string') {
     throw new Error(
       name
-        ? `${name} should be string but got: ${value}`
-        : `Parameter should be string but got: ${value}`,
+        ? `${name} should be string, but got: <${value}>`
+        : `Parameter should be string, but got: <${value}>`,
     );
   }
   return value;
@@ -65,8 +65,53 @@ export function requireStringOrNull(value, name) {
   if (value !== null && typeof value !== 'string') {
     throw new Error(
       name
-        ? `${name} should be string or null but got: ${value}`
-        : `Parameter should be string or null but got: ${value}`,
+        ? `${name} should be string or null, but got: <${value}>`
+        : `Parameter should be string or null, but got: <${value}>`,
+    );
+  }
+  return value;
+}
+
+export function requireArrayOfStrings(value, name) {
+  if (!Array.isArray(value)) {
+    throw new Error(
+      name
+        ? `${name} should be an array of strings, but got: ${value}`
+        : `Paramter should be an array of strings, but got: ${value}`,
+    );
+  }
+  value.forEach((x, idx) => {
+    if (typeof x !== 'string') {
+      throw new Error(
+        name
+          ? `${name} should be an array of string, but got: ${value} (stopped at pos #${idx}: ${x})`
+          : `Parameter should be an array of string, but got: ${value} (stopped at pos #${idx}: ${x})`,
+      );
+    }
+  });
+  return value;
+}
+
+export function requireBoolean(value, name) {
+  if (value !== true && value !== false) {
+    throw new Error(
+      name
+        ? `${name} should be boolean, but got: ${value}`
+        : `Parameter should be boolean, but got: ${value}`,
+    );
+  }
+  return value;
+}
+
+/**
+ * This is a narrow definition of object (i.e. something like {}).
+ */
+export function requireObject(value, name) {
+  if (isNil(value) || Array.isArray(value) || typeof value !== 'object') {
+    throw new Error(
+      name
+        ? `${name} should be an object, but got: <${value}>`
+        : `Parameter should be an object, but got: <${value}>`,
     );
   }
   return value;

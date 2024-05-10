@@ -13,37 +13,14 @@ import logger from './logger';
 import { sanitizeUrl } from './sanitizer';
 import { removeQueryParams } from './url-cleaner';
 import { UnsupportedTransformationError } from './errors';
-
-function expectString(arg) {
-  if (typeof arg !== 'string') {
-    throw new Error(`Expected string argument, but got: ${arg}`);
-  }
-}
-
-function expectArrayOfStrings(arg) {
-  if (!Array.isArray(arg)) {
-    throw new Error(`Expected array of strings, but got: ${arg}`);
-  }
-  arg.forEach((x, idx) => {
-    if (typeof x !== 'string') {
-      throw new Error(
-        `Expected array of string, but got: ${arg} (stopped at pos #${idx}: ${x})`,
-      );
-    }
-  });
-}
-
-function expectInteger(arg) {
-  if (typeof arg !== 'number' || arg % 1 !== 0) {
-    throw new Error(`Expected integer argument, but got: ${arg}`);
-  }
-}
-
-function expectBoolean(arg) {
-  if (arg !== true && arg !== false) {
-    throw new Error(`Expected boolean argument, but got: ${arg}`);
-  }
-}
+import SelfChecks from './self-check';
+import {
+  requireString,
+  requireInt,
+  requireBoolean,
+  requireObject,
+  requireArrayOfStrings,
+} from './utils';
 
 /**
  * A list of predefined string transformations that can be specified
@@ -130,8 +107,8 @@ const TRANSFORMS = new Map(
      * - "This is a string but not an URL" -> null
      */
     queryParam: (url, queryParam) => {
-      expectString(url);
-      expectString(queryParam);
+      requireString(url);
+      requireString(queryParam);
       try {
         // we only need the query parameter, but to handle relative
         // URLs we have to pass a base URL (any domain will work)
@@ -158,8 +135,8 @@ const TRANSFORMS = new Map(
      * - "https://example.test/path?foo=1&bar=2" -> "https://example.test/path"
      */
     removeParams: (url, queryParams) => {
-      expectString(url);
-      expectArrayOfStrings(queryParams);
+      requireString(url);
+      requireArrayOfStrings(queryParams);
       if (URL.canParse(url)) {
         return removeQueryParams(url, queryParams);
       } else {
@@ -172,7 +149,7 @@ const TRANSFORMS = new Map(
      * otherwise, it will end the processing by "nulling" it out.
      */
     requireURL: (url) => {
-      expectString(url);
+      requireString(url);
       return URL.canParse(url) ? url : null;
     },
 
@@ -182,7 +159,7 @@ const TRANSFORMS = new Map(
      * or even drop it completely.
      */
     maskU: (url) => {
-      expectString(url);
+      requireString(url);
       try {
         return sanitizeUrl(url).safeUrl;
       } catch (e) {
@@ -199,7 +176,7 @@ const TRANSFORMS = new Map(
      * expect a high number of false-positives.
      */
     strictMaskU: (url) => {
-      expectString(url);
+      requireString(url);
       try {
         return sanitizeUrl(url, { strict: true }).safeUrl;
       } catch (e) {
@@ -211,7 +188,7 @@ const TRANSFORMS = new Map(
      * Like "maskU", but tries to preserve the URL path when truncating.
      */
     relaxedMaskU: (url) => {
-      expectString(url);
+      requireString(url);
       try {
         return sanitizeUrl(url, { strict: false, tryPreservePath: true })
           .safeUrl;
@@ -221,9 +198,9 @@ const TRANSFORMS = new Map(
     },
 
     split: (text, splitON, arrPos) => {
-      expectString(text);
-      expectString(splitON);
-      expectInteger(arrPos);
+      requireString(text);
+      requireString(splitON);
+      requireInt(arrPos);
 
       const parts = text.split(splitON);
       if (parts.length === 1) {
@@ -233,15 +210,15 @@ const TRANSFORMS = new Map(
     },
 
     trySplit: (text, splitON, arrPos) => {
-      expectString(text);
-      expectString(splitON);
-      expectInteger(arrPos);
+      requireString(text);
+      requireString(splitON);
+      requireInt(arrPos);
 
       return text.split(splitON)[arrPos] || text;
     },
 
     decodeURIComponent: (text) => {
-      expectString(text);
+      requireString(text);
       try {
         return decodeURIComponent(text);
       } catch (e) {
@@ -250,7 +227,7 @@ const TRANSFORMS = new Map(
     },
 
     tryDecodeURIComponent: (text) => {
-      expectString(text);
+      requireString(text);
       try {
         return decodeURIComponent(text);
       } catch (e) {
@@ -265,9 +242,9 @@ const TRANSFORMS = new Map(
      * more than intended.
      */
     json: (text, path, extractObjects = false) => {
-      expectString(text);
-      expectString(path);
-      expectBoolean(extractObjects);
+      requireString(text);
+      requireString(path);
+      requireBoolean(extractObjects);
       try {
         let obj = JSON.parse(text);
         for (const field of path.split('.')) {
@@ -300,6 +277,48 @@ export function lookupBuiltinTransform(name) {
 }
 
 /**
+ * Defines the version of the engine that processes the patterns DSL
+ * (Domain Specific Language).
+ *
+ * It is always safe to increase it: neither will it lead to overhead,
+ * nor will it split the population. Its sole purpose is to be used
+ * to disable clients that do not meet the minimum requirements of the
+ * current patterns.
+ */
+const PATTERN_DSL_VERSION = 1;
+
+/**
+ * "Magic" empty rule set, which exists only if patterns were loaded, but
+ * our engine is too old and does not supported them. Therefore, they are
+ * disabled. Although not a typical error, reaching this state should be
+ * avoided; the client will be dead from the perspective of the server.
+ *
+ * There are two to exit this state:
+ * 1) The client updates to a newer version (this is the preferred one)
+ * 2) The server can decide to serve a backward-compatible set of rules to
+ *    restore support for older clients. It will restore the traffic since
+ *    old clients will still poll for patterns.
+ *
+ * Note that option two will not be sustainable over a longer period. It
+ * also comes with the disadvantage that old clients will form their own
+ * group; anonymity will suffer if their population becomes too small.
+ */
+const RULES_REJECTED__ENGINE_TOO_OLD = {};
+
+/**
+ * "Magic" empty rule set, which should exist only temporarily when
+ * the background page or service worker is starting up. It should
+ * get quickly replaces by a normal set of rules.
+ */
+const RULES_NOT_LOADED_YET = {};
+
+/**
+ * "Magic" empty rule set, which exists only if patterns failed to load,
+ * because they were not well-formed.
+ */
+const RULES_REJECTED__CORRUPTED = {};
+
+/**
  * Represents the currently active rules.
  *
  * It is updated by the PatternsUpdater, which polls
@@ -307,12 +326,12 @@ export function lookupBuiltinTransform(name) {
  */
 export default class Patterns {
   constructor() {
-    this._rules = {};
+    this._rules = RULES_NOT_LOADED_YET;
   }
 
   updatePatterns(rules) {
-    logger.info('Loaded patterns:', rules);
-    this._rules = rules;
+    this._rules = this._sanitizeRules(rules);
+    logger.info('Loaded patterns:', this._rules);
   }
 
   /**
@@ -354,5 +373,44 @@ export default class Patterns {
       }
     }
     return doublefetchRequest;
+  }
+
+  _sanitizeRules(rules) {
+    try {
+      requireObject(rules);
+      const minVersion = requireInt(rules._meta?.minVersion || 0);
+      if (minVersion > PATTERN_DSL_VERSION) {
+        logger.warn(
+          'Ignoring patterns, since our engine does not meet the minimum version:',
+          minVersion,
+          '>',
+          PATTERN_DSL_VERSION,
+        );
+        return RULES_REJECTED__ENGINE_TOO_OLD;
+      }
+      return rules;
+    } catch (e) {
+      logger.error(
+        'Unable to apply rules because they could not be parsed:',
+        rules,
+        e,
+      );
+      return RULES_REJECTED__CORRUPTED;
+    }
+  }
+
+  async selfChecks(check = new SelfChecks()) {
+    if (this._rules === RULES_REJECTED__ENGINE_TOO_OLD) {
+      check.warn('patterns rejected, because our engine is too old');
+    } else if (this._rules === RULES_REJECTED__CORRUPTED) {
+      check.error('patterns rejected, because the rules were corrupted');
+    } else if (this._rules === RULES_NOT_LOADED_YET) {
+      check.warn(
+        'patterns still not initialized (this should happen only at startup)',
+      );
+    } else {
+      check.pass('patterns loaded');
+    }
+    return check;
   }
 }

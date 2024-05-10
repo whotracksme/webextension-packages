@@ -398,6 +398,117 @@ describe('#SearchExtractor', function () {
           .with.property('isPermanentError');
       });
 
+      describe('during preprocessing', function () {
+        it('should support removing an inner div', function () {
+          runScenario({
+            url: 'http://example.test/x?q=some-query',
+            query: 'some-query',
+            category: 'example-test',
+            ctry: 'de',
+            html: `
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+  <html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Test page</title>
+  </head>
+  <body>
+    <div>It does <div>NOT</div>work</div>
+  </body>
+  </html>`,
+            patterns: {
+              'example-test': {
+                preprocess: {
+                  prune: [{ first: 'div > div' }],
+                },
+                input: {
+                  'html > body > div': {
+                    first: {
+                      extractedText: {
+                        attr: 'textContent',
+                      },
+                    },
+                  },
+                },
+                output: {
+                  'test-action': {
+                    fields: [
+                      {
+                        key: 'extractedText',
+                        source: 'html > body > div',
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            mustContain: [
+              {
+                action: 'test-action',
+                payload: {
+                  extractedText: 'It does work',
+                },
+              },
+            ],
+          });
+        });
+
+        it('should support support removing one or many elements (complex scenario)', function () {
+          runScenario({
+            url: 'http://example.test/x?q=some-query',
+            query: 'some-query',
+            category: 'example-test',
+            ctry: 'de',
+            html: `
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+  <html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Test page</title>
+  </head>
+  <body>
+    <p>Remove the X's: only the first p, but all divs</p>
+    <div>1<p id="remove-me">X</p>2<p id="but-keep-me">3</p>4<div>X</div><div>X</div>5<div>X</div>6</div>
+  </body>
+  </html>`,
+            patterns: {
+              'example-test': {
+                preprocess: {
+                  prune: [{ first: 'div > p' }, { all: 'div > div' }],
+                },
+                input: {
+                  'html > body > div': {
+                    first: {
+                      extractedText: {
+                        attr: 'textContent',
+                      },
+                    },
+                  },
+                },
+                output: {
+                  'test-action': {
+                    fields: [
+                      {
+                        key: 'extractedText',
+                        source: 'html > body > div',
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            mustContain: [
+              {
+                action: 'test-action',
+                payload: {
+                  extractedText: '123456',
+                },
+              },
+            ],
+          });
+        });
+      });
+
       // This are optional tests that can be enabled if the TEST_FIXTURES_URL
       // environment variable is defined. Karma lacks access to the filesystem,
       // but we can fetch fixtures over the network.

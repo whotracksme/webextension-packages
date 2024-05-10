@@ -12,6 +12,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import Patterns from '../src/patterns.js';
 import PatternsUpdater from '../src/patterns-updater.js';
 
 const SECOND = 1000;
@@ -24,8 +25,10 @@ const WEEK = 7 * DAY;
 // make sure all cooldowns have expired.
 const SKIP_ALL_COOLDOWNS = WEEK;
 
-function generateTestRules(msgName) {
+function generateTestRules(msgName, { _meta = undefined } = {}) {
+  const optionalMetaTag = _meta ? { _meta } : {};
   return {
+    ...optionalMetaTag,
     [msgName]: {
       input: {
         'div.someCssSelector': {
@@ -58,6 +61,11 @@ const SOME_NON_EMPTY_PATTERN = JSON.stringify(
 );
 const ANOTHER_NON_EMPTY_PATTERN = JSON.stringify(
   generateTestRules('another-test-message'),
+);
+const SOME_UNSUPPORTED_PATTERN = JSON.stringify(
+  generateTestRules('unsupported', {
+    _meta: { minVersion: Number.MAX_SAFE_INTEGER },
+  }),
 );
 
 function mockFetch(patternsUrl, serverPatterns) {
@@ -117,23 +125,6 @@ function mockStorage(storageKey) {
   };
 }
 
-// stub implementation of the "Patterns" class
-function mockPatterns() {
-  return {
-    _rules: {},
-    _updateHistory: [],
-
-    updatePatterns(rules) {
-      this._rules = rules;
-      this._updateHistory.push(rules);
-    },
-
-    getRulesSnapshot() {
-      return this._rules;
-    },
-  };
-}
-
 describe('#PatternsUpdater', function () {
   const storageKey = 'some-storage-key';
   let uut;
@@ -150,7 +141,7 @@ describe('#PatternsUpdater', function () {
     if (typeof pattern === 'string') {
       serverPatterns.value = pattern;
     } else {
-      serverPatterns.value = JSON.stringfy(pattern);
+      serverPatterns.value = JSON.stringify(pattern);
     }
   }
 
@@ -192,7 +183,7 @@ describe('#PatternsUpdater', function () {
   }
 
   beforeEach(function () {
-    clientPatterns = mockPatterns();
+    clientPatterns = new Patterns();
     serverPatterns = {
       value: EMPTY_PATTERN,
     };
@@ -284,6 +275,61 @@ describe('#PatternsUpdater', function () {
         for (let i = outageDuration; i <= 10 * outageDuration; i += 1) {
           await uut.update({ now: ts + i * MINUTE });
         }
+        expectLoadedPatternsToBe(SOME_NON_EMPTY_PATTERN);
+      });
+    });
+
+    describe('[minimum version]', function () {
+      it('should accept patterns without _meta tag', async () => {
+        const pattern = generateTestRules('test-rule', { _meta: undefined });
+        releasePatterns(pattern);
+
+        await uut.init();
+
+        expectLoadedPatternsToBe(pattern);
+      });
+
+      it('should accept patterns without minimum version', async () => {
+        const pattern = generateTestRules('test-rule', { _meta: {} });
+        releasePatterns(pattern);
+
+        await uut.init();
+
+        expectLoadedPatternsToBe(pattern);
+      });
+
+      it('should accept patterns if the DSL version is supported', async () => {
+        const pattern = generateTestRules('test-rule', {
+          _meta: { minVersion: 0 },
+        });
+        releasePatterns(pattern);
+
+        await uut.init();
+
+        expectLoadedPatternsToBe(pattern);
+      });
+
+      it('should reject patterns if the DSL version is not supported', async () => {
+        releasePatterns(SOME_UNSUPPORTED_PATTERN);
+        await uut.init();
+        expectLoadedPatternsToBe(EMPTY_PATTERN);
+      });
+
+      it('should allow to downgrade from an unsupported patterns', async () => {
+        let now = Date.now();
+
+        releasePatterns(SOME_NON_EMPTY_PATTERN);
+        await uut.init({ now });
+        expectLoadedPatternsToBe(SOME_NON_EMPTY_PATTERN);
+
+        releasePatterns(SOME_UNSUPPORTED_PATTERN);
+        now += SKIP_ALL_COOLDOWNS;
+        await uut.update({ now });
+        expectLoadedPatternsToBe(EMPTY_PATTERN);
+
+        releasePatterns(SOME_NON_EMPTY_PATTERN);
+        now += SKIP_ALL_COOLDOWNS;
+        await uut.update({ now });
         expectLoadedPatternsToBe(SOME_NON_EMPTY_PATTERN);
       });
     });
