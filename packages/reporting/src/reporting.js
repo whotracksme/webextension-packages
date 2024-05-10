@@ -277,6 +277,7 @@ export default class Reporting {
     await Promise.all([
       this.pages.selfChecks(check.for('pages')),
       this.pagedb.selfChecks(check.for('pagedb')),
+      this.patterns.selfChecks(check.for('patterns')),
       this.patternsUpdater.selfChecks(check.for('patternsUpdater')),
       this.bloomFilter.selfChecks(check.for('bloomFilter')),
       this.jobScheduler.selfChecks(check.for('jobScheduler')),

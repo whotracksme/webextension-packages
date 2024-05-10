@@ -188,6 +188,7 @@ export default class SearchExtractor {
     }
   }
 
+  // Note: "doc" may be changed as a side-effect of preprocessing
   extractMessages({ doc, query, category, doublefetchRequest }) {
     const rules = this.patterns.getRulesSnapshot();
     if (!rules[category]) {
@@ -197,7 +198,19 @@ export default class SearchExtractor {
     const found = {};
     const baseURI = doublefetchRequest.url;
 
-    const { input = {}, output = {} } = rules[category];
+    const { preprocess = {}, input = {}, output = {} } = rules[category];
+    for (const rule of preprocess.prune || []) {
+      if (rule?.first) {
+        doc.querySelector(rule.first)?.remove();
+      } else if (rule?.all) {
+        for (const elem of doc.querySelectorAll(rule.all) || []) {
+          elem.remove();
+        }
+      } else {
+        throw new BadPatternError('Bad prune rule (expected "first" or "all")');
+      }
+    }
+
     for (const [selector, selectorDef] of Object.entries(input)) {
       found[selector] = found[selector] || {};
       if (selectorDef.first) {
