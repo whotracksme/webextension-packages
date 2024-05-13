@@ -1,3 +1,15 @@
+# v5.0.13 (Mon May 13 2024)
+
+#### 🐛 Bug Fix
+
+- Improves the pattern DSL: [#81](https://github.com/whotracksme/webextension-packages/pull/81) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.12 (Mon Apr 29 2024)
 
 #### 🐛 Bug Fix
