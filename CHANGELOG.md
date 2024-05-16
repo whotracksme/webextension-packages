@@ -1,3 +1,15 @@
+# v5.0.14 (Thu May 16 2024)
+
+#### 🐛 Bug Fix
+
+- Clean up the handling of "ver" among messages. [#82](https://github.com/whotracksme/webextension-packages/pull/82) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.13 (Mon May 13 2024)
 
 #### 🐛 Bug Fix
