@@ -327,7 +327,7 @@ export default class SearchExtractor {
       const body = {
         action,
         payload,
-        ver: '2.9', // TODO: eliminate code duplication (especially, the magic constant '2.9')
+        ver: 3, // Note: no need to keep this number in sync among messages
         'anti-duplicates': Math.floor(random() * 10000000),
       };
       messages.push({ body, deduplicateBy });

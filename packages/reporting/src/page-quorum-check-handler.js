@@ -41,7 +41,7 @@ function createPageMessage(safePage, ctry) {
   const body = {
     action: 'wtm.page',
     payload,
-    ver: '2.9', // TODO: eliminate code duplication (especially, the magic constant '2.9')
+    ver: 3, // Note: no need to keep this number in sync among messages
     'anti-duplicates': Math.floor(random() * 10000000),
   };
   return { body, deduplicateBy };
