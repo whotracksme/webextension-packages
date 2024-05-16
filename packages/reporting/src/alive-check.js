@@ -11,6 +11,7 @@
 
 import logger from './logger';
 import { requireString, requireParam } from './utils';
+import random from './random';
 
 const HOUR = 1000 * 60 * 60;
 
@@ -125,6 +126,8 @@ export default class AliveCheck {
     const message = {
       action: 'wtm.alive',
       payload,
+      ver: 3, // Note: no need to keep this number in sync among messages
+      'anti-duplicates': Math.floor(random() * 10000000),
     };
 
     // Note that it is intentional here to bypass the job scheduler.

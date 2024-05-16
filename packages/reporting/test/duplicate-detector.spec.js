@@ -32,7 +32,7 @@ function mkMessage({ action = 'test-action', payload, deduplicateBy } = {}) {
     type: 'test-type',
     action,
     payload,
-    ver: '2.9',
+    ver: 3,
     'anti-duplicates': 1,
   };
   return { body, deduplicateBy };
