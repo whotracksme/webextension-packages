@@ -79,7 +79,7 @@ export async function analyzePageStructure(doc) {
 
   function parseOpenGraphMetaTags(doc) {
     const og = {};
-    for (const tag of ['title', 'url', 'image']) {
+    for (const tag of ['title', 'url', 'image', 'video']) {
       const elem = doc.querySelector(
         `html > head > meta[property="og:${tag}"]`,
       );
