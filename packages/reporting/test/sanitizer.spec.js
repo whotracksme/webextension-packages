@@ -950,6 +950,8 @@ describe('#sanitizeUrl', function () {
         'https://www.amazon.co.uk/Universal-Adapter-Worldwide-International-European-Black/dp/B0BVZ8VHHH',
         'https://www.amazon.co.uk/Converter-Universal-Standard-Grounded-Portable/dp/B09PBH4JT1',
         'https://www.homedepot.com/p/Makita-Dust-Extracting-Nozzle-for-use-with-Makita-1-1-4-HP-Compact-Router-and-Plunge-Base-model-RT0701C-194733-8/205182383',
+        'https://www.youtube.com/watch?app=desktop&v=hLT-W55y-LI',
+        'https://www.youtube.com/watch?v=hLT-W55y-LI',
       ].forEach((url) => {
         it(`should allow URL (in non-strict mode): ${url}`, function () {
           shouldBeSafeInNonStrictMode(url);

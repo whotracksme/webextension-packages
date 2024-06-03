@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { lazyInitAsync } from './utils';
+import { requireParam, lazyInitAsync } from './utils';
 import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
@@ -104,20 +104,18 @@ export function sanitizeActivity(activity) {
   return noisyActivity.toFixed(4);
 }
 
-class PageCache {
+class CachedPageFetcher {
   constructor() {
-    this.pages = new Map();
+    this.urlToAsyncPageStructure = new Map();
   }
 
   async doublefetchUrl(url) {
-    const docProvider = this.pages.get(url);
-    if (docProvider) {
-      return docProvider();
+    let psProvider = this.urlToAsyncPageStructure.get(url);
+    if (!psProvider) {
+      psProvider = lazyInitAsync(() => this._doublefetchUrl(url));
+      this.urlToAsyncPageStructure.set(url, psProvider);
     }
-
-    const newDocProvider = lazyInitAsync(() => this._doublefetchUrl(url));
-    this.pages.set(url, newDocProvider);
-    return newDocProvider();
+    return psProvider();
   }
 
   async _doublefetchUrl(url) {
@@ -138,7 +136,7 @@ class PageCache {
       });
     } catch (e) {
       if (e.isPermanentError) {
-        return { rejectReason: e };
+        return { rejectReason: `unable to fetch page (${e})` };
       }
       logger.debug(
         'Failed to double-fetch',
@@ -159,9 +157,17 @@ class PageCache {
 }
 
 export default class DoublefetchPageHandler {
-  constructor({ jobScheduler, sanitizer, newPageApprover }) {
-    this.sanitizer = sanitizer;
-    this.newPageApprover = newPageApprover;
+  constructor({
+    jobScheduler,
+    sanitizer,
+    newPageApprover,
+
+    // by default, use a separate fetcher cache per job
+    pageFetcherProvider = () => new CachedPageFetcher(),
+  }) {
+    this.sanitizer = requireParam(sanitizer);
+    this.newPageApprover = requireParam(newPageApprover);
+    this.pageFetcherProvider = requireParam(pageFetcherProvider);
     this.downloadLimit = 2 * 1024 * 1024; // 2 MB
 
     const config = {
@@ -198,9 +204,7 @@ export default class DoublefetchPageHandler {
     const canonicalUrl = preDoublefetch?.meta?.canonicalUrl;
     const canonicalUrlDiffers = canonicalUrl && canonicalUrl !== url;
 
-    // TODO: perhaps share this cache
-    const pageCache = new PageCache();
-
+    const pageFetcher = this.pageFetcherProvider();
     const log = logger.debug.bind(logger.debug, `[doublefetch=${url}]`);
     const logWarn = logger.warn.bind(logger.warn, `[doublefetch=${url}]`);
 
@@ -210,19 +214,21 @@ export default class DoublefetchPageHandler {
           return { ok: false, details: 'marked as private in bloom filter' };
         }
 
-        const { pageStructure, rejectReason } = await pageCache.doublefetchUrl(
-          urlToTest,
-        );
+        const { pageStructure, rejectReason } =
+          await pageFetcher.doublefetchUrl(urlToTest);
         if (!pageStructure) {
           return { ok: false, details: rejectReason };
         }
-        if (urlToTest === url) {
-          const canonicalUrl2 = pageStructure?.meta?.canonicalUrl;
-          const canonicalUrl2Differs =
-            canonicalUrl2 &&
-            canonicalUrl2 !== canonicalUrl &&
-            canonicalUrl2 !== url;
-          if (canonicalUrl2Differs) {
+
+        const canonicalUrl2 = pageStructure?.meta?.canonicalUrl;
+        if (canonicalUrl2) {
+          if (!isCanonicalUrl && urlToTest === canonicalUrl2) {
+            log(
+              'Found a matching canonical URL in doublefetch result for URL:',
+              urlToTest,
+            );
+            isCanonicalUrl = true;
+          } else if (urlToTest === url && canonicalUrl2 !== canonicalUrl) {
             log(
               'Updated canonical URL from',
               canonicalUrl,
@@ -230,7 +236,9 @@ export default class DoublefetchPageHandler {
               canonicalUrl2,
             );
             try {
-              const result = checkUrl(canonicalUrl2, { isCanonicalUrl: true });
+              const result = await checkUrl(canonicalUrl2, {
+                isCanonicalUrl: true,
+              });
               if (result.ok) {
                 return result;
               }
@@ -446,10 +454,7 @@ export default class DoublefetchPageHandler {
         'There are strong indicators that the page is public. Skipping static checks for the URL:',
         safePage.url,
       );
-    } else if (
-      (isCanonicalUrl && (safePage.requestedIndex || isIndexed)) ||
-      (safePage.requestedIndex && isIndexed)
-    ) {
+    } else if (isCanonicalUrl || isIndexed || safePage.requestedIndex) {
       const { result, reason } = sanitizeUrl(safePage.url);
       if (result !== 'safe') {
         logWarn(
