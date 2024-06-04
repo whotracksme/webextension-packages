@@ -1,3 +1,15 @@
+# v5.0.15 (Tue Jun 04 2024)
+
+#### 🐛 Bug Fix
+
+- Improve the heuristics for double-fetch on pages where the [#83](https://github.com/whotracksme/webextension-packages/pull/83) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.14 (Thu May 16 2024)
 
 #### 🐛 Bug Fix
