@@ -616,6 +616,107 @@ describe('#titlesMatchAfterDoublefetch', function () {
       });
     }
   });
+
+  describe('when the encoding is broken after doublefetch', function () {
+    describe('should have some tolerance for broken characters', function () {
+      for (const { before, after } of [
+        {
+          before: 'Imputada la de Sánchez (presuntamente) | España',
+          after: 'Imputada la de S�nchez (presuntamente) | Espa�a',
+        },
+        {
+          before: 'Opinión. Editoriales y columnas | EL MUNDO',
+          after: '\nOpini�n. Editoriales y columnas | EL MUNDO ',
+        },
+        {
+          before:
+            'Zaragoza reclama el impago de 28 millones de euros en fondos europeos al Gobierno y amenaza con denunciarlo en Bruselas | Aragón',
+          after:
+            'Zaragoza reclama el impago de 28 millones de euros en fondos europeos al Gobierno y amenaza con denunciarlo en Bruselas | Arag�n',
+        },
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCatalu�a - Noticias de Catalu�a | EL MUNDO ',
+        },
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCatalu�a - Noticias de Cataluña | EL MUNDO ',
+        },
+        {
+          before: 'AKŞAM - Haberler - Son Dakika Haberleri',
+          after: 'AK�AM - Haberler - Son Dakika Haberleri',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldMatch(before, after);
+        });
+      }
+    });
+
+    describe('should have some tolerance even if it is not consistently broken', function () {
+      for (const { before, after } of [
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCataluña - Noticias de Cataluña | EL MUNDO ',
+        },
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCatalu�a - Noticias de Cataluña | EL MUNDO ',
+        },
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCataluña - Noticias de Catalu�a | EL MUNDO ',
+        },
+        {
+          before: 'Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nCatalu�a - Noticias de Catalu�a | EL MUNDO ',
+        },
+        {
+          before: 'öäÖÄß€ Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nöäÖÄß€ Catalu�a - Noticias de Catalu�a | EL MUNDO ',
+        },
+        {
+          before: 'öäÖÄß€ Cataluña - Noticias de Cataluña | EL MUNDO',
+          after: '\nöäÖÄ�€ Catalu�a - Noticias de Catalu�a | EL MUNDO ',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldMatch(before, after);
+        });
+      }
+    });
+
+    describe('should only tolerate encoding errors for non-ascii characters', function () {
+      for (const { before, after } of [
+        {
+          before: 'This is a pure ascii text',
+          after: 'This is a p�re ascii text',
+        },
+        {
+          before: 'Imputada la de Sánchez (presuntamente) | España',
+          after: '�mputada la de S�nchez (presuntamente) | Espa�a',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldNotMatch(before, after);
+        });
+      }
+    });
+
+    describe('should still reject if doublefetch encoding errors destroy too much', function () {
+      for (const { before, after } of [
+        { before: 'á', after: '�' },
+        {
+          before: 'Imputada la de Sánchez (presuntamente) | España',
+          after: '�������� �� �� ������� (presuntamente) | Espa�a',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldNotMatch(before, after);
+        });
+      }
+    });
+  });
 });
 
 describe('#sanitizeActivity', function () {

@@ -710,6 +710,8 @@ describe('#sanitizeUrl', function () {
         'https://www.huffpost.com/entry/peter-thiel-trump-2024_n_654ddddee4b0373d70b196d1',
         'https://www.lbc.co.uk/world-news/1fe04e54197741a9accba85a1abaf21c/',
         'https://www.ouest-france.fr/monde/israel/ce-que-lon-sait-des-journalistes-accuses-davoir-couvert-lattaque-du-hamas-le-7-octobre-en-israel-e30b9f18-7fd5-11ee-a407-397218b61e71',
+        'https://www.elmundo.es/espana/2024/06/05/665f542fe9cf4a3c598b4584.html',
+        'https://www.sueddeutsche.de/wissen/palaeoanthropologie-menschenaffen-hammerschmiede-lux.Pwq48LbZ4WW92NgCaZWiJT',
       ].forEach((url) => {
         it(`should allow URL: ${url}`, function () {
           shouldBeSafe(url);
@@ -939,6 +941,7 @@ describe('#sanitizeUrl', function () {
         'https://biblehub.com/sermons/auth/aitken/king_of_kings_and_lord_of_lords.htm',
         'https://biblehub.com/sermons/auth/benson/an_acquaintance_with_christ_the_foundation_of_experimental_and_practical_religion.htm',
         'https://akveo.github.io/nebular/docs/auth/getting-user-token',
+        'https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/GettingStarted.html',
       ].forEach((url) => {
         it(`should allow URL: ${url}`, function () {
           shouldBeSafe(url);
