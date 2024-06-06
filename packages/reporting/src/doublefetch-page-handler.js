@@ -69,6 +69,37 @@ export function titlesMatchAfterDoublefetch({
     return true;
   }
 
+  // sometimes encodings are broken after doublefetch (e.g. "Sánchez" -> "S�nchez")
+  if (after.includes('�')) {
+    const nonPrintableAscii = /[^\x20-\x7f]/g;
+    const brokenBefore = before.replace(nonPrintableAscii, '�');
+    const brokenAfter = after.replace(nonPrintableAscii, '�');
+    const start = brokenAfter.indexOf(brokenBefore);
+    if (start >= 0) {
+      let brokenChars = 0;
+      for (let i = 0; i < before.length; i += 1) {
+        const beforeChar = before.codePointAt(i);
+        const afterChar = after.codePointAt(start + i);
+        if (beforeChar === afterChar) {
+          continue;
+        }
+
+        // Tolerate it if a non-printable ASCII character has been replaced by '�'.
+        if ((beforeChar < 0x20 || beforeChar > 0x7f) && afterChar === 65533) {
+          brokenChars += 1;
+        } else {
+          return false;
+        }
+      }
+
+      // Note: this is a bit abitrary, but the idea is to detect
+      // if significant parts of the string got replaced
+      if (brokenChars < 0.2 * after.length && !after.includes('���')) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -392,7 +423,7 @@ export default class DoublefetchPageHandler {
       })
     ) {
       return discard(
-        `titles do not match the page title: <<${before.title}>> ==> <<${after.title}>>`,
+        `titles do not match the page title: <<${page.title}>> ==> <<${after.title}>>`,
       );
     }
     if (
