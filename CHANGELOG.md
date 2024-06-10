@@ -1,3 +1,15 @@
+# v5.0.16 (Mon Jun 10 2024)
+
+#### 🐛 Bug Fix
+
+- Better handling of situation where encoding gets broken after doublefetch [#84](https://github.com/whotracksme/webextension-packages/pull/84) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.15 (Tue Jun 04 2024)
 
 #### 🐛 Bug Fix
