@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-// The concept here is taken from ../../anonymous-communication/src/errors.es
+// The concept here is taken from ../../communication/src/errors.es
 // (see comments there for details). In a nutshell, by classifying errors in
 // being either recoverable or permanent, you can give hints to steer
 // the error recovery.
