@@ -9,6 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import InMemoryDatabase from '../../../anonymous-communication/test/helpers/in-memory-database.js';
+import InMemoryDatabase from '../../../communication/test/helpers/in-memory-database.js';
 
 export default InMemoryDatabase;
