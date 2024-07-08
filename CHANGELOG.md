@@ -1,3 +1,15 @@
+# v5.0.17 (Mon Jul 08 2024)
+
+#### 🐛 Bug Fix
+
+- Reorganize the codebase [#85](https://github.com/whotracksme/webextension-packages/pull/85) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.0.16 (Mon Jun 10 2024)
 
 #### 🐛 Bug Fix
