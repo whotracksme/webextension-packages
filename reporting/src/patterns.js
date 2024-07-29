@@ -94,6 +94,8 @@ import {
  * 2) Returning "null"/"undefined" has the semantic of stopping the
  *    execution without an error. It is still possible that a
  *    message will be sent, but with a missing value.
+ *
+ * After adding a new transformation, increase the API version (see PATTERN_DSL_VERSION).
  */
 const TRANSFORMS = new Map(
   Object.entries({
@@ -105,6 +107,8 @@ const TRANSFORMS = new Map(
      * - "/example.test/path?foo=bar+baz" -> "bar baz"
      * - "/example.test/path" -> null
      * - "This is a string but not an URL" -> null
+     *
+     * @since: 1
      */
     queryParam: (url, queryParam) => {
       requireString(url);
@@ -133,6 +137,8 @@ const TRANSFORMS = new Map(
      *
      * Example ["removeParams", ["foo", "bar"]]:
      * - "https://example.test/path?foo=1&bar=2" -> "https://example.test/path"
+     *
+     * @since: 1
      */
     removeParams: (url, queryParams) => {
       requireString(url);
@@ -147,6 +153,8 @@ const TRANSFORMS = new Map(
     /**
      * Given text, it will verify that it is a well-formed URL;
      * otherwise, it will end the processing by "nulling" it out.
+     *
+     * @since: 1
      */
     requireURL: (url) => {
       requireString(url);
@@ -154,9 +162,23 @@ const TRANSFORMS = new Map(
     },
 
     /**
+     * Validates if the given value is in a predefined list of allowed
+     * values; otherwise, it will end the processing by "nulling" it out.
+     *
+     * @since: 2
+     */
+    filterExact: (text, allowedStrings) => {
+      requireString(text);
+      requireArrayOfStrings(allowedStrings);
+      return allowedStrings.includes(text) ? text : null;
+    },
+
+    /**
      * Given a URL, it runs a set of extra checks to filter out
      * parts that may be sensitive (i.e. keeping only the hostname),
      * or even drop it completely.
+     *
+     * @since: 1
      */
     maskU: (url) => {
       requireString(url);
@@ -174,6 +196,8 @@ const TRANSFORMS = new Map(
      * URLs that can be dropped without causing much harm, using "strictMaskU"
      * can be useful. However, it will drop many harmless URLs; in other words,
      * expect a high number of false-positives.
+     *
+     * @since: 1
      */
     strictMaskU: (url) => {
       requireString(url);
@@ -186,6 +210,8 @@ const TRANSFORMS = new Map(
 
     /**
      * Like "maskU", but tries to preserve the URL path when truncating.
+     *
+     * @since: 1
      */
     relaxedMaskU: (url) => {
       requireString(url);
@@ -197,6 +223,9 @@ const TRANSFORMS = new Map(
       }
     },
 
+    /**
+     * @since: 1
+     */
     split: (text, splitON, arrPos) => {
       requireString(text);
       requireString(splitON);
@@ -209,6 +238,9 @@ const TRANSFORMS = new Map(
       return parts[arrPos] ?? null;
     },
 
+    /**
+     * @since: 1
+     */
     trySplit: (text, splitON, arrPos) => {
       requireString(text);
       requireString(splitON);
@@ -217,6 +249,9 @@ const TRANSFORMS = new Map(
       return text.split(splitON)[arrPos] || text;
     },
 
+    /**
+     * @since: 1
+     */
     decodeURIComponent: (text) => {
       requireString(text);
       try {
@@ -226,6 +261,9 @@ const TRANSFORMS = new Map(
       }
     },
 
+    /**
+     * @since: 1
+     */
     tryDecodeURIComponent: (text) => {
       requireString(text);
       try {
@@ -240,6 +278,8 @@ const TRANSFORMS = new Map(
      * given path. By default, it will only extract safe types (strings,
      * numbers, booleans), mostly to prevent accidentally extracting
      * more than intended.
+     *
+     * @since: 1
      */
     json: (text, path, extractObjects = false) => {
       requireString(text);
@@ -285,7 +325,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 1;
+const PATTERN_DSL_VERSION = 2;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but
