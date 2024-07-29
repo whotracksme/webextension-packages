@@ -413,6 +413,169 @@ describe('#computeDeduplicationKey', function () {
     );
   });
 
+  it('should handle the expansion of array-like objects', function () {
+    duplicatedPayload(
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'bar',
+        },
+      },
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'bar',
+        },
+      },
+      '[].x',
+    );
+
+    nonDuplicatedPayload(
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'bar',
+        },
+      },
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'not bar',
+        },
+      },
+      '[].x',
+    );
+
+    duplicatedPayload(
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'bar',
+        },
+      },
+      {
+        0: {
+          x: 'foo',
+        },
+        1: {
+          x: 'bar',
+          ignore: 'not part of key',
+        },
+      },
+      '[].x',
+    );
+
+    duplicatedPayload(
+      {
+        x: {
+          foo: 'foo',
+          bar: 'bar',
+        },
+        y: {
+          foo: 'foo',
+          bar: 'bar',
+        },
+      },
+      {
+        y: {
+          bar: 'bar',
+          foo: 'foo',
+        },
+        x: {
+          bar: 'bar',
+          foo: 'foo',
+        },
+      },
+      '[].foo,[].bar',
+    );
+  });
+
+  it('should handle the expansion of plain objects', function () {
+    duplicatedPayload(
+      {
+        foo: 'foo',
+        bar: 'bar',
+      },
+      {
+        bar: 'bar',
+        foo: 'foo',
+      },
+      '[]',
+    );
+
+    duplicatedPayload(
+      {
+        foo: {
+          x: 'foo',
+        },
+        bar: {
+          x: 'bar',
+        },
+      },
+      {
+        bar: {
+          x: 'bar',
+        },
+        foo: {
+          x: 'foo',
+        },
+      },
+      '[].x',
+    );
+
+    nonDuplicatedPayload(
+      {
+        foo: {
+          x: 'foo',
+          y: 'only in first elem',
+        },
+        bar: {
+          x: 'bar',
+        },
+      },
+      {
+        bar: {
+          x: 'bar',
+        },
+        foo: {
+          x: 'foo',
+        },
+      },
+      '[].x,[].y',
+    );
+
+    duplicatedPayload(
+      {
+        foo: {
+          x: 'foo',
+          y: 'only in first elem, but will be ignored',
+        },
+        bar: {
+          x: 'bar',
+        },
+      },
+      {
+        bar: {
+          x: 'bar',
+        },
+        foo: {
+          x: 'foo',
+        },
+      },
+      '[].x',
+    );
+  });
+
   it('should ignore the order of fields (non-nested)', function () {
     duplicatedPayload(
       {
