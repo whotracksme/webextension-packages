@@ -78,13 +78,20 @@ function runSelector(item, selector, attr, baseURI) {
 
 function runTransforms(value, transformSteps = []) {
   if (!Array.isArray(transformSteps)) {
-    throw new BadPatternError('Transform definitions must be array.');
+    throw new BadPatternError(
+      'Transform definitions must be an array (of arrays).',
+    );
   }
   if (value === undefined || value === null) {
     return null;
   }
   let tmpValue = value;
   for (const step of transformSteps) {
+    if (!Array.isArray(step)) {
+      throw new BadPatternError(
+        'Single transform definitions must be an array.',
+      );
+    }
     const [name, ...args] = step;
     const transform = lookupBuiltinTransform(name);
     tmpValue = transform(tmpValue, ...args);
