@@ -1,3 +1,15 @@
+# v5.1.18 (Thu Aug 01 2024)
+
+#### 🐛 Bug Fix
+
+- Abort if a transform rule is not well-formed [#88](https://github.com/whotracksme/webextension-packages/pull/88) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.0.17 (Mon Jul 08 2024)
 
 #### 🐛 Bug Fix
