@@ -279,7 +279,7 @@ describe('Test builtin primitives', function () {
     });
 
     describe('robustness on untrusted data', function () {
-      it('should fail if input is not [string] (more parameters are ignored)', function () {
+      it('should fail if input is not [string, [string]] (more parameters are ignored)', function () {
         expect(() => removeParams()).to.throw();
         expect(() => removeParams('too few arguments')).to.throw();
         expect(() => removeParams({ wrong: 'types' }, 42)).to.throw();
@@ -358,6 +358,83 @@ describe('Test builtin primitives', function () {
             fc.webUrl({ withQueryParameters: true, withFragments: true }),
             (untrustedUrl) => {
               expect(requireURL(untrustedUrl)).to.eql(untrustedUrl);
+            },
+          ),
+        );
+      });
+    });
+  });
+
+  describe('#filterExact', function () {
+    let filterExact;
+
+    beforeEach(function () {
+      filterExact = lookupBuiltinTransform('filterExact');
+    });
+
+    describe('core functionality', function () {
+      it('should accept any string that is allowed', function () {
+        expect(filterExact('allowed', ['allowed'])).to.eql('allowed');
+        expect(filterExact('', [''])).to.eql('');
+        expect(filterExact(' ', [' '])).to.eql(' ');
+        expect(filterExact('0', ['0'])).to.eql('0');
+        expect(filterExact('false', ['false'])).to.eql('false');
+      });
+
+      it('should reject any string that is not in the allowed list', function () {
+        expect(filterExact('rejected', ['allowed'])).to.eql(null);
+        expect(filterExact('rejected', [])).to.eql(null);
+        expect(filterExact('', ['allowed'])).to.eql(null);
+        expect(filterExact('', [])).to.eql(null);
+      });
+
+      it('should accept all matching texts', function () {
+        fc.assert(
+          fc.property(fc.array(fc.string()), (allowedTexts) => {
+            for (const text of allowedTexts) {
+              expect(filterExact(text, allowedTexts)).to.eql(text);
+            }
+          }),
+        );
+      });
+
+      it('should drop all non-matching untrustedTexts', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+            expect(filterExact(untrustedText, [])).to.eql(null);
+            expect(
+              filterExact(untrustedText, [untrustedText + 'force_mismatch']),
+            ).to.eql(null);
+            expect(
+              filterExact(untrustedText, [
+                untrustedText + 'force_mismatch',
+                untrustedText + 'also_force_mismatch',
+              ]),
+            ).to.eql(null);
+          }),
+        );
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, [string]] (more parameters are ignored)', function () {
+        expect(() => filterExact()).to.throw();
+        expect(() => filterExact({ wrong: 'types' }, 42)).to.throw();
+        expect(() => filterExact('text', 42).to.throw());
+        expect(() => filterExact('text', '42').to.throw());
+        expect(() => filterExact(42, null).to.throw());
+      });
+
+      it('should not fail on well-formed but arbitrary text', function () {
+        fc.assert(
+          fc.property(
+            fc.fullUnicodeString(),
+            fc.array(fc.string()),
+            (untrustedText, allowedValues) => {
+              expect(filterExact(untrustedText, allowedValues)).to.be.oneOf([
+                untrustedText,
+                null,
+              ]);
             },
           ),
         );
