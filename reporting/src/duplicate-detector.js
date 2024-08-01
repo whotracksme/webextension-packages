@@ -65,6 +65,18 @@ function extractPath(obj, path, pos = 0) {
       if (results.length > 0) {
         return { match: true, value: results };
       }
+    } else if (obj && typeof obj === 'object') {
+      // handle plain objects
+      const results = {};
+      for (const [key, val] of Object.entries(obj)) {
+        const { match, value } = extractPath(val, path, pos + 1);
+        if (match) {
+          results[key] = value;
+        }
+      }
+      if (Object.keys(results).length > 0) {
+        return { match: true, value: results };
+      }
     }
     return { match: false };
   }
