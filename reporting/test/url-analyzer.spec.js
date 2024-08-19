@@ -39,6 +39,31 @@ describe('#UrlAnalyzer', function () {
         });
 
         for (const [expectedType, examples] of Object.entries({
+          'search-gos': {
+            'https://scholar.google.com/scholar?hl=de&as_sdt=0,5&q=biontech+pennsylvania':
+              {
+                query: 'biontech pennsylvania',
+                doublefetchUrl:
+                  'https://scholar.google.com/scholar?q=biontech+pennsylvania',
+              },
+            'https://scholar.google.de/scholar?hl=de&as_sdt=0%2C5&q=gauss-newton+algorithm&btnG=':
+              {
+                query: 'gauss-newton algorithm',
+                doublefetchUrl:
+                  'https://scholar.google.de/scholar?q=gauss-newton+algorithm',
+              },
+            'https://scholar.google.de/scholar?hl=de&as_sdt=0%2C5&q=llm&btnG=':
+              {
+                query: 'llm',
+                doublefetchUrl: 'https://scholar.google.de/scholar?q=llm',
+              },
+            'https://scholar.google.de/scholar?hl=de&as_sdt=0%2C5&q=llm+mistral&btnG=':
+              {
+                query: 'llm mistral',
+                doublefetchUrl:
+                  'https://scholar.google.de/scholar?q=llm+mistral',
+              },
+          },
           'search-goi': {
             'https://www.google.com/search?q=cat&sca_upv=1&hl=de&iflsig=ANes7DEAAAAAZhQcpulunO2PBVNfBmacf9LnDZWNgzgJ&uact=5&udm=2':
               {

@@ -18,6 +18,11 @@ import logger from './logger';
  */
 const URL_PATTERNS = [
   {
+    category: 'search-gos',
+    regexp: /^https:[/][/]scholar[.]google[.][^/]+[/]scholar.*[?&]q=/,
+    prefix: 'scholar?q=',
+  },
+  {
     category: 'search-goi',
     regexp:
       /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*udm=2)|(udm=2&([^&]+&)*q=[^&]+))/,
