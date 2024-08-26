@@ -1,3 +1,15 @@
+# v5.1.21 (Mon Aug 26 2024)
+
+#### 🐛 Bug Fix
+
+- Extend the list of public search engines [#89](https://github.com/whotracksme/webextension-packages/pull/89) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.20 (Thu Aug 01 2024)
 
 #### 🐛 Bug Fix
