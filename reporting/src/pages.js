@@ -53,7 +53,11 @@ export const WINDOW_ID_CURRENT = -2;
  *
  * For more details on lazy variables, see Pages#_setLazyVar.
  *
- * Note: the implementation assumes that objects are free of cycles
+ * Notes:
+ * - the implementation assumes that objects are free of cycles
+ * - as part of the serialization, explicit mappings to "undefined" will be omitted
+ *   (this is consistent with JSON.stringify; if you need keys with optional values,
+ *    you can map to "null" instead)
  *
  * (exported for tests only)
  */
@@ -70,14 +74,21 @@ export function stripLazyVars(obj) {
   if (Object(obj) !== obj || obj.constructor === Date) {
     return obj;
   }
+
   const result = {};
+  const set = (key, val) => {
+    const v = stripLazyVars(val);
+    if (v !== undefined) {
+      result[key] = v;
+    }
+  };
   for (const [key, val] of Object.entries(obj)) {
     if (val?._pending) {
       if (val.result && val.result !== CANCEL_LAZY_VAR) {
-        result[key] = stripLazyVars(val.result);
+        set(key, val.result);
       }
     } else {
-      result[key] = stripLazyVars(val);
+      set(key, val);
     }
   }
   return result;
@@ -527,7 +538,13 @@ export default class Pages {
   _deserializeTabContent(tabContent) {
     const result = {};
     Object.entries(tabContent).forEach(([key, val]) => {
-      if (val._pending) {
+      if (val === undefined) {
+        logger.warn(
+          '"undefined" mappings should not have been serialized:',
+          key,
+          '(drop and continue...)',
+        );
+      } else if (val?._pending) {
         logger.warn(
           'Lazy variable should not have been serialized (since they are promises):',
           key,
@@ -552,7 +569,6 @@ export default class Pages {
 
   _restoreTabs(openTabs) {
     if (openTabs) {
-      // TODO: maybe merge together?
       const deserializedTabs = Object.entries(openTabs).map(
         ([tabId, tabContent]) => [
           tabId,
@@ -1582,11 +1598,6 @@ export default class Pages {
     }
   }
 
-  // TODO:
-  // Maybe extract this functionality.
-  // Caching old values could also help. Not primarily for performance
-  // (though it could make help for that as well), but to put "unknown"
-  // into the right visibility category if possible.
   _checkPageVisibility(url) {
     if (!isRealPage(url)) {
       return {
@@ -1626,19 +1637,19 @@ export default class Pages {
   // This provides a low-level mechanism to safely deal with values
   // that need asynchronous initialization.
   // Other classes should not be aware of it, since they should only
-  // operate on snapshots (which don't export myChecks operations).
+  // operate on snapshots (which don't export pending async operations).
   // Neither should it be needed to understand it while accessing values
-  // during debugging; once the operations are finished, they only
+  // during debugging; once the operations are finished, then only
   // the actual results will be preserved.
   //
   // Notes:
-  // - "asyncInit" is not expected not throw. If it may fail, define an
+  // - "asyncInit" is not expected to throw. If it may fail, define an
   //   explicit error state (e.g. CANCEL_LAZY_VAR) and resolve with that.
   // - To safely read the value, you can use the "_tryUnwrapLazyVar" helper.
   //   Note that "CANCEL_LAZY_VAR" will be interpreted as error cases
   //   and results in missing values (i.e. the callback does not trigger).
   // - There is limited support for lazy vars to depend on each other
-  //   (see _awaitLazyVar), but be careful when using it since you get
+  //   (see _awaitLazyVar); but be careful when using it since you get
   //   only weak guarantees (e.g. the lazy var might not be present yet).
   //   If you have important dependencies, consider merging them together
   //   in one big lazy var (within the async init, dependencies are
