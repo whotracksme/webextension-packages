@@ -569,9 +569,47 @@ describe('#stripLazyVars', function () {
       { foo: 1 },
       { foo: 1, bar: { baz: 2 } },
       { foo: NaN },
+      { foo: null },
+      [null],
+      [NaN],
+      [undefined],
     ])) {
       it(`- example ${pos}: ${JSON.stringify(value)}`, async function () {
         expect(stripLazyVars(value)).to.eql(value);
+      });
+    }
+  });
+
+  describe('should omit keys that map to "undefined"', async function () {
+    for (const [pos, { before, after }] of Object.entries([
+      {
+        before: {
+          foo: undefined,
+        },
+        after: {},
+      },
+      {
+        before: {
+          foo: {
+            bar: undefined,
+          },
+        },
+        after: {
+          foo: {},
+        },
+      },
+      {
+        before: {
+          foo: 42,
+          bar: undefined,
+        },
+        after: {
+          foo: 42,
+        },
+      },
+    ])) {
+      it(`- example ${pos}: ${JSON.stringify(before)}`, async function () {
+        expect(stripLazyVars(before)).to.eql(after);
       });
     }
   });
@@ -621,6 +659,47 @@ describe('#stripLazyVars', function () {
                 result: CANCEL_LAZY_VAR,
               },
             },
+          },
+        },
+        after: {
+          foo: {},
+        },
+      },
+      {
+        before: {
+          pageStructure: CANCEL_LAZY_VAR,
+        },
+        after: {},
+      },
+      {
+        before: {
+          status: 'complete',
+          title:
+            'A comparison of the Gauss–Newton and quasi-Newton methods in resistivity imaging inversion - ScienceDirect',
+          url: 'https://www.sciencedirect.com/science/article/abs/pii/S0926985101001069',
+          windowId: 1500,
+          lastUpdatedAt: 1724851933284,
+          pageId: 1354398384,
+          visibility: 'unknown',
+          pageStructure: CANCEL_LAZY_VAR,
+          language: 'en',
+        },
+        after: {
+          status: 'complete',
+          title:
+            'A comparison of the Gauss–Newton and quasi-Newton methods in resistivity imaging inversion - ScienceDirect',
+          url: 'https://www.sciencedirect.com/science/article/abs/pii/S0926985101001069',
+          windowId: 1500,
+          lastUpdatedAt: 1724851933284,
+          pageId: 1354398384,
+          visibility: 'unknown',
+          language: 'en',
+        },
+      },
+      {
+        before: {
+          foo: {
+            pageStructure: CANCEL_LAZY_VAR,
           },
         },
         after: {
