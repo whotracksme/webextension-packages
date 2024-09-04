@@ -1,3 +1,15 @@
+# v5.1.22 (Wed Sep 04 2024)
+
+#### 🐛 Bug Fix
+
+- Update web-ext [#91](https://github.com/whotracksme/webextension-packages/pull/91) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.21 (Mon Aug 26 2024)
 
 #### 🐛 Bug Fix
