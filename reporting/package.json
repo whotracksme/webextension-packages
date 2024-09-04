@@ -32,7 +32,7 @@
     "sinon": "^15.2.0",
     "sinon-chai": "^3.7.0",
     "sinon-chrome": "^3.0.1",
-    "web-ext": "^6.8.0"
+    "web-ext": "^8.2.0"
   },
   "dependencies": {
     "@cliqz/url-parser": "^1.1.5",
