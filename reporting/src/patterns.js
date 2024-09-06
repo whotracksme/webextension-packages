@@ -305,6 +305,14 @@ const TRANSFORMS = new Map(
         return '';
       }
     },
+
+    /**
+     * @since: 3
+     */
+    trim: (text) => {
+      requireString(text);
+      return text.trim();
+    },
   }),
 );
 
@@ -325,7 +333,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 2;
+const PATTERN_DSL_VERSION = 3;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but

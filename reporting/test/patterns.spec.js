@@ -825,4 +825,46 @@ describe('Test builtin primitives', function () {
       });
     });
   });
+
+  describe('#trim', function () {
+    let trim;
+
+    beforeEach(function () {
+      trim = lookupBuiltinTransform('trim');
+    });
+
+    describe('core functionality', function () {
+      it('"foo" -> "foo"', function () {
+        expect(trim('foo')).to.eql('foo');
+      });
+
+      it('"foo bar" -> "foo bar"', function () {
+        expect(trim('foo bar')).to.eql('foo bar');
+      });
+
+      it('"  foo  " -> "foo"', function () {
+        expect(trim('  foo  ', '_', 0)).to.eql('foo');
+      });
+
+      it('"" -> ""', function () {
+        expect(trim('')).to.eql('');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string] (more parameters are ignored)', function () {
+        expect(() => trim()).to.throw();
+        expect(() => trim({ wrong: 'types' })).to.throw();
+      });
+
+      it('should work on arbitrary strings and behave like String.trim', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+            const result = trim(untrustedText);
+            expect(result).to.be.a('string').and.to.eql(untrustedText.trim());
+          }),
+        );
+      });
+    });
+  });
 });
