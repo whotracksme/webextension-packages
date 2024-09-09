@@ -444,7 +444,7 @@ export default class JobScheduler {
           } else {
             logger.error('Job failed (unexpected error):', jobEntry.job, e);
           }
-          this.notifyObservers('jobFailed', jobEntry);
+          this.notifyObservers('jobFailed', jobEntry, e);
         } finally {
           now = Date.now();
           this._removeFromRunningQueue(jobEntry, now);
@@ -778,6 +778,16 @@ export default class JobScheduler {
         if (queue[state]) {
           count += queue[state].length;
         }
+      }
+    }
+    return count;
+  }
+
+  getTotalJobsInDlq() {
+    let count = 0;
+    for (const queue of Object.values(this.jobQueues)) {
+      if (queue.dlq) {
+        count += queue.dlq.length;
       }
     }
     return count;
