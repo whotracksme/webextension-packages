@@ -18,6 +18,7 @@ import Pages from './pages';
 import PageAggregator from './page-aggregator';
 import PageDB from './pagedb';
 import NewPageApprover from './new-page-approver';
+import NavTrackingDetector from './nav-tracking-detector';
 import MessageSender from './message-sender';
 import DuplicateDetector from './duplicate-detector';
 import DoublefetchPageHandler from './doublefetch-page-handler';
@@ -106,6 +107,7 @@ export default class Reporting {
     this.pages.addObserver(
       this.pageAggregator.onPageEvent.bind(this.pageAggregator),
     );
+    this.pages.addObserver(this._onPageEvent.bind(this));
 
     this.doublefetchPageHandler = new DoublefetchPageHandler({
       jobScheduler: this.jobScheduler,
@@ -124,6 +126,16 @@ export default class Reporting {
       quorumChecker: this.quorumChecker,
       countryProvider: this.countryProvider,
     });
+
+    this.navTrackingDetector = new NavTrackingDetector({
+      sanitizer: this.sanitizer,
+      persistedHashes: this.persistedHashes,
+      quorumChecker: this.quorumChecker,
+      jobScheduler: this.jobScheduler,
+    });
+    this.pages.addObserver(
+      this.navTrackingDetector.onPageEvent.bind(this.navTrackingDetector),
+    );
 
     this.duplicateDetector = new DuplicateDetector(this.persistedHashes);
     this.messageSender = new MessageSender({
@@ -195,6 +207,7 @@ export default class Reporting {
     await Promise.all([
       this.pages.init(),
       this.pageAggregator.init(),
+      this.navTrackingDetector.init(),
       this.duplicateDetector.init(),
       this.patternsUpdater.init(),
       this.countryProvider.init(),
@@ -211,6 +224,7 @@ export default class Reporting {
     try {
       this.duplicateDetector.unload();
       this.pages.unload();
+      this.navTrackingDetector.unload();
       this.pageAggregator.unload();
       this.jobScheduler.unload();
 
@@ -224,40 +238,41 @@ export default class Reporting {
     }
   }
 
-  /**
-   * Should be called when the user navigates to a new page.
-   *
-   * Calling this function alone should not have a noticable
-   * performance impact (both in terms of CPU or network).
-   *
-   * @return true iff new jobs were registered
-   */
-  async analyzeUrl(url) {
+  _onPageEvent(event) {
     if (!this.isActive) {
-      return false;
+      return;
     }
-    this.aliveCheck.ping();
-    await this._ensurePatternsAreUpToDate();
 
+    if (event.type === 'safe-page-navigation') {
+      logger.debug('Navigation in non-private tab detected:', event.url);
+      this.aliveCheck.ping();
+      this._onSafePageNavigation(event.url).catch((e) => {
+        logger.error('Failed to handle event', event, e);
+      });
+    }
+  }
+
+  async _onSafePageNavigation(url) {
+    await this._ensurePatternsAreUpToDate();
+    if (!this.isActive) {
+      return;
+    }
     const { isSupported, category, query, doublefetchRequest } =
       this.urlAnalyzer.parseSearchLinks(url);
-    if (!isSupported) {
-      return false;
+    if (isSupported) {
+      logger.debug('Potential report found on URL:', url);
+      await this.jobScheduler.registerJob({
+        type: 'doublefetch-query',
+        args: {
+          query,
+          category,
+          doublefetchRequest,
+        },
+        config: {
+          readyIn: { min: 2 * SECOND, max: 8 * SECOND },
+        },
+      });
     }
-
-    logger.debug('Potential report found on URL:', url);
-    await this.jobScheduler.registerJob({
-      type: 'doublefetch-query',
-      args: {
-        query,
-        category,
-        doublefetchRequest,
-      },
-      config: {
-        readyIn: { min: 2 * SECOND, max: 8 * SECOND },
-      },
-    });
-    return true;
   }
 
   async processPendingJobs() {
