@@ -112,8 +112,56 @@ class ChromeApiMock {
     if (initialState.openTabs) {
       uut.openTabs = new Map(initialState.openTabs);
     }
-    for (const { api, event, args } of recordedEvents) {
+
+    // eslint-disable-next-line no-undef
+    const verbose = __karma__.config.VERBOSE_REPLAY;
+    // eslint-disable-next-line no-undef
+    const runSelfChecks = __karma__.config.ENABLE_SELF_CHECKS;
+
+    const history = [];
+    for (let step = 0; step < recordedEvents.length; step += 1) {
+      const { startedAt, api, event, args } = recordedEvents[step];
+
+      // (optional) build a log of the intermediate states
+      const stateBeforeAction = verbose
+        ? uut.describe(startedAt)
+        : '<unavailable: set VERBOSE_REPLAY to enable>';
+      history.push({
+        stateBeforeAction,
+        step,
+        ...recordedEvents[step],
+      });
+      if (history.length > 100) {
+        history.shift();
+      }
+      if (verbose) {
+        console.log(`--- Executing step: ${step} ---`);
+        console.log(JSON.stringify(history.at(-1), null, 2));
+      }
+
+      // execute the next step (modifies the state)
       this[api][event].dispatch(...args);
+
+      // (optional) run self-checks
+      // Warning: this is async, so it may change the observation!
+      if (runSelfChecks) {
+        const check = await uut.selfChecks();
+        const { status, overview, log } = check.report();
+
+        if (status === 'FAILED') {
+          const ppOverview = JSON.stringify(overview, null, 2);
+          console.error(
+            `*** self checks failed after step=${step}:\n`,
+            ppOverview,
+            '\n--- begin details ---:\n',
+            JSON.stringify(log, null, 2),
+            '\n--- end details ---',
+          );
+          throw new Error(
+            `self checks failed after step=${step} (for details, see logs)`,
+          );
+        }
+      }
     }
   }
 }
@@ -173,7 +221,7 @@ describe('#Pages', function () {
     let chromeApiMock;
     let urlAnalyzer;
 
-    function runScenario(name, { notes, expectations, events }) {
+    async function runScenario(name, { notes, expectations, events }) {
       const { initialState, recorded } = events || {};
       try {
         expect(notes, '<notes>').to.be.a('string');
@@ -186,7 +234,7 @@ describe('#Pages', function () {
         throw e;
       }
 
-      chromeApiMock.replay(uut, initialState, recorded);
+      await chromeApiMock.replay(uut, initialState, recorded);
       const state = uut.describe();
       try {
         const { expectedTabs, activeTab } = expectations;
@@ -499,7 +547,7 @@ describe('#Pages', function () {
                     'Broken test setup: expected a "scenario" field',
                   );
                 }
-                runScenario(name, fixture.scenario);
+                await runScenario(name, fixture.scenario);
                 testsPassed.push(name);
                 console.log(`test ${name}: PASSED`);
               } catch (e) {
