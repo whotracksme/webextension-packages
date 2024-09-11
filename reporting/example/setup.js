@@ -1,1 +1,1 @@
-globalThis.chrome = browser || chrome;
+globalThis.chrome = globalThis.browser || globalThis.chrome;
