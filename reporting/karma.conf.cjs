@@ -17,6 +17,8 @@ module.exports = function (config) {
     client: {
       TEST_FIXTURES_URL: process.env.TEST_FIXTURES_URL, // for test/search-extractor.spec.js
       REPLAY_FIXTURES_URL: process.env.REPLAY_FIXTURES_URL, // for test/pages.spec.js
+      VERBOSE_REPLAY: process.env.VERBOSE_REPLAY, // for test/pages.spec.js (better debugging)
+      ENABLE_SELF_CHECKS: process.env.ENABLE_SELF_CHECKS, // for test/pages.spec.js (might catch different bugs)
     },
   });
 };

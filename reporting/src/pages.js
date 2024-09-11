@@ -975,6 +975,10 @@ export default class Pages {
         windowId,
         lastUpdatedAt: now,
       };
+      if (!entry.pageId || entry.url !== oldTabEntry.url) {
+        entry.pageId = ++this._pageIdGenerator;
+      }
+
       this._initAllOptionalFields(tabId, entry, now);
       this.openTabs.set(tabId, entry);
       return;
@@ -1033,6 +1037,19 @@ export default class Pages {
               logger.debug('delaying redirect matching:', redirects);
               entry._unverifiedRedirects = [...redirects];
             }
+          }
+
+          // Note that 'redirecting' did not originate from the browser API; it is
+          // a meta state that represents the transition of an old to a new page.
+          // If a link opened in a new tab, we need to merge the opener.
+          if (
+            entry.openedFrom?.status === 'redirecting' &&
+            entry.openedFrom.openerTab
+          ) {
+            entry.openedFrom = {
+              ...entry.openedFrom.openerTab,
+              ...entry.openedFrom,
+            };
           }
 
           const previousUrl = entry.openedFrom?.url;
@@ -1233,6 +1250,7 @@ export default class Pages {
     const entry = {
       status: 'created',
       ...oldEntry,
+      pageId: ++this._pageIdGenerator,
       windowId,
       lastUpdatedAt: Date.now(),
       openerTab: { ...openerTab },
@@ -1241,9 +1259,8 @@ export default class Pages {
   }
 
   chrome_webNavigation_onBeforeNavigate(details) {
-    if (details.frameId !== 0) {
-      return;
-    }
+    if (details.frameId !== 0) return; // not top-level frame (of the active page)
+
     const { tabId, url } = details;
     const oldEntry = this.openTabs.get(tabId);
     if (oldEntry && oldEntry.url !== url) {
@@ -1265,9 +1282,8 @@ export default class Pages {
   // Safari quirks:
   // * The API exists, but "transitionType" is not supported
   chrome_webNavigation_onCommitted(details) {
-    if (details.frameId !== 0) {
-      return;
-    }
+    if (details.frameId !== 0) return; // not top-level frame (of the active page)
+
     const isBackOrForward =
       details.transitionQualifiers?.includes('forward_back');
 
@@ -1294,12 +1310,17 @@ export default class Pages {
     }
   }
 
-  // TODO: this needs to be thought through (the timing between chrome.tab and webNavigation might be subtle)
-  //
   // Safari quirks:
   // * This API is not available
+  //
+  // Firefox quirks (https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/TransitionQualifier):
+  // * 'server_redirect' is limited to top-level frames
+  // * 'client_redirect' is not supplied when redirections are created by JavaScript.
   chrome_webNavigation_onHistoryStateUpdated(details) {
-    const { tabId } = details;
+    const { tabId, frameId, parentFrameId } = details;
+    if (frameId !== 0) return; // not top-level frame (of the active page)
+    if (parentFrameId !== -1) return; // not main frame
+
     const entry = this.openTabs.get(tabId);
     if (!entry) {
       logger.warn('Navigation event in a non-existing tab detected!');
@@ -1360,25 +1381,22 @@ export default class Pages {
     }
   }
 
-  _initVisibility(tabId, entry) {
+  _initVisibility(tabId, entry, now) {
     if (!entry.visibility) {
       const { visibility, search } = this._checkPageVisibility(entry.url);
       entry.visibility = visibility;
-      if (visibility !== 'private') {
-        if (search) {
-          entry.search = {
-            category: search.category,
-            query: search.query,
-            depth: 0,
-            lastUpdatedAt: Date.now(),
-          };
-        }
+      if (visibility !== 'private' && search) {
+        entry.search = {
+          category: search.category,
+          query: search.query,
+          depth: 0,
+          lastUpdatedAt: now,
+        };
       }
     }
   }
 
-  _initAllOptionalFields(tabId, entry) {
-    const now = Date.now();
+  _initAllOptionalFields(tabId, entry, now) {
     const { pageId } = entry;
     this._initVisibility(tabId, entry, now);
     this._tryAnalyzePageStructure(tabId, entry, now);
@@ -1790,6 +1808,51 @@ export default class Pages {
       }
       if (pageIdClashes.length > 0) {
         check.warn('Found a pageId clash', Object.fromEntries(pageIdClashes));
+      }
+
+      // checks for the active tab
+      if (this.activeTab.tabId !== TAB_ID_NONE && this.activeTab.windowId) {
+        const entry = this.openTabs.get(this.activeTab.tabId);
+        if (entry?.windowId !== this.activeTab.windowId) {
+          check.fail('mismatch between the activeTab and the openTabs', {
+            activeTab: {
+              tabId: this.activeTab.tabId,
+              windowId: this.activeTab.windowId,
+            },
+            entry: entry ? { ...entry } : `<tab not found>`,
+          });
+        }
+      }
+
+      // checks for the "search" attribute
+      for (const [tabId, entry] of this.openTabs.entries()) {
+        if (isNil(entry.search)) {
+          continue;
+        }
+        const fail = (msg) => {
+          check.fail(`inconsistency: ${msg}`, { tabId, entry: { ...entry } });
+        };
+
+        if (isRealPage(entry.ref) && isRealPage(entry.url)) {
+          if (
+            entry.search.depth === 1 &&
+            this.urlAnalyzer.parseSearchLinks(entry.ref).category !==
+              entry.search.category &&
+            sameHostname(entry.ref, entry.url)
+          ) {
+            fail(
+              'depth=1 search landing must not include internal page navigation',
+            );
+          } else if (
+            entry.search.depth === 2 &&
+            !sameHostname(entry.ref, entry.url)
+          ) {
+            fail('depth=2 search landings must stay on the same domains');
+          }
+        }
+        if (![0, 1, 2].includes(entry.search.depth)) {
+          fail('depth must be in { 0, 1, 2 }');
+        }
       }
     })();
     await Promise.all([
