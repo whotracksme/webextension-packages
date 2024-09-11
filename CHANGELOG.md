@@ -1,3 +1,18 @@
+# v5.1.23 (Wed Sep 11 2024)
+
+#### 🐛 Bug Fix
+
+- New builtin: "trim" [#92](https://github.com/whotracksme/webextension-packages/pull/92) ([@philipp-classen](https://github.com/philipp-classen))
+- Fix chrome example [#93](https://github.com/whotracksme/webextension-packages/pull/93) ([@chrmod](https://github.com/chrmod))
+- Fixes a problem where the in-memory session could not be restored: [#90](https://github.com/whotracksme/webextension-packages/pull/90) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.22 (Wed Sep 04 2024)
 
 #### 🐛 Bug Fix
