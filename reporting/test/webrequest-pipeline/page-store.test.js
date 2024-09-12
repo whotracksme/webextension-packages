@@ -9,53 +9,51 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { describe, it, beforeAll, afterAll, expect, mock } from 'bun:test';
+import { mock } from 'sinon';
+import { expect } from 'chai';
 
 import PageStore from '../../src/webrequest-pipeline/page-store.js';
 import { PAGE_LOADING_STATE } from '../../src/webrequest-pipeline/page.js';
 
 describe('PageStore', () => {
-  beforeAll(() => {
+  beforeEach(() => {
+    chrome.flush();
     chrome.storage.session.get.yields({});
   });
 
-  afterAll(() => {
+  afterEach(() => {
     chrome.flush();
   });
 
   it('starts with empty tabs', async () => {
     const store = new PageStore({});
     await store.init();
-    expect(store.tabs._inMemoryMap).toEqual(new Map());
+    expect(store.tabs._inMemoryMap).to.deep.equal(new Map());
   });
 
-  describe('on chrome.tabs.onCreated', () => {
+  context('on chrome.tabs.onCreated', () => {
     it('creates a tab', async () => {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onCreated.dispatch(tab);
-      expect(store.tabs.has(tab.id)).toBeTruthy();
-      expect(store.tabs.get(tab.id)).toEqual(
-        expect.objectContaining({
-          id: 1,
-        }),
-      );
+      expect(store.tabs.has(tab.id)).to.be.true;
+      expect(store.tabs.get(tab.id)).to.deep.include({
+        id: tab.id,
+      });
     });
   });
 
-  describe('on chrome.tabs.onUpdated', () => {
+  context('on chrome.tabs.onUpdated', () => {
     it('creates a tab', async () => {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onUpdated.dispatch(tab.id, {}, tab);
-      expect(store.tabs.has(tab.id)).toBeTruthy();
-      expect(store.tabs.get(tab.id)).toEqual(
-        expect.objectContaining({
-          id: tab.id,
-        }),
-      );
+      expect(store.tabs.has(tab.id)).to.be.true;
+      expect(store.tabs.get(tab.id)).to.deep.include({
+        id: tab.id,
+      });
     });
 
     it('updates a tab', async () => {
@@ -63,31 +61,27 @@ describe('PageStore', () => {
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onCreated.dispatch(tab);
-      expect(store.tabs.has(tab.id)).toBeTruthy();
-      expect(store.tabs.get(tab.id)).toEqual(
-        expect.objectContaining({
-          id: tab.id,
-        }),
-      );
-      expect(store.tabs.get(tab.id)).toHaveProperty('url', undefined);
+      expect(store.tabs.has(tab.id)).to.be.true;
+      expect(store.tabs.get(tab.id)).to.deep.include({
+        id: tab.id,
+      });
+      expect(store.tabs.get(tab.id)).to.have.property('url', undefined);
       chrome.tabs.onUpdated.dispatch(tab.id, { url: 'about:blank' }, tab);
-      expect(store.tabs.get(tab.id)).toHaveProperty('url', 'about:blank');
+      expect(store.tabs.get(tab.id)).to.have.property('url', 'about:blank');
     });
   });
 
-  describe('on chrome.webNavigation.onBeforeNavigate', () => {
+  context('on chrome.webNavigation.onBeforeNavigate', () => {
     it('creates a tab', async () => {
       const store = new PageStore({});
       await store.init();
       const details = { tabId: 1, frameId: 0, url: 'about:blank' };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(store.tabs.has(details.tabId)).toBeTruthy();
-      expect(store.tabs.get(details.tabId)).toEqual(
-        expect.objectContaining({
-          id: details.tabId,
-          url: details.url,
-        }),
-      );
+      expect(store.tabs.has(details.tabId)).to.be.true;
+      expect(store.tabs.get(details.tabId)).to.deep.include({
+        id: details.tabId,
+        url: details.url,
+      });
     });
 
     it('stages the page', async () => {
@@ -101,13 +95,13 @@ describe('PageStore', () => {
         timeStamp: Date.now(),
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).to.not.have.been.called;
       store.tabs.get(details.tabId).updateState(PAGE_LOADING_STATE.COMPLETE);
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 300,
       });
-      expect(listener).toHaveBeenCalled();
+      expect(listener).to.have.been.called;
     });
 
     it('ignore duplicates', async () => {
@@ -121,13 +115,13 @@ describe('PageStore', () => {
         timeStamp: Date.now(),
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).to.not.have.been.called;
       store.tabs.get(details.tabId).updateState(PAGE_LOADING_STATE.COMPLETE);
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 1,
       });
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).to.not.have.been.called;
     });
   });
 });
