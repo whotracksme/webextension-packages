@@ -24,11 +24,18 @@ import { requireParam, requireString, lazyInitAsync } from './utils';
  * breaks something on Windows.
  */
 export default class AliveMessageGenerator {
-  constructor({ browserInfoProvider, quorumChecker, storage, storageKey }) {
+  constructor({
+    browserInfoProvider,
+    navigatorApi,
+    quorumChecker,
+    storage,
+    storageKey,
+  }) {
     requireParam(browserInfoProvider);
     this.quorumChecker = requireParam(quorumChecker);
     this.storage = requireParam(storage);
     this.storageKey = requireString(storageKey);
+    this.navigatorApi = navigatorApi || globalThis.navigator;
 
     this.staticConfigProvider = lazyInitAsync(async () =>
       this._generateBaseConfig(await browserInfoProvider()),
@@ -81,10 +88,10 @@ export default class AliveMessageGenerator {
 
     let language;
     try {
-      language = navigator.language;
+      language = this.navigatorApi.language;
     } catch (e) {
       logger.warn(
-        'Failed to access the "navigator" (should only happen when run in NodeJs)',
+        '"navigator" API unavailable (should only happen when run in NodeJs 20 or lower)',
       );
     }
     language = language || '';
