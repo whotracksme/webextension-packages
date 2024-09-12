@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from '../logger';
+import logger from '../logger.js';
 
 export const VALID_RESPONSE_PROPERTIES = {
   onBeforeRequest: ['cancel', 'redirectUrl'],

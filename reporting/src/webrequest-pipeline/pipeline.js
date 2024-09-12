@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger';
+import logger from './logger.js';
 
 /**
  * Handles a set of function pipelines. These pipelines start with an initial state

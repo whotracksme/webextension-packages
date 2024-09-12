@@ -21,7 +21,7 @@ describe('PageStore', function () {
     chrome.storage.session.get.yields({});
   });
 
-  afterEach(function () {
+  after(function () {
     chrome.flush();
   });
 
@@ -32,7 +32,7 @@ describe('PageStore', function () {
   });
 
   context('on chrome.tabs.onCreated', function () {
-    it('creates a tab', async function () {
+    it('creates a page', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -45,7 +45,7 @@ describe('PageStore', function () {
   });
 
   context('on chrome.tabs.onUpdated', function () {
-    it('creates a tab', async function () {
+    it('creates a page', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -56,7 +56,7 @@ describe('PageStore', function () {
       });
     });
 
-    it('updates a tab', async function () {
+    it('updates a page', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -72,7 +72,7 @@ describe('PageStore', function () {
   });
 
   context('on chrome.webNavigation.onBeforeNavigate', function () {
-    it('creates a tab', async function () {
+    it('creates a page', async function () {
       const store = new PageStore({});
       await store.init();
       const details = { tabId: 1, frameId: 0, url: 'about:blank' };

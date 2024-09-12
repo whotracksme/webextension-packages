@@ -9,8 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger';
-import ChromeStorageMap from '../request/utils/chrome-storage-map';
+import logger from './logger.js';
+import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
 
 function checkUserAgent(pattern) {
   return navigator.userAgent.indexOf(pattern) !== -1;

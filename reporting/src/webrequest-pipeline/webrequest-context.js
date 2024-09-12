@@ -9,8 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { parse } from '../utils/url';
-import logger from './logger';
+import { parse } from '../utils/url.js';
+import logger from './logger.js';
 
 /**
  * Transform an array of headers (i.e.: `{ name, value }`) into a `Map`.
