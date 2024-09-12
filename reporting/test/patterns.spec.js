@@ -801,6 +801,54 @@ describe('Test builtin primitives', function () {
       });
     });
 
+    describe('handling of native properties', function () {
+      // The observation is that some property names are implicitly provided:
+      //
+      // x = '';
+      // !!x['foo']       --> false
+      // !!x['bar']       --> false
+      // !!x['toString']  --> true
+      // !!x['__proto__'] --> true
+      [
+        // this list is incomplete, but should cover all primitive
+        '__proto__',
+        'constructor',
+        'hasOwnProperty',
+        'isPrototypeOf',
+        'propertyIsEnumerable',
+        'toLocaleString',
+        'toString',
+        'valueOf',
+        'toExponential',
+        'toFixed',
+        'toPrecision',
+      ].forEach((field) => {
+        it(`should ignore the inherited ${field} field`, function () {
+          expect(uut('"a"', field, true)).to.eql('');
+          expect(uut('["a"]', field, true)).to.eql('');
+          expect(uut('{"a":"b"}', field, true)).to.eql('');
+        });
+      });
+
+      // This is mostly documenting the status quo, which results from
+      // Object.has('foo', 'length') being true.
+      //
+      // Since this is so obscure, we should not built behavior on top of it.
+      // However, it is not opening up attacks, so there is also not much
+      // benefit in having extra logic to handle this situation.
+      it('should gracefully handle the implicit "length" field', function () {
+        expect(uut('"foo"', 'length')).to.eql('3');
+        expect(uut('"foo"', 'length', true)).to.eql('3');
+      });
+
+      it('should support an explicit "length" field', function () {
+        expect(uut('{"height": 17, "length": 42}', 'length')).to.eql('42');
+        expect(uut('{"height": 17, "length": 42}', 'length', true)).to.eql(
+          '42',
+        );
+      });
+    });
+
     describe('robustness on untrusted data', function () {
       it('should fail if input is not [string, string, [bool]]', function () {
         expect(() => uut()).to.throw();

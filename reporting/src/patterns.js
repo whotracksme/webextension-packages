@@ -288,6 +288,9 @@ const TRANSFORMS = new Map(
       try {
         let obj = JSON.parse(text);
         for (const field of path.split('.')) {
+          if (!Object.hasOwn(obj, field)) {
+            return '';
+          }
           obj = obj[field];
         }
         if (typeof obj === 'string') {
