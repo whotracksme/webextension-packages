@@ -19,6 +19,7 @@ describe('#AliveMessageGenerator', function () {
 
   const storageKey = 'some-storage-key';
   let browserInfoProvider;
+  let navigatorApi;
   let quorumChecker;
   let storage;
   let uut;
@@ -29,6 +30,7 @@ describe('#AliveMessageGenerator', function () {
   function newAliveMessageGenerator() {
     return new AliveMessageGenerator({
       browserInfoProvider,
+      navigatorApi,
       quorumChecker,
       storage,
       storageKey,
@@ -54,6 +56,9 @@ describe('#AliveMessageGenerator', function () {
       browser: 'Firefox',
       version: '122',
       os: 'Linux',
+      language: 'en-US',
+    };
+    navigatorApi = {
       language: 'en-US',
     };
     browserInfoProvider = async () => _browserInfo;
@@ -155,12 +160,14 @@ describe('#AliveMessageGenerator', function () {
         os: 'Linux',
         language: 'en-US',
       };
+      navigatorApi.language = 'de-DE';
+
       const message = await uut.generateMessage('de', '2024010203');
-      expect(message).to.deep.eql({
+      expect(message).to.eql({
         browser: 'Firefox',
         version: '122', // only major version
         os: 'Linux',
-        language: 'en-US',
+        language: 'de-DE', // from window.navigator
         ctry: 'de',
         t: '2024010203',
       });
@@ -173,7 +180,7 @@ describe('#AliveMessageGenerator', function () {
 
     it('should not share the config', async function () {
       const message = await uut.generateMessage('de', '2024010203');
-      expect(message).to.deep.eql({
+      expect(message).to.eql({
         browser: '',
         version: '',
         os: '',
