@@ -15,24 +15,24 @@ import { expect } from 'chai';
 import PageStore from '../../src/webrequest-pipeline/page-store.js';
 import { PAGE_LOADING_STATE } from '../../src/webrequest-pipeline/page.js';
 
-describe('PageStore', () => {
-  beforeEach(() => {
+describe('PageStore', function () {
+  beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
   });
 
-  afterEach(() => {
+  afterEach(function () {
     chrome.flush();
   });
 
-  it('starts with empty tabs', async () => {
+  it('starts with empty tabs', async function () {
     const store = new PageStore({});
     await store.init();
     expect(store.tabs._inMemoryMap).to.deep.equal(new Map());
   });
 
-  context('on chrome.tabs.onCreated', () => {
-    it('creates a tab', async () => {
+  context('on chrome.tabs.onCreated', function () {
+    it('creates a tab', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -44,8 +44,8 @@ describe('PageStore', () => {
     });
   });
 
-  context('on chrome.tabs.onUpdated', () => {
-    it('creates a tab', async () => {
+  context('on chrome.tabs.onUpdated', function () {
+    it('creates a tab', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -56,7 +56,7 @@ describe('PageStore', () => {
       });
     });
 
-    it('updates a tab', async () => {
+    it('updates a tab', async function () {
       const store = new PageStore({});
       await store.init();
       const tab = { id: 1 };
@@ -71,8 +71,8 @@ describe('PageStore', () => {
     });
   });
 
-  context('on chrome.webNavigation.onBeforeNavigate', () => {
-    it('creates a tab', async () => {
+  context('on chrome.webNavigation.onBeforeNavigate', function () {
+    it('creates a tab', async function () {
       const store = new PageStore({});
       await store.init();
       const details = { tabId: 1, frameId: 0, url: 'about:blank' };
@@ -84,7 +84,7 @@ describe('PageStore', () => {
       });
     });
 
-    it('stages the page', async () => {
+    it('stages the page', async function () {
       const listener = mock();
       const store = new PageStore({ notifyPageStageListeners: listener });
       await store.init();
@@ -96,15 +96,16 @@ describe('PageStore', () => {
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
-      store.tabs.get(details.tabId).updateState(PAGE_LOADING_STATE.COMPLETE);
+      const page = store.tabs.get(details.tabId);
+      page.updateState(PAGE_LOADING_STATE.COMPLETE);
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 300,
       });
-      expect(listener).to.have.been.called;
+      expect(listener).to.have.been.calledWith(page);
     });
 
-    it('ignore duplicates', async () => {
+    it('ignore duplicates', async function () {
       const listener = mock();
       const store = new PageStore({ notifyPageStageListeners: listener });
       await store.init();
