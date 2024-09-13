@@ -11,8 +11,7 @@
 
 import {
   VALID_RESPONSE_PROPERTIES,
-  addListener,
-  removeListener,
+  default as WebRequestListenersManager,
 } from './utils/webrequest.js';
 
 import Pipeline from './pipeline.js';
@@ -94,6 +93,7 @@ export default class WebRequestPipeline {
   constructor() {
     this.initialized = false;
     this.onPageStagedListeners = new Set();
+    this.listenerManager = new WebRequestListenersManager();
   }
 
   enabled() {
@@ -158,7 +158,7 @@ export default class WebRequestPipeline {
     if (this.pipelines.has(event)) {
       const pipeline = this.pipelines.get(event);
       this[event] = undefined;
-      removeListener(event, pipeline.listener);
+      this.listenerManager.removeListener(event, pipeline.listener);
       pipeline.pipeline.unload();
       this.pipelines.delete(event);
     }
@@ -245,7 +245,7 @@ export default class WebRequestPipeline {
     // can call it: `webRequestPipeline.background.onBeforeRequest(details)`.
     this[event] = listener;
 
-    addListener(event, listener);
+    this.listenerManager.addListener(event, listener);
 
     return pipeline;
   }

@@ -15,8 +15,7 @@ import WebRequestPipeline from '../../src/webrequest-pipeline/index.js';
 
 describe('WebRequestPipeline', function () {
   beforeEach(function () {
-    // TODO: THIS MUST BE HERE - it breaks due to preemptitive listener registration
-    // chrome.flush();
+    chrome.flush();
     chrome.storage.session.get.yields({});
   });
 

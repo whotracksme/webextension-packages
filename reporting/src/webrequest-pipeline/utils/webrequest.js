@@ -49,7 +49,7 @@ function getOptionArray(options) {
 }
 
 // build allowed extraInfo options from <Step>Options objects.
-export const EXTRA_INFO_SPEC = {
+const EXTRA_INFO_SPEC = {
   onBeforeRequest: getOptionArray(chrome.webRequest.OnBeforeRequestOptions),
   onBeforeSendHeaders: getOptionArray(
     chrome.webRequest.OnBeforeSendHeadersOptions,
@@ -61,53 +61,57 @@ export const EXTRA_INFO_SPEC = {
   onErrorOccurred: undefined,
 };
 
-const HANDLERS = {};
 const urls = ['http://*/*', 'https://*/*'];
 
-for (const event of Object.keys(EXTRA_INFO_SPEC)) {
-  // It might be that the platform does not support all listeners:
-  if (chrome.webRequest[event] === undefined) {
-    logger.warn(`chrome.webRequest.${event} is not supported`);
-    continue;
-  }
-
-  // Get allowed options for this event (e.g.: 'blocking', 'requestHeaders',
-  // etc.)
-  const extraInfoSpec = EXTRA_INFO_SPEC[event];
-
-  let firstCall = true;
-  const callback = (...args) => {
-    if (!HANDLERS[event]) {
-      if (firstCall) {
-        firstCall = false;
-        logger.info(
-          `webRequest.${event} called without listener being assigned`,
-        );
+export default class WebRequestListenersManager {
+  constructor() {
+    this.HANDLERS = {};
+    for (const event of Object.keys(EXTRA_INFO_SPEC)) {
+      // It might be that the platform does not support all listeners:
+      if (chrome.webRequest[event] === undefined) {
+        logger.warn(`chrome.webRequest.${event} is not supported`);
+        continue;
       }
-      return;
+
+      // Get allowed options for this event (e.g.: 'blocking', 'requestHeaders',
+      // etc.)
+      const extraInfoSpec = EXTRA_INFO_SPEC[event];
+
+      let firstCall = true;
+      const callback = (...args) => {
+        if (!this.HANDLERS[event]) {
+          if (firstCall) {
+            firstCall = false;
+            logger.info(
+              `webRequest.${event} called without listener being assigned`,
+            );
+          }
+          return;
+        }
+        return this.HANDLERS[event](...args);
+      };
+
+      if (extraInfoSpec === undefined) {
+        chrome.webRequest[event].addListener(callback, { urls });
+      } else {
+        chrome.webRequest[event].addListener(callback, { urls }, extraInfoSpec);
+      }
     }
-    return HANDLERS[event](...args);
-  };
-
-  if (extraInfoSpec === undefined) {
-    chrome.webRequest[event].addListener(callback, { urls });
-  } else {
-    chrome.webRequest[event].addListener(callback, { urls }, extraInfoSpec);
   }
-}
 
-export function addListener(event, listener) {
-  if (HANDLERS[event]) {
-    throw new Error(
-      `webRequest.${event} expects only one listener as this all WebRequestPipeline should need`,
-    );
+  addListener(event, listener) {
+    if (this.HANDLERS[event]) {
+      throw new Error(
+        `webRequest.${event} expects only one listener as this all WebRequestPipeline should need`,
+      );
+    }
+    this.HANDLERS[event] = listener;
   }
-  HANDLERS[event] = listener;
-}
 
-export function removeListener(event, listener) {
-  if (HANDLERS[event] !== listener) {
-    throw new Error(`webRequest.${event} trying to remove wrong listener`);
+  removeListener(event, listener) {
+    if (this.HANDLERS[event] !== listener) {
+      throw new Error(`webRequest.${event} trying to remove wrong listener`);
+    }
+    this.HANDLERS[event] = null;
   }
-  HANDLERS[event] = null;
 }
