@@ -88,7 +88,9 @@ export default class ChromeStorageMap {
     });
   }
 
-  get size() {
+  countNonExpiredKeys() {
+    this._warnIfOutOfSync();
+    this._expireOldEntries();
     return this._inMemoryMap.size;
   }
 

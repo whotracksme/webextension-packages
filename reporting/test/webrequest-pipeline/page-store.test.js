@@ -28,7 +28,7 @@ describe('PageStore', function () {
   it('starts with empty tabs', async function () {
     const store = new PageStore({});
     await store.init();
-    expect(store.tabs).to.have.property('size', 0);
+    expect(store.tabs.countNonExpiredKeys()).to.be.equal(0);
   });
 
   context('on chrome.tabs.onCreated', function () {

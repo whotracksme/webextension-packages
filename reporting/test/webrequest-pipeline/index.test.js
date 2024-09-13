@@ -24,14 +24,14 @@ describe('WebRequestPipeline', function () {
   });
 
   context('PageStore', function () {
-    it('starts empty', async function () {
+    it('starts empty', function () {
       const pipeline = new WebRequestPipeline();
-      await pipeline.init();
-      expect(pipeline.pageStore.tabs).to.have.property('size', 0);
+      pipeline.init();
+      expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(0);
     });
 
     context('on webRequest.onBeforeRequest', function () {
-      it('creates a page', async function () {
+      it('creates a page', function () {
         const pipeline = new WebRequestPipeline();
         pipeline.init();
         pipeline.addPipelineStep('onBeforeRequest', {
