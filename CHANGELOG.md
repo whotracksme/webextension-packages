@@ -1,3 +1,16 @@
+# v5.1.24 (Fri Sep 13 2024)
+
+#### 🐛 Bug Fix
+
+- When parsing JSON, we should no attempt to extract implicitly [#96](https://github.com/whotracksme/webextension-packages/pull/96) ([@philipp-classen](https://github.com/philipp-classen))
+- Test fixed: lifted the unintended dependency on the LANG environment [#95](https://github.com/whotracksme/webextension-packages/pull/95) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.23 (Wed Sep 11 2024)
 
 #### 🐛 Bug Fix
