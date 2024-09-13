@@ -88,6 +88,10 @@ export default class ChromeStorageMap {
     });
   }
 
+  get size() {
+    return this._inMemoryMap.size;
+  }
+
   get(_key) {
     this._warnIfOutOfSync();
     const key = this.normalizeKey(_key);

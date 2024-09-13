@@ -27,7 +27,7 @@ describe('WebRequestPipeline', function () {
     it('starts empty', async function () {
       const pipeline = new WebRequestPipeline();
       await pipeline.init();
-      expect(pipeline.pageStore.tabs._inMemoryMap).to.deep.equal(new Map());
+      expect(pipeline.pageStore.tabs).to.have.property('size', 0);
     });
 
     context('on webRequest.onBeforeRequest', function () {
@@ -46,6 +46,9 @@ describe('WebRequestPipeline', function () {
         };
         chrome.webRequest.onBeforeRequest.dispatch(details);
         expect(pipeline.pageStore.tabs.has(details.tabId)).to.be.true;
+        expect(pipeline.pageStore.tabs.get(details.tabId)).to.deep.include({
+          url: details.url,
+        });
       });
     });
   });
