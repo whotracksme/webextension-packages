@@ -9,6 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import chrome from 'sinon-chrome';
 import { mock } from 'sinon';
 import { expect } from 'chai';
 
@@ -16,6 +17,11 @@ import PageStore from '../../src/webrequest-pipeline/page-store.js';
 import { PAGE_LOADING_STATE } from '../../src/webrequest-pipeline/page.js';
 
 describe('PageStore', function () {
+  before(function () {
+    chrome.storage.session = chrome.storage.local;
+    globalThis.chrome = chrome;
+  });
+
   beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
@@ -23,6 +29,7 @@ describe('PageStore', function () {
 
   after(function () {
     chrome.flush();
+    delete globalThis.chrome;
   });
 
   it('starts with empty tabs', async function () {

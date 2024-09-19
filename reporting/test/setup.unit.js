@@ -9,14 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import chrome from 'sinon-chrome';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-
-chrome.storage.session = chrome.storage.local;
-
-globalThis.chrome = chrome;

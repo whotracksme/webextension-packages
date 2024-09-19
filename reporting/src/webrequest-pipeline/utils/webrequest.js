@@ -21,10 +21,6 @@ export const VALID_RESPONSE_PROPERTIES = {
   onErrorOccurred: [],
 };
 
-const HAS_WEB_REQUEST_BLOCKING = chrome?.runtime
-  ?.getManifest()
-  ?.permissions.includes('webRequestBlocking');
-
 function getOptionArray(options) {
   if (!options) {
     return [];
@@ -41,31 +37,37 @@ function getOptionArray(options) {
     // options.REQUEST_BODY,
   ];
 
-  if (HAS_WEB_REQUEST_BLOCKING) {
+  if (
+    chrome?.runtime?.getManifest()?.permissions.includes('webRequestBlocking')
+  ) {
     optionsSubset.push(options.BLOCKING);
   }
 
   return optionsSubset.filter((o) => !!o);
 }
 
-// build allowed extraInfo options from <Step>Options objects.
-const EXTRA_INFO_SPEC = {
-  onBeforeRequest: getOptionArray(chrome.webRequest.OnBeforeRequestOptions),
-  onBeforeSendHeaders: getOptionArray(
-    chrome.webRequest.OnBeforeSendHeadersOptions,
-  ),
-  onHeadersReceived: getOptionArray(chrome.webRequest.OnHeadersReceivedOptions),
-  onAuthRequired: getOptionArray(chrome.webRequest.OnAuthRequiredOptions),
-  onBeforeRedirect: getOptionArray(chrome.webRequest.OnBeforeRedirectOptions),
-  onCompleted: getOptionArray(chrome.webRequest.OnCompletedOptions),
-  onErrorOccurred: undefined,
-};
-
 const urls = ['http://*/*', 'https://*/*'];
 
 export default class WebRequestListenersManager {
   constructor() {
     this.HANDLERS = {};
+    // build allowed extraInfo options from <Step>Options objects.
+    const EXTRA_INFO_SPEC = {
+      onBeforeRequest: getOptionArray(chrome.webRequest.OnBeforeRequestOptions),
+      onBeforeSendHeaders: getOptionArray(
+        chrome.webRequest.OnBeforeSendHeadersOptions,
+      ),
+      onHeadersReceived: getOptionArray(
+        chrome.webRequest.OnHeadersReceivedOptions,
+      ),
+      onAuthRequired: getOptionArray(chrome.webRequest.OnAuthRequiredOptions),
+      onBeforeRedirect: getOptionArray(
+        chrome.webRequest.OnBeforeRedirectOptions,
+      ),
+      onCompleted: getOptionArray(chrome.webRequest.OnCompletedOptions),
+      onErrorOccurred: undefined,
+    };
+
     for (const event of Object.keys(EXTRA_INFO_SPEC)) {
       // It might be that the platform does not support all listeners:
       if (chrome.webRequest[event] === undefined) {

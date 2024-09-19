@@ -9,11 +9,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import chrome from 'sinon-chrome';
 import { expect } from 'chai';
 
 import WebRequestPipeline from '../../src/webrequest-pipeline/index.js';
 
 describe('WebRequestPipeline', function () {
+  before(function () {
+    chrome.storage.session = chrome.storage.local;
+    globalThis.chrome = chrome;
+  });
+
   beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
@@ -21,6 +27,7 @@ describe('WebRequestPipeline', function () {
 
   after(function () {
     chrome.flush();
+    delete globalThis.chrome;
   });
 
   context('PageStore', function () {
