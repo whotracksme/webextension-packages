@@ -1,6 +1,6 @@
 /**
  * WhoTracks.Me
- * https://whotracks.me/
+ * https://ghostery.com/whotracksme
  *
  * Copyright 2017-present Ghostery GmbH. All rights reserved.
  *
@@ -9,6 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { Logger } from '../logger.js';
+import * as chai from 'chai';
+import sinonChai from 'sinon-chai';
+import chaiAsPromised from 'chai-as-promised';
 
-export default Logger.get('webrequest-pipeline', { level: 'error' });
+chai.use(chaiAsPromised);
+chai.use(sinonChai);

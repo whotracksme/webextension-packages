@@ -11,15 +11,14 @@
 
 import {
   VALID_RESPONSE_PROPERTIES,
-  addListener,
-  removeListener,
-} from './utils/webrequest';
+  default as WebRequestListenersManager,
+} from './utils/webrequest.js';
 
-import Pipeline from './pipeline';
-import WebRequestContext from './webrequest-context';
-import PageStore from './page-store';
-import logger from './logger';
-import CnameUncloaker, { isCnameUncloakSupported } from './cname-uncloak';
+import Pipeline from './pipeline.js';
+import WebRequestContext from './webrequest-context.js';
+import PageStore from './page-store.js';
+import logger from './logger.js';
+import CnameUncloaker, { isCnameUncloakSupported } from './cname-uncloak.js';
 
 function modifyHeaderByType(headers, name, value) {
   const lowerCaseName = name.toLowerCase();
@@ -94,6 +93,7 @@ export default class WebRequestPipeline {
   constructor() {
     this.initialized = false;
     this.onPageStagedListeners = new Set();
+    this.listenerManager = new WebRequestListenersManager();
   }
 
   enabled() {
@@ -158,7 +158,7 @@ export default class WebRequestPipeline {
     if (this.pipelines.has(event)) {
       const pipeline = this.pipelines.get(event);
       this[event] = undefined;
-      removeListener(event, pipeline.listener);
+      this.listenerManager.removeListener(event, pipeline.listener);
       pipeline.pipeline.unload();
       this.pipelines.delete(event);
     }
@@ -168,7 +168,6 @@ export default class WebRequestPipeline {
     if (this.pipelines.has(event)) {
       return this.pipelines.get(event).pipeline;
     }
-
     // Create pipeline step
     const pipeline = new Pipeline(`webRequestPipeline.${event}`, [], false);
 
@@ -246,7 +245,7 @@ export default class WebRequestPipeline {
     // can call it: `webRequestPipeline.background.onBeforeRequest(details)`.
     this[event] = listener;
 
-    addListener(event, listener);
+    this.listenerManager.addListener(event, listener);
 
     return pipeline;
   }

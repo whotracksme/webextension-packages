@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger';
-import Page, { PAGE_LOADING_STATE } from './page';
-import ChromeStorageMap from '../request/utils/chrome-storage-map';
+import logger from './logger.js';
+import Page, { PAGE_LOADING_STATE } from './page.js';
+import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
 
 function makeTabContext(tab) {
   return new Page(tab);
