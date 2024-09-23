@@ -524,7 +524,8 @@ export default class RequestMonitor {
               // check for tracking status headers for first party
               const trackingStatus = getTrackingStatus(state);
               if (trackingStatus) {
-                state.page.setTrackingStatus(trackingStatus);
+                state.page.tsv = trackingStatus.value;
+                state.page.tsvId = trackingStatus.statusId;
               }
               return false;
             }

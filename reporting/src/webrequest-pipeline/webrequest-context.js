@@ -11,6 +11,7 @@
 
 import { parse } from '../utils/url.js';
 import logger from './logger.js';
+import { getFrameUrl, getFrameAncestors } from './page.js';
 
 /**
  * Transform an array of headers (i.e.: `{ name, value }`) into a `Map`.
@@ -61,13 +62,13 @@ export default class WebRequestContext {
     // **Chromium addition**
     // frameAncestors
     if (context.frameAncestors === undefined) {
-      context.frameAncestors = page ? page.getFrameAncestors(context) : [];
+      context.frameAncestors = page ? getFrameAncestors(page, context) : [];
     }
 
     // Cliqz-specific extensions to webRequest details
     context.page = page;
-    context.tabUrl = context.tabUrl || (page && page.getTabUrl());
-    context.frameUrl = context.frameUrl || (page && page.getFrameUrl(context));
+    context.tabUrl = context.tabUrl || (page && page.url);
+    context.frameUrl = context.frameUrl || (page && getFrameUrl(page, context));
     context.isPrivate = page ? page.isPrivate : null;
     context.isMainFrame = context.type === 'main_frame';
     context.isRedirect = page && context.isMainFrame && page.isRedirect;
