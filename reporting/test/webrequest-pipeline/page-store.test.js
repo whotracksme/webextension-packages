@@ -104,7 +104,7 @@ describe('PageStore', function () {
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
       const page = store.tabs.get(details.tabId);
-      page.updateState(PAGE_LOADING_STATE.COMPLETE);
+      page.state = PAGE_LOADING_STATE.COMPLETE;
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 300,
@@ -124,7 +124,7 @@ describe('PageStore', function () {
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
-      store.tabs.get(details.tabId).updateState(PAGE_LOADING_STATE.COMPLETE);
+      store.tabs.get(details.tabId).state = PAGE_LOADING_STATE.COMPLETE;
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 1,
