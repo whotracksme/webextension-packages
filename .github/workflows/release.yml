@@ -7,13 +7,13 @@ on:
 jobs:
   release:
     name: Trigger release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: "!contains(github.event.head_commit.message, 'ci skip') && !contains(github.event.head_commit.message, 'skip ci')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
 
       - name: Prepare repository
