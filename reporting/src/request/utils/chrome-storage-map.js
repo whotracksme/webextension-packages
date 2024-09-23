@@ -112,7 +112,7 @@ export default class ChromeStorageMap {
   values() {
     this._warnIfOutOfSync();
     this._expireOldEntries();
-    return Object.values(this._inMemoryMap);
+    return this._inMemoryMap.values();
   }
 
   has(_key) {
