@@ -14,7 +14,6 @@
 import { truncateDomain } from '../utils.js';
 import { getStatsForDomain } from '../../webrequest-pipeline/page.js';
 
-
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {
   other: 1,
