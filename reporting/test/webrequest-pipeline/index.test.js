@@ -46,7 +46,7 @@ describe('WebRequestPipeline', function () {
         pipeline.addPipelineStep('onBeforeRequest', {
           name: 'test',
           spec: 'annotate',
-          fn: () => { },
+          fn: () => {},
         });
         const details = {
           tabId: 1,
@@ -80,7 +80,7 @@ describe('WebRequestPipeline', function () {
             pipeline.addPipelineStep(step, {
               name: 'test',
               spec: 'annotate',
-              fn: () => { },
+              fn: () => {},
             });
           });
         });
