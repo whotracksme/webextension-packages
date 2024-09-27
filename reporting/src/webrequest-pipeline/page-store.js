@@ -10,12 +10,12 @@
  */
 
 import logger from './logger.js';
-import Page, { PAGE_LOADING_STATE } from './page.js';
+import {
+  setActive,
+  create as makeTabContext,
+  PAGE_LOADING_STATE,
+} from './page.js';
 import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
-
-function makeTabContext(tab) {
-  return new Page(tab);
-}
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
 
@@ -69,7 +69,10 @@ export default class PageStore {
     if (this.staged.push(page) > 5) {
       this.staged.shift();
     }
-    page.stage();
+    setActive(page, false);
+    page.destroyed = Date.now();
+    // unset previous (to prevent history chain memory leak)
+    page.previous = undefined;
     this.notifyPageStageListeners(page);
   }
 
@@ -85,14 +88,14 @@ export default class PageStore {
    */
   onTabUpdated = (tabId, info, tab) => {
     let tabContext = this.tabs.get(tabId);
-    if (tabContext === undefined) {
+    if (!tabContext) {
       tabContext = makeTabContext(tab);
       this.tabs.set(tabId, tabContext);
     }
 
     // Update `isPrivate` and `url` if available
     tabContext.isPrivate = tab.incognito;
-    tabContext.setActive(tab.active);
+    setActive(tabContext, tab.active);
     if (info.url !== undefined) {
       tabContext.url = info.url;
     }
@@ -114,13 +117,13 @@ export default class PageStore {
     // otherwise, we only have to mark the previous tab as inactive
     if (!previousTabId) {
       for (const tab of this.tabs.values()) {
-        tab.setActive(false);
+        setActive(tab, false);
       }
     } else if (this.tabs.has(previousTabId)) {
-      this.tabs.get(previousTabId).setActive(false);
+      setActive(this.tabs.get(previousTabId), false);
     }
     if (this.tabs.has(tabId)) {
-      this.tabs.get(tabId).setActive(true);
+      setActive(this.tabs.get(tabId), true);
     }
   };
 
@@ -132,9 +135,9 @@ export default class PageStore {
           return;
         }
         if (windowId === focusedWindow) {
-          tabContext.setActive(true);
+          setActive(tabContext, true);
         } else {
-          tabContext.setActive(false);
+          setActive(tabContext, false);
         }
       });
     });
@@ -169,7 +172,7 @@ export default class PageStore {
       });
       nextContext.previous = tabContext;
       this.tabs.set(tabId, nextContext);
-      nextContext.updateState(PAGE_LOADING_STATE.NAVIGATING);
+      nextContext.state = PAGE_LOADING_STATE.NAVIGATING;
     }
   };
 
@@ -177,7 +180,7 @@ export default class PageStore {
     const { frameId, tabId } = details;
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
-      tabContext.updateState(PAGE_LOADING_STATE.COMMITTED);
+      tabContext.state = PAGE_LOADING_STATE.COMMITTED;
     } else if (tabContext && !tabContext.frames[frameId]) {
       // frame created without request
       this.onSubFrame(details);
@@ -187,7 +190,7 @@ export default class PageStore {
   onNavigationComplete = ({ frameId, tabId }) => {
     const tabContext = this.tabs.get(tabId);
     if (frameId === 0 && tabContext) {
-      tabContext.updateState(PAGE_LOADING_STATE.COMPLETE);
+      tabContext.state = PAGE_LOADING_STATE.COMPLETE;
     }
   };
 
@@ -198,7 +201,7 @@ export default class PageStore {
     }
     // Update last request id from the tab
     let tabContext = this.tabs.get(tabId);
-    if (tabContext === undefined) {
+    if (!tabContext) {
       tabContext = makeTabContext({ url, incognito: false });
       this.tabs.set(tabId, tabContext);
     }
@@ -229,7 +232,7 @@ export default class PageStore {
   onSubFrame = (details) => {
     const { tabId, frameId, parentFrameId, url } = details;
     const tab = this.tabs.get(tabId);
-    if (tab === undefined) {
+    if (!tab) {
       logger.log('Could not find tab for sub_frame request', details);
       return;
     }

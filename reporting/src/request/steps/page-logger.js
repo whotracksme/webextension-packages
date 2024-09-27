@@ -10,7 +10,10 @@
  */
 
 /* eslint no-param-reassign: 'off' */
+
 import { truncateDomain } from '../utils.js';
+import { getStatsForDomain } from '../../webrequest-pipeline/page.js';
+
 
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {
@@ -44,7 +47,8 @@ export default class PageLogger {
   }
 
   _attachCounters(state) {
-    const stats = state.page.getStatsForDomain(
+    const stats = getStatsForDomain(
+      state.page,
       truncateDomain(state.urlParts.domainInfo, 2),
     );
     state.reqLog = stats;

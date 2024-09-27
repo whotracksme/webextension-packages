@@ -1,3 +1,19 @@
+# v5.1.25 (Mon Sep 23 2024)
+
+#### 🐛 Bug Fix
+
+- The new tests assume Node 22. Also, upgrade to Ubuntu 24.04. [#100](https://github.com/whotracksme/webextension-packages/pull/100) ([@philipp-classen](https://github.com/philipp-classen))
+- Fix page store persistance [#99](https://github.com/whotracksme/webextension-packages/pull/99) ([@chrmod](https://github.com/chrmod))
+- Fix storage values [#99](https://github.com/whotracksme/webextension-packages/pull/99) ([@chrmod](https://github.com/chrmod))
+- Basic unit test setup [#94](https://github.com/whotracksme/webextension-packages/pull/94) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.24 (Fri Sep 13 2024)
 
 #### 🐛 Bug Fix
