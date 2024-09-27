@@ -46,7 +46,7 @@ describe('WebRequestPipeline', function () {
         pipeline.addPipelineStep('onBeforeRequest', {
           name: 'test',
           spec: 'annotate',
-          fn: () => {},
+          fn: () => { },
         });
         const details = {
           tabId: 1,
@@ -62,7 +62,7 @@ describe('WebRequestPipeline', function () {
     });
 
     if (enableScenariors) {
-      context('with pre-recorded events', function () {
+      context.only('with pre-recorded events', function () {
         let pipeline;
 
         beforeEach(function () {
@@ -80,7 +80,7 @@ describe('WebRequestPipeline', function () {
             pipeline.addPipelineStep(step, {
               name: 'test',
               spec: 'annotate',
-              fn: () => {},
+              fn: () => { },
             });
           });
         });
@@ -91,8 +91,11 @@ describe('WebRequestPipeline', function () {
         });
 
         context('0001-quick-close', function () {
-          it('runs without a crash', function () {
-            playScenario(chrome, '0001');
+          it('runs without a crash', async function () {
+            await playScenario(chrome, {
+              scenariorName: '0001-quick-close',
+              scenariorRelease: '2024-09-27',
+            });
             expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
               1,
             );
@@ -108,15 +111,18 @@ describe('WebRequestPipeline', function () {
         });
 
         context('0002-quick-navigation', function () {
-          it('runs without a crash', function () {
-            playScenario(chrome, '0002');
+          it('runs without a crash', async function () {
+            await playScenario(chrome, {
+              scenariorName: '0002-quick-navigation',
+              scenariorRelease: '2024-09-27',
+            });
             expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
               1,
             );
             const [tabId] = pipeline.pageStore.tabs.keys().toArray();
             const tab = pipeline.pageStore.tabs.get(tabId);
             expect(tab).to.deep.include({
-              url: 'https://www.facebook.com/',
+              url: 'https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2F',
             });
             expect(tab.previous).to.deep.include({
               url: 'https://ghosterysearch.com/',
@@ -125,14 +131,16 @@ describe('WebRequestPipeline', function () {
         });
 
         context('0003-prefetch', function () {
-          it('runs without a crash', function () {
-            playScenario(chrome, '0003');
+          it('runs without a crash', async function () {
+            await playScenario(chrome, {
+              scenariorName: '0003-prefetch',
+              scenariorRelease: '2024-09-27',
+            });
             expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
               1,
             );
             const [tabId] = pipeline.pageStore.tabs.keys().toArray();
             const tab = pipeline.pageStore.tabs.get(tabId);
-            console.warn('pipeline.pageStore.tabs', pipeline.pageStore.tabs.get('3511682'))
             expect(tab).to.deep.include({
               url: 'http://localhost:8080/',
             });

@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { decompress } from 'brotli';
 
 const scenariorsArgumentIndex = process.argv.findIndex(
   (arg) => arg === '--scenariors',
@@ -19,28 +20,37 @@ const scenariorsArgumentIndex = process.argv.findIndex(
 
 export const enableScenariors = scenariorsArgumentIndex >= 2;
 
-let scenariors;
+async function download(release, scenarior, browser) {
+  const scenartionFileName = `events_${scenarior}_${browser}.log`;
 
-function getScenariorPaths() {
-  const scenariorsPath = path.resolve(
-    process.argv[scenariorsArgumentIndex + 1],
+  const scenariorsPath = path.join(
+    import.meta.dirname,
+    '..',
+    '..',
+    'scenariors',
+    release,
   );
-  return fs
-    .readdirSync(scenariorsPath, { withFileTypes: true })
-    .filter((file) => !file.isDirectory())
-    .filter((file) =>
-      path.basename(file.name, path.extname(file.name)).startsWith('events_'),
-    )
-    .map((file) => path.join(file.parentPath, file.name));
-}
-
-function findScenario(name) {
-  if (!scenariors) {
-    scenariors = getScenariorPaths();
+  if (!fs.existsSync(scenariorsPath)) {
+    fs.mkdirSync(scenariorsPath, { recursive: true });
   }
-  return scenariors.find((scenarioPath) =>
-    path.basename(scenarioPath, path.extname(scenarioPath)).includes(name),
-  );
+
+  const scenariorPath = path.join(scenariorsPath, scenartionFileName);
+  if (fs.existsSync(scenariorPath)) {
+    return scenariorPath;
+  }
+  const downloadUrl = `https://github.com/ghostery/webextension-event-recorder/releases/download/${release}/${scenartionFileName}.br`;
+  const response = await fetch(downloadUrl);
+
+  if (!response.ok) {
+    throw new Error(
+      `Cound not download scenarior "${scenartionFileName}" from "${downloadUrl}: ${response.status} - ${response.statusText}`,
+    );
+  }
+  const compressedBuffer = await response.arrayBuffer();
+  const decompressedBuffer = await decompress(new Uint8Array(compressedBuffer));
+
+  fs.writeFileSync(scenariorPath, decompressedBuffer);
+  return scenariorPath;
 }
 
 function loadScenario(scenarioPath) {
@@ -50,8 +60,20 @@ function loadScenario(scenarioPath) {
     .map(JSON.parse);
 }
 
-export function playScenario(chrome, scenarioName) {
-  const scenarioPath = findScenario(scenarioName);
+export async function playScenario(
+  chrome,
+  {
+    scenariorRelease = process.argv[scenariorsArgumentIndex + 1],
+    scenariorName,
+    browser = 'chrome',
+  },
+) {
+  if (!scenariorRelease) {
+    throw new Error(
+      'specify scenarior release by passing a command line argument --scenariors <release_name>',
+    );
+  }
+  const scenarioPath = await download(scenariorRelease, scenariorName, browser);
   const events = loadScenario(scenarioPath);
   for (const event of events) {
     try {
