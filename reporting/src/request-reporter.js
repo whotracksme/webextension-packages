@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import RequestMonitor from './request/index';
-import Config from './request/config';
-import Database from './request/database';
+import RequestMonitor from './request/index.js';
+import Config from './request/config.js';
+import Database from './request/database.js';
 
 export default class RequestReporter {
   constructor(

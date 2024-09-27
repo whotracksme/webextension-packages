@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import * as datetime from '../../time';
-import logger from '../../../logger';
-import ChromeStorageMap from '../../utils/chrome-storage-map';
+import * as datetime from '../../time.js';
+import logger from '../../../logger.js';
+import ChromeStorageMap from '../../utils/chrome-storage-map.js';
 
 const DAYS_EXPIRE = 7;
 const STAGED_TOKEN_EXPIRY = 1000 * 60 * 60 * 24 * 2; // 2 days

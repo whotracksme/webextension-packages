@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import MapCache from './fixed-size-cache';
+import MapCache from './fixed-size-cache.js';
 
 /**
  * Largely based on js-md5 (https://github.com/emn178/js-md5)

@@ -9,8 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { truncatedHash } from '../md5';
-import { parse } from '../utils/url';
+import { truncatedHash } from '../md5.js';
+import { parse } from '../utils/url.js';
 
 function truncatePath(path) {
   // extract the first part of the page path

@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import LRU from './LRU';
+import LRU from './LRU.js';
 
 /* Fixed length lookup cache. Allows expensive operations to be cached for later lookup. Once
  * the cache limit is exceeded, least recently used values are removed.

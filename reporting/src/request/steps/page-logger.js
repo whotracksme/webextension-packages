@@ -10,7 +10,7 @@
  */
 
 /* eslint no-param-reassign: 'off' */
-import { truncateDomain } from '../utils';
+import { truncateDomain } from '../utils.js';
 
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {

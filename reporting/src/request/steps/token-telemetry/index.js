@@ -9,10 +9,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import md5, { truncatedHash } from '../../../md5';
-import Subject from '../../utils/subject';
-import KeyPipeline, { getSiteTokensMap } from './key-pipeline';
-import TokenPipeline from './token-pipeline';
+import md5, { truncatedHash } from '../../../md5.js';
+import Subject from '../../utils/subject.js';
+import KeyPipeline, { getSiteTokensMap } from './key-pipeline.js';
+import TokenPipeline from './token-pipeline.js';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour

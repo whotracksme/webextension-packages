@@ -11,9 +11,9 @@
 
 import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
-import PackedBloomFilter from './utils/bloom-filter-packed';
-import pacemaker from '../utils/pacemaker';
-import logger from '../logger';
+import PackedBloomFilter from './utils/bloom-filter-packed.js';
+import pacemaker from '../utils/pacemaker.js';
+import logger from '../logger.js';
 
 const STORAGE_CONFIG_KEY = 'qs_config';
 const STORAGE_BLOOM_FILTER_KEY = 'qs_bloom_filter';

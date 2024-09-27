@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { parse } from '../../utils/url';
-import Subject from '../utils/subject';
-import ChromeStorageMap from '../utils/chrome-storage-map';
+import { parse } from '../../utils/url.js';
+import Subject from '../utils/subject.js';
+import ChromeStorageMap from '../utils/chrome-storage-map.js';
 
 const DEFAULT_OPTIONS = {
   CLICK_TIMEOUT: 5 * 60 * 1000,

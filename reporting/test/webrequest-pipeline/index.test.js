@@ -12,7 +12,7 @@
 import chrome from 'sinon-chrome';
 import { expect } from 'chai';
 
-import { enableScenariors, playScenario } from '../helpers/scenariors.js';
+import { playScenario } from '../helpers/scenariors.js';
 
 import WebRequestPipeline from '../../src/webrequest-pipeline/index.js';
 
@@ -61,95 +61,87 @@ describe('WebRequestPipeline', function () {
       });
     });
 
-    if (enableScenariors) {
-      context.only('with pre-recorded events', function () {
-        let pipeline;
+    context('with pre-recorded events', function () {
+      let pipeline;
 
-        beforeEach(function () {
-          pipeline = new WebRequestPipeline();
-          pipeline.init();
-          [
-            'onBeforeRequest',
-            'onBeforeSendHeaders',
-            'onHeadersReceived',
-            'onAuthRequired',
-            'onBeforeRedirect',
-            'onCompleted',
-            'onErrorOccurred',
-          ].forEach((step) => {
-            pipeline.addPipelineStep(step, {
-              name: 'test',
-              spec: 'annotate',
-              fn: () => {},
-            });
-          });
-        });
-
-        afterEach(function () {
-          pipeline.unload();
-          pipeline = undefined;
-        });
-
-        context('0001-quick-close', function () {
-          it('runs without a crash', async function () {
-            await playScenario(chrome, {
-              scenariorName: '0001-quick-close',
-              scenariorRelease: '2024-09-27',
-            });
-            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
-              1,
-            );
-            const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-            const tab = pipeline.pageStore.tabs.get(tabId);
-            expect(tab).to.deep.include({
-              url: 'https://ghosterysearch.com/',
-            });
-            expect(tab.previous).to.deep.include({
-              url: 'about:blank',
-            });
-          });
-        });
-
-        context('0002-quick-navigation', function () {
-          it('runs without a crash', async function () {
-            await playScenario(chrome, {
-              scenariorName: '0002-quick-navigation',
-              scenariorRelease: '2024-09-27',
-            });
-            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
-              1,
-            );
-            const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-            const tab = pipeline.pageStore.tabs.get(tabId);
-            expect(tab).to.deep.include({
-              url: 'https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2F',
-            });
-            expect(tab.previous).to.deep.include({
-              url: 'https://ghosterysearch.com/',
-            });
-          });
-        });
-
-        context('0003-prefetch', function () {
-          it('runs without a crash', async function () {
-            await playScenario(chrome, {
-              scenariorName: '0003-prefetch',
-              scenariorRelease: '2024-09-27',
-            });
-            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
-              1,
-            );
-            const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-            const tab = pipeline.pageStore.tabs.get(tabId);
-            expect(tab).to.deep.include({
-              url: 'http://localhost:8080/',
-            });
-            expect(tab.previous).to.deep.include({
-              url: 'about:blank',
-            });
+      beforeEach(function () {
+        pipeline = new WebRequestPipeline();
+        pipeline.init();
+        [
+          'onBeforeRequest',
+          'onBeforeSendHeaders',
+          'onHeadersReceived',
+          'onAuthRequired',
+          'onBeforeRedirect',
+          'onCompleted',
+          'onErrorOccurred',
+        ].forEach((step) => {
+          pipeline.addPipelineStep(step, {
+            name: 'test',
+            spec: 'annotate',
+            fn: () => {},
           });
         });
       });
-    }
+
+      afterEach(function () {
+        pipeline.unload();
+        pipeline = undefined;
+      });
+
+      context('0001-quick-close', function () {
+        it('runs without a crash', async function () {
+          await playScenario(chrome, {
+            scenariorName: '0001-quick-close',
+            scenariorRelease: '2024-09-27',
+          });
+          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
+          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
+          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(tab).to.deep.include({
+            url: 'https://ghosterysearch.com/',
+          });
+          expect(tab.previous).to.deep.include({
+            url: 'about:blank',
+          });
+        });
+      });
+
+      context('0002-quick-navigation', function () {
+        it('runs without a crash', async function () {
+          await playScenario(chrome, {
+            scenariorName: '0002-quick-navigation',
+            scenariorRelease: '2024-09-27',
+          });
+          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
+          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
+          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(tab).to.deep.include({
+            url: 'https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2F',
+          });
+          expect(tab.previous).to.deep.include({
+            url: 'https://ghosterysearch.com/',
+          });
+        });
+      });
+
+      context('0003-prefetch', function () {
+        it('runs without a crash', async function () {
+          await playScenario(chrome, {
+            scenariorName: '0003-prefetch',
+            scenariorRelease: '2024-09-27',
+          });
+          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
+          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
+          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(tab).to.deep.include({
+            url: 'http://localhost:8080/',
+          });
+          expect(tab.previous).to.deep.include({
+            url: 'about:blank',
+          });
+        });
+      });
+    });
   });
 });

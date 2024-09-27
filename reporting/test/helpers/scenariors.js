@@ -11,14 +11,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import process from 'node:process';
 import { decompress } from 'brotli';
-
-const scenariorsArgumentIndex = process.argv.findIndex(
-  (arg) => arg === '--scenariors',
-);
-
-export const enableScenariors = scenariorsArgumentIndex >= 2;
 
 async function download(release, scenarior, browser) {
   const scenartionFileName = `events_${scenarior}_${browser}.log`;
@@ -62,17 +55,12 @@ function loadScenario(scenarioPath) {
 
 export async function playScenario(
   chrome,
-  {
-    scenariorRelease = process.argv[scenariorsArgumentIndex + 1],
-    scenariorName,
-    browser = 'chrome',
-  },
+  { scenariorRelease, scenariorName, browser = 'chrome' },
 ) {
   if (!scenariorRelease) {
-    throw new Error(
-      'specify scenarior release by passing a command line argument --scenariors <release_name>',
-    );
+    throw new Error('specify scenarior release');
   }
+
   const scenarioPath = await download(scenariorRelease, scenariorName, browser);
   const events = loadScenario(scenarioPath);
   for (const event of events) {
