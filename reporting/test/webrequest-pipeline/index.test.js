@@ -46,7 +46,7 @@ describe('WebRequestPipeline', function () {
         pipeline.addPipelineStep('onBeforeRequest', {
           name: 'test',
           spec: 'annotate',
-          fn: () => { },
+          fn: () => {},
         });
         const details = {
           tabId: 1,
@@ -76,13 +76,13 @@ describe('WebRequestPipeline', function () {
             'onBeforeRedirect',
             'onCompleted',
             'onErrorOccurred',
-          ].forEach(step => {
+          ].forEach((step) => {
             pipeline.addPipelineStep(step, {
               name: 'test',
               spec: 'annotate',
-              fn: () => { },
+              fn: () => {},
             });
-          })
+          });
         });
 
         afterEach(function () {
@@ -93,7 +93,9 @@ describe('WebRequestPipeline', function () {
         context('0001-quick-close', function () {
           it('runs without a crash', function () {
             playScenario(chrome, '0001');
-            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
+            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
+              1,
+            );
             const [tabId] = pipeline.pageStore.tabs.keys().toArray();
             const tab = pipeline.pageStore.tabs.get(tabId);
             expect(tab).to.deep.include({
@@ -108,7 +110,9 @@ describe('WebRequestPipeline', function () {
         context('0002-quick-navigation', function () {
           it('runs without a crash', function () {
             playScenario(chrome, '0002');
-            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
+            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
+              1,
+            );
             const [tabId] = pipeline.pageStore.tabs.keys().toArray();
             const tab = pipeline.pageStore.tabs.get(tabId);
             expect(tab).to.deep.include({
@@ -116,6 +120,24 @@ describe('WebRequestPipeline', function () {
             });
             expect(tab.previous).to.deep.include({
               url: 'https://ghosterysearch.com/',
+            });
+          });
+        });
+
+        context('0003-prefetch', function () {
+          it('runs without a crash', function () {
+            playScenario(chrome, '0003');
+            expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(
+              1,
+            );
+            const [tabId] = pipeline.pageStore.tabs.keys().toArray();
+            const tab = pipeline.pageStore.tabs.get(tabId);
+            console.warn('pipeline.pageStore.tabs', pipeline.pageStore.tabs.get('3511682'))
+            expect(tab).to.deep.include({
+              url: 'http://localhost:8080/',
+            });
+            expect(tab.previous).to.deep.include({
+              url: 'about:blank',
             });
           });
         });
