@@ -11,7 +11,6 @@
 
 import logger from './logger';
 import { isHash } from './hash-detector';
-//import { isHash } from './hash-detector-new';
 
 function isCharNumber(char) {
   const code = char.charCodeAt(0);
@@ -221,9 +220,15 @@ function tryParseUrl(url) {
   }
 }
 
-function checkForInternalIp(hostname) {
+function isPrivateHostname(hostname) {
   // TODO: this could be extended to detect more cases
   return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+// Note: This is a conservative implementation that detects all valid IPv4 addresses.
+// It may produce false-positives, so consider this if using for other purposes.
+function looksLikeIPv4Address(hostname) {
+  return /^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}$/.test(hostname);
 }
 
 function looksLikeSafeUrlParameter(key, value) {
@@ -346,8 +351,11 @@ export function sanitizeUrl(url, options = {}) {
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
     return drop('URL has uncommon protocol');
   }
-  if (checkForInternalIp(parsedUrl.hostname)) {
+  if (isPrivateHostname(parsedUrl.hostname)) {
     return drop('URL is not public');
+  }
+  if (looksLikeIPv4Address(parsedUrl.hostname)) {
+    return drop('hostname is an ipv4 address');
   }
   if (urlLeaksExtensionId(url)) {
     return drop('URL leaks extension ID');

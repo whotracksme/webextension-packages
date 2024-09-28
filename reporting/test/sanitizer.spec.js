@@ -383,6 +383,22 @@ describe('#sanitizeUrl', function () {
     });
   });
 
+  describe('should drop URls where IP addresses are used as hostnames', function () {
+    [
+      'http://182.180.189.84/',
+      'http://192.168.0.119/',
+      'http://85.11.187.84/saff/index.php?topic=3221141.0',
+      'http://10.234.0.1/',
+      'https://10.234.0.1/',
+      'http://0.0.0.0/',
+      'http://1.1.1.1/',
+    ].forEach((url) => {
+      it(`should drop URL: ${url}`, function () {
+        shouldBeDropped(url);
+      });
+    });
+  });
+
   describe('should drop URLs with non-standard HTTP ports', function () {
     ['http://myserver.test:1234/', 'https://www.myserver.test:5678/'].forEach(
       (url) => {
