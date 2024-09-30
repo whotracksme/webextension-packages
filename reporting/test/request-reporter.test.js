@@ -56,6 +56,7 @@ describe('RequestReporter', function () {
             };
           },
           async arrayBuffer() {
+            // empty bloom filter
             return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
           }
         });
