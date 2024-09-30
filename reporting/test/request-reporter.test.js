@@ -150,7 +150,7 @@ describe('RequestReporter', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
           scenariorName: this.test.parent.title,
-          scenariorRelease: '2024-09-27',
+          scenariorRelease: '2024-09-30',
         });
         await clock.runToLast();
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
