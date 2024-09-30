@@ -29,7 +29,6 @@ import './request/utils/bloom-filter-packed.spec.js';
 import './request/utils/chrome-storage-map.spec.js';
 
 // Request steps
-import './request/steps/check-context.spec.js';
 import './request/steps/oauth-detector.spec.js';
 
 // Request

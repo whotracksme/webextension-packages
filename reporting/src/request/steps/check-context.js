@@ -13,9 +13,17 @@ export function checkValidContext(state) {
   if (!state.page || !state.tabUrlParts || !state.urlParts) {
     return false;
   }
+
+  // ignore requests that are related to page load but does not affect the page itself
+  // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType#other
+  // examples:
+  // * link rel=search
+  // * link rel=manifest
+  // * link rel=prefetch
   if (state.type === 'other') {
     return false;
   }
+
   if (
     !state.tabUrlParts.protocol.startsWith('http') ||
     !state.urlParts.protocol.startsWith('http')

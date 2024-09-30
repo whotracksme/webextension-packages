@@ -11,7 +11,10 @@
 
 import * as chai from 'chai';
 
-import { checkSameGeneralDomain } from '../../../src/request/steps/check-context';
+import {
+  checkSameGeneralDomain,
+  checkValidContext,
+} from '../../../src/request/steps/check-context.js';
 
 describe('request/steps/check-context', function () {
   describe('checkSameGeneralDomain', function () {
@@ -46,6 +49,12 @@ describe('request/steps/check-context', function () {
       it(`does not stop pipeline with '${a}' and '${b}'`, () => {
         chai.expect(checkSameGeneralDomain(mockState(a, b))).to.be.true;
       });
+    });
+  });
+
+  describe('checkValidContext', function () {
+    it('rejects requests of type other', function () {
+      chai.expect(checkValidContext({ type: 'other' })).to.be.false;
     });
   });
 });
