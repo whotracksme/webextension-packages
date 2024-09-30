@@ -11,11 +11,11 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import * as datetime from '../time';
-import md5, { truncatedHash } from '../../md5';
-import pacemaker from '../../utils/pacemaker';
-import ChromeStorageMap from '../utils/chrome-storage-map';
-import logger from '../../logger';
+import * as datetime from '../time.js';
+import md5, { truncatedHash } from '../../md5.js';
+import pacemaker from '../../utils/pacemaker.js';
+import ChromeStorageMap from '../utils/chrome-storage-map.js';
+import logger from '../../logger.js';
 
 const SYNC_DB_INTERVAL = 20 * 1000;
 

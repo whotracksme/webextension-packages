@@ -9,8 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger';
-import SelfCheck from './self-check';
+import logger from './logger.js';
+import SelfCheck from './self-check.js';
 
 const SECOND = 1000;
 

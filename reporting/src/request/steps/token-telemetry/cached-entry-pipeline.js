@@ -9,9 +9,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from '../../../logger';
-import Subject from '../../utils/subject';
-import ChromeStorageMap from '../../utils/chrome-storage-map';
+import logger from '../../../logger.js';
+import Subject from '../../utils/subject.js';
+import ChromeStorageMap from '../../utils/chrome-storage-map.js';
 
 const CACHE_TTL = 2 * 24 * 60 * 60 * 1000; // 2 days
 

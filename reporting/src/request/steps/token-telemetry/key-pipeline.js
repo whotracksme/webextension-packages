@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import CachedEntryPipeline from './cached-entry-pipeline';
+import CachedEntryPipeline from './cached-entry-pipeline.js';
 
 export function getSiteTokensMap(siteTokens, key) {
   let siteTokensMap = siteTokens[key];

@@ -9,12 +9,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { truncatedHash } from '../../md5';
-import pacemaker from '../../utils/pacemaker';
-import { parse } from '../../utils/url';
-import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds';
-import logger from '../../logger';
-import ChromeStorageMap from '../utils/chrome-storage-map';
+import { truncatedHash } from '../../md5.js';
+import pacemaker from '../../utils/pacemaker.js';
+import { parse } from '../../utils/url.js';
+import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds.js';
+import logger from '../../logger.js';
+import ChromeStorageMap from '../utils/chrome-storage-map.js';
 
 const TIME_AFTER_LINK = 5 * 1000;
 const TIME_CLEANING_CACHE = 3 * 60 * 1000; // 3 minutes

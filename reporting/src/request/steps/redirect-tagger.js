@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import TempSet from '../utils/temp-set';
+import TempSet from '../utils/temp-set.js';
 
 const CACHE_TIMEOUT = 10 * 1000;
 

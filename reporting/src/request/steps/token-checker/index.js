@@ -11,9 +11,9 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import md5, { truncatedHash } from '../../../md5';
-import { tryDecodeURIComponent } from '../../../utils/url';
-import TokenDomain from './token-domain';
+import md5, { truncatedHash } from '../../../md5.js';
+import { tryDecodeURIComponent } from '../../../utils/url.js';
+import TokenDomain from './token-domain.js';
 
 function decodeToken(token) {
   let decodedToken = tryDecodeURIComponent(token);

@@ -10,36 +10,36 @@
  */
 
 /* eslint-disable no-param-reassign */
-import Pipeline from '../webrequest-pipeline/pipeline';
-import { isPrivateIP } from '../utils/url';
-import pacemaker from '../utils/pacemaker';
+import Pipeline from '../webrequest-pipeline/pipeline.js';
+import { isPrivateIP } from '../utils/url.js';
+import pacemaker from '../utils/pacemaker.js';
 
-import { truncatedHash } from '../md5';
-import logger from '../logger';
+import { truncatedHash } from '../md5.js';
+import logger from '../logger.js';
 
-import * as datetime from './time';
-import QSWhitelist2 from './qs-whitelist2';
-import TempSet from './utils/temp-set';
-import { HashProb, shouldCheckToken } from './hash';
-import { VERSION, COOKIE_MODE } from './config';
-import { shuffle } from './utils';
-import buildPageLoadObject from './page-telemetry';
-import getTrackingStatus from './dnt';
-import random from '../random';
+import * as datetime from './time.js';
+import QSWhitelist2 from './qs-whitelist2.js';
+import TempSet from './utils/temp-set.js';
+import { HashProb, shouldCheckToken } from './hash.js';
+import { VERSION, COOKIE_MODE } from './config.js';
+import { shuffle } from './utils.js';
+import buildPageLoadObject from './page-telemetry.js';
+import getTrackingStatus from './dnt.js';
+import random from '../random.js';
 
-import BlockRules from './steps/block-rules';
-import CookieContext from './steps/cookie-context';
-import PageLogger from './steps/page-logger';
-import RedirectTagger from './steps/redirect-tagger';
-import TokenChecker from './steps/token-checker/index';
-import TokenExaminer from './steps/token-examiner';
-import TokenTelemetry from './steps/token-telemetry/index';
-import OAuthDetector from './steps/oauth-detector';
+import BlockRules from './steps/block-rules.js';
+import CookieContext from './steps/cookie-context.js';
+import PageLogger from './steps/page-logger.js';
+import RedirectTagger from './steps/redirect-tagger.js';
+import TokenChecker from './steps/token-checker/index.js';
+import TokenExaminer from './steps/token-examiner.js';
+import TokenTelemetry from './steps/token-telemetry/index.js';
+import OAuthDetector from './steps/oauth-detector.js';
 
 import {
   checkValidContext,
   checkSameGeneralDomain,
-} from './steps/check-context';
+} from './steps/check-context.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
@@ -55,7 +55,7 @@ export default class RequestMonitor {
       communication,
       getBrowserInfo,
       onTrackerInteraction = (event, state) => {
-        logger.log(`Tracker '${event}' with url: ${state.url}`);
+        logger.info('Tracker', event, 'with url:', state.url);
       },
       isRequestAllowed = () => false,
     },

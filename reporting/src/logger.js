@@ -103,7 +103,6 @@ export function setLogLevel(level, { prefix = '*' } = {}) {
   if (!SUPPORTED_LOG_LEVELS.has(level)) {
     throw new Error(`Unknow log level '${level}'`);
   }
-
   if (prefix === '*') {
     DEFAULT_LOG_LEVEL = level;
   }

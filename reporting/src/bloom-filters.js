@@ -9,10 +9,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger';
-import { fastHash } from './utils';
-import PersistedBitarray from './persisted-bitarray';
-import SelfCheck from './self-check';
+import logger from './logger.js';
+import { fastHash } from './utils.js';
+import PersistedBitarray from './persisted-bitarray.js';
+import SelfCheck from './self-check.js';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
