@@ -34,7 +34,9 @@ describe('RequestReporter', function () {
     setLogLevel('error');
     chrome.storage.session = chrome.storage.local;
     globalThis.chrome = chrome;
-    sinon.stub(globalThis, 'fetch').callsFake((url) => {
+    const oldFetch = globalThis.fetch;
+    sinon.stub(globalThis, 'fetch').callsFake((...args) => {
+      const url = args[0];
       if (url.startsWith(config.configUrl)) {
         return Promise.resolve({
           ok: true,
@@ -59,7 +61,7 @@ describe('RequestReporter', function () {
         });
       }
 
-      return Promise.reject({ ok: false });
+      return oldFetch(...args);
     });
   });
 
@@ -115,7 +117,7 @@ describe('RequestReporter', function () {
     context('0001-quick-close', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
-          scenariorName: '0001-quick-close',
+          scenariorName: this.test.parent.title,
           scenariorRelease: '2024-09-27',
         });
         await clock.runToLast();
@@ -133,13 +135,27 @@ describe('RequestReporter', function () {
     context('0002-quick-navigation', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
-          scenariorName: '0002-quick-navigation',
+          scenariorName: this.test.parent.title,
           scenariorRelease: '2024-09-27',
         });
         await clock.runToLast();
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
         expect(tab.requestStats).to.have.keys([
           'static.xx.fbcdn.net',
+        ]);
+      });
+    });
+
+    context('0003-prefetch', function () {
+      it('detects 3rd parties', async function () {
+        await playScenario(chrome, {
+          scenariorName: this.test.parent.title,
+          scenariorRelease: '2024-09-27',
+        });
+        await clock.runToLast();
+        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
+        expect(tab.requestStats).to.have.keys([
+          'subdomain.localhost',
         ]);
       });
     });

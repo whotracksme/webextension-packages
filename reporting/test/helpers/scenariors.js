@@ -50,6 +50,7 @@ function loadScenario(scenarioPath) {
   return fs
     .readFileSync(scenarioPath, { encoding: 'utf-8' })
     .split('\n')
+    .filter(Boolean)
     .map(JSON.parse);
 }
 
