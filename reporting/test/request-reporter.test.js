@@ -16,7 +16,7 @@ import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 import { expect } from 'chai';
 
-import { playScenario } from './helpers/scenariors.js';
+import { playScenario } from './helpers/scenarios.js';
 import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
 
 import { setLogLevel } from '../src/logger.js';

@@ -12,7 +12,7 @@
 import chrome from 'sinon-chrome';
 import { expect } from 'chai';
 
-import { playScenario } from '../helpers/scenariors.js';
+import { playScenario } from '../helpers/scenarios.js';
 
 import WebRequestPipeline from '../../src/webrequest-pipeline/index.js';
 
