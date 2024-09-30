@@ -13,6 +13,9 @@ export function checkValidContext(state) {
   if (!state.page || !state.tabUrlParts || !state.urlParts) {
     return false;
   }
+  if (state.type === 'other') {
+    return false;
+  }
   if (
     !state.tabUrlParts.protocol.startsWith('http') ||
     !state.urlParts.protocol.startsWith('http')

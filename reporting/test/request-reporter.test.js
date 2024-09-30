@@ -129,7 +129,6 @@ describe('RequestReporter', function () {
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
         expect(tab.requestStats).to.have.keys([
           'cdn.jsdelivr.net',
-          'cdn.ghostery.com',
         ]);
       });
     });
@@ -151,14 +150,14 @@ describe('RequestReporter', function () {
 
     // https://github.com/ghostery/webextension-event-recorder/blob/69ae910f323e6af11e55f496a3f493aaf69c31ba/scenariors/0003-prefetch.js#L3
     context('0003-prefetch', function () {
-      it('should ignore preflight requests', async function () {
+      it('ignores prefetches requests', async function () {
         await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-09-30',
         });
         await clock.runToLast();
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
-        expect(tab.requestStats).to.have.keys([
+        expect(tab.requestStats).to.not.have.keys([
           'subdomain.localhost',
         ]);
       });
