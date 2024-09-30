@@ -92,8 +92,8 @@ describe('WebRequestPipeline', function () {
       context('0001-quick-close', function () {
         it('runs without a crash', async function () {
           await playScenario(chrome, {
-            scenariorName: '0001-quick-close',
-            scenariorRelease: '2024-09-27',
+            scenarioName: '0001-quick-close',
+            scenarioRelease: '2024-09-27',
           });
           expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
           const [tabId] = pipeline.pageStore.tabs.keys().toArray();
@@ -110,8 +110,8 @@ describe('WebRequestPipeline', function () {
       context('0002-quick-navigation', function () {
         it('runs without a crash', async function () {
           await playScenario(chrome, {
-            scenariorName: '0002-quick-navigation',
-            scenariorRelease: '2024-09-27',
+            scenarioName: '0002-quick-navigation',
+            scenarioRelease: '2024-09-27',
           });
           expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
           const [tabId] = pipeline.pageStore.tabs.keys().toArray();
@@ -128,8 +128,8 @@ describe('WebRequestPipeline', function () {
       context('0003-prefetch', function () {
         it('runs without a crash', async function () {
           await playScenario(chrome, {
-            scenariorName: '0003-prefetch',
-            scenariorRelease: '2024-09-27',
+            scenarioName: '0003-prefetch',
+            scenarioRelease: '2024-09-27',
           });
           expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
           const [tabId] = pipeline.pageStore.tabs.keys().toArray();

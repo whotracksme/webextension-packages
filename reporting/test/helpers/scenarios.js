@@ -13,8 +13,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { brotliDecompressSync } from 'zlib';
 
-async function download(release, scenarior, browser) {
-  const scenartioFileName = `events_${scenarior}_${browser}.log`;
+async function download(release, scenario, browser) {
+  const scenartioFileName = `events_${scenario}_${browser}.log`;
 
   const scenariosPath = path.join(
     import.meta.dirname,
@@ -27,16 +27,16 @@ async function download(release, scenarior, browser) {
     fs.mkdirSync(scenariosPath, { recursive: true });
   }
 
-  const scenariorPath = path.join(scenariosPath, scenartioFileName);
-  if (fs.existsSync(scenariorPath)) {
-    return scenariorPath;
+  const scenarioPath = path.join(scenariosPath, scenartioFileName);
+  if (fs.existsSync(scenarioPath)) {
+    return scenarioPath;
   }
   const downloadUrl = `https://github.com/ghostery/webextension-event-recorder/releases/download/${release}/${scenartioFileName}.br`;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
     throw new Error(
-      `Cound not download scenarior "${scenartioFileName}" from "${downloadUrl}: ${response.status} - ${response.statusText}`,
+      `Cound not download scenario "${scenartioFileName}" from "${downloadUrl}: ${response.status} - ${response.statusText}`,
     );
   }
   const compressedBuffer = await response.arrayBuffer();
@@ -44,8 +44,8 @@ async function download(release, scenarior, browser) {
     new Uint8Array(compressedBuffer),
   );
 
-  fs.writeFileSync(scenariorPath, decompressedBuffer);
-  return scenariorPath;
+  fs.writeFileSync(scenarioPath, decompressedBuffer);
+  return scenarioPath;
 }
 
 function loadScenario(scenarioPath) {
@@ -58,13 +58,13 @@ function loadScenario(scenarioPath) {
 
 export async function playScenario(
   chrome,
-  { scenariorRelease, scenariorName, browser = 'chrome' },
+  { scenarioRelease, scenarioName, browser = 'chrome' },
 ) {
-  if (!scenariorRelease) {
-    throw new Error('specify scenarior release');
+  if (!scenarioRelease) {
+    throw new Error('specify scenario release');
   }
 
-  const scenarioPath = await download(scenariorRelease, scenariorName, browser);
+  const scenarioPath = await download(scenarioRelease, scenarioName, browser);
   const events = loadScenario(scenarioPath);
   for (const event of events) {
     try {

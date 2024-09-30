@@ -118,8 +118,8 @@ describe('RequestReporter', function () {
     context('0001-quick-close', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
-          scenariorName: this.test.parent.title,
-          scenariorRelease: '2024-09-27',
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-09-27',
         });
         await clock.runToLast();
         expect(
@@ -136,8 +136,8 @@ describe('RequestReporter', function () {
     context('0002-quick-navigation', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
-          scenariorName: this.test.parent.title,
-          scenariorRelease: '2024-09-27',
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-09-27',
         });
         await clock.runToLast();
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
@@ -148,10 +148,10 @@ describe('RequestReporter', function () {
     });
 
     context('0003-prefetch', function () {
-      it('detects 3rd parties', async function () {
+      it('should ignore preflight requests', async function () {
         await playScenario(chrome, {
-          scenariorName: this.test.parent.title,
-          scenariorRelease: '2024-09-30',
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-09-30',
         });
         await clock.runToLast();
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
