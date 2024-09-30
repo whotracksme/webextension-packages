@@ -115,7 +115,7 @@ describe('RequestReporter', function () {
           reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
         ).to.be.equal(1);
         const tab = reporter.webRequestPipeline.pageStore.tabs.values()[0]
-        console.log(tab);
+        console.log('xxxx', tab);
       });
     });
   });
