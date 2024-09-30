@@ -93,10 +93,7 @@ describe('RequestReporter', function () {
         expect(
           reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
         ).to.be.equal(1);
-        const [tabId] = reporter.webRequestPipeline.pageStore.tabs
-          .keys()
-          .toArray();
-        const tab = reporter.webRequestPipeline.pageStore.tabs.get(tabId);
+        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
         expect(tab.requestStats).to.have.keys([
           'cdn.jsdelivr.net',
           'cdn.ghostery.com',
@@ -105,17 +102,16 @@ describe('RequestReporter', function () {
     });
 
     context('0002-quick-navigation', function () {
-      it('?????', async function () {
+      it('detects 3rd parties', async function () {
         await playScenario(chrome, {
           scenariorName: '0002-quick-navigation',
           scenariorRelease: '2024-09-27',
         });
         await clock.runToLast();
-        expect(
-          reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
-        ).to.be.equal(1);
-        const tab = reporter.webRequestPipeline.pageStore.tabs.values()[0]
-        console.log('xxxx', tab);
+        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
+        expect(tab.requestStats).to.have.keys([
+          'static.xx.fbcdn.net',
+        ]);
       });
     });
   });
