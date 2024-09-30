@@ -55,7 +55,7 @@ export default class RequestMonitor {
       communication,
       getBrowserInfo,
       onTrackerInteraction = (event, state) => {
-        logger.info('Tracker', event, 'with url:', state.url');
+        logger.info('Tracker', event, 'with url:', state.url);
       },
       isRequestAllowed = () => false,
     },
