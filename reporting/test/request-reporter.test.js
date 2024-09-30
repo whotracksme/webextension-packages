@@ -17,16 +17,50 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 
 import { playScenario } from './helpers/scenariors.js';
+import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
 
 import { setLogLevel } from '../src/logger.js';
 import RequestReporter from '../src/request-reporter.js';
 import WebRequestPipeline from '../src/webrequest-pipeline/index.js';
+
+const config = {
+  configUrl: 'config',
+  remoteWhitelistUrl: 'whitelist',
+  localWhitelistUrl: 'local',
+};
 
 describe('RequestReporter', function () {
   before(function () {
     setLogLevel('error');
     chrome.storage.session = chrome.storage.local;
     globalThis.chrome = chrome;
+    sinon.stub(globalThis, 'fetch').callsFake((url) => {
+      if (url.startsWith(config.configUrl)) {
+        return Promise.resolve({
+          ok: true,
+          async json() {
+            return {};
+          },
+        });
+      }
+
+      if (url.startsWith(config.remoteWhitelistUrl)) {
+        return Promise.resolve({
+          ok: true,
+          async json() {
+            return {
+              version: '2018-10-11',
+              useDiff: false,
+            };
+          },
+          async arrayBuffer() {
+            return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
+          }
+        });
+      }
+
+      return Promise.reject({ ok: false });
+    });
   });
 
   beforeEach(function () {
@@ -37,6 +71,7 @@ describe('RequestReporter', function () {
   after(function () {
     chrome.flush();
     delete globalThis.chrome;
+    globalThis.fetch.restore();
     setLogLevel('info');
   });
 
@@ -57,12 +92,6 @@ describe('RequestReporter', function () {
       };
       const communication = {
         trustedClock,
-      };
-      const config = {
-        configUrl: 'https://cdn.ghostery.com/antitracking/config.json',
-        remoteWhitelistUrl:
-          'https://cdn.ghostery.com/antitracking/whitelist/2',
-        localWhitelistUrl: '/base/assets/request',
       };
       const webRequestPipeline = new WebRequestPipeline();
       await webRequestPipeline.init();
