@@ -18,11 +18,13 @@ import { expect } from 'chai';
 
 import { playScenario } from './helpers/scenariors.js';
 
+import { setLogLevel } from '../src/logger.js';
 import RequestReporter from '../src/request-reporter.js';
 import WebRequestPipeline from '../src/webrequest-pipeline/index.js';
 
 describe('RequestReporter', function () {
   before(function () {
+    setLogLevel('error');
     chrome.storage.session = chrome.storage.local;
     globalThis.chrome = chrome;
   });
@@ -35,6 +37,7 @@ describe('RequestReporter', function () {
   after(function () {
     chrome.flush();
     delete globalThis.chrome;
+    setLogLevel('info');
   });
 
   context('with pre-recorded events', function () {
