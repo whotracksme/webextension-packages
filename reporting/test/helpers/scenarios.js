@@ -11,7 +11,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { decompress } from 'brotli';
+import { brotliDecompressSync } from 'zlib';
 
 async function download(release, scenarior, browser) {
   const scenartioFileName = `events_${scenarior}_${browser}.log`;
@@ -40,7 +40,9 @@ async function download(release, scenarior, browser) {
     );
   }
   const compressedBuffer = await response.arrayBuffer();
-  const decompressedBuffer = await decompress(new Uint8Array(compressedBuffer));
+  const decompressedBuffer = brotliDecompressSync(
+    new Uint8Array(compressedBuffer),
+  );
 
   fs.writeFileSync(scenariorPath, decompressedBuffer);
   return scenariorPath;
