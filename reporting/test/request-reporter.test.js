@@ -115,6 +115,7 @@ describe('RequestReporter', function () {
       delete globalThis.indexedDB;
     });
 
+    // https://github.com/ghostery/webextension-event-recorder/blob/39370ce8a58712a9bbc15761ce62e7f50d43a255/scenariors/0001-quick-close.js#L1
     context('0001-quick-close', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
@@ -133,6 +134,7 @@ describe('RequestReporter', function () {
       });
     });
 
+    // https://github.com/ghostery/webextension-event-recorder/blob/39370ce8a58712a9bbc15761ce62e7f50d43a255/scenariors/0002-quick-navigation.js#L1
     context('0002-quick-navigation', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
@@ -147,6 +149,7 @@ describe('RequestReporter', function () {
       });
     });
 
+    // https://github.com/ghostery/webextension-event-recorder/blob/69ae910f323e6af11e55f496a3f493aaf69c31ba/scenariors/0003-prefetch.js#L3
     context('0003-prefetch', function () {
       it('should ignore preflight requests', async function () {
         await playScenario(chrome, {
