@@ -15,6 +15,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 import { expect } from 'chai';
+import EventEmitter from 'node:events';
 
 import { playScenario } from './helpers/scenarios.js';
 import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
@@ -81,6 +82,7 @@ describe('RequestReporter', function () {
   context('with pre-recorded events', function () {
     let reporter;
     let clock;
+    const communicationEmiter = new EventEmitter();
 
     beforeEach(async function () {
       globalThis.indexedDB = new IDBFactory();
@@ -93,7 +95,14 @@ describe('RequestReporter', function () {
           return '';
         },
       };
+      communicationEmiter.removeAllListeners();
       const communication = {
+        send(msg) {
+          communicationEmiter.emit('send', msg)
+        },
+        sendInstant(msg) {
+          communicationEmiter.emit('sendInstant', msg)
+        },
         trustedClock,
       };
       const webRequestPipeline = new WebRequestPipeline();
@@ -102,6 +111,8 @@ describe('RequestReporter', function () {
         communication,
         webRequestPipeline,
         trustedClock,
+        getBrowserInfo: () => ({ name: 'xx' }),
+        countryProvider: { getSafeCountryCode: () => 'en' },
       });
       await reporter.init();
       await reporter.requestMonitor.qs_whitelist.initPromise;
@@ -131,6 +142,26 @@ describe('RequestReporter', function () {
           'cdn.jsdelivr.net',
           'cdn.ghostery.com',
         ]);
+      });
+
+      it('reports 3rd parties', async function () {
+        await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-09-27',
+        });
+        await clock.runToLast();
+        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        // force stage all pages
+        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        await clock.runToLast();
+        const event = await eventPromise;
+        expect(event).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event.payload.data[0].tps).to.have.keys([
+          'cdn.jsdelivr.net',
+          'cdn.ghostery.com',
+        ])
       });
     });
 
