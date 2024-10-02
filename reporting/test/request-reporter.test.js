@@ -15,6 +15,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 import { expect } from 'chai';
+import EventEmitter from 'node:events';
 
 import { playScenario } from './helpers/scenarios.js';
 import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
@@ -81,6 +82,7 @@ describe('RequestReporter', function () {
   context('with pre-recorded events', function () {
     let reporter;
     let clock;
+    const communicationEmiter = new EventEmitter();
 
     beforeEach(async function () {
       globalThis.indexedDB = new IDBFactory();
@@ -93,7 +95,14 @@ describe('RequestReporter', function () {
           return '';
         },
       };
+      communicationEmiter.removeAllListeners();
       const communication = {
+        send(msg) {
+          communicationEmiter.emit('send', msg)
+        },
+        sendInstant(msg) {
+          communicationEmiter.emit('sendInstant', msg)
+        },
         trustedClock,
       };
       const webRequestPipeline = new WebRequestPipeline();
@@ -102,6 +111,8 @@ describe('RequestReporter', function () {
         communication,
         webRequestPipeline,
         trustedClock,
+        getBrowserInfo: () => ({ name: 'xx' }),
+        countryProvider: { getSafeCountryCode: () => 'en' },
       });
       await reporter.init();
       await reporter.requestMonitor.qs_whitelist.initPromise;
@@ -115,12 +126,26 @@ describe('RequestReporter', function () {
       delete globalThis.indexedDB;
     });
 
-    // https://github.com/ghostery/webextension-event-recorder/blob/39370ce8a58712a9bbc15761ce62e7f50d43a255/scenariors/0001-quick-close.js#L1
-    context('0001-quick-close', function () {
+    context('0001-empty-page', function () {
+      it('detects no 3rd parties', async function () {
+        await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-08-02',
+        });
+        await clock.runToLast();
+        expect(
+          reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
+        ).to.be.equal(1);
+        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
+        expect(tab.requestStats).to.be.empty;
+      });
+    });
+
+    context('0002-3rd-party', function () {
       it('detects 3rd parties', async function () {
         await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-09-27',
+          scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
         expect(
@@ -128,39 +153,98 @@ describe('RequestReporter', function () {
         ).to.be.equal(1);
         const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
         expect(tab.requestStats).to.have.keys([
-          'cdn.jsdelivr.net',
-          'cdn.ghostery.com',
+          'script.localhost',
+        ]);
+      });
+
+      it('reports 3rd parties', async function () {
+        await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-08-02',
+        });
+        await clock.runToLast();
+        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        // force stage all pages
+        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        await clock.runToLast();
+        const event = await eventPromise;
+        expect(event).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event.payload.data[0].tps).to.have.keys([
+          'script.localhost',
+        ])
+      });
+    });
+
+    context('0004-ping', function () {
+      it('reports pings', async function () {
+        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-08-02-1',
+        });
+        await clock.runToLast();
+        // first tp_event from the page that sent ping
+        const event = await eventPromise;
+        expect(event).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event.payload.data[0].tps).to.have.keys([
+          'ping.localhost',
+        ])
+      });
+    });
+
+    context('0005-preload', function () {
+      it('reports 3rd parties', async function () {
+        await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2024-08-02',
+        });
+        await clock.runToLast();
+        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        // force stage all pages
+        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        await clock.runToLast();
+        const event = await eventPromise;
+        expect(event).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event.payload.data[0].tps).to.have.keys([
+          'preload.localhost',
         ]);
       });
     });
 
-    // https://github.com/ghostery/webextension-event-recorder/blob/39370ce8a58712a9bbc15761ce62e7f50d43a255/scenariors/0002-quick-navigation.js#L1
-    context('0002-quick-navigation', function () {
-      it('detects 3rd parties', async function () {
+    context('0008-navigation', function () {
+      it('reports 3rd parties', async function () {
+        const eventPromise1 = new Promise((resolve) => communicationEmiter.once('send', resolve));
         await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-09-27',
+          scenarioRelease: '2024-08-02-2',
         });
         await clock.runToLast();
-        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
-        expect(tab.requestStats).to.have.keys([
-          'static.xx.fbcdn.net',
-        ]);
-      });
-    });
-
-    // https://github.com/ghostery/webextension-event-recorder/blob/69ae910f323e6af11e55f496a3f493aaf69c31ba/scenariors/0003-prefetch.js#L3
-    context('0003-prefetch', function () {
-      it('should ignore preflight requests', async function () {
-        await playScenario(chrome, {
-          scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-09-30',
+        const event1 = await eventPromise1;
+        expect(event1).to.deep.include({
+          action: 'wtm.attrack.tp_events',
         });
-        await clock.runToLast();
-        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
-        expect(tab.requestStats).to.have.keys([
-          'subdomain.localhost',
+        expect(event1.payload.data[0].tps).to.have.keys([
+          'script1.localhost',
         ]);
+        const eventPromise2 = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        // force stage all pages
+        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        await clock.runToLast();
+        const event2 = await eventPromise2;
+        expect(event2).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event2.payload.data[0].tps).to.have.keys([
+          'script2.localhost',
+        ]);
+        // reports should belong to different pages
+        expect(event1.payload.data[0].hostname).to.not.be.equal(event2.payload.data[0].hostname);
       });
     });
   });
