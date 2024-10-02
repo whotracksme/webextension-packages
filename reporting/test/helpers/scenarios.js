@@ -56,6 +56,13 @@ function loadScenario(scenarioPath) {
     .map(JSON.parse);
 }
 
+function rewriteIp(event) {
+  if (event.ip) {
+    event.ip = '198.51.100.1';
+  }
+  return event;
+}
+
 export async function playScenario(
   chrome,
   { scenarioRelease, scenarioName, browser = 'chrome' },
@@ -68,7 +75,8 @@ export async function playScenario(
   const events = loadScenario(scenarioPath);
   for (const event of events) {
     try {
-      chrome[event.api][event.event].dispatch(...event.args);
+      const args = event.args.map(rewriteIp);
+      chrome[event.api][event.event].dispatch(...args);
     } catch (e) {
       console.error(`Could not dispatch event`, event, e);
     }

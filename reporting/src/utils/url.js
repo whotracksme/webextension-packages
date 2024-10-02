@@ -68,35 +68,6 @@ function tryDecode(fn) {
 
 export const tryDecodeURIComponent = tryDecode(decodeURIComponent);
 
-export function isPrivateIP(ip) {
-  // Need to check for ipv6.
-  if (ip.indexOf(':') !== -1) {
-    // ipv6
-    if (ip === '::1') {
-      return true;
-    }
-    const ipParts = ip.split(':');
-    return (
-      ipParts[0].startsWith('fd') ||
-      ipParts.every((d, i) => {
-        if (i === ipParts.length - 1) {
-          // last group of address
-          return d === '1';
-        }
-        return d === '0' || !d;
-      })
-    );
-  }
-  const ipParts = ip.split('.').map((d) => parseInt(d, 10));
-  return (
-    ipParts[0] === 10 ||
-    (ipParts[0] === 192 && ipParts[1] === 168) ||
-    (ipParts[0] === 172 && ipParts[1] >= 16 && ipParts[1] < 32) ||
-    ipParts[0] === 127 ||
-    ipParts[0] === 0
-  );
-}
-
 export function getName(url) {
   if (url === null) {
     return null;

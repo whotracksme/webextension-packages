@@ -11,7 +11,7 @@
 
 /* eslint-disable no-param-reassign */
 import Pipeline from '../webrequest-pipeline/pipeline.js';
-import { isPrivateIP } from '../utils/url.js';
+import { isLocalIP } from '../network.js';
 import pacemaker from '../utils/pacemaker.js';
 
 import { truncatedHash } from '../md5.js';
@@ -640,7 +640,7 @@ export default class RequestMonitor {
         spec: 'break',
         fn: (state) => {
           if (state.isMainFrame && state.ip) {
-            if (isPrivateIP(state.ip)) {
+            if (isLocalIP(state.ip)) {
               state.page.isPrivateServer = true;
             }
             return false;
