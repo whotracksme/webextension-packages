@@ -1,3 +1,19 @@
+# v5.1.26 (Wed Oct 02 2024)
+
+#### 🐛 Bug Fix
+
+- Basic tp_events integration test [#103](https://github.com/whotracksme/webextension-packages/pull/103) ([@chrmod](https://github.com/chrmod))
+- Preserve "openedFrom" information during redirects that are openend in a new tab. [#97](https://github.com/whotracksme/webextension-packages/pull/97) ([@philipp-classen](https://github.com/philipp-classen))
+- Filter out uncommon URLs where the hostname is an IPv4 address. [#101](https://github.com/whotracksme/webextension-packages/pull/101) ([@philipp-classen](https://github.com/philipp-classen))
+- Unit test: play pre-recorded events [#98](https://github.com/whotracksme/webextension-packages/pull/98) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.25 (Mon Sep 23 2024)
 
 #### 🐛 Bug Fix
