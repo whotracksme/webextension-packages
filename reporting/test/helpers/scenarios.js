@@ -57,6 +57,7 @@ function loadScenario(scenarioPath) {
 }
 
 function rewriteIp(event) {
+  // prerecorded scenariors have local IPs which will be ignored by the request monitor
   if (event.ip) {
     event.ip = '198.51.100.1';
   }
