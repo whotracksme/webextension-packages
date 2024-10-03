@@ -36,7 +36,7 @@ describe('WebRequestPipeline', function () {
     it('starts empty', function () {
       const pipeline = new WebRequestPipeline();
       pipeline.init();
-      expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(0);
+      expect(pipeline.pageStore.checkIfEmpty()).to.be.true;
     });
 
     context('on webRequest.onBeforeRequest', function () {
@@ -50,12 +50,13 @@ describe('WebRequestPipeline', function () {
         });
         const details = {
           tabId: 1,
+          frameId: 0,
           url: 'https://example.com',
           type: 'main_frame',
         };
         chrome.webRequest.onBeforeRequest.dispatch(details);
-        expect(pipeline.pageStore.tabs.has(details.tabId)).to.be.true;
-        expect(pipeline.pageStore.tabs.get(details.tabId)).to.deep.include({
+        const tab = pipeline.pageStore.getPageForRequest(details);
+        expect(tab).to.deep.include({
           url: details.url,
         });
       });
@@ -91,13 +92,17 @@ describe('WebRequestPipeline', function () {
 
       context('0001-quick-close', function () {
         it('runs without a crash', async function () {
-          await playScenario(chrome, {
+          const { seenTabIds } = await playScenario(chrome, {
             scenarioName: '0001-quick-close',
             scenarioRelease: '2024-09-27',
           });
-          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
-          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
+          expect(seenTabIds).to.have.property('size', 1);
+          const tabId = seenTabIds.values().next().value;
+          const tab = pipeline.pageStore.getPageForRequest({
+            tabId,
+            frameId: 0,
+          });
           expect(tab).to.deep.include({
             url: 'https://ghosterysearch.com/',
           });
@@ -109,13 +114,17 @@ describe('WebRequestPipeline', function () {
 
       context('0002-quick-navigation', function () {
         it('runs without a crash', async function () {
-          await playScenario(chrome, {
+          const { seenTabIds } = await playScenario(chrome, {
             scenarioName: '0002-quick-navigation',
             scenarioRelease: '2024-09-27',
           });
-          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
-          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
+          expect(seenTabIds).to.have.property('size', 1);
+          const tabId = seenTabIds.values().next().value;
+          const tab = pipeline.pageStore.getPageForRequest({
+            tabId,
+            frameId: 0,
+          });
           expect(tab).to.deep.include({
             url: 'https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2F',
           });
@@ -127,13 +136,17 @@ describe('WebRequestPipeline', function () {
 
       context('0003-prefetch', function () {
         it('runs without a crash', async function () {
-          await playScenario(chrome, {
+          const { seenTabIds } = await playScenario(chrome, {
             scenarioName: '0003-prefetch',
             scenarioRelease: '2024-09-27',
           });
-          expect(pipeline.pageStore.tabs.countNonExpiredKeys()).to.be.equal(1);
-          const [tabId] = pipeline.pageStore.tabs.keys().toArray();
-          const tab = pipeline.pageStore.tabs.get(tabId);
+          expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
+          expect(seenTabIds).to.have.property('size', 1);
+          const tabId = seenTabIds.values().next().value;
+          const tab = pipeline.pageStore.getPageForRequest({
+            tabId,
+            frameId: 0,
+          });
           expect(tab).to.deep.include({
             url: 'http://localhost:8080/',
           });

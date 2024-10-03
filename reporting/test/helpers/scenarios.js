@@ -72,14 +72,33 @@ export async function playScenario(
     throw new Error('specify scenario release');
   }
 
+  const seenTabIds = new Set();
   const scenarioPath = await download(scenarioRelease, scenarioName, browser);
   const events = loadScenario(scenarioPath);
   for (const event of events) {
     try {
       const args = event.args.map(rewriteIp);
+
+      if (events.api === 'tabs' && event.event === 'onCreated') {
+        seenTabIds.add(args[0].id);
+      } else {
+        if (Object.prototype.hasOwnProperty.call(args[0], 'tabId')) {
+          seenTabIds.add(args[0].tabId);
+        }
+
+        if (
+          Object.prototype.hasOwnProperty.call(args[0], 'successorTabId') &&
+          args[0].successorTabId !== -1
+        ) {
+          seenTabIds.add(args[0].successorTabId);
+        }
+      }
+
       chrome[event.api][event.event].dispatch(...args);
     } catch (e) {
       console.error(`Could not dispatch event`, event, e);
     }
   }
+
+  return { seenTabIds };
 }

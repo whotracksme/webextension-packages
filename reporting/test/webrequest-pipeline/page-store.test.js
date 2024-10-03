@@ -25,6 +25,7 @@ describe('PageStore', function () {
   beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
+    chrome.tabs.query.returns([]);
   });
 
   after(function () {
@@ -35,7 +36,7 @@ describe('PageStore', function () {
   it('starts with empty tabs', async function () {
     const store = new PageStore({});
     await store.init();
-    expect(store.tabs.countNonExpiredKeys()).to.be.equal(0);
+    expect(store.checkIfEmpty()).to.be.true;
   });
 
   context('on chrome.tabs.onCreated', function () {
@@ -44,8 +45,10 @@ describe('PageStore', function () {
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onCreated.dispatch(tab);
-      expect(store.tabs.has(tab.id)).to.be.true;
-      expect(store.tabs.get(tab.id)).to.deep.include({
+
+      expect(
+        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+      ).to.deep.include({
         id: tab.id,
       });
     });
@@ -57,8 +60,9 @@ describe('PageStore', function () {
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onUpdated.dispatch(tab.id, {}, tab);
-      expect(store.tabs.has(tab.id)).to.be.true;
-      expect(store.tabs.get(tab.id)).to.deep.include({
+      expect(
+        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+      ).to.deep.include({
         id: tab.id,
       });
     });
@@ -68,13 +72,18 @@ describe('PageStore', function () {
       await store.init();
       const tab = { id: 1 };
       chrome.tabs.onCreated.dispatch(tab);
-      expect(store.tabs.has(tab.id)).to.be.true;
-      expect(store.tabs.get(tab.id)).to.deep.include({
+      expect(
+        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+      ).to.deep.include({
         id: tab.id,
       });
-      expect(store.tabs.get(tab.id)).to.have.property('url', undefined);
+      expect(
+        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+      ).to.have.property('url', undefined);
       chrome.tabs.onUpdated.dispatch(tab.id, { url: 'about:blank' }, tab);
-      expect(store.tabs.get(tab.id)).to.have.property('url', 'about:blank');
+      expect(
+        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+      ).to.have.property('url', 'about:blank');
     });
   });
 
@@ -84,8 +93,7 @@ describe('PageStore', function () {
       await store.init();
       const details = { tabId: 1, frameId: 0, url: 'about:blank' };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(store.tabs.has(details.tabId)).to.be.true;
-      expect(store.tabs.get(details.tabId)).to.deep.include({
+      expect(store.getPageForRequest(details)).to.deep.include({
         id: details.tabId,
         url: details.url,
       });
@@ -103,7 +111,7 @@ describe('PageStore', function () {
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
-      const page = store.tabs.get(details.tabId);
+      const page = store.getPageForRequest(details);
       page.state = PAGE_LOADING_STATE.COMPLETE;
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
@@ -124,7 +132,10 @@ describe('PageStore', function () {
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
-      store.tabs.get(details.tabId).state = PAGE_LOADING_STATE.COMPLETE;
+
+      // sets PAGE_LOADING_STATE.COMPLETE;
+      chrome.webNavigation.onCompleted.dispatch(details);
+
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 1,

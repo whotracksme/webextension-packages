@@ -128,44 +128,48 @@ describe('RequestReporter', function () {
 
     context('0001-empty-page', function () {
       it('detects no 3rd parties', async function () {
-        await playScenario(chrome, {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
         expect(
-          reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
-        ).to.be.equal(1);
-        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
+          reporter.webRequestPipeline.pageStore.checkIfEmpty(),
+        ).to.be.false;
+        expect(seenTabIds).to.have.property('size', 1);
+        const tabId = seenTabIds.values().next().value;
+        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
         expect(tab.requestStats).to.be.empty;
       });
     });
 
     context('0002-3rd-party', function () {
       it('detects 3rd parties', async function () {
-        await playScenario(chrome, {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
         expect(
-          reporter.webRequestPipeline.pageStore.tabs.countNonExpiredKeys(),
-        ).to.be.equal(1);
-        const [tab] = reporter.webRequestPipeline.pageStore.tabs.values();
+          reporter.webRequestPipeline.pageStore.checkIfEmpty(),
+        ).to.be.false;
+        expect(seenTabIds).to.have.property('size', 1);
+        const tabId = seenTabIds.values().next().value;
+        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
         expect(tab.requestStats).to.have.keys([
           'script.localhost',
         ]);
       });
 
       it('reports 3rd parties', async function () {
-        await playScenario(chrome, {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
         // force stage all pages
-        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
@@ -198,14 +202,14 @@ describe('RequestReporter', function () {
 
     context('0005-preload', function () {
       it('reports 3rd parties', async function () {
-        await playScenario(chrome, {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
         // force stage all pages
-        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
@@ -220,7 +224,7 @@ describe('RequestReporter', function () {
     context('0008-navigation', function () {
       it('reports 3rd parties', async function () {
         const eventPromise1 = new Promise((resolve) => communicationEmiter.once('send', resolve));
-        await playScenario(chrome, {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02-2',
         });
@@ -234,7 +238,7 @@ describe('RequestReporter', function () {
         ]);
         const eventPromise2 = new Promise((resolve) => communicationEmiter.once('send', resolve));
         // force stage all pages
-        reporter.webRequestPipeline.pageStore.tabs.forEach((page) => reporter.webRequestPipeline.pageStore.stagePage(page));
+        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event2 = await eventPromise2;
         expect(event2).to.deep.include({
