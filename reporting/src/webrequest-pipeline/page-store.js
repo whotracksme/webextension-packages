@@ -20,13 +20,14 @@ import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
 
 export default class PageStore {
+  #notifyPageStageListeners;
+
   constructor({ notifyPageStageListeners }) {
     this.tabs = new ChromeStorageMap({
       storageKey: 'wtm-url-reporting:page-store:tabs',
       ttlInMs: PAGE_TTL,
     });
-    this.staged = [];
-    this.notifyPageStageListeners = notifyPageStageListeners;
+    this.#notifyPageStageListeners = notifyPageStageListeners;
   }
 
   async init() {
@@ -66,14 +67,11 @@ export default class PageStore {
   }
 
   stagePage(page) {
-    if (this.staged.push(page) > 5) {
-      this.staged.shift();
-    }
     setActive(page, false);
     page.destroyed = Date.now();
     // unset previous (to prevent history chain memory leak)
     page.previous = undefined;
-    this.notifyPageStageListeners(page);
+    this.#notifyPageStageListeners(page);
   }
 
   /**
