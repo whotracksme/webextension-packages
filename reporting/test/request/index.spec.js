@@ -11,6 +11,7 @@
 
 import * as chai from 'chai';
 import sinon from 'sinon';
+
 // import FakeSessionApi from '../helpers/fake-session-storage.js'; // TODO: see comments below
 
 import testPages from './test-pages.js';
@@ -139,9 +140,7 @@ describe('request/index', function () {
   });
 
   function simulatePageLoad(pageSpec) {
-    pipeline.pageStore.onTabCreated({
-      ...pageSpec.tab,
-    });
+    chrome.tabs.onCreated.dispatch(pageSpec.tab);
     return {
       onBeforeRequest: pageSpec.onBeforeRequest.map(function (reqData) {
         const response = pipeline.onBeforeRequest(reqData);
