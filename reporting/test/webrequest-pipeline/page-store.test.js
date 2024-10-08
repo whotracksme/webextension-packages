@@ -10,11 +10,10 @@
  */
 
 import chrome from 'sinon-chrome';
-import { mock } from 'sinon';
+import { mock, match } from 'sinon';
 import { expect } from 'chai';
 
 import PageStore from '../../src/webrequest-pipeline/page-store.js';
-import { PAGE_LOADING_STATE } from '../../src/webrequest-pipeline/page.js';
 
 describe('PageStore', function () {
   before(function () {
@@ -112,12 +111,21 @@ describe('PageStore', function () {
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
       const page = store.getPageForRequest(details);
-      page.state = PAGE_LOADING_STATE.COMPLETE;
+
+      // sets PAGE_LOADING_STATE.COMPLETE;
+      chrome.webNavigation.onCompleted.dispatch(details);
+
       chrome.webNavigation.onBeforeNavigate.dispatch({
         ...details,
         timeStamp: details.timeStamp + 300,
       });
-      expect(listener).to.have.been.calledWith(page);
+      expect(listener).to.have.been.calledWith(
+        match({
+          id: page.id,
+          url: details.url,
+          created: details.timeStamp,
+        }),
+      );
     });
 
     it('ignore duplicates', async function () {
