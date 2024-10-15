@@ -83,7 +83,6 @@ describe('request/index', function () {
   afterEach(() => {
     pipeline?.unload();
     pipeline = null;
-
     if (monkeyPatchedChromeStorage) {
       chrome.storage.session = oldChromeStorageSession;
       chrome.storage = oldChromeStorage;
