@@ -164,7 +164,8 @@ export default class PageStore {
     this.#pages.delete(tabId);
   };
 
-  #onTabActivated = ({ previousTabId, tabId }) => {
+  #onTabActivated = (details) => {
+    const { previousTabId, tabId } = details;
     // if previousTabId is not set (e.g. on chrome), set all tabs to inactive
     // otherwise, we only have to mark the previous tab as inactive
     if (!previousTabId) {
@@ -257,7 +258,8 @@ export default class PageStore {
     }
   };
 
-  #onNavigationCompleted = ({ frameId, tabId }) => {
+  #onNavigationCompleted = (details) => {
+    const { frameId, tabId } = details;
     const serializedPage = this.#pages.get(tabId);
     if (!serializedPage) {
       return;
@@ -269,7 +271,8 @@ export default class PageStore {
     this.#pages.set(tabId, page);
   };
 
-  onMainFrame = ({ tabId, url, requestId }, event) => {
+  onMainFrame = (details, event) => {
+    const { tabId, url, requestId } = details;
     // main frame from tabId -1 is from service worker and should not be saved
     if (tabId === -1) {
       return;
