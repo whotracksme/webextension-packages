@@ -65,13 +65,6 @@ export default class WebRequestContext {
         context.originUrl || context.initiator || context.documentUrl;
     }
 
-    if (!context.originUrl) {
-      context.originUrl =
-        context.initiator ||
-        context.documentUrl ||
-        context.tabUrl;
-    }
-
     return new WebRequestContext(context);
   }
 
@@ -84,7 +77,6 @@ export default class WebRequestContext {
 
     this.urlParts = parse(this.url);
     this.tabUrlParts = parse(this.tabUrl);
-    this.originUrlParts = parse(this.originUrl);
   }
 
   /**
@@ -122,11 +114,5 @@ export default class WebRequestContext {
 
   getReferrer() {
     return this.getRequestHeader('Referer');
-  }
-
-  isBackgroundRequest() {
-    return (
-      this.tabId === -1 && this.originUrlParts?.protocol.endsWith('extension:')
-    );
   }
 }
