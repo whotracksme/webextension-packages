@@ -58,12 +58,6 @@ export default class WebRequestContext {
     // Get context on this page
     const page = pageStore.getPageForRequest(context);
 
-    // **Chromium addition**
-    // frameAncestors
-    if (context.frameAncestors === undefined) {
-      context.frameAncestors = page ? page.getFrameAncestors(context) : [];
-    }
-
     // Ghostery-specific extensions to webRequest details
     context.page = page;
     context.tabUrl = context.tabUrl || (page && page.url);

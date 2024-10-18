@@ -64,39 +64,6 @@ class Page {
     return (this.requestStats[domain] ||= {});
   }
 
-  getFrameAncestors({ parentFrameId }) {
-    const ancestors = [];
-
-    // Reconstruct frame ancestors
-    let currentFrameId = parentFrameId;
-    while (currentFrameId !== -1) {
-      const frame = this.frames[currentFrameId];
-
-      // If `frame` if undefined, this means we do not have any information
-      // about the frame associated with `currentFrameId`. This can happen if
-      // the event for `main_frame` or `sub_frame` was not emitted from the
-      // webRequest API for this frame; this can happen when Service Workers
-      // are used. In this case, we consider that the parent frame is the main
-      // frame (which is very likely the case).
-      if (frame === undefined) {
-        ancestors.push({
-          frameId: 0,
-          url: this.url,
-        });
-        break;
-      }
-
-      // Continue going up the ancestors chain
-      ancestors.push({
-        frameId: currentFrameId,
-        url: frame.url,
-      });
-      currentFrameId = frame.parentFrameId;
-    }
-
-    return ancestors;
-  }
-
   /**
    * Return the URL of the frame.
    */
