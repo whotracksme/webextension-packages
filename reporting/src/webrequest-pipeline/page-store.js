@@ -80,9 +80,7 @@ export default class PageStore {
     chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
-    if (chrome.windows && chrome.windows.onFocusChanged) {
-      chrome.windows.onFocusChanged.addListener(this.#onWindowFocusChanged);
-    }
+
     // popupate initially open tabs
     (await chrome.tabs.query({})).forEach((tab) => this.#onTabCreated(tab));
   }
@@ -107,9 +105,6 @@ export default class PageStore {
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
     );
-    if (chrome.windows && chrome.windows.onFocusChanged) {
-      chrome.windows.onFocusChanged.removeListener(this.#onWindowFocusChanged);
-    }
   }
 
   checkIfEmpty() {
@@ -184,19 +179,6 @@ export default class PageStore {
       const page = new Page(this.#pages.get(tabId));
       page.setActive(true);
       this.#pages.set(page.id, page);
-    }
-  };
-
-  #onWindowFocusChanged = async (focusedWindowId) => {
-    const activeTabs = await chrome.tabs.query({ active: true });
-    for (const { id, windowId } of activeTabs) {
-      const serializedPage = this.#pages.get(id);
-      if (!serializedPage) {
-        continue;
-      }
-      const page = new Page(serializedPage);
-      page.setActive(windowId === focusedWindowId);
-      this.#pages.set(id, page);
     }
   };
 
