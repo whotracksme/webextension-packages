@@ -31,12 +31,6 @@ class Page {
     this.created = page.created || Date.now();
     this.destroyed = page.destroyed || null;
     this.lastRequestId = page.lastRequestId || null;
-    this.frames = page.frames || {
-      0: {
-        parentFrameId: -1,
-        url: page.url,
-      },
-    };
     this.state = page.state || PAGE_LOADING_STATE.CREATED;
 
     this.activeTime = page.activeTime || 0;
@@ -260,9 +254,6 @@ export default class PageStore {
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMMITTED;
       this.#pages.set(tabId, page);
-    } else if (!page.frames[frameId]) {
-      // frame created without request
-      this.onSubFrame(details);
     }
   };
 
@@ -290,7 +281,6 @@ export default class PageStore {
     );
 
     if (event === 'onBeforeRequest') {
-      page.frames = {};
       // Detect redirect: if the last request on this tab had the same id and
       // this was from the same `onBeforeRequest` hook, we can assume this is a
       // redirection.
@@ -306,27 +296,7 @@ export default class PageStore {
 
     // Update context of tab with `url` and main frame information
     page.url = url;
-    page.frames[0] = {
-      parentFrameId: -1,
-      url,
-    };
 
-    this.#pages.set(tabId, page);
-  };
-
-  onSubFrame = (details) => {
-    const { tabId, frameId, parentFrameId, url } = details;
-    const serializedPage = this.#pages.get(tabId);
-    if (!serializedPage) {
-      logger.log('Could not find tab for sub_frame request', details);
-      return;
-    }
-    const page = new Page(serializedPage);
-    // Keep track of frameUrl as well as parent frame
-    page.frames[frameId] = {
-      parentFrameId,
-      url,
-    };
     this.#pages.set(tabId, page);
   };
 
@@ -337,14 +307,6 @@ export default class PageStore {
       return null;
     }
     const page = new Page(serializedPage);
-    // check if the current page has the given frame id, otherwise check if it belongs to the
-    // previous page
-    if (!page.frames[frameId]) {
-      if (page.previous && page.previous.frames[frameId]) {
-        return page.previous;
-      }
-      return null;
-    }
 
     const couldBePreviousPage =
       frameId === 0 && type !== 'main_frame' && page.previous;

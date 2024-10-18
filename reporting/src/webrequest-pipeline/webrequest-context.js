@@ -50,11 +50,6 @@ export default class WebRequestContext {
       pageStore.onMainFrame(context, event);
     }
 
-    // Sub frames book keeping
-    if (context.type === 'sub_frame') {
-      pageStore.onSubFrame(context);
-    }
-
     // Get context on this page
     const page = pageStore.getPageForRequest(context);
 
