@@ -63,25 +63,6 @@ class Page {
   getStatsForDomain(domain) {
     return (this.requestStats[domain] ||= {});
   }
-
-  /**
-   * Return the URL of the frame.
-   */
-  getFrameUrl(context) {
-    const { frameId } = context;
-
-    const frame = this.frames[frameId];
-
-    // In some cases, frame creation does not trigger a webRequest event (e.g.:
-    // if the iframe is specified in the HTML of the page directly). In this
-    // case we try to fall-back to something else: documentUrl, originUrl,
-    // initiator.
-    if (frame === undefined) {
-      return context.documentUrl || context.originUrl || context.initiator;
-    }
-
-    return frame.url;
-  }
 }
 
 export default class PageStore {
