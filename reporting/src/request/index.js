@@ -24,7 +24,6 @@ import { HashProb, shouldCheckToken } from './hash.js';
 import { VERSION, COOKIE_MODE } from './config.js';
 import { shuffle } from './utils.js';
 import buildPageLoadObject from './page-telemetry.js';
-import getTrackingStatus from './dnt.js';
 import random from '../random.js';
 
 import BlockRules from './steps/block-rules.js';
@@ -519,18 +518,7 @@ export default class RequestMonitor {
         {
           name: 'checkMainDocumentRedirects',
           spec: 'break',
-          fn: (state) => {
-            if (state.isMainFrame) {
-              // check for tracking status headers for first party
-              const trackingStatus = getTrackingStatus(state);
-              if (trackingStatus) {
-                state.page.tsv = trackingStatus.value;
-                state.page.tsvId = trackingStatus.statusId;
-              }
-              return false;
-            }
-            return true;
-          },
+          fn: (state) => !state.isMainFrame,
         },
         {
           name: 'checkSameGeneralDomain',
@@ -546,28 +534,6 @@ export default class RequestMonitor {
           name: 'pageLogger.onHeadersReceived',
           spec: 'annotate',
           fn: (state) => steps.pageLogger.onHeadersReceived(state),
-        },
-        {
-          name: 'logResponseStats',
-          spec: 'collect',
-          fn: (state) => {
-            if (state.incrementStat) {
-              // TSV stats
-              if (
-                this.qs_whitelist.isTrackerDomain(
-                  truncatedHash(state.urlParts.generalDomain),
-                )
-              ) {
-                const trackingStatus = getTrackingStatus(state);
-                if (trackingStatus) {
-                  state.incrementStat(`tsv_${trackingStatus.value}`);
-                  if (trackingStatus.statusId) {
-                    state.incrementStat('tsv_status');
-                  }
-                }
-              }
-            }
-          },
         },
         {
           name: 'checkSetCookie',

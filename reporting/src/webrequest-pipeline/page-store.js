@@ -45,9 +45,6 @@ class Page {
     this.annotations = page.annotations || {};
     this.counter = page.counter || 0;
     this.previous = page.previous;
-
-    this.tsv = page.tsv || '';
-    this.tsvId = page.tsvId || undefined;
   }
 
   setActive(active) {
