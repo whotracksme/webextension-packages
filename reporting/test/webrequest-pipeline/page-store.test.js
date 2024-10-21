@@ -46,7 +46,7 @@ describe('PageStore', function () {
       chrome.tabs.onCreated.dispatch(tab);
 
       expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+        store.getPage(tab.id),
       ).to.deep.include({
         id: tab.id,
       });
@@ -60,7 +60,7 @@ describe('PageStore', function () {
       const tab = { id: 1 };
       chrome.tabs.onUpdated.dispatch(tab.id, {}, tab);
       expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+        store.getPage(tab.id),
       ).to.deep.include({
         id: tab.id,
       });
@@ -72,16 +72,16 @@ describe('PageStore', function () {
       const tab = { id: 1 };
       chrome.tabs.onCreated.dispatch(tab);
       expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+        store.getPage(tab.id),
       ).to.deep.include({
         id: tab.id,
       });
       expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+        store.getPage(tab.id),
       ).to.have.property('url', undefined);
       chrome.tabs.onUpdated.dispatch(tab.id, { url: 'about:blank' }, tab);
       expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
+        store.getPage(tab.id),
       ).to.have.property('url', 'about:blank');
     });
   });
@@ -92,7 +92,7 @@ describe('PageStore', function () {
       await store.init();
       const details = { tabId: 1, frameId: 0, url: 'about:blank' };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(store.getPageForRequest(details)).to.deep.include({
+      expect(store.getPage(details.tabId)).to.deep.include({
         id: details.tabId,
         url: details.url,
       });
@@ -110,7 +110,7 @@ describe('PageStore', function () {
       };
       chrome.webNavigation.onBeforeNavigate.dispatch(details);
       expect(listener).to.not.have.been.called;
-      const page = store.getPageForRequest(details);
+      const page = store.getPage(details.tabId);
 
       // sets PAGE_LOADING_STATE.COMPLETE;
       chrome.webNavigation.onCompleted.dispatch(details);

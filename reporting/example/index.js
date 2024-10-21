@@ -117,10 +117,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       sendResponse({
         tabs: tabs.map((tab) =>
-          webRequestPipeline.pageStore.getPageForRequest({
-            tabId: tab.id,
-            frameId: 0,
-          }),
+          webRequestPipeline.pageStore.getPage(tab.id),
         ),
       });
     })();

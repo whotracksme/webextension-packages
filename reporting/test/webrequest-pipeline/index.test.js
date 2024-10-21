@@ -55,7 +55,7 @@ describe('WebRequestPipeline', function () {
           type: 'main_frame',
         };
         chrome.webRequest.onBeforeRequest.dispatch(details);
-        const tab = pipeline.pageStore.getPageForRequest(details);
+        const tab = pipeline.pageStore.getPage(details.tabId);
         expect(tab).to.deep.include({
           url: details.url,
         });
@@ -99,10 +99,7 @@ describe('WebRequestPipeline', function () {
           expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
           expect(seenTabIds).to.have.property('size', 1);
           const tabId = seenTabIds.values().next().value;
-          const tab = pipeline.pageStore.getPageForRequest({
-            tabId,
-            frameId: 0,
-          });
+          const tab = pipeline.pageStore.getPage(tabId);
           expect(tab).to.deep.include({
             url: 'https://ghosterysearch.com/',
           });
@@ -121,10 +118,7 @@ describe('WebRequestPipeline', function () {
           expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
           expect(seenTabIds).to.have.property('size', 1);
           const tabId = seenTabIds.values().next().value;
-          const tab = pipeline.pageStore.getPageForRequest({
-            tabId,
-            frameId: 0,
-          });
+          const tab = pipeline.pageStore.getPage(tabId);
           expect(tab).to.deep.include({
             url: 'https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2F',
           });
@@ -143,10 +137,7 @@ describe('WebRequestPipeline', function () {
           expect(pipeline.pageStore.checkIfEmpty()).to.be.false;
           expect(seenTabIds).to.have.property('size', 1);
           const tabId = seenTabIds.values().next().value;
-          const tab = pipeline.pageStore.getPageForRequest({
-            tabId,
-            frameId: 0,
-          });
+          const tab = pipeline.pageStore.getPage(tabId);
           expect(tab).to.deep.include({
             url: 'http://localhost:8080/',
           });
