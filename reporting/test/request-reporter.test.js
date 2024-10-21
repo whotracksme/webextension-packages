@@ -138,7 +138,7 @@ describe('RequestReporter', function () {
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
+        const tab = reporter.webRequestPipeline.pageStore.getPage(tabId);
         expect(tab.requestStats).to.be.empty;
       });
     });
@@ -155,7 +155,7 @@ describe('RequestReporter', function () {
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
+        const tab = reporter.webRequestPipeline.pageStore.getPage(tabId);
         expect(tab.requestStats).to.have.keys([
           'script.localhost',
         ]);

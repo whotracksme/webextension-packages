@@ -42,6 +42,9 @@ class Page {
 
     this.tsv = page.tsv || '';
     this.tsvId = page.tsvId || undefined;
+
+    this.documentAncestors = page.documentAncestors;
+    this.frameAncestors = page.frameAncestors;
   }
 
   setActive(active) {
@@ -233,6 +236,23 @@ export default class PageStore {
 
     const page = new Page(serializedPage);
 
+    if (details.documentId) {
+
+      if (!details.parentDocumentId && !page.documentAncestors /* main frame */) {
+        page.documentAncestors = [details.documentId];
+        this.#pages.set(tabId, page);
+      } else if (details.parentDocumentId /* sub frame */) {
+
+        if (page.documentAncestors.find(id => id === details.parentDocumentId)) {
+          page.documentAncestors.push(details.documentId);
+          this.#pages.set(tabId, page);
+        } else if (page.previous.documentAncestors.find(id => id === details.parentDocumentId)) {
+          page.previous.documentAncestors.push(details.documentId);
+          this.#pages.set(tabId, page);
+        }
+      }
+    }
+
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMMITTED;
       this.#pages.set(tabId, page);
@@ -284,35 +304,50 @@ export default class PageStore {
     this.#pages.set(tabId, page);
   };
 
-  getPageForRequest(context) {
-    const { tabId, frameId, originUrl, type, initiator } = context;
+  getPage(tabId) {
     const serializedPage = this.#pages.get(tabId);
     if (!serializedPage) {
       return null;
     }
     const page = new Page(serializedPage);
-
-    const couldBePreviousPage =
-      frameId === 0 && type !== 'main_frame' && page.previous;
-
-    // for main frame requests: check if the origin url is from the previous page (Firefox)
-    if (
-      couldBePreviousPage &&
-      page.url !== originUrl &&
-      page.previous.url === originUrl
-    ) {
-      return page.previous;
-    }
-    // on Chrome we have `initiator` which only contains the origin. In this case, check for a
-    // different origin
-    if (
-      couldBePreviousPage &&
-      initiator &&
-      !page.url.startsWith(initiator) &&
-      page.previous.url.startsWith(initiator)
-    ) {
-      return page.previous;
-    }
     return page;
+  }
+
+  getPageForRequest(context) {
+    const page = this.getPage(context.tabId);
+
+    if (!page) {
+      return null;
+    }
+
+    // Firefox
+    if (context.frameAncestors) {
+      const tabUrl = context.frameAncestors.findLast(a => a.frameId === 0)?.url || context.documentUrl;
+
+      if (page.url === tabUrl) {
+        return page;
+      } else if (page.previous && page.previous.url === tabUrl) {
+        return page.previous;
+      }
+      return null;
+    }
+
+    if (page.documentAncestors) {
+      for(const documentId of page.documentAncestors) {
+        if (context.documentId === documentId || context.parentDocumentId === documentId) {
+          return page;
+        }
+      }
+    }
+
+    if (page.previous && page.previous.documentAncestors) {
+      for(const documentId of page.previous.documentAncestors) {
+        if (context.documentId === documentId || context.parentDocumentId === documentId) {
+          return page.previous;
+        }
+      }
+    }
+
+    return null;
   }
 }
