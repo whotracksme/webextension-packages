@@ -11,8 +11,7 @@
     "webRequest",
     "tabs",
     "storage",
-    "scripting",
-    "windows"
+    "scripting"
   ],
   "action": {
     "default_title": "WTM/Reporting Inspector"

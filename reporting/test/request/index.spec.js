@@ -294,7 +294,6 @@ describe('request/index', function () {
         type: 'main_frame',
         url: 'http://cliqztest.com/',
         requestHeaders: mockRequestHeaders,
-        frameAncestors: [],
       });
       chai.expect(mainDoc).to.not.have.property('cancel');
       chai.expect(mainDoc).to.not.have.property('redirectUrl');
@@ -311,7 +310,6 @@ describe('request/index', function () {
         requestHeaders: mockRequestHeaders,
         initiator: 'http://cliqztest.com',
         isPrivate: false,
-        frameAncestors: [],
       });
       chai.expect(response).to.have.property('redirectUrl');
       chai.expect(response.redirectUrl).to.not.contain(uid);
@@ -329,7 +327,6 @@ describe('request/index', function () {
         requestHeaders: mockRequestHeaders,
         originUrl: '',
         tabUrl: '',
-        frameAncestors: [],
       });
       chai.expect(mainDoc).to.not.have.property('cancel');
       chai.expect(mainDoc).to.not.have.property('redirectUrl');
@@ -347,7 +344,6 @@ describe('request/index', function () {
         originUrl: 'http://cliqztest.com',
         tabUrl: 'http://cliqztest.com',
         isPrivate: false,
-        frameAncestors: [],
       });
       chai.expect(response).to.have.property('redirectUrl');
       chai.expect(response.redirectUrl).to.not.contain(uid);
@@ -366,7 +362,6 @@ describe('request/index', function () {
         originUrl: 'http://cliqztest.com',
         tabUrl: 'http://cliqztest.com',
         isPrivate: false,
-        frameAncestors: [],
       });
       chai.expect(response).to.have.property('redirectUrl');
       chai.expect(response.redirectUrl).to.not.contain(uid);

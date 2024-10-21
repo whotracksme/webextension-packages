@@ -9,7 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from './logger.js';
 import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
@@ -63,58 +62,6 @@ class Page {
   getStatsForDomain(domain) {
     return (this.requestStats[domain] ||= {});
   }
-
-  getFrameAncestors({ parentFrameId }) {
-    const ancestors = [];
-
-    // Reconstruct frame ancestors
-    let currentFrameId = parentFrameId;
-    while (currentFrameId !== -1) {
-      const frame = this.frames[currentFrameId];
-
-      // If `frame` if undefined, this means we do not have any information
-      // about the frame associated with `currentFrameId`. This can happen if
-      // the event for `main_frame` or `sub_frame` was not emitted from the
-      // webRequest API for this frame; this can happen when Service Workers
-      // are used. In this case, we consider that the parent frame is the main
-      // frame (which is very likely the case).
-      if (frame === undefined) {
-        ancestors.push({
-          frameId: 0,
-          url: this.url,
-        });
-        break;
-      }
-
-      // Continue going up the ancestors chain
-      ancestors.push({
-        frameId: currentFrameId,
-        url: frame.url,
-      });
-      currentFrameId = frame.parentFrameId;
-    }
-
-    return ancestors;
-  }
-
-  /**
-   * Return the URL of the frame.
-   */
-  getFrameUrl(context) {
-    const { frameId } = context;
-
-    const frame = this.frames[frameId];
-
-    // In some cases, frame creation does not trigger a webRequest event (e.g.:
-    // if the iframe is specified in the HTML of the page directly). In this
-    // case we try to fall-back to something else: documentUrl, originUrl,
-    // initiator.
-    if (frame === undefined) {
-      return context.documentUrl || context.originUrl || context.initiator;
-    }
-
-    return frame.url;
-  }
 }
 
 export default class PageStore {
@@ -138,9 +85,8 @@ export default class PageStore {
     chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
-    if (chrome.windows && chrome.windows.onFocusChanged) {
-      chrome.windows.onFocusChanged.addListener(this.#onWindowFocusChanged);
-    }
+    chrome.windows.onFocusChanged?.addListener(this.#onWindowFocusChanged);
+
     // popupate initially open tabs
     (await chrome.tabs.query({})).forEach((tab) => this.#onTabCreated(tab));
   }
@@ -165,9 +111,7 @@ export default class PageStore {
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
     );
-    if (chrome.windows && chrome.windows.onFocusChanged) {
-      chrome.windows.onFocusChanged.removeListener(this.#onWindowFocusChanged);
-    }
+    chrome.windows.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
   }
 
   checkIfEmpty() {
@@ -222,7 +166,8 @@ export default class PageStore {
     this.#pages.delete(tabId);
   };
 
-  #onTabActivated = ({ previousTabId, tabId }) => {
+  #onTabActivated = (details) => {
+    const { previousTabId, tabId } = details;
     // if previousTabId is not set (e.g. on chrome), set all tabs to inactive
     // otherwise, we only have to mark the previous tab as inactive
     if (!previousTabId) {
@@ -281,6 +226,9 @@ export default class PageStore {
       // loaded), stage it before we create the new page info.
       if (page.state === PAGE_LOADING_STATE.COMPLETE) {
         this.#stagePage(page);
+      } else if (!page.frames[frameId]) {
+        // frame created without request
+        this.onSubFrame(details);
       }
     }
 
@@ -312,13 +260,11 @@ export default class PageStore {
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMMITTED;
       this.#pages.set(tabId, page);
-    } else if (!page.frames[frameId]) {
-      // frame created without request
-      this.onSubFrame(details);
     }
   };
 
-  #onNavigationCompleted = ({ frameId, tabId }) => {
+  #onNavigationCompleted = (details) => {
+    const { frameId, tabId } = details;
     const serializedPage = this.#pages.get(tabId);
     if (!serializedPage) {
       return;
@@ -330,7 +276,8 @@ export default class PageStore {
     this.#pages.set(tabId, page);
   };
 
-  onMainFrame = ({ tabId, url, requestId }, event) => {
+  onMainFrame = (details, event) => {
+    const { tabId, url, requestId } = details;
     // main frame from tabId -1 is from service worker and should not be saved
     if (tabId === -1) {
       return;
@@ -342,7 +289,6 @@ export default class PageStore {
     );
 
     if (event === 'onBeforeRequest') {
-      page.frames = {};
       // Detect redirect: if the last request on this tab had the same id and
       // this was from the same `onBeforeRequest` hook, we can assume this is a
       // redirection.
@@ -389,7 +335,7 @@ export default class PageStore {
       return null;
     }
     const page = new Page(serializedPage);
-    // check if the current page has the given frame id, otherwise check if it belongs to the
+
     // previous page
     if (!page.frames[frameId]) {
       if (page.previous && page.previous.frames[frameId]) {

@@ -98,9 +98,6 @@ export default class PageLogger {
     const scheme = isHTTP(urlParts.protocol) ? urlParts.scheme : 'other';
     incrementStat(`scheme_${scheme}`);
 
-    // find frame depth
-    incrementStat(`window_depth_${Math.min(state.frameAncestors.length, 2)}`);
-
     if (state.url.indexOf(this.config.placeHolder) > -1) {
       incrementStat('hasPlaceHolder');
     }
