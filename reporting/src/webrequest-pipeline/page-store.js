@@ -289,6 +289,7 @@ export default class PageStore {
     );
 
     if (event === 'onBeforeRequest') {
+      page.frames = {};
       // Detect redirect: if the last request on this tab had the same id and
       // this was from the same `onBeforeRequest` hook, we can assume this is a
       // redirection.
@@ -335,7 +336,7 @@ export default class PageStore {
       return null;
     }
     const page = new Page(serializedPage);
-
+    // check if the current page has the given frame id, otherwise check if it belongs to the
     // previous page
     if (!page.frames[frameId]) {
       if (page.previous && page.previous.frames[frameId]) {
