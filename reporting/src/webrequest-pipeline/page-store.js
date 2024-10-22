@@ -314,7 +314,6 @@ export default class PageStore {
     const { tabId, frameId, parentFrameId, url } = details;
     const serializedPage = this.#pages.get(tabId);
     if (!serializedPage) {
-      logger.log('Could not find tab for sub_frame request', details);
       return;
     }
     const page = new Page(serializedPage);
