@@ -58,16 +58,9 @@ export default class WebRequestContext {
     // Get context on this page
     const page = pageStore.getPageForRequest(context);
 
-    // **Chromium addition**
-    // frameAncestors
-    if (context.frameAncestors === undefined) {
-      context.frameAncestors = page ? page.getFrameAncestors(context) : [];
-    }
-
     // Ghostery-specific extensions to webRequest details
     context.page = page;
     context.tabUrl = context.tabUrl || (page && page.url);
-    context.frameUrl = context.frameUrl || (page && page.getFrameUrl(context));
     context.isPrivate = page ? page.isPrivate : null;
     context.isMainFrame = context.type === 'main_frame';
     context.isRedirect = page && context.isMainFrame && page.isRedirect;
@@ -77,19 +70,6 @@ export default class WebRequestContext {
         context.originUrl || context.initiator || context.documentUrl;
     }
 
-    if (!context.frameUrl) {
-      context.frameUrl =
-        context.documentUrl || context.originUrl || context.initiator;
-    }
-
-    if (!context.originUrl) {
-      context.originUrl =
-        context.initiator ||
-        context.documentUrl ||
-        context.frameUrl ||
-        context.tabUrl;
-    }
-
     return new WebRequestContext(context);
   }
 
@@ -97,15 +77,11 @@ export default class WebRequestContext {
     Object.assign(this, details);
 
     // Lazy attributes
-    this._frameUrlParts = null;
-
     this._requestHeadersMap = null;
     this._responseHeadersMap = null;
 
     this.urlParts = parse(this.url);
-    this.frameUrlParts = parse(this.frameUrl);
     this.tabUrlParts = parse(this.tabUrl);
-    this.originUrlParts = parse(this.originUrl);
   }
 
   /**
@@ -143,11 +119,5 @@ export default class WebRequestContext {
 
   getReferrer() {
     return this.getRequestHeader('Referer');
-  }
-
-  isBackgroundRequest() {
-    return (
-      this.tabId === -1 && this.originUrlParts?.protocol.endsWith('extension:')
-    );
   }
 }

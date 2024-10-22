@@ -112,9 +112,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sender,
     );
   } else if (request.action === 'debug') {
-    sendResponse({
-      tabs: [...webRequestPipeline.pageStore.tabs._inMemoryMap.values()],
-    });
+    (async () => {
+      const tabs = await chrome.tabs.query({});
+
+      sendResponse({
+        tabs: tabs.map((tab) =>
+          webRequestPipeline.pageStore.getPageForRequest({
+            tabId: tab.id,
+            frameId: 0,
+          }),
+        ),
+      });
+    })();
+
+    return true;
   }
 });
 

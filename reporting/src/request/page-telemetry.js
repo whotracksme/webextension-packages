@@ -35,8 +35,8 @@ export default function buildPageLoadObject(page) {
     redirects: [],
     redirectsPlaceHolder: [],
     triggeringTree: {},
-    tsv: page.tsv,
-    tsv_id: page.tsvId !== undefined,
+    tsv: '',
+    tsv_id: false,
     frames: {},
   };
 }
