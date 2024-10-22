@@ -223,9 +223,6 @@ export default class PageStore {
       // loaded), stage it before we create the new page info.
       if (page.state === PAGE_LOADING_STATE.COMPLETE) {
         this.#stagePage(page);
-      } else if (!page.frames[frameId]) {
-        // frame created without request
-        this.onSubFrame(details);
       }
     }
 
@@ -257,6 +254,9 @@ export default class PageStore {
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMMITTED;
       this.#pages.set(tabId, page);
+    } else if (!page.frames[frameId]) {
+      // frame created without request
+      this.onSubFrame(details);
     }
   };
 
