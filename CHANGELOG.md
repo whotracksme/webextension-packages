@@ -1,3 +1,21 @@
+# v5.1.27 (Wed Oct 23 2024)
+
+#### 🐛 Bug Fix
+
+- Remove main_frame redirect detection [#108](https://github.com/whotracksme/webextension-packages/pull/108) ([@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- webrequest-pipeline cleanup [#106](https://github.com/whotracksme/webextension-packages/pull/106) ([@chrmod](https://github.com/chrmod))
+- PageStore cleanup [#105](https://github.com/whotracksme/webextension-packages/pull/105) ([@chrmod](https://github.com/chrmod))
+- PageStore cleanup [#104](https://github.com/whotracksme/webextension-packages/pull/104) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.26 (Wed Oct 02 2024)
 
 #### 🐛 Bug Fix
