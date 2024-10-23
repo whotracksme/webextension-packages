@@ -24,12 +24,10 @@ class Page {
   constructor(page) {
     this.id = page.id;
     this.url = page.url;
-    this.isRedirect = page.isRedirect || false;
     this.isPrivate = page.incognito || false;
     this.isPrivateServer = page.isPrivateServer || false;
     this.created = page.created || Date.now();
     this.destroyed = page.destroyed || null;
-    this.lastRequestId = page.lastRequestId || null;
     this.frames = page.frames || {
       0: {
         parentFrameId: -1,
@@ -274,7 +272,7 @@ export default class PageStore {
   };
 
   onMainFrame = (details, event) => {
-    const { tabId, url, requestId } = details;
+    const { tabId, url } = details;
     // main frame from tabId -1 is from service worker and should not be saved
     if (tabId === -1) {
       return;
@@ -287,17 +285,6 @@ export default class PageStore {
 
     if (event === 'onBeforeRequest') {
       page.frames = {};
-      // Detect redirect: if the last request on this tab had the same id and
-      // this was from the same `onBeforeRequest` hook, we can assume this is a
-      // redirection.
-      if (page.lastRequestId === requestId) {
-        page.isRedirect = true;
-      }
-
-      // Only keep track of `lastRequestId` with `onBeforeRequest` listener
-      // since we need this information for redirect detection only and this can
-      // be detected with this hook.
-      page.lastRequestId = requestId;
     }
 
     // Update context of tab with `url` and main frame information

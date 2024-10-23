@@ -253,9 +253,9 @@ export default class RequestMonitor {
           fn: (state) => steps.oAuthDetector.checkMainFrames(state),
         },
         {
-          name: 'redirectTagger.checkRedirect',
+          name: 'checkIsMainDocument',
           spec: 'break',
-          fn: (state) => steps.redirectTagger.checkRedirect(state),
+          fn: (state) => !state.isMainFrame,
         },
         {
           name: 'checkSameGeneralDomain',
@@ -379,11 +379,6 @@ export default class RequestMonitor {
           name: 'cookieContext.assignCookieTrust',
           spec: 'collect', // TODO - global state
           fn: (state) => steps.cookieContext.assignCookieTrust(state),
-        },
-        {
-          name: 'redirectTagger.confirmRedirect',
-          spec: 'break',
-          fn: (state) => steps.redirectTagger.confirmRedirect(state),
         },
         {
           name: 'checkIsMainDocument',
@@ -516,7 +511,7 @@ export default class RequestMonitor {
           fn: checkValidContext,
         },
         {
-          name: 'checkMainDocumentRedirects',
+          name: 'checkIsMainDocument',
           spec: 'break',
           fn: (state) => !state.isMainFrame,
         },

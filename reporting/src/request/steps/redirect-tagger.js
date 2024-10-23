@@ -20,7 +20,6 @@ const CACHE_TIMEOUT = 10 * 1000;
 export default class RedirectTagger {
   constructor() {
     this.redirectCache = new TempSet();
-    this.redirectTaggerCache = new TempSet();
   }
 
   isFromRedirect(url) {
@@ -47,29 +46,6 @@ export default class RedirectTagger {
         this.redirectCache.add(location, CACHE_TIMEOUT);
       }
     }
-    return true;
-  }
-
-  checkRedirect(details) {
-    if (details.isRedirect && details.requestId !== undefined) {
-      this.redirectTaggerCache.add(details.requestId, CACHE_TIMEOUT);
-      return false;
-    }
-    return true;
-  }
-
-  confirmRedirect(details) {
-    if (
-      details.requestId !== undefined &&
-      this.redirectTaggerCache.has(details.requestId)
-    ) {
-      return false;
-    }
-
-    if (details.isMainFrame && details.isRedirect) {
-      return false;
-    }
-
     return true;
   }
 }

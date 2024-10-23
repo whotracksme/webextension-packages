@@ -63,7 +63,6 @@ export default class WebRequestContext {
     context.tabUrl = context.tabUrl || (page && page.url);
     context.isPrivate = page ? page.isPrivate : null;
     context.isMainFrame = context.type === 'main_frame';
-    context.isRedirect = page && context.isMainFrame && page.isRedirect;
 
     if (!context.tabUrl) {
       context.tabUrl =
