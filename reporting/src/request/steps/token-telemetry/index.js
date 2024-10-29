@@ -159,14 +159,12 @@ export default class TokenTelemetry {
       (payload) => this.telemetry({ action: 'wtm.attrack.tokensv2', payload }),
       this.TOKEN_BATCH_INTERVAL,
       this.TOKEN_BATCH_SIZE,
-      this.subjectTokens,
     );
     this.keys.init(
       this.keySendQueue,
       (payload) => this.telemetry({ action: 'wtm.attrack.keysv2', payload }),
       this.KEY_BATCH_INTERVAL,
       this.KEY_BATCH_SIZE,
-      this.subjectTokens,
     );
 
     // run every x minutes while there is activity

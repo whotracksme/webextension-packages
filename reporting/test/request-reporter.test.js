@@ -10,14 +10,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import 'fake-indexeddb/auto';
-import { IDBFactory } from 'fake-indexeddb';
 import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 import { expect } from 'chai';
 import EventEmitter from 'node:events';
+import { IDBFactory } from 'fake-indexeddb';
 
-import { playScenario } from './helpers/scenarios.js';
+import {
+  playScenario,
+  playScapshotScenario,
+  recordSnapshot,
+  readSnapshot,
+} from './helpers/scenarios.js';
 import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
 
 import { setLogLevel } from '../src/logger.js';
@@ -59,7 +63,7 @@ describe('RequestReporter', function () {
           async arrayBuffer() {
             // empty bloom filter
             return base64ToArrayBuffer('AAAAAgrdwUcnN1113w==');
-          }
+          },
         });
       }
 
@@ -98,10 +102,10 @@ describe('RequestReporter', function () {
       communicationEmiter.removeAllListeners();
       const communication = {
         send(msg) {
-          communicationEmiter.emit('send', msg)
+          communicationEmiter.emit('send', msg);
         },
         sendInstant(msg) {
-          communicationEmiter.emit('sendInstant', msg)
+          communicationEmiter.emit('sendInstant', msg);
         },
         trustedClock,
       };
@@ -138,7 +142,10 @@ describe('RequestReporter', function () {
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
+        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({
+          tabId,
+          frameId: 0,
+        });
         expect(tab.requestStats).to.be.empty;
       });
     });
@@ -155,10 +162,11 @@ describe('RequestReporter', function () {
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({ tabId, frameId: 0 });
-        expect(tab.requestStats).to.have.keys([
-          'script.localhost',
-        ]);
+        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({
+          tabId,
+          frameId: 0,
+        });
+        expect(tab.requestStats).to.have.keys(['script.localhost']);
       });
 
       it('reports 3rd parties', async function () {
@@ -167,23 +175,25 @@ describe('RequestReporter', function () {
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
-        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        const eventPromise = new Promise((resolve) =>
+          communicationEmiter.once('send', resolve),
+        );
         // force stage all pages
-        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
           action: 'wtm.attrack.tp_events',
         });
-        expect(event.payload.data[0].tps).to.have.keys([
-          'script.localhost',
-        ])
+        expect(event.payload.data[0].tps).to.have.keys(['script.localhost']);
       });
     });
 
     context('0004-ping', function () {
       it('reports pings', async function () {
-        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        const eventPromise = new Promise((resolve) =>
+          communicationEmiter.once('send', resolve),
+        );
         await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02-1',
@@ -194,9 +204,7 @@ describe('RequestReporter', function () {
         expect(event).to.deep.include({
           action: 'wtm.attrack.tp_events',
         });
-        expect(event.payload.data[0].tps).to.have.keys([
-          'ping.localhost',
-        ])
+        expect(event.payload.data[0].tps).to.have.keys(['ping.localhost']);
       });
     });
 
@@ -207,23 +215,25 @@ describe('RequestReporter', function () {
           scenarioRelease: '2024-08-02',
         });
         await clock.runToLast();
-        const eventPromise = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        const eventPromise = new Promise((resolve) =>
+          communicationEmiter.once('send', resolve),
+        );
         // force stage all pages
-        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
           action: 'wtm.attrack.tp_events',
         });
-        expect(event.payload.data[0].tps).to.have.keys([
-          'preload.localhost',
-        ]);
+        expect(event.payload.data[0].tps).to.have.keys(['preload.localhost']);
       });
     });
 
     context('0008-navigation', function () {
       it('reports 3rd parties', async function () {
-        const eventPromise1 = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        const eventPromise1 = new Promise((resolve) =>
+          communicationEmiter.once('send', resolve),
+        );
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2024-08-02-2',
@@ -233,23 +243,73 @@ describe('RequestReporter', function () {
         expect(event1).to.deep.include({
           action: 'wtm.attrack.tp_events',
         });
-        expect(event1.payload.data[0].tps).to.have.keys([
-          'script1.localhost',
-        ]);
-        const eventPromise2 = new Promise((resolve) => communicationEmiter.once('send', resolve));
+        expect(event1.payload.data[0].tps).to.have.keys(['script1.localhost']);
+        const eventPromise2 = new Promise((resolve) =>
+          communicationEmiter.once('send', resolve),
+        );
         // force stage all pages
-        seenTabIds.forEach(tabId => chrome.tabs.onRemoved.dispatch(tabId));
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
         const event2 = await eventPromise2;
         expect(event2).to.deep.include({
           action: 'wtm.attrack.tp_events',
         });
-        expect(event2.payload.data[0].tps).to.have.keys([
-          'script2.localhost',
-        ]);
+        expect(event2.payload.data[0].tps).to.have.keys(['script2.localhost']);
         // reports should belong to different pages
-        expect(event1.payload.data[0].hostname).to.not.be.equal(event2.payload.data[0].hostname);
+        expect(event1.payload.data[0].hostname).to.not.be.equal(
+          event2.payload.data[0].hostname,
+        );
       });
+    });
+
+    context('snapshots', function () {
+      this.timeout(10000);
+
+      function cleanupMessage(message) {
+        delete message['anti-duplicates'];
+        return message;
+      }
+
+      async function processRunloopUntil(timeout) {
+        const start = Date.now();
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const now = await clock.runToLast();
+          if (now - start > timeout) {
+            break;
+          }
+        }
+      }
+
+      for (const snapshotName of ['0001', '0002']) {
+        it(snapshotName, async function () {
+          const messages = [];
+          communicationEmiter.addListener('send', (message) =>
+            messages.push(cleanupMessage(message)),
+          );
+          playScapshotScenario(chrome, snapshotName);
+
+          // run twice to allow token telemetry to trigger
+          playScapshotScenario(chrome, snapshotName, {
+            rewriteUrls: { 'onet.pl': 'wp.pl' },
+          });
+          await processRunloopUntil(
+            reporter.requestMonitor.pipelineSteps.tokenTelemetry
+              .NEW_ENTRY_MIN_AGE,
+          );
+
+          // eslint-disable-next-line no-undef
+          if (process.argv.includes('--record-snapshot')) {
+            recordSnapshot(snapshotName, messages);
+          }
+
+          const snapshot = await readSnapshot(snapshotName);
+          expect(messages).to.have.lengthOf(snapshot.length);
+          messages.forEach((message, index) => {
+            expect(message).to.deep.equal(snapshot[index]);
+          });
+        });
+      }
     });
   });
 });

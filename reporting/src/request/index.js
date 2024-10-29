@@ -138,14 +138,14 @@ export default class RequestMonitor {
     return this.config.forceBlockEnabled;
   }
 
-  async telemetry(message) {
+  telemetry(message) {
     if (!this.communication) {
       logger.error('No provider provider loaded');
       return;
     }
 
     message.type = 'wtm.request';
-    message.userAgent = (await this.getBrowserInfo()).name;
+    message.userAgent = this.userAgent;
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
     message['anti-duplicates'] = Math.floor(random() * 10000000);
 
@@ -188,7 +188,7 @@ export default class RequestMonitor {
     this.webRequestPipeline.addOnPageStageListener((page) => {
       this.onPageStaged(page);
     });
-
+    this.userAgent = (await this.getBrowserInfo()).name;
     await this.initPipeline();
   }
 

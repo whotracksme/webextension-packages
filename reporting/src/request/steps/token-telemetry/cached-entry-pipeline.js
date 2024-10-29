@@ -66,13 +66,13 @@ export default class CachedEntryPipeline {
    * by #serialiseEntry
    * @param keys
    */
-  saveBatchToDb(keys) {
+  async saveBatchToDb(keys) {
     const rows = keys.map((key) => {
       const entry = this.getFromCache(key);
       entry.dirty = false;
       return this.serialiseEntry(key, entry);
     });
-    return this.db.bulkPut(rows);
+    await this.db.bulkPut(rows);
   }
 
   /**
@@ -83,25 +83,28 @@ export default class CachedEntryPipeline {
    * @param batchInterval how often to run batches
    * @param batchLimit maximum messages per batch
    */
-  async init(
-    inputObservable,
-    sendMessage,
-    batchInterval,
-    batchLimit,
-    overflowSubject,
-  ) {
+  async init(inputObservable, sendMessage, batchInterval, batchLimit) {
     await this.cache.isReady;
     const pipeline = new Subject();
+    const retryQueue = new Subject();
     this.input = inputObservable;
 
     let batch = [];
     setInterval(() => {
-      pipeline.pub(batch);
-      batch = [];
+      if (batch.length > 0) {
+        pipeline.pub(batch);
+        batch = [];
+      }
     }, batchInterval);
 
     inputObservable.subscribe((token) => {
       batch.push(token);
+    });
+
+    retryQueue.subscribe((token) => {
+      setTimeout(() => {
+        batch.push(token);
+      }, 1);
     });
 
     pipeline.subscribe(async (batch) => {
@@ -136,7 +139,7 @@ export default class CachedEntryPipeline {
           sendMessage(msg);
         });
         // push overflowed entries back into the queue
-        overflowKeys.forEach((k) => overflowSubject.pub(k));
+        overflowKeys.forEach((k) => retryQueue.pub(k));
       } catch (e) {
         logger.error('Failed to initialize stream', e);
       }
