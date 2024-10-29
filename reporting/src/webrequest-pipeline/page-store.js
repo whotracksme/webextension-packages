@@ -172,7 +172,8 @@ export default class PageStore {
         this.#pages.set(page.id, page);
       }
     } else if (this.#pages.has(previousTabId)) {
-      const page = new Page(previousTabId);
+      const previousPage = this.#pages.get(previousTabId);
+      const page = new Page(previousPage);
       page.setActive(false);
       this.#pages.set(page.id, page);
     }
