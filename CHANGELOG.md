@@ -1,3 +1,15 @@
+# v5.1.28 (Tue Oct 29 2024)
+
+#### 🐛 Bug Fix
+
+- Fix: page store tab active listener [#110](https://github.com/whotracksme/webextension-packages/pull/110) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.27 (Wed Oct 23 2024)
 
 #### 🐛 Bug Fix
