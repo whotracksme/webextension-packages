@@ -42,6 +42,3 @@ import './request/index.spec.js';
 // // Utils
 import './utils/pacemaker.spec.js';
 import './utils/url.spec.js';
-
-// // Webrequest-pipeline
-import './webrequest-pipeline/pipeline.spec.js';

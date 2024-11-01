@@ -10,13 +10,15 @@
  */
 
 /* eslint-disable no-param-reassign */
-import Pipeline from '../webrequest-pipeline/pipeline.js';
 import { isLocalIP } from '../network.js';
 import pacemaker from '../utils/pacemaker.js';
+import Config from './config.js';
+import Database from './database.js';
 
 import { truncatedHash } from '../md5.js';
 import logger from '../logger.js';
 
+import { BlockingResponse, WebRequestContext } from './utils/webrequest.js';
 import * as datetime from './time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
@@ -34,21 +36,19 @@ import TokenChecker from './steps/token-checker/index.js';
 import TokenExaminer from './steps/token-examiner.js';
 import TokenTelemetry from './steps/token-telemetry/index.js';
 import OAuthDetector from './steps/oauth-detector.js';
-
 import {
   checkValidContext,
   checkSameGeneralDomain,
 } from './steps/check-context.js';
+import PageStore from './page-store.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 
-export default class RequestMonitor {
+export default class RequestReporter {
   constructor(
     settings,
     {
-      db,
-      webRequestPipeline,
       trustedClock,
       countryProvider,
       communication,
@@ -62,23 +62,23 @@ export default class RequestMonitor {
     this.settings = settings;
     this.communication = communication;
     this.trustedClock = trustedClock;
-    this.webRequestPipeline = webRequestPipeline;
     this.countryProvider = countryProvider;
     this.onTrackerInteraction = onTrackerInteraction;
     this.getBrowserInfo = getBrowserInfo;
     this.isRequestAllowed = isRequestAllowed;
-    this.db = db;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
+    this.pageStore = new PageStore({
+      notifyPageStageListeners: this.onPageStaged.bind(this),
+    });
 
     // Intervals
     this.dayChangedInterval = null;
 
     // Web request pipelines
-    this.pipelineSteps = {};
     this.pipelines = {};
   }
 
@@ -163,8 +163,15 @@ export default class RequestMonitor {
 
   /** Global module initialisation.
    */
-  async init(config) {
-    this.config = config;
+  async init() {
+    this.db = new Database();
+    await this.db.init();
+    this.config = new Config(this.settings, {
+      db: this.db,
+      trustedClock: this.trustedClock,
+    });
+    await this.config.init();
+
     this.hashProb = new HashProb();
 
     // load all caches:
@@ -185,25 +192,20 @@ export default class RequestMonitor {
       timeout: DAY_CHANGE_INTERVAL,
     });
 
-    this.webRequestPipeline.addOnPageStageListener((page) => {
-      this.onPageStaged(page);
-    });
+    await this.pageStore.init();
+
     this.userAgent = (await this.getBrowserInfo()).name;
-    await this.initPipeline();
-  }
 
-  async initPipeline() {
-    this.unloadPipeline();
+    this.pageLogger = new PageLogger(this.config);
+    this.blockRules = new BlockRules(this.config);
+    this.redirectTagger = new RedirectTagger();
+    this.cookieContext = new CookieContext(this.config, this.qs_whitelist);
+    await this.cookieContext.init();
 
-    // Initialise classes which are used as steps in listeners
-    const steps = {
-      pageLogger: new PageLogger(this.config),
-      blockRules: new BlockRules(this.config),
-      cookieContext: new CookieContext(this.config, this.qs_whitelist),
-      redirectTagger: new RedirectTagger(),
-      oAuthDetector: new OAuthDetector(),
-    };
-    steps.tokenTelemetry = new TokenTelemetry(
+    this.oAuthDetector = new OAuthDetector();
+    await this.oAuthDetector.init();
+
+    this.tokenTelemetry = new TokenTelemetry(
       this.telemetry.bind(this),
       this.qs_whitelist,
       this.config,
@@ -212,478 +214,394 @@ export default class RequestMonitor {
       this.config.tokenTelemetry,
       this.trustedClock,
     );
+    await this.tokenTelemetry.init();
 
-    steps.tokenExaminer = new TokenExaminer(
+    this.tokenExaminer = new TokenExaminer(
       this.qs_whitelist,
       this.config,
       this.shouldCheckToken.bind(this),
     );
-    steps.tokenChecker = new TokenChecker(
+    await this.tokenExaminer.init();
+
+    this.tokenChecker = new TokenChecker(
       this.qs_whitelist,
       {},
       this.shouldCheckToken.bind(this),
       this.config,
       this.db,
     );
+    await this.tokenChecker.init();
 
-    this.pipelineSteps = steps;
-
-    // initialise step objects
-    for (const key of Object.keys(steps)) {
-      const step = steps[key];
-      if (step.init) {
-        await step.init();
-      }
-    }
-
-    // ----------------------------------- \\
-    // create pipeline for onBeforeRequest \\
-    // ----------------------------------- \\
-    this.pipelines.onBeforeRequest = new Pipeline(
-      'antitracking.onBeforeRequest',
-      [
-        {
-          name: 'checkState',
-          spec: 'break',
-          fn: checkValidContext,
-        },
-        {
-          name: 'oAuthDetector.checkMainFrames',
-          spec: 'break',
-          fn: (state) => steps.oAuthDetector.checkMainFrames(state),
-        },
-        {
-          name: 'checkIsMainDocument',
-          spec: 'break',
-          fn: (state) => !state.isMainFrame,
-        },
-        {
-          name: 'checkSameGeneralDomain',
-          spec: 'break',
-          fn: checkSameGeneralDomain,
-        },
-        {
-          name: 'cancelRecentlyModified',
-          spec: 'blocking',
-          fn: (state, response) => this.cancelRecentlyModified(state, response),
-        },
-        {
-          name: 'pageLogger.onBeforeRequest',
-          spec: 'annotate',
-          fn: (state) => steps.pageLogger.onBeforeRequest(state),
-        },
-        {
-          name: 'logIsTracker',
-          spec: 'collect',
-          fn: (state) => {
-            if (
-              this.qs_whitelist.isTrackerDomain(
-                truncatedHash(state.urlParts.generalDomain),
-              )
-            ) {
-              this.onTrackerInteraction('observed', state);
-            }
-          },
-        },
-        {
-          name: 'checkExternalBlocking',
-          spec: 'blocking',
-          fn: (state, response) => {
-            if (response.cancel === true || response.redirectUrl) {
-              state.incrementStat('blocked_external');
-              response.shouldIncrementCounter = true;
-              return false;
-            }
-            return true;
-          },
-        },
-        {
-          name: 'tokenExaminer.examineTokens',
-          spec: 'collect', // TODO - global state
-          fn: (state) => steps.tokenExaminer.examineTokens(state),
-        },
-        {
-          name: 'tokenTelemetry.extractKeyTokens',
-          spec: 'collect', // TODO - global state
-          fn: (state) =>
-            !steps.tokenTelemetry ||
-            steps.tokenTelemetry.extractKeyTokens(state),
-        },
-        {
-          name: 'tokenChecker.findBadTokens',
-          spec: 'annotate',
-          fn: (state) => steps.tokenChecker.findBadTokens(state),
-        },
-        {
-          name: 'checkSourceWhitelisted',
-          spec: 'break',
-          fn: (state) => {
-            if (this.checkIsWhitelisted(state)) {
-              state.incrementStat('source_whitelisted');
-              return false;
-            }
-            return true;
-          },
-        },
-        {
-          name: 'checkShouldBlock',
-          spec: 'break',
-          fn: (state) =>
-            state.badTokens.length > 0 &&
-            this.qs_whitelist.isUpToDate() &&
-            !this.config.paused,
-        },
-        {
-          name: 'oAuthDetector.checkIsOAuth',
-          spec: 'break',
-          fn: (state) => steps.oAuthDetector.checkIsOAuth(state, 'token'),
-        },
-        {
-          name: 'isQSEnabled',
-          spec: 'break',
-          fn: () => this.isQSEnabled(),
-        },
-        {
-          name: 'blockRules.applyBlockRules',
-          spec: 'blocking',
-          fn: (state, response) =>
-            steps.blockRules.applyBlockRules(state, response),
-        },
-        {
-          name: 'logBlockedToken',
-          spec: 'collect',
-          fn: (state) => {
-            this.onTrackerInteraction('fingerprint-removed', state);
-          },
-        },
-        {
-          name: 'applyBlock',
-          spec: 'blocking',
-          fn: (state, response) => this.applyBlock(state, response),
-        },
-      ],
-    );
-
-    // --------------------------------------- \\
-    // create pipeline for onBeforeSendHeaders \\
-    // --------------------------------------- \\
-    this.pipelines.onBeforeSendHeaders = new Pipeline(
-      'antitracking.onBeforeSendHeaders',
-      [
-        {
-          name: 'checkState',
-          spec: 'break',
-          fn: checkValidContext,
-        },
-        {
-          name: 'cookieContext.assignCookieTrust',
-          spec: 'collect', // TODO - global state
-          fn: (state) => steps.cookieContext.assignCookieTrust(state),
-        },
-        {
-          name: 'checkIsMainDocument',
-          spec: 'break',
-          fn: (state) => !state.isMainFrame,
-        },
-        {
-          name: 'checkSameGeneralDomain',
-          spec: 'break',
-          fn: checkSameGeneralDomain,
-        },
-        {
-          name: 'pageLogger.onBeforeSendHeaders',
-          spec: 'annotate',
-          fn: (state) => steps.pageLogger.onBeforeSendHeaders(state),
-        },
-        {
-          name: 'catchMissedOpenListener',
-          spec: 'blocking',
-          fn: (state, response) => {
-            if (
-              (state.reqLog && state.reqLog.c === 0) ||
-              steps.redirectTagger.isFromRedirect(state.url)
-            ) {
-              // take output from 'open' pipeline and copy into our response object
-              this.pipelines.onBeforeRequest.execute(state, response);
-            }
-          },
-        },
-        {
-          name: 'overrideUserAgent',
-          spec: 'blocking',
-          fn: (state, response) => {
-            if (this.config.overrideUserAgent === true) {
-              const domainHash = truncatedHash(state.urlParts.generalDomain);
-              if (this.qs_whitelist.isTrackerDomain(domainHash)) {
-                response.modifyHeader('User-Agent', 'CLIQZ');
-                state.incrementStat('override_user_agent');
-              }
-            }
-          },
-        },
-        {
-          name: 'checkHasCookie',
-          spec: 'break',
-          // hasCookie flag is set by pageLogger.onBeforeSendHeaders
-          fn: (state) => state.hasCookie === true,
-        },
-        {
-          name: 'checkIsCookieWhitelisted',
-          spec: 'break',
-          fn: (state) => this.checkIsCookieWhitelisted(state),
-        },
-        {
-          name: 'checkCompatibilityList',
-          spec: 'break',
-          fn: (state) => this.checkCompatibilityList(state),
-        },
-        {
-          name: 'checkCookieBlockingMode',
-          spec: 'break',
-          fn: (state) => this.checkCookieBlockingMode(state),
-        },
-        {
-          name: 'cookieContext.checkCookieTrust',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkCookieTrust(state),
-        },
-        {
-          name: 'cookieContext.checkVisitCache',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkVisitCache(state),
-        },
-        {
-          name: 'cookieContext.checkContextFromEvent',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkContextFromEvent(state),
-        },
-        {
-          name: 'oAuthDetector.checkIsOAuth',
-          spec: 'break',
-          fn: (state) => steps.oAuthDetector.checkIsOAuth(state, 'cookie'),
-        },
-        {
-          name: 'shouldBlockCookie',
-          spec: 'break',
-          fn: (state) => {
-            const shouldBlock =
-              !this.checkIsWhitelisted(state) &&
-              this.isCookieEnabled(state) &&
-              !this.config.paused;
-            if (!shouldBlock) {
-              state.incrementStat('bad_cookie_sent');
-            }
-            return shouldBlock;
-          },
-        },
-        {
-          name: 'logBlockedCookie',
-          spec: 'collect',
-          fn: (state) => {
-            this.onTrackerInteraction('cookie-removed', state);
-          },
-        },
-        {
-          name: 'blockCookie',
-          spec: 'blocking',
-          fn: (state, response) => {
-            state.incrementStat('cookie_blocked');
-            state.incrementStat('cookie_block_tp1');
-            response.modifyHeader('Cookie', '');
-            if (this.config.sendAntiTrackingHeader) {
-              response.modifyHeader(this.config.cliqzHeader, ' ');
-            }
-            state.page.counter += 1;
-          },
-        },
-      ],
-    );
-
-    // ------------------------------------- \\
-    // create pipeline for onHeadersReceived \\
-    // ------------------------------------- \\
-    this.pipelines.onHeadersReceived = new Pipeline(
-      'antitracking.onHeadersReceived',
-      [
-        {
-          name: 'checkState',
-          spec: 'break',
-          fn: checkValidContext,
-        },
-        {
-          name: 'checkIsMainDocument',
-          spec: 'break',
-          fn: (state) => !state.isMainFrame,
-        },
-        {
-          name: 'checkSameGeneralDomain',
-          spec: 'break',
-          fn: checkSameGeneralDomain,
-        },
-        {
-          name: 'redirectTagger.checkRedirectStatus',
-          spec: 'break',
-          fn: (state) => steps.redirectTagger.checkRedirectStatus(state),
-        },
-        {
-          name: 'pageLogger.onHeadersReceived',
-          spec: 'annotate',
-          fn: (state) => steps.pageLogger.onHeadersReceived(state),
-        },
-        {
-          name: 'checkSetCookie',
-          spec: 'break',
-          fn: (state) => state.hasSetCookie === true,
-        },
-        {
-          name: 'shouldBlockCookie',
-          spec: 'break',
-          fn: (state) =>
-            !this.checkIsWhitelisted(state) && this.isCookieEnabled(state),
-        },
-        {
-          name: 'checkIsCookieWhitelisted',
-          spec: 'break',
-          fn: (state) => this.checkIsCookieWhitelisted(state),
-        },
-        {
-          name: 'checkCompatibilityList',
-          spec: 'break',
-          fn: (state) => this.checkCompatibilityList(state),
-        },
-        {
-          name: 'checkCookieBlockingMode',
-          spec: 'break',
-          fn: (state) => this.checkCookieBlockingMode(state),
-        },
-        {
-          name: 'cookieContext.checkCookieTrust',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkCookieTrust(state),
-        },
-        {
-          name: 'cookieContext.checkVisitCache',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkVisitCache(state),
-        },
-        {
-          name: 'cookieContext.checkContextFromEvent',
-          spec: 'break',
-          fn: (state) => steps.cookieContext.checkContextFromEvent(state),
-        },
-        {
-          name: 'logSetBlockedCookie',
-          spec: 'collect',
-          fn: (state) => {
-            this.onTrackerInteraction('cookie-removed', state);
-          },
-        },
-        {
-          name: 'blockSetCookie',
-          spec: 'blocking',
-          fn: (state, response) => {
-            response.modifyResponseHeader('Set-Cookie', '');
-            state.incrementStat('set_cookie_blocked');
-            state.page.counter += 1;
-          },
-        },
-      ],
-    );
-
-    this.pipelines.onCompleted = new Pipeline('antitracking.onCompleted', [
-      {
-        name: 'checkState',
-        spec: 'break',
-        fn: checkValidContext,
-      },
-      {
-        name: 'logPrivateDocument',
-        spec: 'break',
-        fn: (state) => {
-          if (state.isMainFrame && state.ip) {
-            if (isLocalIP(state.ip)) {
-              state.page.isPrivateServer = true;
-            }
-            return false;
-          }
-          return true;
-        },
-      },
-      {
-        name: 'pageLogger.reattachStatCounter',
-        spec: 'annotate',
-        fn: (state) => steps.pageLogger.reattachStatCounter(state),
-      },
-      {
-        name: 'logIsCached',
-        spec: 'collect',
-        fn: (state) => {
-          this.whitelistedRequestCache.delete(state.requestId);
-          state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
-        },
-      },
-    ]);
-
-    this.pipelines.onErrorOccurred = new Pipeline('antitracking.onError', [
-      {
-        name: 'checkState',
-        spec: 'break',
-        fn: checkValidContext,
-      },
-      {
-        name: 'pageLogger.reattachStatCounter',
-        spec: 'annotate',
-        fn: (state) => steps.pageLogger.reattachStatCounter(state),
-      },
-      {
-        name: 'logError',
-        spec: 'collect',
-        fn: (state) => {
-          this.whitelistedRequestCache.delete(state.requestId);
-          if (state.error && state.error.indexOf('ABORT')) {
-            state.incrementStat('error_abort');
-          }
-        },
-      },
-    ]);
-
-    Object.keys(this.pipelines).map((stage) =>
-      this.webRequestPipeline.addPipelineStep(stage, {
-        name: `antitracking.${stage}`,
-        spec: 'blocking',
-        fn: (...args) => this.pipelines[stage].execute(...args),
-      }),
-    );
-  }
-
-  unloadPipeline() {
-    Object.keys(this.pipelineSteps || {}).forEach((key) => {
-      const step = this.pipelineSteps[key];
-      if (step.unload) {
-        step.unload();
-      }
+    const urls = ['http://*/*', 'https://*/*'];
+    const blockingWebRequest = await chrome.permissions.contains({
+      permissions: ['webRequestBlocking'],
     });
 
-    Object.keys(this.pipelines).forEach((stage) => {
-      this.pipelines[stage].unload();
-    });
-
-    Object.keys(this.pipelines).map((stage) =>
-      this.webRequestPipeline.removePipelineStep(
-        stage,
-        `antitracking.${stage}`,
-      ),
+    chrome.webRequest.onBeforeRequest.addListener(
+      this.onBeforeRequest,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnBeforeRequestOptions)
+        : undefined,
     );
-    this.pipelines = {};
+    chrome.webRequest.onBeforeSendHeaders.addListener(
+      this.onBeforeSendHeaders,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnBeforeSendHeadersOptions)
+        : undefined,
+    );
+    chrome.webRequest.onHeadersReceived.addListener(
+      this.onHeadersReceived,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnHeadersReceivedOptions)
+        : undefined,
+    );
+    chrome.webRequest.onCompleted.addListener(this.onCompleted, { urls });
+    chrome.webRequest.onErrorOccurred.addListener(this.onErrorOccurred, {
+      urls,
+    });
   }
 
   unload() {
     // Check is active usage, was sent
     this.qs_whitelist.destroy();
-    this.unloadPipeline();
+    this.cookieContext.unload();
+    this.oAuthDetector.unload();
+    this.tokenTelemetry.unload();
+    this.tokenExaminer.unload();
+    this.tokenChecker.unload();
+
+    chrome.webRequest.onBeforeRequest.removeListener(this.onBeforeRequest);
+    chrome.webRequest.onBeforeSendHeaders.removeListener(
+      this.onBeforeSendHeaders,
+    );
+    chrome.webRequest.onHeadersReceived.removeListener(this.onHeadersReceived);
+    chrome.webRequest.onCompleted.removeListener(this.onCompleted);
+    chrome.webRequest.onErrorOccurred.removeListener(this.onErrorOccurred);
+
     this.db.unload();
     this.dayChangedInterval = this.dayChangedInterval.stop();
   }
+
+  onBeforeRequest = (details) => {
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      'onBeforeRequest',
+    );
+    const response = new BlockingResponse(details, 'onBeforeRequest');
+    // checkState
+    if (checkValidContext(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // oAuthDetector.checkMainFrames
+    if (this.oAuthDetector.checkMainFrames(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkIsMainDocument
+    if (!state.isMainFrame === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkSameGeneralDomain
+    if (checkSameGeneralDomain(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cancelRecentlyModified
+    if (this.cancelRecentlyModified(state, response) === false) {
+      return response.toWebRequestResponse();
+    }
+    // pageLogger.onBeforeRequest
+    if (this.pageLogger.onBeforeRequest(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // logIsTracker
+    setTimeout(() => {
+      if (
+        this.qs_whitelist.isTrackerDomain(
+          truncatedHash(state.urlParts.generalDomain),
+        )
+      ) {
+        this.onTrackerInteraction('observed', state);
+      }
+    }, 1);
+    // checkExternalBlocking
+    if (response.cancel === true || response.redirectUrl) {
+      state.incrementStat('blocked_external');
+      response.shouldIncrementCounter = true;
+      return response.toWebRequestResponse();
+    }
+    // tokenExaminer.examineTokens
+    if (this.tokenExaminer.examineTokens(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // tokenTelemetry.extractKeyTokens
+    setTimeout(() => {
+      this.tokenTelemetry.extractKeyTokens(state);
+    }, 1);
+    // tokenChecker.findBadTokens
+    if (this.tokenChecker.findBadTokens(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkSourceWhitelisted
+    if (this.checkIsWhitelisted(state)) {
+      state.incrementStat('source_whitelisted');
+      return response.toWebRequestResponse();
+    }
+    // checkShouldBlock
+    if (
+      (state.badTokens.length > 0 &&
+        this.qs_whitelist.isUpToDate() &&
+        !this.config.paused) === false
+    ) {
+      return response.toWebRequestResponse();
+    }
+    // oAuthDetector.checkIsOAuth
+    if (this.oAuthDetector.checkIsOAuth(state, 'token') === false) {
+      return response.toWebRequestResponse();
+    }
+    // isQSEnabled
+    if (this.isQSEnabled() === false) {
+      return response.toWebRequestResponse();
+    }
+    // blockRules.applyBlockRules
+    if (this.blockRules.applyBlockRules(state, response) === false) {
+      return response.toWebRequestResponse();
+    }
+    // logBlockedToken
+    setTimeout(() => {
+      this.onTrackerInteraction('fingerprint-removed', state);
+    }, 1);
+    // applyBlock
+    if (this.applyBlock(state, response) === false) {
+      return response.toWebRequestResponse();
+    }
+    return response.toWebRequestResponse();
+  };
+
+  onBeforeSendHeaders = (details) => {
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      'onBeforeSendHeaders',
+    );
+    const response = new BlockingResponse(details, 'onBeforeSendHeaders');
+    // checkState
+    if (checkValidContext(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.assignCookieTrust
+    setTimeout(() => {
+      this.cookieContext.assignCookieTrust(state);
+    }, 1);
+    // checkIsMainDocument
+    if (!state.isMainFrame === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkSameGeneralDomain
+    if (checkSameGeneralDomain(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // pageLogger.onBeforeSendHeaders
+    if (this.pageLogger.onBeforeSendHeaders(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // catchMissedOpenListener
+    if (
+      (state.reqLog && state.reqLog.c === 0) ||
+      this.redirectTagger.isFromRedirect(state.url)
+    ) {
+      // take output from 'open' pipeline and copy into our response object
+      this.onBeforeRequest(state, response);
+    }
+    // overrideUserAgent
+    if (this.config.overrideUserAgent === true) {
+      const domainHash = truncatedHash(state.urlParts.generalDomain);
+      if (this.qs_whitelist.isTrackerDomain(domainHash)) {
+        response.modifyHeader('User-Agent', 'CLIQZ');
+        state.incrementStat('override_user_agent');
+      }
+    }
+    // checkHasCookie
+    // hasCookie flag is set by pageLogger.onBeforeSendHeaders
+    if ((state.hasCookie === true) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkIsCookieWhitelisted
+    if (this.checkIsCookieWhitelisted(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkCompatibilityList
+    if (this.checkCompatibilityList(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkCookieBlockingMode
+    if (this.checkCookieBlockingMode(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkCookieTrust
+    if (this.cookieContext.checkCookieTrust(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkVisitCache
+    if (this.cookieContext.checkVisitCache(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkContextFromEvent
+    if (this.cookieContext.checkContextFromEvent(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // oAuthDetector.checkIsOAuth
+    if (this.oAuthDetector.checkIsOAuth(state, 'cookie') === false) {
+      return response.toWebRequestResponse();
+    }
+    // shouldBlockCookie
+    if (
+      (!this.checkIsWhitelisted(state) &&
+        this.isCookieEnabled(state) &&
+        !this.config.paused) === false
+    ) {
+      state.incrementStat('bad_cookie_sent');
+      return response.toWebRequestResponse();
+    }
+    // logBlockedCookie
+    setTimeout(() => {
+      this.onTrackerInteraction('cookie-removed', state);
+    }, 1);
+    // blockCookie
+    state.incrementStat('cookie_blocked');
+    state.incrementStat('cookie_block_tp1');
+    response.modifyHeader('Cookie', '');
+    if (this.config.sendAntiTrackingHeader) {
+      response.modifyHeader(this.config.cliqzHeader, ' ');
+    }
+    state.page.counter += 1;
+    return response.toWebRequestResponse();
+  };
+
+  onHeadersReceived = (details) => {
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      'onHeadersReceived',
+    );
+    const response = new BlockingResponse(details, 'onHeadersReceived');
+    // checkState
+    if (checkValidContext(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkIsMainDocument
+    if (!state.isMainFrame === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkSameGeneralDomain
+    if (checkSameGeneralDomain(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // redirectTagger.checkRedirectStatus
+    if (this.redirectTagger.checkRedirectStatus(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // pageLogger.onHeadersReceived
+    if (this.pageLogger.onHeadersReceived(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkSetCookie
+    if ((state.hasSetCookie === true) === false) {
+      return response.toWebRequestResponse();
+    }
+    // shouldBlockCookie
+    if (
+      (!this.checkIsWhitelisted(state) && this.isCookieEnabled(state)) === false
+    ) {
+      return response.toWebRequestResponse();
+    }
+    // checkIsCookieWhitelisted
+    if (this.checkIsCookieWhitelisted(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkCompatibilityList
+    if (this.checkCompatibilityList(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // checkCookieBlockingMode
+    if (this.checkCookieBlockingMode(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkCookieTrust
+    if (this.cookieContext.checkCookieTrust(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkVisitCache
+    if (this.cookieContext.checkVisitCache(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // cookieContext.checkContextFromEvent
+    if (this.cookieContext.checkContextFromEvent(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    // logSetBlockedCookie
+    setTimeout(() => {
+      this.onTrackerInteraction('cookie-removed', state);
+    }, 1);
+    // blockSetCookie
+    response.modifyResponseHeader('Set-Cookie', '');
+    state.incrementStat('set_cookie_blocked');
+    state.page.counter += 1;
+    return response.toWebRequestResponse();
+  };
+
+  onCompleted = (details) => {
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      'onCompleted',
+    );
+    // checkState
+    if (checkValidContext(state) === false) {
+      return false;
+    }
+    // logPrivateDocument
+    if (state.isMainFrame && state.ip) {
+      if (isLocalIP(state.ip)) {
+        state.page.isPrivateServer = true;
+      }
+      return false;
+    }
+    // pageLogger.reattachStatCounter
+    if (this.pageLogger.reattachStatCounter(state) === false) {
+      return false;
+    }
+    // logIsCached
+    setTimeout(() => {
+      this.whitelistedRequestCache.delete(state.requestId);
+      state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
+    }, 1);
+  };
+
+  onErrorOccurred = (details) => {
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      'onErrorOccurred',
+    );
+    // checkState
+    if (checkValidContext(state) === false) {
+      return false;
+    }
+    // pageLogger.reattachStatCounte
+    if (this.pageLogger.reattachStatCounter(state) === false) {
+      return false;
+    }
+    // logError
+    setTimeout(() => {
+      this.whitelistedRequestCache.delete(state.requestId);
+      if (state.error && state.error.indexOf('ABORT')) {
+        state.incrementStat('error_abort');
+      }
+    }, 1);
+  };
 
   async dayChanged() {
     const dayTimestamp = datetime.getTime().slice(0, 8);
@@ -691,8 +609,8 @@ export default class RequestMonitor {
     await this.db.set('dayChangedlastRun', dayTimestamp);
 
     if (dayTimestamp !== lastDay) {
-      if (this.pipelineSteps.tokenChecker) {
-        this.pipelineSteps.tokenChecker.tokenDomain.clean();
+      if (this.tokenChecker) {
+        this.tokenChecker.tokenDomain.clean();
       }
     }
   }
@@ -757,10 +675,6 @@ export default class RequestMonitor {
 
     state.incrementStat(`token_blocked_${rule}`);
 
-    // TODO: do this nicer
-    // if (this.pipelineSteps.trackerProxy && this.pipelineSteps.trackerProxy.shouldProxy(tmpUrl)) {
-    //     state.incrementStat('proxy');
-    // }
     this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
     response.redirectTo(tmpUrl);
@@ -807,11 +721,11 @@ export default class RequestMonitor {
   }
 
   clearCache() {
-    if (this.pipelineSteps.tokenExaminer) {
-      this.pipelineSteps.tokenExaminer.clearCache();
+    if (this.tokenExaminer) {
+      this.tokenExaminer.clearCache();
     }
-    if (this.pipelineSteps.tokenChecker) {
-      this.pipelineSteps.tokenChecker.tokenDomain.clear();
+    if (this.tokenChecker) {
+      this.tokenChecker.tokenDomain.clear();
     }
   }
 
@@ -832,5 +746,10 @@ export default class RequestMonitor {
         });
       }
     }
+  }
+
+  recordClick(event, context, href, sender) {
+    this.cookieContext.setContextFromEvent(event, context, href, sender);
+    this.oAuthDetector.recordClick(event, context, href, sender);
   }
 }

@@ -9,6 +9,7 @@
   "permissions": [
     "webNavigation",
     "webRequest",
+    "webRequestBlocking",
     "tabs",
     "storage",
     "scripting"

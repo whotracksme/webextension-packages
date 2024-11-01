@@ -21,12 +21,11 @@ import {
   playSnapshotScenario,
   recordSnapshot,
   readSnapshot,
-} from './helpers/scenarios.js';
-import { base64ToArrayBuffer } from './helpers/fetch-mock.js';
+} from '../helpers/scenarios.js';
+import { base64ToArrayBuffer } from '../helpers/fetch-mock.js';
 
-import { setLogLevel } from '../src/logger.js';
-import RequestReporter from '../src/request-reporter.js';
-import WebRequestPipeline from '../src/webrequest-pipeline/index.js';
+import { setLogLevel } from '../../src/logger.js';
+import RequestReporter from '../../src/request/index.js';
 
 const config = {
   configUrl: 'config',
@@ -74,6 +73,7 @@ describe('RequestReporter', function () {
   beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
+    chrome.tabs.query.returns([]);
   });
 
   after(function () {
@@ -109,22 +109,18 @@ describe('RequestReporter', function () {
         },
         trustedClock,
       };
-      const webRequestPipeline = new WebRequestPipeline();
-      await webRequestPipeline.init();
       reporter = new RequestReporter(config, {
         communication,
-        webRequestPipeline,
         trustedClock,
         getBrowserInfo: () => ({ name: 'xx' }),
         countryProvider: { getSafeCountryCode: () => 'en' },
       });
       await reporter.init();
-      await reporter.requestMonitor.qs_whitelist.initPromise;
+      await reporter.qs_whitelist.initPromise;
     });
 
     afterEach(function () {
       reporter.unload();
-      reporter.webRequestPipeline.unload();
       reporter = undefined;
       clock.restore();
       delete globalThis.indexedDB;
@@ -138,11 +134,11 @@ describe('RequestReporter', function () {
         });
         await clock.runToLast();
         expect(
-          reporter.webRequestPipeline.pageStore.checkIfEmpty(),
+          reporter.pageStore.checkIfEmpty(),
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({
+        const tab = reporter.pageStore.getPageForRequest({
           tabId,
           frameId: 0,
         });
@@ -158,11 +154,11 @@ describe('RequestReporter', function () {
         });
         await clock.runToLast();
         expect(
-          reporter.webRequestPipeline.pageStore.checkIfEmpty(),
+          reporter.pageStore.checkIfEmpty(),
         ).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.webRequestPipeline.pageStore.getPageForRequest({
+        const tab = reporter.pageStore.getPageForRequest({
           tabId,
           frameId: 0,
         });
@@ -294,7 +290,7 @@ describe('RequestReporter', function () {
             rewriteUrls: { 'onet.pl': 'wp.pl' },
           });
           await processRunloopUntil(
-            reporter.requestMonitor.pipelineSteps.tokenTelemetry
+            reporter.tokenTelemetry
               .NEW_ENTRY_MIN_AGE,
           );
 

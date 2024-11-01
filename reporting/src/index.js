@@ -9,6 +9,5 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 export { default as UrlReporter } from './reporting';
-export { default as RequestReporter } from './request-reporter';
-export { default as WebRequestPipeline } from './webrequest-pipeline';
+export { default as RequestReporter } from './request/index';
 export { setLogLevel, describeLoggers } from './logger';

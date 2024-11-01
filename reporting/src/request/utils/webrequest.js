@@ -9,8 +9,89 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { parse } from '../utils/url.js';
-import logger from './logger.js';
+import { parse } from '../../utils/url.js';
+
+export const VALID_RESPONSE_PROPERTIES = {
+  onBeforeRequest: ['cancel', 'redirectUrl'],
+  onBeforeSendHeaders: ['cancel', 'requestHeaders'],
+  onSendHeaders: [],
+  onHeadersReceived: ['cancel', 'redirectUrl', 'responseHeaders'],
+  onAuthRequired: ['cancel'],
+  onResponseStarted: [],
+  onBeforeRedirect: [],
+  onCompleted: [],
+  onErrorOccurred: [],
+};
+
+function modifyHeaderByType(headers, name, value) {
+  const lowerCaseName = name.toLowerCase();
+  const filteredHeaders = headers.filter(
+    (h) => h.name.toLowerCase() !== lowerCaseName,
+  );
+  if (value) {
+    filteredHeaders.push({ name, value });
+  }
+  return filteredHeaders;
+}
+
+/**
+ * Small abstraction on top of blocking responses expected by WebRequest API. It
+ * provides a few helpers to block, redirect or modify headers. It is also able
+ * to create a valid blocking response taking into account platform-specific
+ * allowed capabilities.
+ */
+export class BlockingResponse {
+  constructor(details, event) {
+    this.details = details;
+
+    // Blocking response
+    this.redirectUrl = undefined;
+    this.cancel = undefined;
+    this.responseHeaders = undefined;
+    this.requestHeaders = undefined;
+    this.shouldIncrementCounter = undefined;
+    this.event = event;
+  }
+
+  redirectTo(url) {
+    this.redirectUrl = url;
+  }
+
+  block() {
+    this.cancel = true;
+  }
+
+  modifyHeader(name, value) {
+    this.requestHeaders = modifyHeaderByType(
+      this.requestHeaders || this.details.requestHeaders || [],
+      name,
+      value,
+    );
+  }
+
+  modifyResponseHeader(name, value) {
+    this.responseHeaders = modifyHeaderByType(
+      this.responseHeaders || this.details.responseHeaders || [],
+      name,
+      value,
+    );
+  }
+
+  toWebRequestResponse() {
+    const allowedProperties = VALID_RESPONSE_PROPERTIES[this.event];
+    const response = {};
+
+    for (let i = 0; i < allowedProperties.length; i += 1) {
+      const prop = allowedProperties[i];
+      const value = this[prop];
+      if (value !== undefined) {
+        response[prop] = value;
+      }
+    }
+
+    return response;
+  }
+}
 
 /**
  * Transform an array of headers (i.e.: `{ name, value }`) into a `Map`.
@@ -29,7 +110,7 @@ function createHeadersGetter(headers) {
 /**
  * Wrap webRequest's details to provide convenient helpers.
  */
-export default class WebRequestContext {
+export class WebRequestContext {
   /**
    * "Smart" constructor for `WebRequestContext`. It will make sure that the same
    * information is provided for different browsers (e.g.: Chrome and Firefox) as
@@ -41,7 +122,6 @@ export default class WebRequestContext {
 
     // Check if we have a URL
     if (!context.url) {
-      logger.log('Ignoring request with empty url', context);
       return null;
     }
 

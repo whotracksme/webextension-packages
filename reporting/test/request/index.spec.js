@@ -21,10 +21,7 @@ import { createFetchMock } from '../helpers/fetch-mock';
 
 import { truncatedHash, default as md5 } from '../../src/md5.js';
 
-import Config from '../../src/request/config.js';
-import Database from '../../src/request/database.js';
-import RequestMonitor from '../../src/request/index.js';
-import WebrequestPipeline from '../../src/webrequest-pipeline/index.js';
+import RequestReporter from '../../src/request/index.js';
 
 const THIRD_PARTY_HOST1 = '127.0.0.1:60508';
 const THIRD_PARTY_HOST2 = 'cliqztest2.de:60508';
@@ -57,8 +54,6 @@ describe('request/index', function () {
   let oldChromeStorageSession;
   let oldChromeStorage;
 
-  let pipeline;
-
   beforeEach(() => {
     if (!chrome?.storage?.session) {
       monkeyPatchedChromeStorage = true;
@@ -71,18 +66,14 @@ describe('request/index', function () {
       // indicate that there are bugs in the implementation or in the tests.
       chrome.storage.session = chrome.storage.local;
       chrome.storage.session.get.yields({});
+      chrome.tabs.query.returns([]);
 
       // to test against a real in-memory implementation:
       // chrome.storage.session = new FakeSessionApi();
     }
-
-    pipeline = new WebrequestPipeline();
-    pipeline.init();
   });
 
   afterEach(() => {
-    pipeline?.unload();
-    pipeline = null;
     if (monkeyPatchedChromeStorage) {
       chrome.storage.session = oldChromeStorageSession;
       chrome.storage = oldChromeStorage;
@@ -90,7 +81,6 @@ describe('request/index', function () {
   });
 
   let attrack;
-  let config;
   let fetchMock = createFetchMock();
 
   beforeEach(async function () {
@@ -101,36 +91,24 @@ describe('request/index', function () {
         return '';
       },
     };
-    const db = new Database();
-    await db.init();
-    config = new Config(
+    attrack = new RequestReporter(
       {
         configUrl: 'http://cdn',
         remoteWhitelistUrl: 'http://cdn',
         localWhitelistUrl: '/base/assets/request',
       },
       {
-        db,
-        trustedClock,
-      },
-    );
-    await config.init();
-    attrack = new RequestMonitor(
-      {},
-      {
-        db,
-        webRequestPipeline: pipeline,
         countryProvider: {},
         trustedClock,
         communication: {},
         getBrowserInfo: () => ({ name: 'xx' }),
       },
     );
-    await attrack.init(config);
+    await attrack.init();
     await attrack.qs_whitelist.initPromise;
-    config.cookieEnabled = false;
-    config.qsEnabled = false;
-    config.placeHolder = '<removed>';
+    attrack.config.cookieEnabled = false;
+    attrack.config.qsEnabled = false;
+    attrack.config.placeHolder = '<removed>';
   });
 
   afterEach(() => {
@@ -143,18 +121,18 @@ describe('request/index', function () {
     chrome.tabs.onCreated.dispatch(pageSpec.tab);
     return {
       onBeforeRequest: pageSpec.onBeforeRequest.map(function (reqData) {
-        const response = pipeline.onBeforeRequest(reqData);
+        const response = attrack.onBeforeRequest(reqData);
         return { url: reqData.url, response };
       }),
       onBeforeSendHeaders: pageSpec.onBeforeSendHeaders.map(function (reqData) {
         reqData.requestHeaders = mockRequestHeaders;
-        const response = pipeline.onBeforeSendHeaders(reqData);
+        const response = attrack.onBeforeSendHeaders(reqData);
         return { url: reqData.url, response };
       }),
       onHeadersReceived: pageSpec.onHeadersReceived.map(function (reqData) {
         reqData.requestHeaders = mockRequestHeaders;
         reqData.responseHeaders = mockResponseHeaders;
-        const response = pipeline.onHeadersReceived(reqData);
+        const response = attrack.onHeadersReceived(reqData);
         return { url: reqData.url, response };
       }),
     };
@@ -167,7 +145,7 @@ describe('request/index', function () {
       describe('cookie blocking', function () {
         describe('cookie blocking disabled', function () {
           beforeEach(function () {
-            config.cookieEnabled = false;
+            attrack.config.cookieEnabled = false;
           });
 
           it('allows all cookies', function () {
@@ -179,7 +157,7 @@ describe('request/index', function () {
 
         describe('cookie blocking enabled', function () {
           beforeEach(function () {
-            config.cookieEnabled = true;
+            attrack.config.cookieEnabled = true;
           });
 
           it('blocks third party cookies', function () {
@@ -199,7 +177,7 @@ describe('request/index', function () {
 
       context('QS blocking', function () {
         beforeEach(function () {
-          config.qsEnabled = true;
+          attrack.config.qsEnabled = true;
         });
 
         it('allows query strings on domains not in the tracker list', function () {
@@ -217,8 +195,8 @@ describe('request/index', function () {
             key = md5('uid');
             trackerHash = truncatedHash('127.0.0.1');
             attrack.qs_whitelist.addSafeToken(trackerHash, '');
-            config.tokenDomainCountThreshold = 2;
-            attrack.pipelineSteps.tokenChecker.tokenDomain.clear();
+            attrack.config.tokenDomainCountThreshold = 2;
+            attrack.tokenChecker.tokenDomain.clear();
           });
 
           it('allows QS first time on tracker', function () {
@@ -239,7 +217,7 @@ describe('request/index', function () {
             }
 
             beforeEach(function () {
-              config.tokenDomainCountThreshold = 0;
+              attrack.config.tokenDomainCountThreshold = 0;
             });
 
             it('blocks long tokens on tracker domain', function () {
@@ -280,14 +258,13 @@ describe('request/index', function () {
     const uid = '04C2EAD03BAB7F5E-2E85855CF4C75134';
 
     beforeEach(function () {
-      config.qsEnabled = true;
+      attrack.config.qsEnabled = true;
       attrack.qs_whitelist.addSafeToken(truncatedHash('tracker.com'), '');
-      config.tokenDomainCountThreshold = 0; // block first time
-      return attrack.initPipeline();
+      attrack.config.tokenDomainCountThreshold = 0; // block first time
     });
 
     it('removes all occurances of uid in the request', function () {
-      const mainDoc = pipeline.onBeforeRequest({
+      const mainDoc = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
@@ -299,7 +276,7 @@ describe('request/index', function () {
       chai.expect(mainDoc).to.not.have.property('cancel');
       chai.expect(mainDoc).to.not.have.property('redirectUrl');
       chai.expect(mainDoc).to.not.have.property('requestHeaders');
-      const response = pipeline.onBeforeRequest({
+      const response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
@@ -318,7 +295,7 @@ describe('request/index', function () {
     });
 
     it('removes also after subsequent redirect with same uid', function () {
-      const mainDoc = pipeline.onBeforeRequest({
+      const mainDoc = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
@@ -332,7 +309,7 @@ describe('request/index', function () {
       chai.expect(mainDoc).to.not.have.property('cancel');
       chai.expect(mainDoc).to.not.have.property('redirectUrl');
       chai.expect(mainDoc).to.not.have.property('requestHeaders');
-      let response = pipeline.onBeforeRequest({
+      let response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
@@ -350,7 +327,7 @@ describe('request/index', function () {
       chai.expect(response.redirectUrl).to.not.contain(uid);
       chai.expect(response.redirectUrl).to.not.contain(encodeURIComponent(uid));
 
-      response = pipeline.onBeforeRequest({
+      response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
