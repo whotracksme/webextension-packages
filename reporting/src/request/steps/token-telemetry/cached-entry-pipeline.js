@@ -86,25 +86,18 @@ export default class CachedEntryPipeline {
   async init(inputObservable, sendMessage, batchInterval, batchLimit) {
     await this.cache.isReady;
     const pipeline = new Subject();
-    const retryQueue = new Subject();
     this.input = inputObservable;
 
-    let batch = [];
+    let inputBatch = [];
     setInterval(() => {
-      if (batch.length > 0) {
-        pipeline.pub(batch);
-        batch = [];
+      if (inputBatch.length > 0) {
+        pipeline.pub(inputBatch);
+        inputBatch = [];
       }
     }, batchInterval);
 
     inputObservable.subscribe((token) => {
-      batch.push(token);
-    });
-
-    retryQueue.subscribe((token) => {
-      setTimeout(() => {
-        batch.push(token);
-      }, 1);
+      inputBatch.push(token);
     });
 
     pipeline.subscribe(async (batch) => {
@@ -139,7 +132,7 @@ export default class CachedEntryPipeline {
           sendMessage(msg);
         });
         // push overflowed entries back into the queue
-        overflowKeys.forEach((k) => retryQueue.pub(k));
+        overflowKeys.forEach((k) => this.input.pub(k));
       } catch (e) {
         logger.error('Failed to initialize stream', e);
       }
