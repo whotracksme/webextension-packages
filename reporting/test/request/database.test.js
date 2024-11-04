@@ -82,9 +82,14 @@ describe('request/database', function () {
           '824a9c5b7b39d556',
           '05d986b30d7eb849',
         ],
-        count: 2,
+        count: 1,
       };
-      await database.tokens.bulkPut([token, { ...token, token: 1 }]);
+      expect(await database.tokens.count()).to.equal(0);
+      await database.tokens.bulkPut([
+        token,
+        // add the same token with a different id
+        { ...token, token: 1 },
+      ]);
       expect(await database.tokens.count()).to.equal(2);
     });
   });
