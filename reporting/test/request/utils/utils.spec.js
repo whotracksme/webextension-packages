@@ -11,9 +11,9 @@
 
 import * as chai from 'chai';
 
-import { truncateDomain } from '../../src/request/utils';
+import { truncateDomain } from '../../../src/request/utils/utils';
 
-describe('request/utils', function () {
+describe('request/utils/utils', function () {
   describe('truncateDomain', function () {
     it('does not change domain which is already tld+1', () => {
       chai

@@ -11,15 +11,6 @@
 
 import { ImmutableURL } from '@cliqz/url-parser';
 
-const ipv4Part = '0*([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'; // numbers 0 - 255
-const ipv4Regex = new RegExp(
-  `^${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}([:]([0-9])+)?$`,
-); // port number
-
-export function isIpv4Address(host) {
-  return ipv4Regex.test(host);
-}
-
 /**
  * This is an abstraction over URL with caching and basic error handling built in. The main
  * difference is that this catches exceptions from the URL constructor (when the url is invalid)
@@ -67,19 +58,3 @@ function tryDecode(fn) {
 }
 
 export const tryDecodeURIComponent = tryDecode(decodeURIComponent);
-
-export function getName(url) {
-  if (url === null) {
-    return null;
-  }
-
-  if (url.hostIsIp) {
-    return 'IP';
-  }
-
-  if (!url.hostname) {
-    return url.pathname;
-  }
-
-  return url.domainInfo.domainWithoutSuffix || url.generalDomain;
-}

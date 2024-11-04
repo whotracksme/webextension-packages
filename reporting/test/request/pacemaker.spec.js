@@ -12,7 +12,7 @@
 import * as chai from 'chai';
 import sinon from 'sinon';
 
-import { Pacemaker } from '../../src/utils/pacemaker';
+import { Pacemaker } from '../../src/request/pacemaker';
 
 const expect = chai.expect;
 

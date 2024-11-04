@@ -12,7 +12,7 @@
 import { differenceInDays, parseISO, getUnixTime, sub } from 'date-fns';
 
 import PackedBloomFilter from './utils/bloom-filter-packed.js';
-import pacemaker from '../utils/pacemaker.js';
+import pacemaker from './pacemaker.js';
 import logger from '../logger.js';
 
 const STORAGE_CONFIG_KEY = 'qs_config';
