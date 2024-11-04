@@ -72,7 +72,7 @@ export function isMostlyNumeric(str) {
 const BEGIN_DATE = new Date(2010, 1, 1).getTime();
 const END_DATE = Date.now() + 1000 * 60 * 60 * 24 * 365 * 5; // now + 5 YEARS;
 
-export function isTimestamp(str) {
+function isTimestamp(str) {
   const intVal = parseInt(str, 10);
   return !isNaN(intVal) && intVal > BEGIN_DATE && intVal < END_DATE;
 }

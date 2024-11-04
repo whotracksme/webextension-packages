@@ -30,9 +30,6 @@ function parse(url) {
 }
 
 const getGeneralDomain = (url) => parse(url).domain;
-const getPublicSuffix = tldts.getPublicSuffix;
-const getDomainWithoutSuffix = tldts.getDomainWithoutSuffix;
-const extractHostname = tldts.getHostname;
 
 function sameGeneralDomain(uri1, uri2) {
   if (uri1 === uri2) {
@@ -45,11 +42,4 @@ function sameGeneralDomain(uri1, uri2) {
   return domain1 !== null && domain2 !== null && domain1 === domain2;
 }
 
-export {
-  extractHostname,
-  getDomainWithoutSuffix,
-  getGeneralDomain,
-  getPublicSuffix,
-  parse,
-  sameGeneralDomain,
-};
+export { getGeneralDomain, sameGeneralDomain };
