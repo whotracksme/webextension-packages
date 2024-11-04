@@ -9,8 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import logger from '../../../logger.js';
-import Subject from '../../utils/subject.js';
 import ChromeStorageMap from '../../utils/chrome-storage-map.js';
 
 const CACHE_TTL = 2 * 24 * 60 * 60 * 1000; // 2 days
@@ -19,16 +17,19 @@ const CACHE_TTL = 2 * 24 * 60 * 60 * 1000; // 2 days
  * Abstract part of token/key processing logic.
  */
 export default class CachedEntryPipeline {
-  constructor({ name, db, trustedClock, primaryKey, options }) {
-    this.name = name;
-    this.db = db;
-    this.trustedClock = trustedClock;
+  constructor(params) {
+    this.name = params.name;
+    this.db = params.db;
+    this.trustedClock = params.trustedClock;
     this.cache = new ChromeStorageMap({
-      storageKey: `wtm-request-reporting:token-telemetry:${name}`,
+      storageKey: `wtm-request-reporting:token-telemetry:${this.name}`,
       ttlInMs: CACHE_TTL,
     });
-    this.primaryKey = primaryKey;
-    this.options = options;
+    this.primaryKey = params.primaryKey;
+    this.options = params.options;
+    this.sendMessage = params.sendMessage;
+    this.batchInterval = params.batchInterval;
+    this.batchLimit = params.batchLimit;
   }
 
   get(key) {
@@ -75,71 +76,54 @@ export default class CachedEntryPipeline {
     await this.db.bulkPut(rows);
   }
 
-  /**
-   * Create an Rx pipeline to process a stream of tokens or keys at regular intervals
-   * and pushes generated messages to the outputSubject.
-   * @param inputObservable Observable input to the pipeline
-   * @param outputSubject Subject for outputed messages
-   * @param batchInterval how often to run batches
-   * @param batchLimit maximum messages per batch
-   */
-  async init(inputObservable, sendMessage, batchInterval, batchLimit) {
+  async init() {
     await this.cache.isReady;
-    const pipeline = new Subject();
-    this.input = inputObservable;
-
-    let inputBatch = [];
+    this.batch = [];
     setInterval(() => {
-      if (inputBatch.length > 0) {
-        pipeline.pub(inputBatch);
-        inputBatch = [];
+      if (this.batch.length > 0) {
+        this.#processBatch([...this.batch]);
+        this.batch = [];
       }
-    }, batchInterval);
-
-    inputObservable.subscribe((token) => {
-      inputBatch.push(token);
-    });
-
-    pipeline.subscribe(async (batch) => {
-      try {
-        // merge existing entries from DB
-        await this.loadBatchIntoCache(batch);
-        // extract message and clear
-        const today = this.trustedClock.getTimeAsYYYYMMDD();
-        const toBeSent = batch
-          .map((token) => [token, this.getFromCache(token)])
-          .filter(([, { lastSent }]) => lastSent !== today);
-
-        // generate the set of messages to be sent from the candiate list
-        const { messages, overflow } = this.createMessagePayloads(
-          toBeSent,
-          batchLimit,
-        );
-        // get the keys of the entries not being sent this time
-        const overflowKeys = new Set(overflow.map((tup) => tup[0]));
-
-        // update lastSent for sent messages
-        toBeSent
-          .filter((tup) => !overflowKeys.has(tup[0]))
-          .forEach(([, _entry]) => {
-            const entry = _entry;
-            entry.lastSent = this.trustedClock.getTimeAsYYYYMMDD();
-          });
-
-        await this.saveBatchToDb(batch);
-        // clear the distinct map
-        messages.forEach((msg) => {
-          sendMessage(msg);
-        });
-        // push overflowed entries back into the queue
-        overflowKeys.forEach((k) => this.input.pub(k));
-      } catch (e) {
-        logger.error('Failed to initialize stream', e);
-      }
-    });
+    }, this.batchInterval);
   }
 
-  unload() {}
+  processEntry(entry) {
+    this.batch.push(entry);
+  }
+
+  async #processBatch(batch) {
+    // merge existing entries from DB
+    await this.loadBatchIntoCache(batch);
+    // extract message and clear
+    const today = this.trustedClock.getTimeAsYYYYMMDD();
+    const toBeSent = batch
+      .map((token) => [token, this.getFromCache(token)])
+      .filter(([, { lastSent }]) => lastSent !== today);
+
+    // generate the set of messages to be sent from the candiate list
+    const { messages, overflow } = this.createMessagePayloads(
+      toBeSent,
+      this.batchLimit,
+    );
+    // get the keys of the entries not being sent this time
+    const overflowKeys = new Set(overflow.map((tup) => tup[0]));
+
+    // update lastSent for sent messages
+    toBeSent
+      .filter((tup) => !overflowKeys.has(tup[0]))
+      .forEach(([, _entry]) => {
+        const entry = _entry;
+        entry.lastSent = this.trustedClock.getTimeAsYYYYMMDD();
+      });
+
+    await this.saveBatchToDb(batch);
+    // clear the distinct map
+    for (const message of messages) {
+      this.sendMessage(message);
+    }
+    // push overflowed entries back into the queue
+    overflowKeys.forEach((k) => this.processEntry(k));
+  }
 
   /**
    * Periodic task to take unsent values from the database and push them to be sent,

@@ -268,8 +268,6 @@ export default class RequestReporter {
     // Check is active usage, was sent
     this.qs_whitelist.destroy();
     this.cookieContext.unload();
-    this.oAuthDetector.unload();
-    this.tokenTelemetry.unload();
     this.tokenExaminer.unload();
     this.tokenChecker.unload();
 
@@ -750,7 +748,7 @@ export default class RequestReporter {
 
   recordClick(event, context, href, sender) {
     this.cookieContext.setContextFromEvent(event, context, href, sender);
-    this.oAuthDetector.recordClick(event, context, href, sender);
+    this.oAuthDetector.recordClick(sender);
   }
 }
 

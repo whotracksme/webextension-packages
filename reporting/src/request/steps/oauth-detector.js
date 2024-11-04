@@ -10,7 +10,6 @@
  */
 
 import { parse } from '../../utils/url.js';
-import Subject from '../utils/subject.js';
 import ChromeStorageMap from '../utils/chrome-storage-map.js';
 
 const DEFAULT_OPTIONS = {
@@ -30,40 +29,20 @@ export default class OAuthDetector {
       storageKey: 'wtm-request-reporting:oauth-detector:site-activity',
       ttlInMs: this.VISIT_TIMEOUT,
     });
-    this.subjectMainFrames = new Subject();
-    this.tabClicks = new Subject();
   }
 
-  recordClick(ev, contextHTML, href, sender) {
-    this.tabClicks.pub(sender.tab);
+  recordClick(sender) {
+    this.clickActivity.set(sender.tab.id, sender.tab.url);
   }
 
   async init() {
     await this.clickActivity.isReady;
     await this.siteActivitiy.isReady;
-    this.tabActivitySubscription = this.tabClicks.subscribe((event) => {
-      this.clickActivity.set(event.id, event.url);
-    });
-    this.pageOpenedSubscription = this.subjectMainFrames.subscribe((event) => {
-      this.siteActivitiy.set(event.hostname, event.tabId);
-    });
-  }
-
-  unload() {
-    if (this.tabActivitySubscription) {
-      this.tabActivitySubscription.unsubscribe();
-    }
-    if (this.pageOpenedSubscription) {
-      this.pageOpenedSubscription.unsubscribe();
-    }
   }
 
   checkMainFrames(state) {
     if (state.isMainFrame) {
-      this.subjectMainFrames.pub({
-        tabId: state.tabId,
-        hostname: state.urlParts.hostname,
-      });
+      this.siteActivitiy.set(state.urlParts.hostname, state.tabId);
     }
   }
 
