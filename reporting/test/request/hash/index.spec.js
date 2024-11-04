@@ -11,12 +11,12 @@
 
 import * as chai from 'chai';
 
-import probData from '../../src/request/resources/prob.js';
+import probData from '../../../src/request/hash/prob.js';
 import {
   isMostlyNumeric,
   HashProb,
   shouldCheckToken,
-} from '../../src/request/hash.js';
+} from '../../../src/request/hash/index.js';
 
 const nonNumeric = ['', 'ithinkthereis1numberhere', '1240abcd'];
 const mostlyNumeric = ['4902', '1024x768'];

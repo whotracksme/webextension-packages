@@ -11,21 +11,21 @@
 
 /* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
-import pacemaker from '../utils/pacemaker.js';
+import pacemaker from './pacemaker.js';
 import Config from './config.js';
 import Database from './database.js';
 
 import { truncatedHash } from '../md5.js';
 import logger from '../logger.js';
 
+import { parse } from '../utils/url.js';
 import { BlockingResponse, WebRequestContext } from './utils/webrequest.js';
-import * as datetime from './time.js';
+import * as datetime from './utils/time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
-import { HashProb, shouldCheckToken } from './hash.js';
+import { HashProb, shouldCheckToken } from './hash/index.js';
 import { VERSION, COOKIE_MODE } from './config.js';
-import { shuffle } from './utils.js';
-import buildPageLoadObject from './page-telemetry.js';
+import { shuffle } from './utils/utils.js';
 import random from '../random.js';
 
 import BlockRules from './steps/block-rules.js';
@@ -752,4 +752,33 @@ export default class RequestReporter {
     this.cookieContext.setContextFromEvent(event, context, href, sender);
     this.oAuthDetector.recordClick(event, context, href, sender);
   }
+}
+
+function truncatePath(path) {
+  // extract the first part of the page path
+  const [prefix] = path.substring(1).split('/');
+  return `/${prefix}`;
+}
+
+function buildPageLoadObject(page) {
+  const urlParts = parse(page.url);
+  const tps = { ...page.requestStats };
+  return {
+    hostname: truncatedHash(urlParts.hostname),
+    path: truncatedHash(truncatePath(urlParts.path)),
+    scheme: urlParts.scheme,
+    c: 1,
+    t: Math.round(page.destroyed - page.created),
+    active: page.activeTime,
+    counter: page.counter,
+    ra: 0,
+    tps,
+    placeHolder: false,
+    redirects: [],
+    redirectsPlaceHolder: [],
+    triggeringTree: {},
+    tsv: '',
+    tsv_id: false,
+    frames: {},
+  };
 }

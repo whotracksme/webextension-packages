@@ -11,7 +11,7 @@
 
 import * as chai from 'chai';
 
-import { getName, parse } from '../../src/utils/url';
+import { parse } from '../../src/utils/url';
 
 const plainUrls = [
   {
@@ -521,31 +521,6 @@ function fillInSpec(spec) {
 }
 
 describe('utils/url', function () {
-  describe('#getName', () => {
-    it('return "null" for invalid URL', () => {
-      chai.expect(getName(parse('foo'))).to.equal(null);
-    });
-
-    it('return "IP" if URL is ipv4', () => {
-      chai.expect(getName(parse('https://1.1.1.1/'))).to.equal('IP');
-    });
-
-    // Currently not handled by '@cliqz/url-parser' but will be fixed soon.
-    it.skip('return "IP" if URL is ipv6', () => {
-      chai.expect(getName(parse('https://[::1]/'))).to.equal('IP');
-    });
-
-    it('handle localhost', () => {
-      chai
-        .expect(getName(parse('http://localhost/path')))
-        .to.equal('localhost');
-    });
-
-    it('return domain without suffix', () => {
-      chai.expect(getName(parse('https://sub.foo.co.uk'))).to.equal('foo');
-    });
-  });
-
   describe('#parse', () => {
     function testSpecArray(name, spec) {
       describe(name, function () {

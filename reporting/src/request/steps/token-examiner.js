@@ -11,9 +11,9 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import * as datetime from '../time.js';
+import * as datetime from '../utils/time.js';
 import md5, { truncatedHash } from '../../md5.js';
-import pacemaker from '../../utils/pacemaker.js';
+import pacemaker from '../pacemaker.js';
 import ChromeStorageMap from '../utils/chrome-storage-map.js';
 import logger from '../../logger.js';
 

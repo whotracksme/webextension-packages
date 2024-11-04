@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import * as datetime from '../../time.js';
+import * as datetime from '../../utils/time.js';
 import logger from '../../../logger.js';
 import ChromeStorageMap from '../../utils/chrome-storage-map.js';
 
