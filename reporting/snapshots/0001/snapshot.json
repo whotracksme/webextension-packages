@@ -1083,14 +1083,14 @@
               "scheme_https": 3,
               "token.has_qs_newToken": 3,
               "token.qs_newToken": 7,
-              "token.has_no_check_decoded": 2,
-              "token.no_check_decoded": 3,
               "token.has_no_check": 3,
-              "token.no_check": 4,
+              "token.no_check": 5,
               "resp_ob": 2,
               "content_length": 2,
               "status_302": 1,
               "type_7": 1,
+              "token.has_no_check_decoded": 1,
+              "token.no_check_decoded": 2,
               "referer_leak_site": 1,
               "status_200": 1,
               "error_abort": 1,
@@ -1444,11 +1444,9 @@
               "type_3": 11,
               "scheme_https": 11,
               "token.has_no_check": 11,
-              "token.no_check": 23,
-              "token.has_no_check_decoded": 1,
-              "token.no_check_decoded": 1,
-              "token.has_qs_newToken": 11,
-              "token.qs_newToken": 13,
+              "token.no_check": 28,
+              "token.has_qs_newToken": 9,
+              "token.qs_newToken": 9,
               "resp_ob": 6,
               "content_length": 216,
               "status_302": 1,
@@ -2862,10 +2860,8 @@
               "scheme_https": 3,
               "token.has_qs_countThreshold": 3,
               "token.qs_countThreshold": 7,
-              "token.has_no_check_decoded": 2,
-              "token.no_check_decoded": 3,
               "token.has_no_check": 3,
-              "token.no_check": 4,
+              "token.no_check": 5,
               "bad_qs": 3,
               "bad_tokens": 7,
               "token_blocked_placeholder": 3,
@@ -2873,6 +2869,8 @@
               "content_length": 2,
               "status_302": 1,
               "type_7": 1,
+              "token.has_no_check_decoded": 1,
+              "token.no_check_decoded": 2,
               "referer_leak_site": 1,
               "status_200": 1,
               "error_abort": 1,
@@ -3219,19 +3217,17 @@
               "status_302": 1
             },
             "dsum-sec.casalemedia.com": {
-              "c": 6,
-              "has_qs": 6,
-              "type_3": 6,
-              "scheme_https": 6,
-              "token.has_no_check": 6,
-              "token.no_check": 13,
-              "token.has_no_check_decoded": 1,
-              "token.no_check_decoded": 1,
-              "token.has_qs_countThreshold": 6,
-              "token.qs_countThreshold": 7,
-              "bad_qs": 6,
-              "bad_tokens": 7,
-              "token_blocked_placeholder": 6,
+              "c": 7,
+              "has_qs": 7,
+              "type_3": 7,
+              "scheme_https": 7,
+              "token.has_no_check": 7,
+              "token.no_check": 18,
+              "token.has_qs_countThreshold": 5,
+              "token.qs_countThreshold": 5,
+              "bad_qs": 5,
+              "bad_tokens": 5,
+              "token_blocked_placeholder": 5,
               "resp_ob": 6,
               "content_length": 216,
               "status_302": 1,
@@ -3567,10 +3563,10 @@
       "data": [
         {
           "ts": "",
-          "token": "8b72dcfadc69a786b66584b8b69d0512",
+          "token": "de4cb0480fff14e9686195025b3b7806",
           "safe": false,
           "sites": 2,
-          "trackers": 67
+          "trackers": 66
         }
       ],
       "ver": "0.103",
@@ -3586,18 +3582,6 @@
     "action": "wtm.attrack.keysv2",
     "payload": {
       "data": [
-        {
-          "ts": "",
-          "tracker": "e10f949fcaacdb19",
-          "key": "0d3fda0bdbb9d619e09cdf3eecba7999",
-          "site": "a10104ad75306d26",
-          "tokens": [
-            [
-              "8b72dcfadc69a786b66584b8b69d0512",
-              true
-            ]
-          ]
-        },
         {
           "ts": "",
           "tracker": "685c1532a4c8585c",
@@ -3634,22 +3618,6 @@
             ],
             [
               "ad60974631ea6055859c72214fa25225",
-              true
-            ],
-            [
-              "423ecc92cf9de24494c0aa99a29962ac",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "599eba19aa93a929cb8589f148b8a6c4",
-          "site": "a10104ad75306d26",
-          "tokens": [
-            [
-              "d0ee6dc052797e500e593a0259bbb0b8",
               true
             ]
           ]
@@ -3706,38 +3674,6 @@
             ],
             [
               "307b5f32c4753769b15cc7b2b374335f",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "ea97586b4aa0c141e4456912f3325f7f",
-          "site": "a10104ad75306d26",
-          "tokens": [
-            [
-              "08ff37960a6c692018a6bc57f85b8a31",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "cfe4df55e82b4cd2224a8618f773c985",
-          "site": "a10104ad75306d26",
-          "tokens": [
-            [
-              "16f4f829139346ef6719b8dfa33c9f21",
-              true
-            ],
-            [
-              "ccd859a59dd6b2e8d769c9365210a1fc",
-              true
-            ],
-            [
-              "c51a23b294e109f7a08354e099ea731b",
               true
             ]
           ]
@@ -3778,18 +3714,6 @@
       "data": [
         {
           "ts": "",
-          "tracker": "e10f949fcaacdb19",
-          "key": "0d3fda0bdbb9d619e09cdf3eecba7999",
-          "site": "6287472925cbc9b4",
-          "tokens": [
-            [
-              "8b72dcfadc69a786b66584b8b69d0512",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
           "tracker": "685c1532a4c8585c",
           "key": "b80bb7740288fda1f201890375a60c8f",
           "site": "6287472925cbc9b4",
@@ -3824,22 +3748,6 @@
             ],
             [
               "ad60974631ea6055859c72214fa25225",
-              true
-            ],
-            [
-              "2fb52af1e7350e412d954b02e115110f",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "599eba19aa93a929cb8589f148b8a6c4",
-          "site": "6287472925cbc9b4",
-          "tokens": [
-            [
-              "d0ee6dc052797e500e593a0259bbb0b8",
               true
             ]
           ]
@@ -3896,38 +3804,6 @@
             ],
             [
               "307b5f32c4753769b15cc7b2b374335f",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "ea97586b4aa0c141e4456912f3325f7f",
-          "site": "6287472925cbc9b4",
-          "tokens": [
-            [
-              "08ff37960a6c692018a6bc57f85b8a31",
-              true
-            ]
-          ]
-        },
-        {
-          "ts": "",
-          "tracker": "685c1532a4c8585c",
-          "key": "cfe4df55e82b4cd2224a8618f773c985",
-          "site": "6287472925cbc9b4",
-          "tokens": [
-            [
-              "16f4f829139346ef6719b8dfa33c9f21",
-              true
-            ],
-            [
-              "ccd859a59dd6b2e8d769c9365210a1fc",
-              true
-            ],
-            [
-              "c51a23b294e109f7a08354e099ea731b",
               true
             ]
           ]

@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { isHash } from './hash-detector';
+import { isHash } from './utils/hash-detector';
 
 function isCharNumber(char) {
   const code = char.charCodeAt(0);

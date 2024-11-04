@@ -11,51 +11,8 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import { isIpv4Address } from '../utils/utils.js';
-import prob from './prob.js';
-
-export class HashProb {
-  constructor() {
-    this.probHashLogM = prob.logM;
-    this.probHashThreshold = prob.thresh;
-    this.probHashChars = {};
-    'abcdefghijklmnopqrstuvwxyz1234567890.- '.split('').forEach((e, idx) => {
-      this.probHashChars[e] = idx;
-    });
-  }
-
-  _update(data) {
-    this.probHashLogM = data.logM;
-    this.probHashThreshold = data.thresh;
-  }
-
-  isHashProb(str) {
-    if (!this.probHashLogM || !this.probHashThreshold) {
-      return 0;
-    }
-    let logProb = 0.0;
-    let transC = 0;
-    str = str.toLowerCase().replace(/[^a-z0-9.\- ]/g, '');
-    for (let i = 0; i < str.length - 1; i += 1) {
-      const pos1 = this.probHashChars[str[i]];
-      const pos2 = this.probHashChars[str[i + 1]];
-
-      logProb += this.probHashLogM[pos1][pos2];
-      transC += 1;
-    }
-    if (transC > 0) {
-      return Math.exp(logProb / transC);
-    }
-    return Math.exp(logProb);
-  }
-
-  isHash(str) {
-    const p = this.isHashProb(str);
-    return p < this.probHashThreshold;
-  }
-}
-
-const numberThreshold = 0.8;
+import { isIpv4Address } from './utils.js';
+import { isHash } from '../../utils/hash-detector.js';
 
 export function isMostlyNumeric(str) {
   let numbers = 0;
@@ -66,7 +23,7 @@ export function isMostlyNumeric(str) {
       numbers += 1;
     }
   }
-  return numbers / length > numberThreshold;
+  return numbers / length > 0.8;
 }
 
 const BEGIN_DATE = new Date(2010, 1, 1).getTime();
@@ -81,7 +38,7 @@ function isTimestamp(str) {
  * Check if this value should be considered as a potential identifier and subject to token checks
  * @param str
  */
-export function shouldCheckToken(hashProb, minLength, str) {
+export function shouldCheckToken(minLength, str) {
   if (str.length < minLength) {
     return false;
   }
@@ -97,5 +54,5 @@ export function shouldCheckToken(hashProb, minLength, str) {
   if (str.length === 13 && isTimestamp(str)) {
     return false;
   }
-  return hashProb.isHash(str);
+  return isHash(str);
 }
