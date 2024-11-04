@@ -123,6 +123,7 @@ describe('request/index', function () {
         countryProvider: {},
         trustedClock,
         communication: {},
+        getBrowserInfo: () => ({ name: 'xx' }),
       },
     );
     await attrack.init(config);

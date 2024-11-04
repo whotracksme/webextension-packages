@@ -48,12 +48,43 @@ async function download(release, scenario, browser) {
   return scenarioPath;
 }
 
+function getSnapshotScenarioPath(name) {
+  return path.join(import.meta.dirname, '..', '..', 'snapshots', name);
+}
+
+export function recordSnapshot(name, messages) {
+  const snapshotPath = path.join(
+    getSnapshotScenarioPath(name),
+    'snapshot.json',
+  );
+  fs.writeFileSync(snapshotPath, JSON.stringify(messages, null, 2));
+}
+
+export function readSnapshot(name) {
+  const snapshotPath = path.join(
+    getSnapshotScenarioPath(name),
+    'snapshot.json',
+  );
+  return JSON.parse(fs.readFileSync(snapshotPath, { encoding: 'utf-8' }));
+}
+
+export function playSnapshotScenario(chrome, name, options = {}) {
+  const scenarioPath = path.join(
+    getSnapshotScenarioPath(name),
+    'events.log.br',
+  );
+  const events = loadScenario(scenarioPath);
+  return playEvents(chrome, events, options);
+}
+
 function loadScenario(scenarioPath) {
-  return fs
-    .readFileSync(scenarioPath, { encoding: 'utf-8' })
-    .split('\n')
-    .filter(Boolean)
-    .map(JSON.parse);
+  let body;
+  if (scenarioPath.endsWith('.br')) {
+    body = brotliDecompressSync(fs.readFileSync(scenarioPath)).toString('utf8');
+  } else {
+    body = fs.readFileSync(scenarioPath, { encoding: 'utf-8' });
+  }
+  return body.split('\n').filter(Boolean).map(JSON.parse);
 }
 
 function rewriteIp(event) {
@@ -64,21 +95,35 @@ function rewriteIp(event) {
   return event;
 }
 
-export async function playScenario(
-  chrome,
-  { scenarioRelease, scenarioName, browser = 'chrome' },
-) {
-  if (!scenarioRelease) {
-    throw new Error('specify scenario release');
-  }
-
+export function playEvents(chrome, events, options = {}) {
   const seenTabIds = new Set();
-  const scenarioPath = await download(scenarioRelease, scenarioName, browser);
-  const events = loadScenario(scenarioPath);
   for (const event of events) {
     try {
-      const args = event.args.map(rewriteIp);
-
+      const args = event.args.map(rewriteIp).map((a) => {
+        if (typeof a !== 'object') {
+          return a;
+        }
+        const event = { ...a };
+        if (options.rewriteUrls) {
+          for (const key of Object.keys(options.rewriteUrls)) {
+            for (const prop of [
+              'url',
+              'originUrl',
+              'initiator',
+              'redirectUrl',
+              'favIconUrl',
+            ]) {
+              if (event[prop]) {
+                event[prop] = event[prop].replace(
+                  key,
+                  options.rewriteUrls[key],
+                );
+              }
+            }
+          }
+        }
+        return event;
+      });
       if (events.api === 'tabs' && event.event === 'onCreated') {
         seenTabIds.add(args[0].id);
       } else {
@@ -101,4 +146,18 @@ export async function playScenario(
   }
 
   return { seenTabIds };
+}
+
+export async function playScenario(
+  chrome,
+  { scenarioRelease, scenarioName, browser = 'chrome' },
+) {
+  if (!scenarioRelease) {
+    throw new Error('specify scenario release');
+  }
+
+  const scenarioPath = await download(scenarioRelease, scenarioName, browser);
+  const events = loadScenario(scenarioPath);
+
+  return playEvents(chrome, events);
 }
