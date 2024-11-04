@@ -11,17 +11,16 @@
 
 import * as chai from 'chai';
 
-import probData from '../../../src/request/hash/prob.js';
 import {
   isMostlyNumeric,
-  HashProb,
   shouldCheckToken,
-} from '../../../src/request/hash/index.js';
+} from '../../../src/request/utils/hash.js';
+import { isHash } from '../../../src/utils/hash-detector.js';
 
 const nonNumeric = ['', 'ithinkthereis1numberhere', '1240abcd'];
 const mostlyNumeric = ['4902', '1024x768'];
 
-describe('request/hash', function () {
+describe('request/utils/hash', function () {
   describe('#isMostlyNumeric', function () {
     nonNumeric.forEach((testInput) => {
       it(`returns false for "${testInput}"`, function () {
@@ -37,13 +36,6 @@ describe('request/hash', function () {
   });
 
   describe('HashProb', function () {
-    let hashProb;
-
-    beforeEach(function () {
-      hashProb = new HashProb();
-      hashProb._update(probData);
-    });
-
     const notHash = [
       '',
       'Firefox',
@@ -69,38 +61,38 @@ describe('request/hash', function () {
 
     notHash.forEach(function (str) {
       it(`'${str}' is not a hash`, function () {
-        chai.expect(hashProb.isHash(str)).to.be.false;
+        chai.expect(isHash(str)).to.be.false;
       });
     });
 
     hashes.forEach(function (str) {
       it(`'${str}' is a hash`, function () {
-        chai.expect(hashProb.isHash(str)).to.be.true;
+        chai.expect(isHash(str)).to.be.true;
       });
     });
 
     describe('shouldCheckToken', function () {
       it('returns false for short tokens', () => {
-        chai.expect(shouldCheckToken(hashProb, 6, '1234')).to.be.false;
+        chai.expect(shouldCheckToken(6, '1234')).to.be.false;
       });
 
       it('returns false for timestamps', () => {
-        chai.expect(shouldCheckToken(hashProb, 6, `${Date.now()}`)).to.be.false;
+        chai.expect(shouldCheckToken(6, `${Date.now()}`)).to.be.false;
       });
 
       it('returns false for IP addresses', () => {
-        chai.expect(shouldCheckToken(hashProb, 6, '192.168.3.4')).to.be.false;
+        chai.expect(shouldCheckToken(6, '192.168.3.4')).to.be.false;
       });
 
       notHash.forEach(function (str) {
         it(`should not check '${str}'`, function () {
-          chai.expect(shouldCheckToken(hashProb, 6, str)).to.be.false;
+          chai.expect(shouldCheckToken(6, str)).to.be.false;
         });
       });
 
       hashes.forEach(function (str) {
         it(`should check '${str}'`, function () {
-          chai.expect(shouldCheckToken(hashProb, 6, str)).to.be.true;
+          chai.expect(shouldCheckToken(6, str)).to.be.true;
         });
       });
     });

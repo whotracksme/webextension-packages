@@ -23,7 +23,7 @@ import { BlockingResponse, WebRequestContext } from './utils/webrequest.js';
 import * as datetime from './utils/time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
-import { HashProb, shouldCheckToken } from './hash/index.js';
+import { shouldCheckToken } from './utils/hash.js';
 import { VERSION, COOKIE_MODE } from './config.js';
 import { shuffle } from './utils/utils.js';
 import random from '../random.js';
@@ -171,8 +171,6 @@ export default class RequestReporter {
       trustedClock: this.trustedClock,
     });
     await this.config.init();
-
-    this.hashProb = new HashProb();
 
     // load all caches:
     // Large dynamic caches are loaded via the persist module, which will
@@ -730,7 +728,7 @@ export default class RequestReporter {
   }
 
   shouldCheckToken(tok) {
-    return shouldCheckToken(this.hashProb, this.config.shortTokenLength, tok);
+    return shouldCheckToken(this.config.shortTokenLength, tok);
   }
 
   onPageStaged(page) {
