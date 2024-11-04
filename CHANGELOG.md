@@ -1,3 +1,15 @@
+# v5.1.29 (Mon Nov 04 2024)
+
+#### 🐛 Bug Fix
+
+- Snapshot tests + keysv2 batching fix [#109](https://github.com/whotracksme/webextension-packages/pull/109) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.28 (Tue Oct 29 2024)
 
 #### 🐛 Bug Fix
