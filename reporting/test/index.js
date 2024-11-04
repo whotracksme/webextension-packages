@@ -21,24 +21,23 @@ import './search-extractor.spec.js';
 import './session-storage.spec.js';
 import './seq-executor.spec.js';
 import './url-cleaner.spec.js';
-import './utils.spec.js';
 
 // Request utils
 import './request/utils/tldts.spec.js';
 import './request/utils/bloom-filter-packed.spec.js';
 import './request/utils/chrome-storage-map.spec.js';
+import './request/utils/utils.spec.js';
 
 // Request steps
 import './request/steps/check-context.spec.js';
 import './request/steps/oauth-detector.spec.js';
 
 // Request
-import './request/utils.spec.js';
 import './request/qs-whitelist2.spec.js';
-import './request/hash.spec.js';
+import './request/hash/index.spec.js';
 import './request/database.spec.js';
 import './request/index.spec.js';
+import './request/pacemaker.spec.js';
 
-// // Utils
-import './utils/pacemaker.spec.js';
+// Utils
 import './utils/url.spec.js';

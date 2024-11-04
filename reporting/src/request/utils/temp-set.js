@@ -12,7 +12,7 @@
 /* eslint func-names: 'off' */
 /* eslint prefer-arrow-callback: 'off' */
 
-import pacemaker from '../../utils/pacemaker.js';
+import pacemaker from '../pacemaker.js';
 
 /** Set like class whose members are removed after a specific amount of time
  */

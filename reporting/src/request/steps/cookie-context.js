@@ -10,7 +10,7 @@
  */
 
 import { truncatedHash } from '../../md5.js';
-import pacemaker from '../../utils/pacemaker.js';
+import pacemaker from '../pacemaker.js';
 import { parse } from '../../utils/url.js';
 import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds.js';
 import logger from '../../logger.js';

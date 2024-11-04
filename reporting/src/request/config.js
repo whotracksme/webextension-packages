@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import pacemaker from '../utils/pacemaker.js';
+import pacemaker from './pacemaker.js';
 import logger from '../logger.js';
 
 const RETRY_TIMEOUT = 30 * 1000;

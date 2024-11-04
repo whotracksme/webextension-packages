@@ -39,3 +39,18 @@ export function shuffle(s) {
   }
   return a.join('');
 }
+
+const ipv4Part = '0*([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'; // numbers 0 - 255
+const ipv4Regex = new RegExp(
+  `^${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}\\.${ipv4Part}([:]([0-9])+)?$`,
+); // port number
+
+export function isIpv4Address(host) {
+  return ipv4Regex.test(host);
+}
+
+function truncatePath(path) {
+  // extract the first part of the page path
+  const [prefix] = path.substring(1).split('/');
+  return `/${prefix}`;
+}
