@@ -68,7 +68,7 @@ export function readSnapshot(name) {
   return JSON.parse(fs.readFileSync(snapshotPath, { encoding: 'utf-8' }));
 }
 
-export function playScapshotScenario(chrome, name, options = {}) {
+export function playSnapshotScenario(chrome, name, options = {}) {
   const scenarioPath = path.join(
     getSnapshotScenarioPath(name),
     'events.log.br',

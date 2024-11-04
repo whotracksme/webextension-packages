@@ -18,7 +18,7 @@ import { IDBFactory } from 'fake-indexeddb';
 
 import {
   playScenario,
-  playScapshotScenario,
+  playSnapshotScenario,
   recordSnapshot,
   readSnapshot,
 } from './helpers/scenarios.js';
@@ -287,10 +287,10 @@ describe('RequestReporter', function () {
           communicationEmiter.addListener('send', (message) =>
             messages.push(cleanupMessage(message)),
           );
-          playScapshotScenario(chrome, snapshotName);
+          playSnapshotScenario(chrome, snapshotName);
 
           // run twice to allow token telemetry to trigger
-          playScapshotScenario(chrome, snapshotName, {
+          playSnapshotScenario(chrome, snapshotName, {
             rewriteUrls: { 'onet.pl': 'wp.pl' },
           });
           await processRunloopUntil(
