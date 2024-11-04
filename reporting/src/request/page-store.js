@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import ChromeStorageMap from '../request/utils/chrome-storage-map.js';
+import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
 

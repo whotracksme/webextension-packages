@@ -13,7 +13,7 @@ import chrome from 'sinon-chrome';
 import { mock, match } from 'sinon';
 import { expect } from 'chai';
 
-import PageStore from '../../src/webrequest-pipeline/page-store.js';
+import PageStore from '../../src/request/page-store.js';
 
 describe('PageStore', function () {
   before(function () {

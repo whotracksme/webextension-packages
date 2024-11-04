@@ -9,12 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 import './setup.js';
-import {
-  UrlReporter,
-  RequestReporter,
-  WebRequestPipeline,
-  setLogLevel,
-} from '../src/index.js';
+import { UrlReporter, RequestReporter, setLogLevel } from '../src/index.js';
 import rules from './rules.json';
 
 (chrome.action || chrome.browserAction).onClicked.addListener(() => {
@@ -85,8 +80,6 @@ const config = {
   },
 };
 
-const webRequestPipeline = new WebRequestPipeline();
-
 const urlReporter = new UrlReporter({
   config: config.url,
   storage: createStorage(),
@@ -97,7 +90,6 @@ const urlReporter = new UrlReporter({
 
 const requestReporter = new RequestReporter(config.request, {
   communication,
-  webRequestPipeline,
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
   getBrowserInfo: () => ({ name: 'xx' }),
@@ -117,7 +109,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       sendResponse({
         tabs: tabs.map((tab) =>
-          webRequestPipeline.pageStore.getPageForRequest({
+          requestReporter.pageStore.getPageForRequest({
             tabId: tab.id,
             frameId: 0,
           }),
@@ -130,7 +122,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 (async function () {
-  await webRequestPipeline.init();
   await urlReporter.init();
   await urlReporter.patterns.updatePatterns(rules);
   await urlReporter.analyzeUrl('https://www.google.com/search?q=shoes');
@@ -138,6 +129,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   await requestReporter.init();
 })();
 
-globalThis.webRequestPipeline = webRequestPipeline;
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;
