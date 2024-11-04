@@ -21,7 +21,7 @@ export const COOKIE_MODE = {
   TRACKERS: 'trackers',
 };
 
-export const DEFAULTS = {
+const DEFAULTS = {
   safekeyValuesThreshold: 4,
   shortTokenLength: 6,
   placeHolder: 'ghostery',

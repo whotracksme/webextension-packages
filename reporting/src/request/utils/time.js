@@ -56,11 +56,6 @@ export function dateString(date) {
   return yyyy + (mm[1] ? mm : `0${mm[0]}`) + (dd[1] ? dd : `0${dd[0]}`); // padding
 }
 
-export function hourString(date) {
-  const hour = date.getUTCHours().toString();
-  return dateString(date) + (hour[1] ? hour : `0${hour[0]}`);
-}
-
 export function getCurrentDay() {
   if (!getCurrentDay._currentDay || Date.now() > getCurrentDay._nextDayCheck) {
     const day = getTime().substr(0, 8);

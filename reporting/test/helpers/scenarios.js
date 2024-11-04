@@ -95,7 +95,7 @@ function rewriteIp(event) {
   return event;
 }
 
-export function playEvents(chrome, events, options = {}) {
+function playEvents(chrome, events, options = {}) {
   const seenTabIds = new Set();
   for (const event of events) {
     try {

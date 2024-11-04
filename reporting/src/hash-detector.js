@@ -1502,7 +1502,7 @@ const probHashChars = {
   'Z': 61,
 };
 
-export function isHashProb(str) {
+function isHashProb(str) {
   str = str.replace(/[^A-Za-z0-9]/g, '');
 
   let logProb = 0.0;

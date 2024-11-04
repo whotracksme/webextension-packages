@@ -11,7 +11,7 @@
 
 import { parse } from '../../utils/url.js';
 
-export const VALID_RESPONSE_PROPERTIES = {
+const VALID_RESPONSE_PROPERTIES = {
   onBeforeRequest: ['cancel', 'redirectUrl'],
   onBeforeSendHeaders: ['cancel', 'requestHeaders'],
   onSendHeaders: [],
