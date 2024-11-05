@@ -74,15 +74,11 @@ describe('request/steps/oauth-detector', function () {
       await detectorInstance.init();
     });
 
-    afterEach(function () {
-      detectorInstance.unload();
-    });
-
     it('registers clicks on tabs', (done) => {
       const tab = 5;
       const url = 'https://cliqz.com';
       const sender = mockSender(tab, url);
-      detectorInstance.recordClick(null, '', '', sender);
+      detectorInstance.recordClick(sender);
       delayedTest(
         () => {
           chai
@@ -102,8 +98,8 @@ describe('request/steps/oauth-detector', function () {
       const tab = 5;
       const url1 = 'https://cliqz.com';
       const url2 = 'https://ghostery.com';
-      detectorInstance.recordClick(null, '', '', mockSender(tab, url1));
-      detectorInstance.recordClick(null, '', '', mockSender(tab, url2));
+      detectorInstance.recordClick(mockSender(tab, url1));
+      detectorInstance.recordClick(mockSender(tab, url2));
       delayedTest(
         () => {
           chai
@@ -124,8 +120,8 @@ describe('request/steps/oauth-detector', function () {
       const tab2 = 6;
       const url1 = 'https://cliqz.com';
       const url2 = 'https://ghostery.com';
-      detectorInstance.recordClick(null, '', '', mockSender(tab1, url1));
-      detectorInstance.recordClick(null, '', '', mockSender(tab2, url2));
+      detectorInstance.recordClick(mockSender(tab1, url1));
+      detectorInstance.recordClick(mockSender(tab2, url2));
       delayedTest(
         () => {
           chai
@@ -146,7 +142,7 @@ describe('request/steps/oauth-detector', function () {
       const tab = 5;
       const url = 'https://cliqz.com';
       const sender = mockSender(tab, url);
-      detectorInstance.recordClick(null, '', '', sender);
+      detectorInstance.recordClick(sender);
       delayedTest(
         () => {
           chai
@@ -165,10 +161,9 @@ describe('request/steps/oauth-detector', function () {
       const tab2 = 6;
       const url1 = 'https://cliqz.com';
       const url2 = 'https://ghostery.com';
-      detectorInstance.recordClick(null, '', '', mockSender(tab1, url1));
+      detectorInstance.recordClick(mockSender(tab1, url1));
       setTimeout(
-        () =>
-          detectorInstance.recordClick(null, '', '', mockSender(tab2, url2)),
+        () => detectorInstance.recordClick(mockSender(tab2, url2)),
         10,
       );
       delayedTest(
@@ -191,11 +186,10 @@ describe('request/steps/oauth-detector', function () {
       const tab2 = 6;
       const url1 = 'https://cliqz.com';
       const url2 = 'https://ghostery.com';
-      detectorInstance.recordClick(null, '', '', mockSender(tab1, url1));
-      detectorInstance.recordClick(null, '', '', mockSender(tab2, url2));
+      detectorInstance.recordClick(mockSender(tab1, url1));
+      detectorInstance.recordClick(mockSender(tab2, url2));
       setTimeout(
-        () =>
-          detectorInstance.recordClick(null, '', '', mockSender(tab1, url1)),
+        () => detectorInstance.recordClick(mockSender(tab1, url1)),
         10,
       );
       delayedTest(
@@ -236,10 +230,6 @@ describe('request/steps/oauth-detector', function () {
       await detectorInstance.init();
     });
 
-    afterEach(function () {
-      detectorInstance.unload();
-    });
-
     it('returns true when there has been no activity and the URL contains "/oauth"', () => {
       const state = mockState(
         5,
@@ -261,7 +251,7 @@ describe('request/steps/oauth-detector', function () {
     it('returns true when there is only a click', (done) => {
       const tab = 5;
       const tabUrl = 'https://cliqz.com/';
-      detectorInstance.recordClick(null, '', '', mockSender(tab, tabUrl));
+      detectorInstance.recordClick(mockSender(tab, tabUrl));
       const state = mockState(tab, 'https://auth.ghostery.com/oauth', tabUrl);
       delayedTest(
         () => {
@@ -275,7 +265,7 @@ describe('request/steps/oauth-detector', function () {
     it('returns false with click and page', (done) => {
       const tab = 5;
       const tabUrl = 'https://cliqz.com/';
-      detectorInstance.recordClick(null, '', '', mockSender(tab, tabUrl));
+      detectorInstance.recordClick(mockSender(tab, tabUrl));
       const fullPageState = mockState(
         tab + 1,
         'https://auth.ghostery.com/',
@@ -296,7 +286,7 @@ describe('request/steps/oauth-detector', function () {
     it('returns true if page domain does not match', (done) => {
       const tab = 5;
       const tabUrl = 'https://cliqz.com/';
-      detectorInstance.recordClick(null, '', '', mockSender(tab, tabUrl));
+      detectorInstance.recordClick(mockSender(tab, tabUrl));
       const fullPageState = mockState(
         tab + 1,
         'https://www.ghostery.com/',
@@ -318,7 +308,7 @@ describe('request/steps/oauth-detector', function () {
       const tab = 5;
       const tabUrl = 'https://cliqz.com/';
       const tabUrl2 = 'https://www.cliqz.com/';
-      detectorInstance.recordClick(null, '', '', mockSender(tab, tabUrl));
+      detectorInstance.recordClick(mockSender(tab, tabUrl));
       const fullPageState = mockState(
         tab + 1,
         'https://www.ghostery.com/',

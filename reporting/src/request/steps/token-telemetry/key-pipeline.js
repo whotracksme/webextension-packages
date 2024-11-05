@@ -21,8 +21,9 @@ export function getSiteTokensMap(siteTokens, key) {
 }
 
 export default class KeyPipeline extends CachedEntryPipeline {
-  constructor({ db, trustedClock, name, options }) {
-    super({ db, trustedClock, name, options, primaryKey: 'hash' });
+  constructor(options) {
+    super(options);
+    this.primaryKey = 'hash';
   }
 
   newEntry() {

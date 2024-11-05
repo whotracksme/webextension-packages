@@ -12,8 +12,9 @@
 import CachedEntryPipeline from './cached-entry-pipeline.js';
 
 export default class TokenPipeline extends CachedEntryPipeline {
-  constructor({ db, trustedClock, options, name }) {
-    super({ db, trustedClock, name, options, primaryKey: 'token' });
+  constructor(options) {
+    super(options);
+    this.primaryKey = 'token';
   }
 
   newEntry() {
