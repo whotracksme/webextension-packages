@@ -10,7 +10,6 @@
  */
 
 import { truncatedHash } from '../../md5.js';
-import pacemaker from '../pacemaker.js';
 import { parse } from '../../utils/url.js';
 import { sameGeneralDomain, getGeneralDomain } from '../utils/tlds.js';
 import logger from '../../logger.js';
@@ -46,13 +45,14 @@ export default class CookieContext {
     await this.visitCache.isReady;
     await this.trustedThirdParties.isReady;
     this.cleanCookieCache();
-    this._pmclean = pacemaker.register(this.cleanCookieCache.bind(this), {
-      timeout: CLEAN_COOKIE_CACHE_TIMEOUT,
-    });
+    this._pmclean = setInterval(
+      this.cleanCookieCache.bind(this),
+      CLEAN_COOKIE_CACHE_TIMEOUT,
+    );
   }
 
   unload() {
-    this._pmclean = pacemaker.clearTimeout(this._pmclean);
+    clearTimeout(this._pmclean);
   }
 
   cleanCookieCache() {

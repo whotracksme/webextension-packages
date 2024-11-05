@@ -9,7 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import pacemaker from './pacemaker.js';
 import logger from '../logger.js';
 
 const RETRY_TIMEOUT = 30 * 1000;
@@ -80,7 +79,9 @@ export default class Config {
     await this._loadConfig();
   }
 
-  unload() {}
+  unload() {
+    clearTimeout(this._retryTimeout);
+  }
 
   async _loadConfig() {
     await this.db.ready;
@@ -104,7 +105,10 @@ export default class Config {
       });
     } catch (e) {
       logger.error('could not load request config', e);
-      pacemaker.setTimeout(this._loadConfig.bind(this), RETRY_TIMEOUT);
+      this._retryTimeout = setTimeout(
+        this._loadConfig.bind(this),
+        RETRY_TIMEOUT,
+      );
     }
   }
 

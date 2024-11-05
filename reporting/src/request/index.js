@@ -11,7 +11,6 @@
 
 /* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
-import pacemaker from './pacemaker.js';
 import Config from './config.js';
 import Database from './database.js';
 
@@ -92,9 +91,6 @@ export default class RequestReporter {
     this.pageStore = new PageStore({
       notifyPageStageListeners: this.onPageStaged.bind(this),
     });
-
-    // Intervals
-    this.dayChangedInterval = null;
 
     // Web request pipelines
     this.pipelines = {};
@@ -206,9 +202,10 @@ export default class RequestReporter {
     // load the whitelist async - qs protection will start once it is ready
     this.qs_whitelist.init();
 
-    this.dayChangedInterval = pacemaker.register(this.dayChanged.bind(this), {
-      timeout: DAY_CHANGE_INTERVAL,
-    });
+    this.dayChangedInterval = setInterval(
+      this.dayChanged.bind(this),
+      DAY_CHANGE_INTERVAL,
+    );
 
     await this.pageStore.init();
 
@@ -300,7 +297,7 @@ export default class RequestReporter {
     chrome.webRequest.onErrorOccurred.removeListener(this.onErrorOccurred);
 
     this.db.unload();
-    this.dayChangedInterval = this.dayChangedInterval.stop();
+    clearInterval(this.dayChangedInterval);
   }
 
   onBeforeRequest = (details) => {
