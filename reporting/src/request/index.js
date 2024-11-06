@@ -298,6 +298,7 @@ export default class RequestReporter {
 
     this.db.unload();
     clearInterval(this.dayChangedInterval);
+    this.dayChangedInterval = null;
   }
 
   onBeforeRequest = (details) => {

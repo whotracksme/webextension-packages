@@ -52,7 +52,8 @@ export default class CookieContext {
   }
 
   unload() {
-    clearTimeout(this._pmclean);
+    clearInterval(this._pmclean);
+    this._pmclean = null;
   }
 
   cleanCookieCache() {

@@ -81,6 +81,7 @@ export default class Config {
 
   unload() {
     clearTimeout(this._retryTimeout);
+    this._retryTimeout = null;
   }
 
   async _loadConfig() {
