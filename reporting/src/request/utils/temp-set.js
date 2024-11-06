@@ -12,8 +12,6 @@
 /* eslint func-names: 'off' */
 /* eslint prefer-arrow-callback: 'off' */
 
-import pacemaker from '../pacemaker.js';
-
 /** Set like class whose members are removed after a specific amount of time
  */
 export default class TempSet {
@@ -32,7 +30,7 @@ export default class TempSet {
 
   add(item, ttl) {
     this._items.add(item);
-    const timeout = pacemaker.setTimeout(
+    const timeout = setTimeout(
       function () {
         this.delete(item);
         this._timeouts.delete(timeout);
@@ -48,7 +46,7 @@ export default class TempSet {
 
   clear() {
     for (const t of this._timeouts) {
-      pacemaker.clearTimeout(t);
+      clearTimeout(t);
     }
     this._timeouts.clear();
     this._items.clear();

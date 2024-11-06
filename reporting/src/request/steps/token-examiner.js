@@ -13,7 +13,6 @@
 
 import * as datetime from '../utils/time.js';
 import md5, { truncatedHash } from '../../md5.js';
-import pacemaker from '../pacemaker.js';
 import ChromeStorageMap from '../utils/chrome-storage-map.js';
 import logger from '../../logger.js';
 
@@ -40,7 +39,7 @@ export default class TokenExaminer {
   }
 
   unload() {
-    pacemaker.clearTimeout(this._syncTimer);
+    clearTimeout(this._syncTimer);
     this._syncTimer = null;
   }
 
@@ -153,7 +152,7 @@ export default class TokenExaminer {
         this._syncTimer = null;
       }
     };
-    this._syncTimer = pacemaker.setTimeout(syncDb, SYNC_DB_INTERVAL);
+    this._syncTimer = setTimeout(syncDb, SYNC_DB_INTERVAL);
   }
 
   async _syncDb() {
