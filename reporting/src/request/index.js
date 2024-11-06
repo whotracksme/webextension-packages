@@ -44,24 +44,6 @@ import PageStore from './page-store.js';
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 
-// TODO: why did we need this delay in the original code?
-//
-// Originally was in: https://github.com/whotracksme/webextension-packages/blob/6b800a596e6ce9d80bceb59e0f21795aedde75dc/reporting/src/webrequest-pipeline/pipeline.js#L200
-// Changed with https://github.com/whotracksme/webextension-packages/pull/111/files
-//
-// Existed for the events from the "collect" step:
-//
-// > A `collect` step is used to only observe the http life-cycle and
-// > is never used to alter it in any way. It does not have access to
-// > the response either. Because of these constraints, we can safely
-// > run these steps asynchronously to not block the processing of
-// > requests.
-//
-// See also: https://github.com/ghostery/common/blob/d09bd3a03f158a08fe72ef2386deacaf9b40c98e/modules/webrequest-pipeline/sources/pipeline.es#L181
-function delayOneMs(cb) {
-  setTimeout(() => cb(), 1);
-}
-
 export default class RequestReporter {
   constructor(
     settings,
@@ -94,6 +76,14 @@ export default class RequestReporter {
 
     // Web request pipelines
     this.pipelines = {};
+  }
+
+  #reportTrackerInteraction(kind, state) {
+    try {
+      this.onTrackerInteraction(kind, state);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   checkIsWhitelisted(state) {
@@ -331,15 +321,13 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
     // logIsTracker
-    delayOneMs(() => {
-      if (
-        this.qs_whitelist.isTrackerDomain(
-          truncatedHash(state.urlParts.generalDomain),
-        )
-      ) {
-        this.onTrackerInteraction('observed', state);
-      }
-    });
+    if (
+      this.qs_whitelist.isTrackerDomain(
+        truncatedHash(state.urlParts.generalDomain),
+      )
+    ) {
+      this.#reportTrackerInteraction('observed', state);
+    }
     // checkExternalBlocking
     if (response.cancel === true || response.redirectUrl) {
       state.incrementStat('blocked_external');
@@ -350,10 +338,9 @@ export default class RequestReporter {
     if (this.tokenExaminer.examineTokens(state) === false) {
       return response.toWebRequestResponse();
     }
-    // tokenTelemetry.extractKeyTokens
-    delayOneMs(() => {
-      this.tokenTelemetry.extractKeyTokens(state);
-    });
+
+    this.tokenTelemetry.extractKeyTokens(state);
+
     // tokenChecker.findBadTokens
     if (this.tokenChecker.findBadTokens(state) === false) {
       return response.toWebRequestResponse();
@@ -383,10 +370,9 @@ export default class RequestReporter {
     if (this.blockRules.applyBlockRules(state, response) === false) {
       return response.toWebRequestResponse();
     }
-    // logBlockedToken
-    delayOneMs(() => {
-      this.onTrackerInteraction('fingerprint-removed', state);
-    });
+
+    this.#reportTrackerInteraction('fingerprint-removed', state);
+
     // applyBlock
     if (this.applyBlock(state, response) === false) {
       return response.toWebRequestResponse();
@@ -406,9 +392,8 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
     // cookieContext.assignCookieTrust
-    delayOneMs(() => {
-      this.cookieContext.assignCookieTrust(state);
-    });
+    this.cookieContext.assignCookieTrust(state);
+
     // checkIsMainDocument
     if (!state.isMainFrame === false) {
       return response.toWebRequestResponse();
@@ -479,10 +464,9 @@ export default class RequestReporter {
       state.incrementStat('bad_cookie_sent');
       return response.toWebRequestResponse();
     }
-    // logBlockedCookie
-    delayOneMs(() => {
-      this.onTrackerInteraction('cookie-removed', state);
-    });
+
+    this.#reportTrackerInteraction('cookie-removed', state);
+
     // blockCookie
     state.incrementStat('cookie_blocked');
     state.incrementStat('cookie_block_tp1');
@@ -555,10 +539,9 @@ export default class RequestReporter {
     if (this.cookieContext.checkContextFromEvent(state) === false) {
       return response.toWebRequestResponse();
     }
-    // logSetBlockedCookie
-    delayOneMs(() => {
-      this.onTrackerInteraction('cookie-removed', state);
-    });
+
+    this.#reportTrackerInteraction('cookie-removed', state);
+
     // blockSetCookie
     response.modifyResponseHeader('Set-Cookie', '');
     state.incrementStat('set_cookie_blocked');
@@ -588,10 +571,8 @@ export default class RequestReporter {
       return false;
     }
     // logIsCached
-    delayOneMs(() => {
-      this.whitelistedRequestCache.delete(state.requestId);
-      state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
-    });
+    this.whitelistedRequestCache.delete(state.requestId);
+    state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
   };
 
   onErrorOccurred = (details) => {
@@ -609,12 +590,10 @@ export default class RequestReporter {
       return false;
     }
     // logError
-    delayOneMs(() => {
-      this.whitelistedRequestCache.delete(state.requestId);
-      if (state.error && state.error.indexOf('ABORT')) {
-        state.incrementStat('error_abort');
-      }
-    });
+    this.whitelistedRequestCache.delete(state.requestId);
+    if (state.error && state.error.indexOf('ABORT')) {
+      state.incrementStat('error_abort');
+    }
   };
 
   async dayChanged() {
