@@ -210,7 +210,7 @@ export default class RequestReporter {
 
     this.userAgent = (await this.getBrowserInfo()).name;
 
-    this.pageLogger = new PageLogger(this.config);
+    this.pageLogger = new PageLogger(this.config.placeHolder);
     this.blockRules = new BlockRules(this.config);
     this.cookieContext = new CookieContext(this.config, this.qs_whitelist);
     await this.cookieContext.init();
@@ -329,10 +329,9 @@ export default class RequestReporter {
     if (this.cancelRecentlyModified(state, response) === false) {
       return response.toWebRequestResponse();
     }
-    // pageLogger.onBeforeRequest
-    if (this.pageLogger.onBeforeRequest(state) === false) {
-      return response.toWebRequestResponse();
-    }
+
+    this.pageLogger.onBeforeRequest(state);
+
     // logIsTracker
     if (
       this.qs_whitelist.isTrackerDomain(
@@ -411,10 +410,9 @@ export default class RequestReporter {
     if (checkSameGeneralDomain(state) === false) {
       return response.toWebRequestResponse();
     }
-    // pageLogger.onBeforeSendHeaders
-    if (this.pageLogger.onBeforeSendHeaders(state) === false) {
-      return response.toWebRequestResponse();
-    }
+
+    this.pageLogger.onBeforeSendHeaders(state);
+
     // overrideUserAgent
     if (this.config.overrideUserAgent === true) {
       const domainHash = truncatedHash(state.urlParts.generalDomain);
@@ -494,10 +492,10 @@ export default class RequestReporter {
     if (checkSameGeneralDomain(state) === false) {
       return response.toWebRequestResponse();
     }
+
     // pageLogger.onHeadersReceived
-    if (this.pageLogger.onHeadersReceived(state) === false) {
-      return response.toWebRequestResponse();
-    }
+    this.pageLogger.onHeadersReceived(state);
+
     // checkSetCookie
     if ((state.hasSetCookie === true) === false) {
       return response.toWebRequestResponse();
@@ -555,10 +553,11 @@ export default class RequestReporter {
       }
       return false;
     }
-    // pageLogger.reattachStatCounter
-    if (this.pageLogger.reattachStatCounter(state) === false) {
-      return false;
+
+    if (state.hasNoStats()) {
+      return;
     }
+
     // logIsCached
     this.whitelistedRequestCache.delete(state.requestId);
     state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
@@ -570,10 +569,11 @@ export default class RequestReporter {
     if (checkValidContext(state) === false) {
       return false;
     }
-    // pageLogger.reattachStatCounte
-    if (this.pageLogger.reattachStatCounter(state) === false) {
-      return false;
+
+    if (state.hasNoStats()) {
+      return;
     }
+
     // logError
     this.whitelistedRequestCache.delete(state.requestId);
     if (state.error && state.error.indexOf('ABORT')) {
