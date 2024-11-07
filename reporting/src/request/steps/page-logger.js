@@ -45,9 +45,8 @@ export default class PageLogger {
   }
 
   _attachCounters(state) {
-    const stats = state.page.getStatsForDomain(
-      truncateDomain(state.urlParts.domainInfo, 2),
-    );
+    const domain = truncateDomain(state.urlParts.domainInfo, 2);
+    const stats = (state.page.requestStats[domain] ||= {});
     state.reqLog = stats;
     const incrementStat = (statName, c) => {
       stats[statName] = (stats[statName] || 0) + (c || 1);
