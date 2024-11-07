@@ -57,7 +57,22 @@ export function recordSnapshot(name, messages) {
     getSnapshotScenarioPath(name),
     'snapshot.json',
   );
-  fs.writeFileSync(snapshotPath, JSON.stringify(messages, null, 2));
+  function sortObjectKeys(obj) {
+    if (Array.isArray(obj)) {
+      return obj.map(sortObjectKeys);
+    } else if (obj !== null && typeof obj === 'object') {
+      const sortedObj = {};
+      const keys = Object.keys(obj).sort(); // Sort keys alphabetically
+      for (const key of keys) {
+        sortedObj[key] = sortObjectKeys(obj[key]); // Recursively sort nested objects
+      }
+      return sortedObj;
+    } else {
+      return obj; // Return the value if obj is not an object or array
+    }
+  }
+  const sortedMessages = sortObjectKeys(messages);
+  fs.writeFileSync(snapshotPath, JSON.stringify(sortedMessages, null, 2));
 }
 
 export function readSnapshot(name) {
