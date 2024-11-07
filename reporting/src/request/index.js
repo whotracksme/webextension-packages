@@ -200,7 +200,17 @@ export default class RequestReporter {
     });
 
     // load the whitelist async - qs protection will start once it is ready
-    this.qs_whitelist.init();
+    (async () => {
+      try {
+        logger.debug('qs_whitelist loading...');
+        await this.qs_whitelist.init();
+        logger.info(
+          'qs_whitelist fully successfully loaded (qs protection ready)',
+        );
+      } catch (e) {
+        logger.warn('Failed to load qs_whitelist (qs protection disabled)', e);
+      }
+    })();
 
     this.dayChangedInterval = setInterval(
       this.dayChanged.bind(this),
