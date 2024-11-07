@@ -1,3 +1,28 @@
+# v5.1.30 (Thu Nov 07 2024)
+
+#### 🐛 Bug Fix
+
+- Request: simplify page store [#122](https://github.com/whotracksme/webextension-packages/pull/122) ([@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- Request: process webRequest in sync [#121](https://github.com/whotracksme/webextension-packages/pull/121) ([@chrmod](https://github.com/chrmod))
+- Improved error handling of anti-tracking lazy initialization [#119](https://github.com/whotracksme/webextension-packages/pull/119) ([@philipp-classen](https://github.com/philipp-classen))
+- Request reporter: remove pacemaker [#118](https://github.com/whotracksme/webextension-packages/pull/118) ([@chrmod](https://github.com/chrmod))
+- Request reporter: remove Subject abstraction [#116](https://github.com/whotracksme/webextension-packages/pull/116) ([@chrmod](https://github.com/chrmod))
+- Marker to keep the context around the 1ms delays [#117](https://github.com/whotracksme/webextension-packages/pull/117) ([@philipp-classen](https://github.com/philipp-classen))
+- More snapshot tests [#115](https://github.com/whotracksme/webextension-packages/pull/115) ([@chrmod](https://github.com/chrmod))
+- Remove dead code [#113](https://github.com/whotracksme/webextension-packages/pull/113) ([@chrmod](https://github.com/chrmod))
+- Reorganise RequestMonitor file structure [#112](https://github.com/whotracksme/webextension-packages/pull/112) ([@chrmod](https://github.com/chrmod))
+- Remove WebRequest Pipeline [#111](https://github.com/whotracksme/webextension-packages/pull/111) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.29 (Mon Nov 04 2024)
 
 #### 🐛 Bug Fix
