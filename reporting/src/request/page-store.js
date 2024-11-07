@@ -20,43 +20,40 @@ const PAGE_LOADING_STATE = {
   COMPLETE: 'complete',
 };
 
-class Page {
-  constructor(page) {
-    this.id = page.id;
-    this.url = page.url;
-    this.isPrivate = page.incognito || false;
-    this.isPrivateServer = page.isPrivateServer || false;
-    this.created = page.created || Date.now();
-    this.destroyed = page.destroyed || null;
-    this.frames = page.frames || {
-      0: {
-        parentFrameId: -1,
-        url: page.url,
-      },
-    };
-    this.state = page.state || PAGE_LOADING_STATE.CREATED;
-
-    this.activeTime = page.activeTime || 0;
-    this.activeFrom = page.active ? Date.now() : 0;
-
-    this.requestStats = page.requestStats || {};
-    this.annotations = page.annotations || {};
-    this.counter = page.counter || 0;
-    this.previous = page.previous;
+function makePageActive(page, active) {
+  if (active && page.activeFrom === 0) {
+    page.activeFrom = Date.now();
+  } else if (!active && page.activeFrom > 0) {
+    page.activeTime += Date.now() - page.activeFrom;
+    page.activeFrom = 0;
   }
+}
 
-  setActive(active) {
-    if (active && this.activeFrom === 0) {
-      this.activeFrom = Date.now();
-    } else if (!active && this.activeFrom > 0) {
-      this.activeTime += Date.now() - this.activeFrom;
-      this.activeFrom = 0;
-    }
-  }
+function createPageFromTab(tab) {
+  const { id, active, url, incognito, created } = tab;
+  const page = {};
+  page.id = id;
+  page.url = url;
+  page.isPrivate = incognito || false;
+  page.isPrivateServer = false;
+  page.created = created || Date.now();
+  page.destroyed = null;
+  page.frames = {
+    0: {
+      parentFrameId: -1,
+      url,
+    },
+  };
+  page.state = PAGE_LOADING_STATE.CREATED;
 
-  getStatsForDomain(domain) {
-    return (this.requestStats[domain] ||= {});
-  }
+  page.activeTime = 0;
+  page.activeFrom = active ? Date.now() : 0;
+
+  page.requestStats = {};
+  page.annotations = {};
+  page.counter = 0;
+  page.previous = null;
+  return page;
 }
 
 export default class PageStore {
@@ -88,7 +85,7 @@ export default class PageStore {
 
   unload() {
     this.#pages.forEach((serializedPage) => {
-      const page = new Page(serializedPage);
+      const page = createPageFromTab(serializedPage);
       this.#stagePage(page);
     });
     this.#pages.clear();
@@ -115,7 +112,7 @@ export default class PageStore {
   }
 
   #stagePage(page) {
-    page.setActive(false);
+    makePageActive(page, false);
     page.destroyed = Date.now();
     // unset previous (to prevent history chain memory leak)
     page.previous = undefined;
@@ -127,18 +124,21 @@ export default class PageStore {
    * Create a new `tabContext` for the new tab
    */
   #onTabCreated = (tab) => {
-    this.#pages.set(tab.id, new Page(tab));
+    this.#pages.set(tab.id, createPageFromTab(tab));
   };
 
   /**
    * Update an existing tab or create it if we do not have a context yet.
    */
   #onTabUpdated = (tabId, info, tab) => {
-    const page = new Page(this.#pages.get(tabId) || tab);
+    let page = this.#pages.get(tabId);
+    if (!page) {
+      page = createPageFromTab(tab);
+    }
 
     // Update `isPrivate` and `url` if available
     page.isPrivate = tab.incognito;
-    page.setActive(tab.active);
+    makePageActive(page, tab.active);
     if (info.url !== undefined) {
       page.url = info.url;
     }
@@ -150,11 +150,10 @@ export default class PageStore {
    * Remove tab context for `tabId`.
    */
   #onTabRemoved = (tabId) => {
-    const serializedPage = this.#pages.get(tabId);
-    if (!serializedPage) {
+    const page = this.#pages.get(tabId);
+    if (!page) {
       return;
     }
-    const page = new Page(serializedPage);
     if (page.state === PAGE_LOADING_STATE.COMPLETE) {
       this.#stagePage(page);
     }
@@ -166,21 +165,19 @@ export default class PageStore {
     // if previousTabId is not set (e.g. on chrome), set all tabs to inactive
     // otherwise, we only have to mark the previous tab as inactive
     if (!previousTabId) {
-      for (const serializedPage of this.#pages.values()) {
-        const page = new Page(serializedPage);
-        page.setActive(false);
+      for (const page of this.#pages.values()) {
+        makePageActive(page, false);
         this.#pages.set(page.id, page);
       }
     } else if (this.#pages.has(previousTabId)) {
       const previousPage = this.#pages.get(previousTabId);
-      const page = new Page(previousPage);
-      page.setActive(false);
-      this.#pages.set(page.id, page);
+      makePageActive(previousPage, false);
+      this.#pages.set(previousPage.id, previousPage);
     }
 
     if (this.#pages.has(tabId)) {
-      const page = new Page(this.#pages.get(tabId));
-      page.setActive(true);
+      const page = this.#pages.get(tabId);
+      makePageActive(page, true);
       this.#pages.set(page.id, page);
     }
   };
@@ -188,12 +185,11 @@ export default class PageStore {
   #onWindowFocusChanged = async (focusedWindowId) => {
     const activeTabs = await chrome.tabs.query({ active: true });
     for (const { id, windowId } of activeTabs) {
-      const serializedPage = this.#pages.get(id);
-      if (!serializedPage) {
+      const page = this.#pages.get(id);
+      if (!page) {
         continue;
       }
-      const page = new Page(serializedPage);
-      page.setActive(windowId === focusedWindowId);
+      makePageActive(page, windowId === focusedWindowId);
       this.#pages.set(id, page);
     }
   };
@@ -205,9 +201,7 @@ export default class PageStore {
       return;
     }
 
-    const page = this.#pages.has(tabId)
-      ? new Page(this.#pages.get(tabId))
-      : null;
+    const page = this.#pages.get(tabId);
 
     if (page) {
       // ignore duplicated #onBeforeNavigate https://bugzilla.mozilla.org/show_bug.cgi?id=1732564
@@ -228,7 +222,7 @@ export default class PageStore {
     // create a new page for the navigation
     this.#pages.delete(tabId);
 
-    const nextPage = new Page({
+    const nextPage = createPageFromTab({
       id: tabId,
       active: false,
       url,
@@ -242,13 +236,11 @@ export default class PageStore {
 
   #onNavigationCommitted = (details) => {
     const { frameId, tabId } = details;
-    const serializedPage = this.#pages.get(tabId);
+    const page = this.#pages.get(tabId);
 
-    if (!serializedPage) {
+    if (!page) {
       return;
     }
-
-    const page = new Page(serializedPage);
 
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMMITTED;
@@ -261,11 +253,10 @@ export default class PageStore {
 
   #onNavigationCompleted = (details) => {
     const { frameId, tabId } = details;
-    const serializedPage = this.#pages.get(tabId);
-    if (!serializedPage) {
+    const page = this.#pages.get(tabId);
+    if (!page) {
       return;
     }
-    const page = new Page(serializedPage);
     if (frameId === 0) {
       page.state = PAGE_LOADING_STATE.COMPLETE;
     }
@@ -280,9 +271,9 @@ export default class PageStore {
     }
 
     // Update last request id from the tab
-    const page = new Page(
-      this.#pages.get(tabId) || { url, incognito: false, id: tabId },
-    );
+    const page =
+      this.#pages.get(tabId) ||
+      createPageFromTab({ url, incognito: false, id: tabId });
 
     if (event === 'onBeforeRequest') {
       page.frames = {};
@@ -300,11 +291,10 @@ export default class PageStore {
 
   onSubFrame = (details) => {
     const { tabId, frameId, parentFrameId, url } = details;
-    const serializedPage = this.#pages.get(tabId);
-    if (!serializedPage) {
+    const page = this.#pages.get(tabId);
+    if (!page) {
       return;
     }
-    const page = new Page(serializedPage);
     // Keep track of frameUrl as well as parent frame
     page.frames[frameId] = {
       parentFrameId,
@@ -315,11 +305,11 @@ export default class PageStore {
 
   getPageForRequest(context) {
     const { tabId, frameId, originUrl, type, initiator } = context;
-    const serializedPage = this.#pages.get(tabId);
-    if (!serializedPage) {
+    const page = this.#pages.get(tabId);
+    if (!page) {
       return null;
     }
-    const page = new Page(serializedPage);
+
     // check if the current page has the given frame id, otherwise check if it belongs to the
     // previous page
     if (!page.frames[frameId]) {
