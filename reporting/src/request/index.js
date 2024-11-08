@@ -30,7 +30,6 @@ import random from '../random.js';
 import BlockRules from './steps/block-rules.js';
 import CookieContext from './steps/cookie-context.js';
 import PageLogger from './steps/page-logger.js';
-import RedirectTagger from './steps/redirect-tagger.js';
 import TokenChecker from './steps/token-checker/index.js';
 import TokenExaminer from './steps/token-examiner.js';
 import TokenTelemetry from './steps/token-telemetry/index.js';
@@ -213,7 +212,6 @@ export default class RequestReporter {
 
     this.pageLogger = new PageLogger(this.config);
     this.blockRules = new BlockRules(this.config);
-    this.redirectTagger = new RedirectTagger();
     this.cookieContext = new CookieContext(this.config, this.qs_whitelist);
     await this.cookieContext.init();
 
@@ -408,14 +406,6 @@ export default class RequestReporter {
     if (this.pageLogger.onBeforeSendHeaders(state) === false) {
       return response.toWebRequestResponse();
     }
-    // catchMissedOpenListener
-    if (
-      (state.reqLog && state.reqLog.c === 0) ||
-      this.redirectTagger.isFromRedirect(state.url)
-    ) {
-      // take output from 'open' pipeline and copy into our response object
-      this.onBeforeRequest(state, response);
-    }
     // overrideUserAgent
     if (this.config.overrideUserAgent === true) {
       const domainHash = truncatedHash(state.urlParts.generalDomain);
@@ -493,10 +483,6 @@ export default class RequestReporter {
     }
     // checkSameGeneralDomain
     if (checkSameGeneralDomain(state) === false) {
-      return response.toWebRequestResponse();
-    }
-    // redirectTagger.checkRedirectStatus
-    if (this.redirectTagger.checkRedirectStatus(state) === false) {
       return response.toWebRequestResponse();
     }
     // pageLogger.onHeadersReceived
