@@ -125,11 +125,6 @@ export class WebRequestContext {
       return null;
     }
 
-    // Main frames book keeping
-    if (context.type === 'main_frame') {
-      pageStore.onMainFrame(context, event);
-    }
-
     // Sub frames book keeping
     if (context.type === 'sub_frame') {
       pageStore.onSubFrame(context);
