@@ -1,3 +1,19 @@
+# v5.1.31 (Fri Nov 08 2024)
+
+#### 🐛 Bug Fix
+
+- Request: fix firefox page store [#123](https://github.com/whotracksme/webextension-packages/pull/123) ([@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- Request: better snapshot tests [#124](https://github.com/whotracksme/webextension-packages/pull/124) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.30 (Thu Nov 07 2024)
 
 #### 🐛 Bug Fix
