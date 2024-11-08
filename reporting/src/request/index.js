@@ -553,11 +553,10 @@ export default class RequestReporter {
       }
       return false;
     }
-
-    if (state.hasNoStats()) {
-      return;
+    // checkSameGeneralDomain
+    if (checkSameGeneralDomain(state) === false) {
+      return false;
     }
-
     // logIsCached
     this.whitelistedRequestCache.delete(state.requestId);
     state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
@@ -569,11 +568,10 @@ export default class RequestReporter {
     if (checkValidContext(state) === false) {
       return false;
     }
-
-    if (state.hasNoStats()) {
-      return;
+    // checkSameGeneralDomain
+    if (checkSameGeneralDomain(state) === false) {
+      return false;
     }
-
     // logError
     this.whitelistedRequestCache.delete(state.requestId);
     if (state.error && state.error.indexOf('ABORT')) {

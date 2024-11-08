@@ -172,13 +172,6 @@ export class WebRequestContext {
     stats[statName] = (stats[statName] || 0) + (c || 1);
   }
 
-  hasNoStats() {
-    return (
-      !this.page.requestStats[this.truncatedDomain] ||
-      Object.keys(this.page.requestStats[this.truncatedDomain]).length === 0
-    );
-  }
-
   /**
    * Optionally, a CNAME record can be requested from DNS for `this.url`. If
    * available, it will be communicated by calling this method. We then set two

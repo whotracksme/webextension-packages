@@ -59,7 +59,9 @@ export default class PageLogger {
 
     // log protocol (secure or not)
     const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
-    const scheme = isHTTP(state.urlParts.protocol) ? state.urlParts.scheme : 'other';
+    const scheme = isHTTP(state.urlParts.protocol)
+      ? state.urlParts.scheme
+      : 'other';
     state.incrementStat(`scheme_${scheme}`);
 
     if (state.url.indexOf(this.placeHolder) > -1) {
