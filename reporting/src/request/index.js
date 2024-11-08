@@ -280,11 +280,18 @@ export default class RequestReporter {
   }
 
   unload() {
-    // Check is active usage, was sent
-    this.qs_whitelist.destroy();
-    this.cookieContext.unload();
-    this.tokenExaminer.unload();
-    this.tokenChecker.unload();
+    if (this.qs_whitelist) {
+      this.qs_whitelist.destroy();
+    }
+    if (this.cookieContext) {
+      this.cookieContext.unload();
+    }
+    if (this.tokenExaminer) {
+      this.tokenExaminer.unload();
+    }
+    if (this.tokenChecker) {
+      this.tokenChecker.unload();
+    }
 
     chrome.webRequest.onBeforeRequest.removeListener(this.onBeforeRequest);
     chrome.webRequest.onBeforeSendHeaders.removeListener(
@@ -294,7 +301,9 @@ export default class RequestReporter {
     chrome.webRequest.onCompleted.removeListener(this.onCompleted);
     chrome.webRequest.onErrorOccurred.removeListener(this.onErrorOccurred);
 
-    this.db.unload();
+    if (this.db) {
+      this.db.unload();
+    }
     clearInterval(this.dayChangedInterval);
     this.dayChangedInterval = null;
   }
