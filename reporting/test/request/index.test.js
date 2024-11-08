@@ -170,7 +170,6 @@ describe('RequestReporter', function () {
           status_302: 1,
           has_qs: 1,
           status_200: 1,
-          not_cached: 1,
         });
       });
     });

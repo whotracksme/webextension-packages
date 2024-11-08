@@ -541,6 +541,7 @@ export default class RequestReporter {
   };
 
   onCompleted = (details) => {
+    this.whitelistedRequestCache.delete(details.requestId);
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     // checkState
     if (checkValidContext(state) === false) {
@@ -551,32 +552,11 @@ export default class RequestReporter {
       if (isLocalIP(state.ip)) {
         state.page.isPrivateServer = true;
       }
-      return false;
     }
-    // checkSameGeneralDomain
-    if (checkSameGeneralDomain(state) === false) {
-      return false;
-    }
-    // logIsCached
-    this.whitelistedRequestCache.delete(state.requestId);
-    state.incrementStat(state.fromCache ? 'cached' : 'not_cached');
   };
 
   onErrorOccurred = (details) => {
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
-    // checkState
-    if (checkValidContext(state) === false) {
-      return false;
-    }
-    // checkSameGeneralDomain
-    if (checkSameGeneralDomain(state) === false) {
-      return false;
-    }
-    // logError
-    this.whitelistedRequestCache.delete(state.requestId);
-    if (state.error && state.error.indexOf('ABORT')) {
-      state.incrementStat('error_abort');
-    }
+    this.whitelistedRequestCache.delete(details.requestId);
   };
 
   async dayChanged() {

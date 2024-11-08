@@ -160,13 +160,6 @@ export class WebRequestContext {
     this.truncatedDomain = truncateDomain(this.urlParts.domainInfo, 2);
   }
 
-  getStat(statName) {
-    if (!this.page.requestStats[this.truncatedDomain]) {
-      return undefined;
-    }
-    return this.page.requestStats[this.truncatedDomain][statName];
-  }
-
   incrementStat(statName, c) {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
