@@ -264,18 +264,10 @@ describe('request/index', function () {
     });
 
     it('removes all occurances of uid in the request', function () {
-      const mainDoc = attrack.onBeforeRequest({
-        tabId: 34,
-        frameId: 0,
-        parentFrameId: -1,
-        method: 'GET',
-        type: 'main_frame',
+      chrome.tabs.onCreated.dispatch({
+        id: 34,
         url: 'http://cliqztest.com/',
-        requestHeaders: mockRequestHeaders,
       });
-      chai.expect(mainDoc).to.not.have.property('cancel');
-      chai.expect(mainDoc).to.not.have.property('redirectUrl');
-      chai.expect(mainDoc).to.not.have.property('requestHeaders');
       const response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
@@ -295,20 +287,10 @@ describe('request/index', function () {
     });
 
     it('removes also after subsequent redirect with same uid', function () {
-      const mainDoc = attrack.onBeforeRequest({
-        tabId: 34,
-        frameId: 0,
-        parentFrameId: -1,
-        method: 'GET',
-        type: 'main_frame',
+      chrome.tabs.onCreated.dispatch({
+        id: 34,
         url: 'http://cliqztest.com/',
-        requestHeaders: mockRequestHeaders,
-        originUrl: '',
-        tabUrl: '',
       });
-      chai.expect(mainDoc).to.not.have.property('cancel');
-      chai.expect(mainDoc).to.not.have.property('redirectUrl');
-      chai.expect(mainDoc).to.not.have.property('requestHeaders');
       let response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,

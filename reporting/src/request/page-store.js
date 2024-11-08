@@ -263,32 +263,6 @@ export default class PageStore {
     this.#pages.set(tabId, page);
   };
 
-  onMainFrame = (details, event) => {
-    const { tabId, url } = details;
-    // main frame from tabId -1 is from service worker and should not be saved
-    if (tabId === -1) {
-      return;
-    }
-
-    // Update last request id from the tab
-    const page =
-      this.#pages.get(tabId) ||
-      createPageFromTab({ url, incognito: false, id: tabId });
-
-    if (event === 'onBeforeRequest') {
-      page.frames = {};
-    }
-
-    // Update context of tab with `url` and main frame information
-    page.url = url;
-    page.frames[0] = {
-      parentFrameId: -1,
-      url,
-    };
-
-    this.#pages.set(tabId, page);
-  };
-
   onSubFrame = (details) => {
     const { tabId, frameId, parentFrameId, url } = details;
     const page = this.#pages.get(tabId);

@@ -117,17 +117,12 @@ export class WebRequestContext {
    * well as provide convenient helpers for parsed URLs, etc. It will also not
    * return a wrapper for background requests.
    */
-  static fromDetails(details, pageStore, event) {
+  static fromDetails(details, pageStore) {
     const context = details;
 
     // Check if we have a URL
     if (!context.url) {
       return null;
-    }
-
-    // Main frames book keeping
-    if (context.type === 'main_frame') {
-      pageStore.onMainFrame(context, event);
     }
 
     // Sub frames book keeping

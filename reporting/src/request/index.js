@@ -300,11 +300,7 @@ export default class RequestReporter {
   }
 
   onBeforeRequest = (details) => {
-    const state = WebRequestContext.fromDetails(
-      details,
-      this.pageStore,
-      'onBeforeRequest',
-    );
+    const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeRequest');
     // checkState
     if (checkValidContext(state) === false) {
@@ -391,11 +387,7 @@ export default class RequestReporter {
   };
 
   onBeforeSendHeaders = (details) => {
-    const state = WebRequestContext.fromDetails(
-      details,
-      this.pageStore,
-      'onBeforeSendHeaders',
-    );
+    const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeSendHeaders');
     // checkState
     if (checkValidContext(state) === false) {
@@ -489,11 +481,7 @@ export default class RequestReporter {
   };
 
   onHeadersReceived = (details) => {
-    const state = WebRequestContext.fromDetails(
-      details,
-      this.pageStore,
-      'onHeadersReceived',
-    );
+    const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onHeadersReceived');
     // checkState
     if (checkValidContext(state) === false) {
@@ -560,11 +548,7 @@ export default class RequestReporter {
   };
 
   onCompleted = (details) => {
-    const state = WebRequestContext.fromDetails(
-      details,
-      this.pageStore,
-      'onCompleted',
-    );
+    const state = WebRequestContext.fromDetails(details, this.pageStore);
     // checkState
     if (checkValidContext(state) === false) {
       return false;
@@ -586,11 +570,7 @@ export default class RequestReporter {
   };
 
   onErrorOccurred = (details) => {
-    const state = WebRequestContext.fromDetails(
-      details,
-      this.pageStore,
-      'onErrorOccurred',
-    );
+    const state = WebRequestContext.fromDetails(details, this.pageStore);
     // checkState
     if (checkValidContext(state) === false) {
       return false;
