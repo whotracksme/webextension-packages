@@ -162,13 +162,13 @@ describe('RequestReporter', function () {
         expect(
           event.payload.data[0].tps['googleads.g.doubleclick.net'],
         ).to.deep.equal({
-          c: 3,
-          type_11: 3,
-          scheme_https: 3,
+          c: 2,
+          type_11: 2,
+          scheme_https: 2,
           resp_ob: 2,
           content_length: 121,
           status_302: 1,
-          has_qs: 2,
+          has_qs: 1,
           status_200: 1,
           not_cached: 1,
         });
