@@ -10,6 +10,7 @@
  */
 
 import { parse } from '../../utils/url.js';
+import { truncateDomain } from './utils.js';
 
 const VALID_RESPONSE_PROPERTIES = {
   onBeforeRequest: ['cancel', 'redirectUrl'],
@@ -156,6 +157,12 @@ export class WebRequestContext {
 
     this.urlParts = parse(this.url);
     this.tabUrlParts = parse(this.tabUrl);
+    this.truncatedDomain = truncateDomain(this.urlParts.domainInfo, 2);
+  }
+
+  incrementStat(statName, c) {
+    const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
+    stats[statName] = (stats[statName] || 0) + (c || 1);
   }
 
   /**

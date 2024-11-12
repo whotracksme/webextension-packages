@@ -11,8 +11,6 @@
 
 /* eslint no-param-reassign: 'off' */
 
-import { truncateDomain } from '../utils/utils.js';
-
 // maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
 const TYPE_LOOKUP = {
   other: 1,
@@ -38,76 +36,40 @@ const TYPE_LOOKUP = {
 };
 
 export default class PageLogger {
-  constructor(config) {
-    this.config = config;
-    // maintain the request metadabase between pipeline steps
-    this._requestCounters = new Map();
-  }
-
-  _attachCounters(state) {
-    const domain = truncateDomain(state.urlParts.domainInfo, 2);
-    const stats = (state.page.requestStats[domain] ||= {});
-    state.reqLog = stats;
-    const incrementStat = (statName, c) => {
-      stats[statName] = (stats[statName] || 0) + (c || 1);
-    };
-    const setStat = (statName, value) => {
-      stats[statName] = value;
-    };
-    state.incrementStat = incrementStat;
-    state.setStat = setStat;
-
-    if (state.requestId) {
-      this._requestCounters.set(state.requestId, {
-        incrementStat,
-        setStat,
-      });
-    }
-  }
-
-  _loadStatCounters(state) {
-    const meta = this._requestCounters.get(state.requestId);
-    Object.keys(meta).forEach((k) => {
-      state[k] = meta[k];
-    });
+  constructor(placeHolder) {
+    this.placeHolder = placeHolder;
   }
 
   onBeforeRequest(state) {
-    this._attachCounters(state);
-    const { incrementStat, urlParts } = state;
-
-    incrementStat('c');
-    if (urlParts.search.length > 0) {
-      incrementStat('has_qs');
+    state.incrementStat('c');
+    if (state.urlParts.search.length > 0) {
+      state.incrementStat('has_qs');
     }
-    if (urlParts.hasParameterString() > 0) {
-      incrementStat('has_ps');
+    if (state.urlParts.hasParameterString() > 0) {
+      state.incrementStat('has_ps');
     }
-    if (urlParts.hash.length > 0) {
-      incrementStat('has_fragment');
+    if (state.urlParts.hash.length > 0) {
+      state.incrementStat('has_fragment');
     }
     if (state.method === 'POST') {
-      incrementStat('has_post');
+      state.incrementStat('has_post');
     }
 
-    incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
+    state.incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
 
     // log protocol (secure or not)
     const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
-    const scheme = isHTTP(urlParts.protocol) ? urlParts.scheme : 'other';
-    incrementStat(`scheme_${scheme}`);
+    const scheme = isHTTP(state.urlParts.protocol)
+      ? state.urlParts.scheme
+      : 'other';
+    state.incrementStat(`scheme_${scheme}`);
 
-    if (state.url.indexOf(this.config.placeHolder) > -1) {
-      incrementStat('hasPlaceHolder');
+    if (state.url.indexOf(this.placeHolder) > -1) {
+      state.incrementStat('hasPlaceHolder');
     }
   }
 
   onBeforeSendHeaders(state) {
-    if (state.requestId && this._requestCounters.has(state.requestId)) {
-      this._loadStatCounters(state);
-    } else {
-      this._attachCounters(state);
-    }
     // referer stats
     const referrer = state.getReferrer();
     if (referrer && referrer.indexOf(state.tabUrl) > -1) {
@@ -132,15 +94,9 @@ export default class PageLogger {
       state.incrementStat('cookie_set');
     }
     state.hasCookie = hasCookie;
-    return true;
   }
 
   onHeadersReceived(state) {
-    if (state.requestId && this._requestCounters.has(state.requestId)) {
-      this._loadStatCounters(state);
-    } else {
-      this._attachCounters(state);
-    }
     state.incrementStat('resp_ob');
     state.incrementStat(
       'content_length',
@@ -158,17 +114,5 @@ export default class PageLogger {
       }
     }
     state.hasSetCookie = hasSetCookie;
-
-    return true;
-  }
-
-  reattachStatCounter(state) {
-    const { requestId } = state;
-    if (requestId && this._requestCounters.has(requestId)) {
-      this._loadStatCounters(state);
-      this._requestCounters.delete(requestId);
-      return true;
-    }
-    return false;
   }
 }

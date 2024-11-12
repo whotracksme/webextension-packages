@@ -20,9 +20,7 @@
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
-              "cached": 1,
               "content_length": 460298,
-              "not_cached": 34,
               "resp_ob": 35,
               "scheme_https": 35,
               "status_200": 35,
@@ -33,7 +31,6 @@
             "accounts.google.com": {
               "c": 4,
               "content_length": 4,
-              "not_cached": 4,
               "resp_ob": 4,
               "scheme_https": 4,
               "status_200": 4,
@@ -42,14 +39,12 @@
             },
             "cdn.adswizz.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "cdn.cookielaw.org": {
               "c": 13,
               "content_length": 155055,
-              "not_cached": 13,
               "resp_ob": 13,
               "scheme_https": 13,
               "status_200": 13,
@@ -60,7 +55,6 @@
             "cdn.jsdelivr.net": {
               "c": 1,
               "content_length": 142409,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -70,7 +64,6 @@
               "c": 48,
               "content_length": 4482414,
               "has_qs": 48,
-              "not_cached": 48,
               "resp_ob": 48,
               "scheme_https": 48,
               "status_200": 48,
@@ -80,7 +73,6 @@
               "c": 1,
               "content_length": 16,
               "has_post": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_202": 1,
@@ -88,22 +80,18 @@
             },
             "featuregates.org": {
               "c": 4,
-              "error_abort": 4,
               "has_post": 4,
               "scheme_https": 4,
               "type_11": 4
             },
             "geolocation.onetrust.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_11": 1
             },
             "i1.sndcdn.com": {
               "c": 301,
-              "cached": 7,
               "content_length": 945899,
-              "not_cached": 294,
               "resp_ob": 301,
               "scheme_https": 301,
               "status_200": 301,
@@ -115,7 +103,6 @@
               "content_length": 2,
               "has_post": 1,
               "has_qs": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -123,27 +110,22 @@
             },
             "js-agent.newrelic.com": {
               "c": 2,
-              "error_abort": 2,
               "scheme_https": 2,
               "type_2": 2
             },
             "sb.scorecardresearch.com": {
               "c": 4,
-              "error_abort": 4,
               "scheme_https": 4,
               "type_2": 4
             },
             "secure.quantserve.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "secure.sndcdn.com": {
               "c": 18,
               "content_length": 208843,
-              "error_abort": 2,
-              "not_cached": 16,
               "resp_ob": 16,
               "scheme_https": 18,
               "status_200": 16,
@@ -154,7 +136,6 @@
             },
             "securepubads.g.doubleclick.net": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
@@ -162,7 +143,6 @@
               "c": 1,
               "content_length": 1,
               "has_post": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -171,7 +151,6 @@
             "style.sndcdn.com": {
               "c": 1,
               "content_length": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -179,14 +158,12 @@
             },
             "synchrobox.adswizz.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "wave.sndcdn.com": {
               "c": 3,
               "content_length": 4239,
-              "not_cached": 3,
               "resp_ob": 3,
               "scheme_https": 3,
               "status_200": 3,
@@ -194,7 +171,6 @@
             },
             "www.googletagmanager.com": {
               "c": 3,
-              "error_abort": 3,
               "has_qs": 3,
               "scheme_https": 3,
               "type_2": 3
@@ -203,7 +179,6 @@
               "c": 3,
               "content_length": 28405,
               "has_qs": 1,
-              "not_cached": 3,
               "resp_ob": 3,
               "scheme_https": 3,
               "status_200": 3,
@@ -244,9 +219,7 @@
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
-              "cached": 1,
               "content_length": 460298,
-              "not_cached": 34,
               "resp_ob": 35,
               "scheme_https": 35,
               "status_200": 35,
@@ -257,8 +230,6 @@
             "assets.web.soundcloud.cloud": {
               "c": 48,
               "content_length": 434940,
-              "error_abort": 1,
-              "not_cached": 47,
               "resp_ob": 47,
               "scheme_https": 48,
               "status_200": 47,
@@ -270,14 +241,12 @@
             },
             "cdn.adswizz.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "cdn.cookielaw.org": {
               "c": 13,
               "content_length": 155055,
-              "not_cached": 13,
               "resp_ob": 13,
               "scheme_https": 13,
               "status_200": 13,
@@ -288,7 +257,6 @@
             "cdn.jsdelivr.net": {
               "c": 1,
               "content_length": 142409,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -298,7 +266,6 @@
               "c": 48,
               "content_length": 4482414,
               "has_qs": 48,
-              "not_cached": 48,
               "resp_ob": 48,
               "scheme_https": 48,
               "status_200": 48,
@@ -308,7 +275,6 @@
               "c": 1,
               "content_length": 16,
               "has_post": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_202": 1,
@@ -316,22 +282,18 @@
             },
             "featuregates.org": {
               "c": 4,
-              "error_abort": 4,
               "has_post": 4,
               "scheme_https": 4,
               "type_11": 4
             },
             "geolocation.onetrust.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_11": 1
             },
             "i1.sndcdn.com": {
               "c": 301,
-              "cached": 7,
               "content_length": 945899,
-              "not_cached": 294,
               "resp_ob": 301,
               "scheme_https": 301,
               "status_200": 301,
@@ -343,7 +305,6 @@
               "content_length": 2,
               "has_post": 1,
               "has_qs": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -351,27 +312,22 @@
             },
             "js-agent.newrelic.com": {
               "c": 2,
-              "error_abort": 2,
               "scheme_https": 2,
               "type_2": 2
             },
             "sb.scorecardresearch.com": {
               "c": 4,
-              "error_abort": 4,
               "scheme_https": 4,
               "type_2": 4
             },
             "secure.quantserve.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "secure.sndcdn.com": {
               "c": 18,
               "content_length": 208843,
-              "error_abort": 2,
-              "not_cached": 16,
               "resp_ob": 16,
               "scheme_https": 18,
               "status_200": 16,
@@ -382,7 +338,6 @@
             },
             "securepubads.g.doubleclick.net": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
@@ -390,7 +345,6 @@
               "c": 1,
               "content_length": 1,
               "has_post": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -399,7 +353,6 @@
             "style.sndcdn.com": {
               "c": 1,
               "content_length": 1,
-              "not_cached": 1,
               "resp_ob": 1,
               "scheme_https": 1,
               "status_200": 1,
@@ -407,14 +360,12 @@
             },
             "synchrobox.adswizz.com": {
               "c": 1,
-              "error_abort": 1,
               "scheme_https": 1,
               "type_2": 1
             },
             "wave.sndcdn.com": {
               "c": 3,
               "content_length": 4239,
-              "not_cached": 3,
               "resp_ob": 3,
               "scheme_https": 3,
               "status_200": 3,
@@ -422,7 +373,6 @@
             },
             "www.googletagmanager.com": {
               "c": 3,
-              "error_abort": 3,
               "has_qs": 3,
               "scheme_https": 3,
               "type_2": 3
@@ -431,7 +381,6 @@
               "c": 3,
               "content_length": 28405,
               "has_qs": 1,
-              "not_cached": 3,
               "resp_ob": 3,
               "scheme_https": 3,
               "status_200": 3,
