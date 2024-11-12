@@ -73,6 +73,7 @@ describe('RequestReporter', function () {
   beforeEach(function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
+    chrome.runtime.getManifest.returns({ permissions: [] });
     chrome.tabs.query.returns([]);
   });
 
