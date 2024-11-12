@@ -1,3 +1,15 @@
+# v5.1.33 (Tue Nov 12 2024)
+
+#### 🐛 Bug Fix
+
+- Request: ensure webRequest listeners are ready [#129](https://github.com/whotracksme/webextension-packages/pull/129) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.32 (Tue Nov 12 2024)
 
 #### 🐛 Bug Fix
