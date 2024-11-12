@@ -39,16 +39,16 @@
               "type_11": 1
             },
             "aax-eu.amazon-adsystem.com": {
-              "c": 15,
+              "c": 11,
               "content_length": 3639,
-              "has_qs": 15,
+              "has_qs": 11,
               "not_cached": 9,
               "resp_ob": 11,
-              "scheme_https": 15,
+              "scheme_https": 11,
               "status_200": 9,
               "status_302": 2,
-              "type_3": 8,
-              "type_7": 7
+              "type_3": 6,
+              "type_7": 5
             },
             "aax.amazon-adsystem.com": {
               "c": 3,
@@ -72,31 +72,31 @@
               "type_7": 1
             },
             "ad.doubleclick.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 43,
-              "has_ps": 3,
+              "has_ps": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_3": 3
-            },
-            "ad.turn.com": {
-              "c": 2,
-              "has_qs": 2,
-              "scheme_https": 2,
               "type_3": 2
             },
+            "ad.turn.com": {
+              "c": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_3": 1
+            },
             "ads.pubmatic.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 12125,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 3,
-              "type_3": 2,
+              "type_3": 1,
               "type_7": 2
             },
             "adx.adform.net": {
@@ -164,15 +164,15 @@
               "type_11": 1
             },
             "axel-springer-pl-d.openx.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 931,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "bat.bing.com": {
               "c": 3,
@@ -236,32 +236,32 @@
               "type_2": 1
             },
             "c1.adform.net": {
-              "c": 7,
+              "c": 5,
               "content_length": 4,
-              "has_qs": 7,
+              "has_qs": 5,
               "resp_ob": 4,
-              "scheme_https": 7,
+              "scheme_https": 5,
               "status_302": 4,
-              "type_3": 7
+              "type_3": 5
             },
             "capi.connatix.com": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_200": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "casale-match.dotomi.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "cdn.adnext.pl": {
               "c": 2,
@@ -333,17 +333,17 @@
               "type_2": 1
             },
             "ce.lijit.com": {
-              "c": 13,
+              "c": 7,
               "content_length": 1112,
-              "has_qs": 13,
+              "has_qs": 7,
               "not_cached": 6,
               "resp_ob": 7,
-              "scheme_https": 13,
+              "scheme_https": 7,
               "status_200": 5,
               "status_204": 1,
               "status_302": 1,
-              "type_3": 10,
-              "type_7": 3
+              "type_3": 5,
+              "type_7": 2
             },
             "ced-ns.sascdn.com": {
               "c": 1,
@@ -355,17 +355,17 @@
               "type_2": 1
             },
             "cm.g.doubleclick.net": {
-              "c": 23,
+              "c": 16,
               "content_length": 10700,
-              "has_qs": 23,
+              "has_qs": 16,
               "not_cached": 5,
               "resp_ob": 16,
-              "scheme_https": 23,
+              "scheme_https": 16,
               "status_200": 5,
               "status_302": 11,
               "type_10": 1,
               "type_2": 1,
-              "type_3": 21
+              "type_3": 14
             },
             "cmp.dreamlab.pl": {
               "c": 6,
@@ -445,16 +445,16 @@
               "type_4": 1
             },
             "cookie-matching.mediarithmics.com": {
-              "c": 12,
+              "c": 8,
               "content_length": 828,
-              "has_qs": 12,
+              "has_qs": 8,
               "not_cached": 4,
               "resp_ob": 8,
-              "scheme_https": 12,
+              "scheme_https": 8,
               "status_200": 4,
               "status_303": 4,
-              "type_10": 5,
-              "type_2": 7
+              "type_10": 3,
+              "type_2": 5
             },
             "cr.frontend.weborama.fr": {
               "c": 2,
@@ -499,46 +499,46 @@
               "type_7": 1
             },
             "dmp.adform.net": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_302": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "dsum-sec.casalemedia.com": {
-              "c": 11,
+              "c": 6,
               "content_length": 216,
-              "has_qs": 11,
+              "has_qs": 6,
               "not_cached": 5,
               "resp_ob": 6,
-              "scheme_https": 11,
+              "scheme_https": 6,
               "status_200": 5,
               "status_302": 1,
-              "token.has_no_check": 11,
+              "token.has_no_check": 6,
               "token.has_no_check_decoded": 1,
-              "token.has_qs_newToken": 11,
-              "token.has_whitelisted": 2,
-              "token.no_check": 23,
+              "token.has_qs_newToken": 6,
+              "token.has_whitelisted": 1,
+              "token.no_check": 13,
               "token.no_check_decoded": 1,
-              "token.qs_newToken": 13,
-              "token.whitelisted": 2,
-              "type_3": 11
+              "token.qs_newToken": 7,
+              "token.whitelisted": 1,
+              "type_3": 6
             },
             "dsum.casalemedia.com": {
-              "c": 2,
+              "c": 1,
               "content_length": 43,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_200": 1,
-              "token.has_no_check": 2,
-              "token.has_qs_newToken": 2,
-              "token.no_check": 6,
-              "token.qs_newToken": 6,
-              "type_3": 2
+              "token.has_no_check": 1,
+              "token.has_qs_newToken": 1,
+              "token.no_check": 3,
+              "token.qs_newToken": 3,
+              "type_3": 1
             },
             "encrypted-tbn0.gstatic.com": {
               "c": 2,
@@ -583,14 +583,14 @@
               "type_11": 2
             },
             "eu-u.openx.net": {
-              "c": 4,
+              "c": 2,
               "content_length": 86,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
+              "scheme_https": 2,
               "status_200": 2,
-              "type_3": 4
+              "type_3": 2
             },
             "euexchangesync.digitaleast.mobi": {
               "c": 1,
@@ -703,17 +703,17 @@
               "type_2": 4
             },
             "googleads.g.doubleclick.net": {
-              "c": 8,
+              "c": 6,
               "content_length": 5198,
-              "has_qs": 6,
+              "has_qs": 4,
               "not_cached": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
               "resp_ob": 6,
-              "scheme_https": 8,
+              "scheme_https": 6,
               "status_200": 4,
               "status_302": 2,
-              "type_11": 6,
+              "type_11": 4,
               "type_2": 2
             },
             "gum.criteo.com": {
@@ -795,16 +795,16 @@
               "type_11": 1
             },
             "id.nsaudience.pl": {
-              "c": 4,
+              "c": 3,
               "content_length": 3,
               "has_post": 1,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_11": 3,
+              "type_11": 2,
               "type_2": 1
             },
             "id5-sync.com": {
@@ -818,46 +818,46 @@
               "type_11": 2
             },
             "idsync.frontend.weborama.fr": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_204": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "image2.pubmatic.com": {
-              "c": 4,
+              "c": 2,
               "content_length": 84,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
-              "status_200": 2,
-              "type_3": 4
-            },
-            "image4.pubmatic.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_qs": 2,
-              "not_cached": 1,
-              "resp_ob": 1,
               "scheme_https": 2,
-              "status_200": 1,
+              "status_200": 2,
               "type_3": 2
             },
+            "image4.pubmatic.com": {
+              "c": 1,
+              "content_length": 1,
+              "has_qs": 1,
+              "not_cached": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_3": 1
+            },
             "image6.pubmatic.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
               "type_2": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "ingestion.contentinsights.com": {
               "c": 1,
@@ -921,13 +921,13 @@
               "type_7": 3
             },
             "match.adsrvr.org": {
-              "c": 9,
+              "c": 7,
               "content_length": 7858,
-              "has_qs": 9,
+              "has_qs": 7,
               "resp_ob": 6,
-              "scheme_https": 9,
+              "scheme_https": 7,
               "status_302": 6,
-              "type_3": 9
+              "type_3": 7
             },
             "match.prod.bidr.io": {
               "c": 2,
@@ -941,14 +941,14 @@
               "type_3": 2
             },
             "match.sharethrough.com": {
-              "c": 7,
+              "c": 4,
               "content_length": 2324,
-              "has_qs": 7,
+              "has_qs": 4,
               "not_cached": 4,
               "resp_ob": 4,
-              "scheme_https": 7,
+              "scheme_https": 4,
               "status_200": 4,
-              "type_3": 6,
+              "type_3": 3,
               "type_7": 1
             },
             "mwzeom.zeotap.com": {
@@ -1049,13 +1049,13 @@
               "type_3": 1
             },
             "pixel-sync.sitescout.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "pixel.adsafeprotected.com": {
               "c": 1,
@@ -1082,15 +1082,15 @@
               "type_3": 1
             },
             "pixel.rubiconproject.com": {
-              "c": 18,
+              "c": 12,
               "content_length": 135,
-              "has_qs": 18,
+              "has_qs": 12,
               "not_cached": 3,
               "resp_ob": 12,
-              "scheme_https": 18,
+              "scheme_https": 12,
               "status_200": 3,
               "status_302": 9,
-              "type_3": 18
+              "type_3": 12
             },
             "play.google.com": {
               "c": 10,
@@ -1105,15 +1105,15 @@
               "type_11": 10
             },
             "pr-bh.ybp.yahoo.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 87,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_3": 4
+              "type_3": 3
             },
             "prebid-eu.creativecdn.com": {
               "c": 3,
@@ -1126,26 +1126,26 @@
               "type_11": 3
             },
             "prebid.a-mo.net": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_204": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prebid.adnxs.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 87,
               "has_post": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 2,
               "type_11": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prg.smartadserver.com": {
               "c": 5,
@@ -1171,14 +1171,14 @@
               "type_7": 2
             },
             "px.ads.linkedin.com": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_200": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "raspl.tagger.opecloud.com": {
               "c": 1,
@@ -1225,15 +1225,15 @@
               "type_11": 10
             },
             "rtb-csync.smartadserver.com": {
-              "c": 8,
+              "c": 5,
               "content_length": 5,
-              "has_qs": 8,
+              "has_qs": 5,
               "not_cached": 3,
               "resp_ob": 5,
-              "scheme_https": 8,
+              "scheme_https": 5,
               "status_200": 3,
               "status_302": 2,
-              "type_3": 8
+              "type_3": 5
             },
             "rtb.openx.net": {
               "c": 3,
@@ -1255,15 +1255,15 @@
               "type_2": 3
             },
             "s.amazon-adsystem.com": {
-              "c": 5,
+              "c": 3,
               "content_length": 87,
-              "has_qs": 5,
+              "has_qs": 3,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 5,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_3": 5
+              "type_3": 3
             },
             "s.company-target.com": {
               "c": 1,
@@ -1311,15 +1311,15 @@
               "type_2": 1
             },
             "simage2.pubmatic.com": {
-              "c": 6,
+              "c": 3,
               "content_length": 126,
-              "has_qs": 6,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 3,
               "status_200": 3,
-              "type_3": 4,
-              "type_7": 2
+              "type_3": 2,
+              "type_7": 1
             },
             "simage4.pubmatic.com": {
               "c": 1,
@@ -1348,16 +1348,16 @@
               "type_2": 1
             },
             "ssp-sync.criteo.com": {
-              "c": 5,
+              "c": 4,
               "content_length": 4,
-              "has_qs": 5,
+              "has_qs": 4,
               "not_cached": 4,
               "resp_ob": 4,
-              "scheme_https": 5,
+              "scheme_https": 4,
               "status_200": 2,
               "status_204": 2,
               "type_11": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "ssum-sec.casalemedia.com": {
               "c": 3,
@@ -1423,24 +1423,24 @@
               "type_11": 1
             },
             "sync.1rx.io": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "sync.crwdcntrl.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 50,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_3": 3
+              "type_3": 2
             },
             "sync.ipredictive.com": {
               "c": 1,
@@ -1475,15 +1475,15 @@
               "type_7": 1
             },
             "tagger.opecloud.com": {
-              "c": 6,
+              "c": 3,
               "content_length": 91,
-              "has_qs": 6,
+              "has_qs": 3,
               "not_cached": 1,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 3,
               "status_200": 1,
               "status_302": 2,
-              "type_3": 6
+              "type_3": 3
             },
             "td.doubleclick.net": {
               "c": 3,
@@ -1508,16 +1508,16 @@
               "type_2": 3
             },
             "token.rubiconproject.com": {
-              "c": 7,
+              "c": 6,
               "content_length": 12,
-              "has_qs": 7,
+              "has_qs": 6,
               "not_cached": 1,
               "resp_ob": 6,
-              "scheme_https": 7,
+              "scheme_https": 6,
               "status_200": 1,
               "status_302": 5,
               "type_11": 1,
-              "type_3": 6
+              "type_3": 5
             },
             "topics.authorizedvault.com": {
               "c": 1,
@@ -1576,24 +1576,24 @@
               "type_3": 1
             },
             "ups.analytics.yahoo.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 3,
-              "has_qs": 4,
+              "has_qs": 3,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_302": 3,
               "type_3": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "us-u.openx.net": {
-              "c": 4,
+              "c": 2,
               "content_length": 86,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
+              "scheme_https": 2,
               "status_200": 2,
-              "type_3": 4
+              "type_3": 2
             },
             "wt.rqtrk.eu": {
               "c": 1,
@@ -1738,13 +1738,13 @@
               "type_7": 2
             },
             "x.bidswitch.net": {
-              "c": 6,
+              "c": 4,
               "content_length": 3,
-              "has_qs": 6,
+              "has_qs": 4,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 4,
               "status_302": 3,
-              "type_3": 6
+              "type_3": 4
             },
             "yt3.ggpht.com": {
               "c": 3,
@@ -1815,16 +1815,16 @@
               "type_11": 1
             },
             "aax-eu.amazon-adsystem.com": {
-              "c": 15,
+              "c": 11,
               "content_length": 3639,
-              "has_qs": 15,
+              "has_qs": 11,
               "not_cached": 9,
               "resp_ob": 11,
-              "scheme_https": 15,
+              "scheme_https": 11,
               "status_200": 9,
               "status_302": 2,
-              "type_3": 8,
-              "type_7": 7
+              "type_3": 6,
+              "type_7": 5
             },
             "aax.amazon-adsystem.com": {
               "c": 3,
@@ -1848,31 +1848,31 @@
               "type_7": 1
             },
             "ad.doubleclick.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 43,
-              "has_ps": 3,
+              "has_ps": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_3": 3
-            },
-            "ad.turn.com": {
-              "c": 2,
-              "has_qs": 2,
-              "scheme_https": 2,
               "type_3": 2
             },
+            "ad.turn.com": {
+              "c": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_3": 1
+            },
             "ads.pubmatic.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 12125,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 3,
-              "type_3": 2,
+              "type_3": 1,
               "type_7": 2
             },
             "adx.adform.net": {
@@ -1940,15 +1940,15 @@
               "type_11": 1
             },
             "axel-springer-pl-d.openx.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 931,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "bat.bing.com": {
               "c": 3,
@@ -2012,32 +2012,32 @@
               "type_2": 1
             },
             "c1.adform.net": {
-              "c": 7,
+              "c": 5,
               "content_length": 4,
-              "has_qs": 7,
+              "has_qs": 5,
               "resp_ob": 4,
-              "scheme_https": 7,
+              "scheme_https": 5,
               "status_302": 4,
-              "type_3": 7
+              "type_3": 5
             },
             "capi.connatix.com": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_200": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "casale-match.dotomi.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "cdn.adnext.pl": {
               "c": 2,
@@ -2109,17 +2109,17 @@
               "type_2": 1
             },
             "ce.lijit.com": {
-              "c": 13,
+              "c": 7,
               "content_length": 1112,
-              "has_qs": 13,
+              "has_qs": 7,
               "not_cached": 6,
               "resp_ob": 7,
-              "scheme_https": 13,
+              "scheme_https": 7,
               "status_200": 5,
               "status_204": 1,
               "status_302": 1,
-              "type_3": 10,
-              "type_7": 3
+              "type_3": 5,
+              "type_7": 2
             },
             "ced-ns.sascdn.com": {
               "c": 1,
@@ -2131,17 +2131,17 @@
               "type_2": 1
             },
             "cm.g.doubleclick.net": {
-              "c": 23,
+              "c": 16,
               "content_length": 10700,
-              "has_qs": 23,
+              "has_qs": 16,
               "not_cached": 5,
               "resp_ob": 16,
-              "scheme_https": 23,
+              "scheme_https": 16,
               "status_200": 5,
               "status_302": 11,
               "type_10": 1,
               "type_2": 1,
-              "type_3": 21
+              "type_3": 14
             },
             "cmp.dreamlab.pl": {
               "c": 6,
@@ -2221,16 +2221,16 @@
               "type_4": 1
             },
             "cookie-matching.mediarithmics.com": {
-              "c": 12,
+              "c": 8,
               "content_length": 828,
-              "has_qs": 12,
+              "has_qs": 8,
               "not_cached": 4,
               "resp_ob": 8,
-              "scheme_https": 12,
+              "scheme_https": 8,
               "status_200": 4,
               "status_303": 4,
-              "type_10": 5,
-              "type_2": 7
+              "type_10": 3,
+              "type_2": 5
             },
             "cr.frontend.weborama.fr": {
               "c": 2,
@@ -2275,13 +2275,13 @@
               "type_7": 1
             },
             "dmp.adform.net": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_302": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "dsum-sec.casalemedia.com": {
               "bad_qs": 6,
@@ -2365,14 +2365,14 @@
               "type_11": 2
             },
             "eu-u.openx.net": {
-              "c": 4,
+              "c": 2,
               "content_length": 86,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
+              "scheme_https": 2,
               "status_200": 2,
-              "type_3": 4
+              "type_3": 2
             },
             "euexchangesync.digitaleast.mobi": {
               "c": 1,
@@ -2485,17 +2485,17 @@
               "type_2": 4
             },
             "googleads.g.doubleclick.net": {
-              "c": 8,
+              "c": 6,
               "content_length": 5198,
-              "has_qs": 6,
+              "has_qs": 4,
               "not_cached": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
               "resp_ob": 6,
-              "scheme_https": 8,
+              "scheme_https": 6,
               "status_200": 4,
               "status_302": 2,
-              "type_11": 6,
+              "type_11": 4,
               "type_2": 2
             },
             "gum.criteo.com": {
@@ -2580,16 +2580,16 @@
               "type_11": 1
             },
             "id.nsaudience.pl": {
-              "c": 4,
+              "c": 3,
               "content_length": 3,
               "has_post": 1,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_11": 3,
+              "type_11": 2,
               "type_2": 1
             },
             "id5-sync.com": {
@@ -2603,46 +2603,46 @@
               "type_11": 2
             },
             "idsync.frontend.weborama.fr": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_204": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "image2.pubmatic.com": {
-              "c": 4,
+              "c": 2,
               "content_length": 84,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
-              "status_200": 2,
-              "type_3": 4
-            },
-            "image4.pubmatic.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_qs": 2,
-              "not_cached": 1,
-              "resp_ob": 1,
               "scheme_https": 2,
-              "status_200": 1,
+              "status_200": 2,
               "type_3": 2
             },
+            "image4.pubmatic.com": {
+              "c": 1,
+              "content_length": 1,
+              "has_qs": 1,
+              "not_cached": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_3": 1
+            },
             "image6.pubmatic.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
               "type_2": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "ingestion.contentinsights.com": {
               "c": 1,
@@ -2706,13 +2706,13 @@
               "type_7": 3
             },
             "match.adsrvr.org": {
-              "c": 9,
+              "c": 7,
               "content_length": 7858,
-              "has_qs": 9,
+              "has_qs": 7,
               "resp_ob": 6,
-              "scheme_https": 9,
+              "scheme_https": 7,
               "status_302": 6,
-              "type_3": 9
+              "type_3": 7
             },
             "match.prod.bidr.io": {
               "c": 2,
@@ -2726,14 +2726,14 @@
               "type_3": 2
             },
             "match.sharethrough.com": {
-              "c": 7,
+              "c": 4,
               "content_length": 2324,
-              "has_qs": 7,
+              "has_qs": 4,
               "not_cached": 4,
               "resp_ob": 4,
-              "scheme_https": 7,
+              "scheme_https": 4,
               "status_200": 4,
-              "type_3": 6,
+              "type_3": 3,
               "type_7": 1
             },
             "mwzeom.zeotap.com": {
@@ -2832,13 +2832,13 @@
               "type_3": 1
             },
             "pixel-sync.sitescout.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "pixel.adsafeprotected.com": {
               "c": 1,
@@ -2865,15 +2865,15 @@
               "type_3": 1
             },
             "pixel.rubiconproject.com": {
-              "c": 18,
+              "c": 12,
               "content_length": 135,
-              "has_qs": 18,
+              "has_qs": 12,
               "not_cached": 3,
               "resp_ob": 12,
-              "scheme_https": 18,
+              "scheme_https": 12,
               "status_200": 3,
               "status_302": 9,
-              "type_3": 18
+              "type_3": 12
             },
             "play.google.com": {
               "c": 10,
@@ -2888,15 +2888,15 @@
               "type_11": 10
             },
             "pr-bh.ybp.yahoo.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 87,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_3": 4
+              "type_3": 3
             },
             "prebid-eu.creativecdn.com": {
               "c": 3,
@@ -2909,26 +2909,26 @@
               "type_11": 3
             },
             "prebid.a-mo.net": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_204": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prebid.adnxs.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 87,
               "has_post": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 2,
               "type_11": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prg.smartadserver.com": {
               "c": 5,
@@ -2954,14 +2954,14 @@
               "type_7": 2
             },
             "px.ads.linkedin.com": {
-              "c": 2,
+              "c": 1,
               "content_length": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 1,
               "resp_ob": 1,
-              "scheme_https": 2,
+              "scheme_https": 1,
               "status_200": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "raspl.tagger.opecloud.com": {
               "c": 1,
@@ -3008,15 +3008,15 @@
               "type_11": 10
             },
             "rtb-csync.smartadserver.com": {
-              "c": 8,
+              "c": 5,
               "content_length": 5,
-              "has_qs": 8,
+              "has_qs": 5,
               "not_cached": 3,
               "resp_ob": 5,
-              "scheme_https": 8,
+              "scheme_https": 5,
               "status_200": 3,
               "status_302": 2,
-              "type_3": 8
+              "type_3": 5
             },
             "rtb.openx.net": {
               "c": 3,
@@ -3038,15 +3038,15 @@
               "type_2": 3
             },
             "s.amazon-adsystem.com": {
-              "c": 5,
+              "c": 3,
               "content_length": 87,
-              "has_qs": 5,
+              "has_qs": 3,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 5,
+              "scheme_https": 3,
               "status_200": 2,
               "status_302": 1,
-              "type_3": 5
+              "type_3": 3
             },
             "s.company-target.com": {
               "c": 1,
@@ -3094,15 +3094,15 @@
               "type_2": 1
             },
             "simage2.pubmatic.com": {
-              "c": 6,
+              "c": 3,
               "content_length": 126,
-              "has_qs": 6,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 3,
               "status_200": 3,
-              "type_3": 4,
-              "type_7": 2
+              "type_3": 2,
+              "type_7": 1
             },
             "simage4.pubmatic.com": {
               "c": 1,
@@ -3131,16 +3131,16 @@
               "type_2": 1
             },
             "ssp-sync.criteo.com": {
-              "c": 5,
+              "c": 4,
               "content_length": 4,
-              "has_qs": 5,
+              "has_qs": 4,
               "not_cached": 4,
               "resp_ob": 4,
-              "scheme_https": 5,
+              "scheme_https": 4,
               "status_200": 2,
               "status_204": 2,
               "type_11": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "ssum-sec.casalemedia.com": {
               "bad_qs": 3,
@@ -3209,24 +3209,24 @@
               "type_11": 1
             },
             "sync.1rx.io": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_qs": 3,
+              "has_qs": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_302": 2,
-              "type_3": 3
+              "type_3": 2
             },
             "sync.crwdcntrl.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 50,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_200": 1,
               "status_302": 1,
-              "type_3": 3
+              "type_3": 2
             },
             "sync.ipredictive.com": {
               "c": 1,
@@ -3261,15 +3261,15 @@
               "type_7": 1
             },
             "tagger.opecloud.com": {
-              "c": 6,
+              "c": 3,
               "content_length": 91,
-              "has_qs": 6,
+              "has_qs": 3,
               "not_cached": 1,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 3,
               "status_200": 1,
               "status_302": 2,
-              "type_3": 6
+              "type_3": 3
             },
             "td.doubleclick.net": {
               "c": 3,
@@ -3294,16 +3294,16 @@
               "type_2": 3
             },
             "token.rubiconproject.com": {
-              "c": 7,
+              "c": 6,
               "content_length": 12,
-              "has_qs": 7,
+              "has_qs": 6,
               "not_cached": 1,
               "resp_ob": 6,
-              "scheme_https": 7,
+              "scheme_https": 6,
               "status_200": 1,
               "status_302": 5,
               "type_11": 1,
-              "type_3": 6
+              "type_3": 5
             },
             "topics.authorizedvault.com": {
               "c": 1,
@@ -3362,24 +3362,24 @@
               "type_3": 1
             },
             "ups.analytics.yahoo.com": {
-              "c": 4,
+              "c": 3,
               "content_length": 3,
-              "has_qs": 4,
+              "has_qs": 3,
               "resp_ob": 3,
-              "scheme_https": 4,
+              "scheme_https": 3,
               "status_302": 3,
               "type_3": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "us-u.openx.net": {
-              "c": 4,
+              "c": 2,
               "content_length": 86,
-              "has_qs": 4,
+              "has_qs": 2,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 4,
+              "scheme_https": 2,
               "status_200": 2,
-              "type_3": 4
+              "type_3": 2
             },
             "wt.rqtrk.eu": {
               "c": 1,
@@ -3524,13 +3524,13 @@
               "type_7": 2
             },
             "x.bidswitch.net": {
-              "c": 6,
+              "c": 4,
               "content_length": 3,
-              "has_qs": 6,
+              "has_qs": 4,
               "resp_ob": 3,
-              "scheme_https": 6,
+              "scheme_https": 4,
               "status_302": 3,
-              "type_3": 6
+              "type_3": 4
             },
             "yt3.ggpht.com": {
               "c": 3,

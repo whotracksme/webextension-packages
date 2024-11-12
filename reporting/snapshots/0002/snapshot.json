@@ -29,18 +29,18 @@
               "type_11": 4
             },
             "aax-eu.amazon-adsystem.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 65,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "aax.amazon-adsystem.com": {
               "c": 7,
@@ -126,17 +126,17 @@
               "type_11": 1
             },
             "axel-springer-pl-d.openx.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 152,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_set": 1,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "bat.bing.com": {
               "c": 4,
@@ -263,18 +263,18 @@
               "type_2": 1
             },
             "cm.g.doubleclick.net": {
-              "c": 10,
+              "c": 6,
               "content_length": 5413,
-              "has_qs": 10,
+              "has_qs": 6,
               "resp_ob": 6,
-              "scheme_https": 10,
+              "scheme_https": 6,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_302": 6,
-              "type_19": 3,
-              "type_2": 3,
-              "type_3": 4
+              "type_19": 2,
+              "type_2": 2,
+              "type_3": 2
             },
             "cmp.dreamlab.pl": {
               "c": 6,
@@ -341,19 +341,19 @@
               "type_2": 2
             },
             "cookie-matching.mediarithmics.com": {
-              "c": 15,
+              "c": 11,
               "content_length": 708,
-              "has_qs": 15,
+              "has_qs": 11,
               "not_cached": 4,
               "resp_ob": 8,
-              "scheme_https": 15,
+              "scheme_https": 11,
               "set_cookie_blocked": 2,
               "set_cookie_samesite_none": 2,
               "set_cookie_set": 2,
               "status_200": 4,
               "status_303": 4,
-              "type_19": 5,
-              "type_2": 10
+              "type_19": 3,
+              "type_2": 8
             },
             "dcapi.tagger.opecloud.com": {
               "c": 3,
@@ -553,21 +553,21 @@
               "type_11": 1
             },
             "googleads.g.doubleclick.net": {
-              "c": 11,
+              "c": 8,
               "content_length": 5063,
-              "has_qs": 9,
+              "has_qs": 6,
               "not_cached": 5,
               "referer_leak_path": 3,
               "referer_leak_site": 3,
               "resp_ob": 7,
-              "scheme_https": 11,
+              "scheme_https": 8,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 5,
               "status_302": 2,
-              "type_11": 6,
-              "type_19": 2,
+              "type_11": 4,
+              "type_19": 1,
               "type_2": 3
             },
             "gum.criteo.com": {
@@ -662,36 +662,36 @@
               "type_11": 1
             },
             "id.nsaudience.pl": {
-              "c": 7,
+              "c": 5,
               "content_length": 5,
               "has_post": 1,
-              "has_qs": 5,
+              "has_qs": 3,
               "not_cached": 4,
               "resp_ob": 5,
-              "scheme_https": 7,
+              "scheme_https": 5,
               "set_cookie_blocked": 2,
               "set_cookie_samesite_none": 2,
               "set_cookie_set": 2,
               "status_200": 4,
               "status_302": 1,
-              "type_11": 6,
+              "type_11": 4,
               "type_2": 1
             },
             "id5-sync.com": {
-              "c": 6,
+              "c": 5,
               "content_length": 4,
               "has_post": 2,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 4,
-              "scheme_https": 6,
+              "scheme_https": 5,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 3,
               "status_302": 1,
               "type_11": 2,
-              "type_3": 4
+              "type_3": 3
             },
             "ingestion.contentinsights.com": {
               "c": 2,
@@ -824,18 +824,18 @@
               "type_11": 7
             },
             "prebid.adnxs.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 87,
               "has_post": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_set": 1,
               "status_200": 2,
               "type_11": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prg.smartadserver.com": {
               "c": 12,
@@ -904,18 +904,18 @@
               "type_11": 8
             },
             "rtb-csync.smartadserver.com": {
-              "c": 8,
+              "c": 5,
               "content_length": 4,
-              "has_qs": 8,
+              "has_qs": 5,
               "not_cached": 3,
               "resp_ob": 4,
-              "scheme_https": 8,
+              "scheme_https": 5,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 3,
               "status_302": 1,
-              "type_3": 8
+              "type_3": 5
             },
             "rtb.openx.net": {
               "c": 7,
@@ -1042,14 +1042,14 @@
               "type_3": 2
             },
             "t.visx.net": {
-              "c": 7,
+              "c": 6,
               "content_length": 45,
               "error_abort": 1,
               "has_post": 2,
-              "has_qs": 5,
+              "has_qs": 4,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 7,
+              "scheme_https": 6,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
@@ -1057,7 +1057,7 @@
               "status_302": 1,
               "type_11": 2,
               "type_3": 2,
-              "type_7": 3
+              "type_7": 2
             },
             "tentacles.smartocto.com": {
               "c": 4,
@@ -1254,18 +1254,18 @@
               "type_11": 4
             },
             "aax-eu.amazon-adsystem.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 65,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "aax.amazon-adsystem.com": {
               "c": 7,
@@ -1351,17 +1351,17 @@
               "type_11": 1
             },
             "axel-springer-pl-d.openx.net": {
-              "c": 3,
+              "c": 2,
               "content_length": 152,
-              "has_qs": 3,
+              "has_qs": 2,
               "not_cached": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_set": 1,
               "status_200": 1,
               "status_302": 1,
-              "type_7": 3
+              "type_7": 2
             },
             "bat.bing.com": {
               "c": 4,
@@ -1488,18 +1488,18 @@
               "type_2": 1
             },
             "cm.g.doubleclick.net": {
-              "c": 10,
+              "c": 6,
               "content_length": 5413,
-              "has_qs": 10,
+              "has_qs": 6,
               "resp_ob": 6,
-              "scheme_https": 10,
+              "scheme_https": 6,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_302": 6,
-              "type_19": 3,
-              "type_2": 3,
-              "type_3": 4
+              "type_19": 2,
+              "type_2": 2,
+              "type_3": 2
             },
             "cmp.dreamlab.pl": {
               "c": 6,
@@ -1566,19 +1566,19 @@
               "type_2": 2
             },
             "cookie-matching.mediarithmics.com": {
-              "c": 15,
+              "c": 11,
               "content_length": 708,
-              "has_qs": 15,
+              "has_qs": 11,
               "not_cached": 4,
               "resp_ob": 8,
-              "scheme_https": 15,
+              "scheme_https": 11,
               "set_cookie_blocked": 2,
               "set_cookie_samesite_none": 2,
               "set_cookie_set": 2,
               "status_200": 4,
               "status_303": 4,
-              "type_19": 5,
-              "type_2": 10
+              "type_19": 3,
+              "type_2": 8
             },
             "dcapi.tagger.opecloud.com": {
               "c": 3,
@@ -1778,20 +1778,20 @@
               "type_11": 1
             },
             "googleads.g.doubleclick.net": {
-              "c": 10,
+              "c": 8,
               "content_length": 5063,
-              "has_qs": 8,
+              "has_qs": 6,
               "not_cached": 5,
               "referer_leak_path": 3,
               "referer_leak_site": 3,
               "resp_ob": 7,
-              "scheme_https": 10,
+              "scheme_https": 8,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 5,
               "status_302": 2,
-              "type_11": 6,
+              "type_11": 4,
               "type_19": 1,
               "type_2": 3
             },
@@ -1890,36 +1890,36 @@
               "type_11": 1
             },
             "id.nsaudience.pl": {
-              "c": 7,
+              "c": 5,
               "content_length": 5,
               "has_post": 1,
-              "has_qs": 5,
+              "has_qs": 3,
               "not_cached": 4,
               "resp_ob": 5,
-              "scheme_https": 7,
+              "scheme_https": 5,
               "set_cookie_blocked": 2,
               "set_cookie_samesite_none": 2,
               "set_cookie_set": 2,
               "status_200": 4,
               "status_302": 1,
-              "type_11": 6,
+              "type_11": 4,
               "type_2": 1
             },
             "id5-sync.com": {
-              "c": 6,
+              "c": 5,
               "content_length": 4,
               "has_post": 2,
-              "has_qs": 4,
+              "has_qs": 3,
               "not_cached": 3,
               "resp_ob": 4,
-              "scheme_https": 6,
+              "scheme_https": 5,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 3,
               "status_302": 1,
               "type_11": 2,
-              "type_3": 4
+              "type_3": 3
             },
             "ingestion.contentinsights.com": {
               "c": 2,
@@ -2052,18 +2052,18 @@
               "type_11": 7
             },
             "prebid.adnxs.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 87,
               "has_post": 1,
-              "has_qs": 2,
+              "has_qs": 1,
               "not_cached": 2,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "set_cookie_blocked": 1,
               "set_cookie_set": 1,
               "status_200": 2,
               "type_11": 1,
-              "type_3": 2
+              "type_3": 1
             },
             "prg.smartadserver.com": {
               "c": 12,
@@ -2132,18 +2132,18 @@
               "type_11": 8
             },
             "rtb-csync.smartadserver.com": {
-              "c": 8,
+              "c": 5,
               "content_length": 4,
-              "has_qs": 8,
+              "has_qs": 5,
               "not_cached": 3,
               "resp_ob": 4,
-              "scheme_https": 8,
+              "scheme_https": 5,
               "set_cookie_blocked": 3,
               "set_cookie_samesite_none": 3,
               "set_cookie_set": 3,
               "status_200": 3,
               "status_302": 1,
-              "type_3": 8
+              "type_3": 5
             },
             "rtb.openx.net": {
               "c": 7,
@@ -2273,14 +2273,14 @@
               "type_3": 2
             },
             "t.visx.net": {
-              "c": 7,
+              "c": 6,
               "content_length": 45,
               "error_abort": 1,
               "has_post": 2,
-              "has_qs": 5,
+              "has_qs": 4,
               "not_cached": 2,
               "resp_ob": 3,
-              "scheme_https": 7,
+              "scheme_https": 6,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
@@ -2288,7 +2288,7 @@
               "status_302": 1,
               "type_11": 2,
               "type_3": 2,
-              "type_7": 3
+              "type_7": 2
             },
             "tentacles.smartocto.com": {
               "c": 4,
