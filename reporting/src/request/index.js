@@ -23,7 +23,7 @@ import * as datetime from './utils/time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
 import { HashProb, shouldCheckToken } from './hash/index.js';
-import { VERSION, COOKIE_MODE } from './config.js';
+import { COOKIE_MODE, VERSION } from './config.js';
 import { shuffle } from './utils/utils.js';
 import random from '../random.js';
 
@@ -35,8 +35,8 @@ import TokenExaminer from './steps/token-examiner.js';
 import TokenTelemetry from './steps/token-telemetry/index.js';
 import OAuthDetector from './steps/oauth-detector.js';
 import {
-  checkValidContext,
   checkSameGeneralDomain,
+  checkValidContext,
 } from './steps/check-context.js';
 import PageStore from './page-store.js';
 
@@ -73,8 +73,38 @@ export default class RequestReporter {
       notifyPageStageListeners: this.onPageStaged.bind(this),
     });
 
-    // Web request pipelines
-    this.pipelines = {};
+    this.ready = false;
+    const urls = ['http://*/*', 'https://*/*'];
+    // TODO: find a way to detect if blocking webRequest is available on Brave and Opera
+    const blockingWebRequest = chrome.runtime
+      .getManifest()
+      .permissions.includes('webRequestBlocking');
+
+    chrome.webRequest.onBeforeRequest.addListener(
+      this.onBeforeRequest,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnBeforeRequestOptions)
+        : undefined,
+    );
+    chrome.webRequest.onBeforeSendHeaders.addListener(
+      this.onBeforeSendHeaders,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnBeforeSendHeadersOptions)
+        : undefined,
+    );
+    chrome.webRequest.onHeadersReceived.addListener(
+      this.onHeadersReceived,
+      { urls },
+      blockingWebRequest
+        ? Object.values(chrome.webRequest.OnHeadersReceivedOptions)
+        : undefined,
+    );
+    chrome.webRequest.onCompleted.addListener(this.onCompleted, { urls });
+    chrome.webRequest.onErrorOccurred.addListener(this.onErrorOccurred, {
+      urls,
+    });
   }
 
   #reportTrackerInteraction(kind, state) {
@@ -245,39 +275,11 @@ export default class RequestReporter {
     );
     await this.tokenChecker.init();
 
-    const urls = ['http://*/*', 'https://*/*'];
-    const blockingWebRequest = await chrome.permissions.contains({
-      permissions: ['webRequestBlocking'],
-    });
-
-    chrome.webRequest.onBeforeRequest.addListener(
-      this.onBeforeRequest,
-      { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnBeforeRequestOptions)
-        : undefined,
-    );
-    chrome.webRequest.onBeforeSendHeaders.addListener(
-      this.onBeforeSendHeaders,
-      { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnBeforeSendHeadersOptions)
-        : undefined,
-    );
-    chrome.webRequest.onHeadersReceived.addListener(
-      this.onHeadersReceived,
-      { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnHeadersReceivedOptions)
-        : undefined,
-    );
-    chrome.webRequest.onCompleted.addListener(this.onCompleted, { urls });
-    chrome.webRequest.onErrorOccurred.addListener(this.onErrorOccurred, {
-      urls,
-    });
+    this.ready = true;
   }
 
   unload() {
+    this.ready = false;
     if (this.qs_whitelist) {
       this.qs_whitelist.destroy();
     }
@@ -307,6 +309,7 @@ export default class RequestReporter {
   }
 
   onBeforeRequest = (details) => {
+    if (!this.ready) return;
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeRequest');
     // checkState
@@ -393,6 +396,7 @@ export default class RequestReporter {
   };
 
   onBeforeSendHeaders = (details) => {
+    if (!this.ready) return;
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeSendHeaders');
     // checkState
@@ -478,6 +482,7 @@ export default class RequestReporter {
   };
 
   onHeadersReceived = (details) => {
+    if (!this.ready) return;
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onHeadersReceived');
     // checkState
@@ -541,6 +546,7 @@ export default class RequestReporter {
   };
 
   onCompleted = (details) => {
+    if (!this.ready) return;
     this.whitelistedRequestCache.delete(details.requestId);
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     // checkState
@@ -556,6 +562,7 @@ export default class RequestReporter {
   };
 
   onErrorOccurred = (details) => {
+    if (!this.ready) return;
     this.whitelistedRequestCache.delete(details.requestId);
   };
 
