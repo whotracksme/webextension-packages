@@ -1,3 +1,22 @@
+# v5.1.32 (Tue Nov 12 2024)
+
+#### 🐛 Bug Fix
+
+- Request reporter: simplify stats [#120](https://github.com/whotracksme/webextension-packages/pull/120) ([@chrmod](https://github.com/chrmod))
+- Request reporting: remove redirect tagger [#126](https://github.com/whotracksme/webextension-packages/pull/126) ([@chrmod](https://github.com/chrmod))
+- Reporting: fix pre-emptive unloading [#125](https://github.com/whotracksme/webextension-packages/pull/125) ([@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- Request: fix tests [#128](https://github.com/whotracksme/webextension-packages/pull/128) ([@chrmod](https://github.com/chrmod))
+- Request: redirect tests [#127](https://github.com/whotracksme/webextension-packages/pull/127) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.31 (Fri Nov 08 2024)
 
 #### 🐛 Bug Fix
