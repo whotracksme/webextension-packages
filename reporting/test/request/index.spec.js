@@ -65,6 +65,7 @@ describe('request/index', function () {
       // Thus, leaving the old way to monkey patch, even though it may
       // indicate that there are bugs in the implementation or in the tests.
       chrome.storage.session = chrome.storage.local;
+      chrome.runtime.getManifest.returns({ permissions: [] });
       chrome.storage.session.get.yields({});
       chrome.tabs.query.returns([]);
 
