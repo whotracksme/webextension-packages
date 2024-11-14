@@ -10,6 +10,7 @@
  */
 
 import CachedEntryPipeline from './cached-entry-pipeline.js';
+import logger from '../../../logger.js';
 
 export function getSiteTokensMap(siteTokens, key) {
   let siteTokensMap = siteTokens[key];
@@ -84,12 +85,26 @@ export default class KeyPipeline extends CachedEntryPipeline {
             entry = [];
             groupedMessages.set(`${site}${extraKey}`, entry);
           }
+          let tokensToSend = Object.entries(tokens);
+
+          if (tokensToSend.length > this.options.KEY_TOKENS_LIMIT) {
+            logger.warn(
+              '[Request keys-pipeline]',
+              `too many tokens for site="${site}" key="${stats.key}" tracker=${stats.tracker}`,
+              `picking a random sample ${this.options.KEY_TOKENS_LIMIT} of ${tokensToSend.length}`,
+            );
+            tokensToSend = takeRandomSample(
+              Object.entries(tokens),
+              this.options.KEY_TOKENS_LIMIT,
+            );
+          }
+
           entry.push({
             ts: this.trustedClock.getTimeAsYYYYMMDD(),
             tracker: stats.tracker,
             key: stats.key,
             site,
-            tokens: Object.entries(tokens),
+            tokens: tokensToSend,
           });
         });
         Object.keys(stats.sitesTokens).forEach(
@@ -107,4 +122,21 @@ export default class KeyPipeline extends CachedEntryPipeline {
   hasData(entry) {
     return Object.keys(entry.sitesTokens).length > 0;
   }
+}
+
+function takeRandomSample(array, size) {
+  const shuffled = [...array];
+  let currentIndex = shuffled.length;
+
+  // Fisher-Yates Shuffle Algorithm
+  while (currentIndex !== 0) {
+    const randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    const temporaryValue = shuffled[currentIndex];
+    shuffled[currentIndex] = shuffled[randomIndex];
+    shuffled[randomIndex] = temporaryValue;
+  }
+
+  return shuffled.slice(0, size);
 }

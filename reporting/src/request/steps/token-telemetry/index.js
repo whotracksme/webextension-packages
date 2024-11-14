@@ -21,6 +21,7 @@ const DEFAULT_CONFIG = {
   // key batches, max 450 messages/hour
   KEY_BATCH_INTERVAL: 80 * 1000,
   KEY_BATCH_SIZE: 10,
+  KEY_TOKENS_LIMIT: 100,
   // clean every 4 mins (activity triggered)
   CLEAN_INTERVAL: 4 * 60 * 1000,
   // batch size of incoming tokens
