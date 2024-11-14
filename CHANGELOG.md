@@ -1,3 +1,15 @@
+# v5.1.34 (Thu Nov 14 2024)
+
+#### 🐛 Bug Fix
+
+- Request: fix token telemetry cleanup [#130](https://github.com/whotracksme/webextension-packages/pull/130) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.33 (Tue Nov 12 2024)
 
 #### 🐛 Bug Fix
