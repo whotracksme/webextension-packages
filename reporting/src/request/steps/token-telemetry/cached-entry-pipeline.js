@@ -164,7 +164,7 @@ export default class CachedEntryPipeline {
     });
     // push first maxSending entries to input queue
     queuedForSending.splice(maxSending);
-    queuedForSending.forEach((v) => this.input.pub(v));
+    queuedForSending.forEach((v) => this.processEntry.pub(v));
     // delete old entries
     this.db.bulkDelete(toBeDeleted);
     // check the cache for items to persist to the db.
