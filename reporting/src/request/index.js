@@ -27,7 +27,6 @@ import { COOKIE_MODE, VERSION } from './config.js';
 import { shuffle } from './utils/utils.js';
 import random from '../random.js';
 
-import BlockRules from './steps/block-rules.js';
 import CookieContext from './steps/cookie-context.js';
 import PageLogger from './steps/page-logger.js';
 import TokenChecker from './steps/token-checker/index.js';
@@ -241,7 +240,6 @@ export default class RequestReporter {
     this.userAgent = (await this.getBrowserInfo()).name;
 
     this.pageLogger = new PageLogger(this.config.placeHolder);
-    this.blockRules = new BlockRules(this.config);
     this.cookieContext = new CookieContext(this.config, this.qs_whitelist);
     await this.cookieContext.init();
 
@@ -379,10 +377,6 @@ export default class RequestReporter {
     }
     // isQSEnabled
     if (this.isQSEnabled() === false) {
-      return response.toWebRequestResponse();
-    }
-    // blockRules.applyBlockRules
-    if (this.blockRules.applyBlockRules(state, response) === false) {
       return response.toWebRequestResponse();
     }
 

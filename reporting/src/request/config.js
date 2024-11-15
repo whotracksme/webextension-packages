@@ -36,12 +36,7 @@ const DEFAULTS = {
  * These are attributes which are loaded from the remote CONFIG_URL
  * @type {Array}
  */
-const REMOTELY_CONFIGURED = [
-  'blockRules',
-  'cookieWhitelist',
-  'subdomainRewriteRules',
-  'compatibilityList',
-];
+const REMOTELY_CONFIGURED = ['cookieWhitelist', 'compatibilityList'];
 
 export default class Config {
   constructor(
