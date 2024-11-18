@@ -1,3 +1,15 @@
+# v5.1.35 (Mon Nov 18 2024)
+
+#### 🐛 Bug Fix
+
+- Request: keys pipeline picks a random tokens if too many [#131](https://github.com/whotracksme/webextension-packages/pull/131) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.34 (Thu Nov 14 2024)
 
 #### 🐛 Bug Fix
