@@ -1,3 +1,19 @@
+# v5.1.36 (Mon Nov 18 2024)
+
+#### 🐛 Bug Fix
+
+- Request: fix typo [#134](https://github.com/whotracksme/webextension-packages/pull/134) ([@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- Request: remove remote blocking configuration [#133](https://github.com/whotracksme/webextension-packages/pull/133) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v5.1.35 (Mon Nov 18 2024)
 
 #### 🐛 Bug Fix
