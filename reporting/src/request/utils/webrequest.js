@@ -166,9 +166,9 @@ export class WebRequestContext {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
 
-    this.metadata.truncatedDomain = this.truncatedDomain;
-    this.metadata.stats[statName] =
-      (this.metadata.stats[statName] || 0) + (c || 1);
+    this.metadata.stats[this.truncatedDomain] ||= {};
+    this.metadata.stats[this.truncatedDomain][statName] =
+      (this.metadata.stats[this.truncatedDomain][statName] || 0) + (c || 1);
   }
 
   /**
@@ -303,13 +303,14 @@ export class WebRequestStore {
       this.requests.delete(requestId);
       document.requestIds.delete(requestId);
 
-      stats[request.truncatedDomain] ||= {};
-
-      for (const key of Object.keys(request.stats)) {
-        stats[request.truncatedDomain][key] =
-          (stats[request.truncatedDomain][key] || 0) + request.stats[key];
+      for (const domain of Object.keys(request.stats)) {
+        stats[domain] ||= {};
+        for (const key of Object.keys(request.stats[domain])) {
+          stats[domain][key] =
+            (stats[domain][key] || 0) + request.stats[domain][key];
+        }
       }
     }
-    console.warn(stats)
+    console.warn(stats);
   }
 }
