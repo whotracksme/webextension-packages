@@ -145,11 +145,11 @@ export class WebRequestContext {
         context.originUrl || context.initiator || context.documentUrl;
     }
 
-    const stats = webRequestStore.prepareStatsForDetails(details);
-    return new WebRequestContext(context, stats);
+    const metadata = webRequestStore.updateMetadata(details);
+    return new WebRequestContext(context, metadata);
   }
 
-  constructor(details, stats) {
+  constructor(details, metadata) {
     Object.assign(this, details);
 
     // Lazy attributes
@@ -159,14 +159,16 @@ export class WebRequestContext {
     this.urlParts = parse(this.url);
     this.tabUrlParts = parse(this.tabUrl);
     this.truncatedDomain = truncateDomain(this.urlParts.domainInfo, 2);
-    this.stats = stats;
+    this.metadata = metadata;
   }
 
   incrementStat(statName, c) {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
 
-    this.stats[statName] = (stats[statName] || 0) + (c || 1);
+    this.metadata.truncatedDomain = this.truncatedDomain;
+    this.metadata.stats[statName] =
+      (this.metadata.stats[statName] || 0) + (c || 1);
   }
 
   /**
@@ -212,7 +214,21 @@ export class WebRequestStore {
     this.requests = new Map();
     this.tabs = new Map();
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
+    chrome.tabs.onRemoved.addListener(this.#onTabsRemoved);
   }
+
+  #onTabsRemoved = (tabId) => {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      console.error('XXXX must have tab', tabId, this.tabs);
+    }
+    for (const document of tab.documents) {
+      if (document.requestIds.size !== 0) {
+        this.#stageDocument(document);
+      }
+    }
+    this.tabs.delete(tabId);
+  };
 
   #onNavigationCommitted = (details) => {
     const { documentId, parentDocumentId, tabId, frameType } = details;
@@ -222,23 +238,30 @@ export class WebRequestStore {
         documents: [],
       };
       this.tabs.set(tabId, tab);
+
+      for (const document of tab.documents) {
+        if (document.requestIds.size !== 0) {
+          this.#stageDocument(document);
+        }
+      }
+
       tab.documents.push({
         documentId,
-        subDocumentIds: [],
-        requestIds: [],
+        subDocumentIds: new Set(),
+        requestIds: new Set(),
       });
     } else if (frameType === 'sub_frame') {
       const tab = this.tabs.get(tabId);
       const document = tab.documents.find(
         (d) =>
           d.documentId === parentDocumentId ||
-          d.subDocumentIds.includes(parentDocumentId),
+          d.subDocumentIds.has(parentDocumentId),
       );
-      document.subDocumentIds.push(documentId);
+      document.subDocumentIds.add(documentId);
     }
   };
 
-  prepareStatsForDetails(details) {
+  updateMetadata(details) {
     const { requestId, documentId, parentDocumentId, tabId, type } = details;
 
     if (tabId === -1 || type === 'main_frame') {
@@ -256,21 +279,37 @@ export class WebRequestStore {
     const tab = this.tabs.get(tabId);
 
     if (!tab) {
-      console.error('There must be a tab', tabId, this.tabs);
+      console.warn('dropping stats for requestId', requestId);
+      return;
     }
 
     const document = tab.documents.find(
       (d) =>
         d.documentId === documentId ||
         d.documentId === parentDocumentId ||
-        d.subDocumentIds.includes(documentId) ||
-        d.subDocumentIds.includes(parentDocumentId),
+        d.subDocumentIds.has(documentId) ||
+        d.subDocumentIds.has(parentDocumentId),
     );
 
-    if (!document) {
-      document.requestIds.push(requestId);
-    }
+    document.requestIds.add(requestId);
 
-    return request.stats;
+    return request;
+  }
+
+  #stageDocument(document) {
+    const stats = {};
+    for (const requestId of document.requestIds) {
+      const request = this.requests.get(requestId);
+      this.requests.delete(requestId);
+      document.requestIds.delete(requestId);
+
+      stats[request.truncatedDomain] ||= {};
+
+      for (const key of Object.keys(request.stats)) {
+        stats[request.truncatedDomain][key] =
+          (stats[request.truncatedDomain][key] || 0) + request.stats[key];
+      }
+    }
+    console.warn(stats)
   }
 }
