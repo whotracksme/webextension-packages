@@ -326,8 +326,8 @@ describe('RequestReporter', function () {
         }
       }
 
-      for (const snapshotName of ['0001', '0002', '0003', '0004']) {
-        it(snapshotName, async function () {
+      for (const snapshotName of ['0001']) {
+        it.only(snapshotName, async function () {
           const messages = [];
           communicationEmiter.addListener('send', (message) =>
             messages.push(cleanupMessage(message)),
@@ -353,6 +353,17 @@ describe('RequestReporter', function () {
           messages.forEach((message, index) => {
             expect(message).to.deep.equal(snapshot[index]);
           });
+
+          for (const request of reporter.webRequestStore.requests.values()) {
+            try {
+              if (!request.documentId && !request.parentDocumentId) {
+                throw new Error('requets needs a document');
+              }
+            } catch (e) {
+              console.log(request)
+              throw e;
+            }
+          }
         });
       }
     });

@@ -18,7 +18,11 @@ import { truncatedHash } from '../md5.js';
 import logger from '../logger.js';
 
 import { parse } from '../utils/url.js';
-import { BlockingResponse, WebRequestContext } from './utils/webrequest.js';
+import {
+  BlockingResponse,
+  WebRequestContext,
+  WebRequestStore,
+} from './utils/webrequest.js';
 import * as datetime from './utils/time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
@@ -71,6 +75,7 @@ export default class RequestReporter {
     this.pageStore = new PageStore({
       notifyPageStageListeners: this.onPageStaged.bind(this),
     });
+    this.webRequestStore = new WebRequestStore();
 
     this.ready = false;
     const urls = ['http://*/*', 'https://*/*'];
@@ -308,7 +313,11 @@ export default class RequestReporter {
 
   onBeforeRequest = (details) => {
     if (!this.ready) return;
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      this.webRequestStore,
+    );
     const response = new BlockingResponse(details, 'onBeforeRequest');
     // checkState
     if (checkValidContext(state) === false) {
@@ -391,7 +400,11 @@ export default class RequestReporter {
 
   onBeforeSendHeaders = (details) => {
     if (!this.ready) return;
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      this.webRequestStore,
+    );
     const response = new BlockingResponse(details, 'onBeforeSendHeaders');
     // checkState
     if (checkValidContext(state) === false) {
@@ -477,7 +490,11 @@ export default class RequestReporter {
 
   onHeadersReceived = (details) => {
     if (!this.ready) return;
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      this.webRequestStore,
+    );
     const response = new BlockingResponse(details, 'onHeadersReceived');
     // checkState
     if (checkValidContext(state) === false) {
@@ -542,7 +559,11 @@ export default class RequestReporter {
   onCompleted = (details) => {
     if (!this.ready) return;
     this.whitelistedRequestCache.delete(details.requestId);
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(
+      details,
+      this.pageStore,
+      this.webRequestStore,
+    );
     // checkState
     if (checkValidContext(state) === false) {
       return false;

@@ -118,7 +118,7 @@ export class WebRequestContext {
    * well as provide convenient helpers for parsed URLs, etc. It will also not
    * return a wrapper for background requests.
    */
-  static fromDetails(details, pageStore) {
+  static fromDetails(details, pageStore, webRequestStore) {
     const context = details;
 
     // Check if we have a URL
@@ -145,10 +145,11 @@ export class WebRequestContext {
         context.originUrl || context.initiator || context.documentUrl;
     }
 
-    return new WebRequestContext(context);
+    const stats = webRequestStore.prepareStatsForDetails(details);
+    return new WebRequestContext(context, stats);
   }
 
-  constructor(details) {
+  constructor(details, stats) {
     Object.assign(this, details);
 
     // Lazy attributes
@@ -158,11 +159,14 @@ export class WebRequestContext {
     this.urlParts = parse(this.url);
     this.tabUrlParts = parse(this.tabUrl);
     this.truncatedDomain = truncateDomain(this.urlParts.domainInfo, 2);
+    this.stats = stats;
   }
 
   incrementStat(statName, c) {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
+
+    this.stats[statName] = (stats[statName] || 0) + (c || 1);
   }
 
   /**
@@ -200,5 +204,73 @@ export class WebRequestContext {
 
   getReferrer() {
     return this.getRequestHeader('Referer');
+  }
+}
+
+export class WebRequestStore {
+  constructor() {
+    this.requests = new Map();
+    this.tabs = new Map();
+    chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
+  }
+
+  #onNavigationCommitted = (details) => {
+    const { documentId, parentDocumentId, tabId, frameType } = details;
+
+    if (frameType === 'outermost_frame') {
+      const tab = this.tabs.get(tabId) || {
+        documents: [],
+      };
+      this.tabs.set(tabId, tab);
+      tab.documents.push({
+        documentId,
+        subDocumentIds: [],
+        requestIds: [],
+      });
+    } else if (frameType === 'sub_frame') {
+      const tab = this.tabs.get(tabId);
+      const document = tab.documents.find(
+        (d) =>
+          d.documentId === parentDocumentId ||
+          d.subDocumentIds.includes(parentDocumentId),
+      );
+      document.subDocumentIds.push(documentId);
+    }
+  };
+
+  prepareStatsForDetails(details) {
+    const { requestId, documentId, parentDocumentId, tabId, type } = details;
+
+    if (tabId === -1 || type === 'main_frame') {
+      return;
+    }
+
+    const request = this.requests.get(requestId) || {
+      stats: {},
+      parentDocumentId,
+      documentId,
+      requestId,
+    };
+    this.requests.set(requestId, request);
+
+    const tab = this.tabs.get(tabId);
+
+    if (!tab) {
+      console.error('There must be a tab', tabId, this.tabs);
+    }
+
+    const document = tab.documents.find(
+      (d) =>
+        d.documentId === documentId ||
+        d.documentId === parentDocumentId ||
+        d.subDocumentIds.includes(documentId) ||
+        d.subDocumentIds.includes(parentDocumentId),
+    );
+
+    if (!document) {
+      document.requestIds.push(requestId);
+    }
+
+    return request.stats;
   }
 }
