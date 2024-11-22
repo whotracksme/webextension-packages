@@ -1,3 +1,19 @@
+# v5.1.38 (Fri Nov 22 2024)
+
+#### 🐛 Bug Fix
+
+- Update url classifier regexp [#140](https://github.com/whotracksme/webextension-packages/pull/140) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Fixed errors when request reporter is not ready yet [#137](https://github.com/whotracksme/webextension-packages/pull/137) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.37 (Fri Nov 22 2024)
 
 #### 🐛 Bug Fix
