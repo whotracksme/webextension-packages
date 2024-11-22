@@ -1,3 +1,15 @@
+# v5.1.37 (Fri Nov 22 2024)
+
+#### 🐛 Bug Fix
+
+- Run compatibility checks before placeholder replacements in onBeforeRequest [#139](https://github.com/whotracksme/webextension-packages/pull/139) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.36 (Mon Nov 18 2024)
 
 #### 🐛 Bug Fix
