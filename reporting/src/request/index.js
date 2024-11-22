@@ -379,6 +379,9 @@ export default class RequestReporter {
     if (this.isQSEnabled() === false) {
       return response.toWebRequestResponse();
     }
+    if (this.checkCompatibilityList(state) === false) {
+      return response.toWebRequestResponse();
+    }
 
     this.#reportTrackerInteraction('fingerprint-removed', state);
 
