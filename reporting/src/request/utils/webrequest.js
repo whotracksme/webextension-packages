@@ -215,6 +215,8 @@ export class WebRequestStore {
     this.tabs = new Map();
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.tabs.onRemoved.addListener(this.#onTabsRemoved);
+    // TODO: remove - used in tests only
+    this.reports = [];
   }
 
   #onTabsRemoved = (tabId) => {
@@ -231,9 +233,23 @@ export class WebRequestStore {
   };
 
   #onNavigationCommitted = (details) => {
-    const { documentId, parentDocumentId, tabId, frameType } = details;
+    const {
+      documentId,
+      parentDocumentId,
+      tabId,
+      frameType,
+      frameId,
+      parentFrameId,
+      url,
+      timeStamp,
+    } = details;
 
-    if (frameType === 'outermost_frame') {
+    if (
+      // outermost_frame - chromium
+      frameType === 'outermost_frame' ||
+      // outermost_frame - firefox
+      (frameId === 0 && parentFrameId === -1)
+    ) {
       const tab = this.tabs.get(tabId) || {
         documents: [],
       };
@@ -249,8 +265,13 @@ export class WebRequestStore {
         documentId,
         subDocumentIds: new Set(),
         requestIds: new Set(),
+        frameAncestors: [],
+        timeStamp,
       });
-    } else if (frameType === 'sub_frame') {
+    } else if (
+      // subframe - chromium
+      frameType === 'sub_frame'
+    ) {
       const tab = this.tabs.get(tabId);
       const document = tab.documents.find(
         (d) =>
@@ -258,11 +279,27 @@ export class WebRequestStore {
           d.subDocumentIds.has(parentDocumentId),
       );
       document.subDocumentIds.add(documentId);
+    } else if (
+      // subframe - firefox
+      frameId > 0 &&
+      parentFrameId !== -1
+    ) {
+      const tab = this.tabs.get(tabId);
+      const document = tab.documents[0];
+      document.frameAncestors.push({ frameId, url });
     }
   };
 
   updateMetadata(details) {
-    const { requestId, documentId, parentDocumentId, tabId, type } = details;
+    const {
+      requestId,
+      documentId,
+      parentDocumentId,
+      tabId,
+      frameId,
+      type,
+      frameAncestors,
+    } = details;
 
     if (tabId === -1 || type === 'main_frame') {
       return;
@@ -270,26 +307,61 @@ export class WebRequestStore {
 
     const request = this.requests.get(requestId) || {
       stats: {},
-      parentDocumentId,
-      documentId,
+      parentDocumentId: parentDocumentId,
+      documentId: documentId,
       requestId,
+      frameAncestors,
     };
     this.requests.set(requestId, request);
 
     const tab = this.tabs.get(tabId);
 
     if (!tab) {
-      console.warn('dropping stats for requestId', requestId);
-      return;
+      console.warn(
+        'dropping stats for requestId',
+        requestId,
+        'no matching tab',
+      );
+      return request;
     }
 
-    const document = tab.documents.find(
-      (d) =>
-        d.documentId === documentId ||
-        d.documentId === parentDocumentId ||
-        d.subDocumentIds.has(documentId) ||
-        d.subDocumentIds.has(parentDocumentId),
-    );
+    let document;
+
+    if (
+      // chromium
+      documentId ||
+      parentDocumentId
+    ) {
+      document = tab.documents.find(
+        (d) =>
+          d.documentId === documentId ||
+          d.documentId === parentDocumentId ||
+          d.subDocumentIds.has(documentId) ||
+          d.subDocumentIds.has(parentDocumentId),
+      );
+    } else if (
+      // firefox
+      frameAncestors
+    ) {
+      if (frameId === 0) {
+        document = tab.documents[0];
+      } else {
+        for (const doc of tab.documents) {
+          document = doc[0].frameAncestors.find((d) => d.frameId === frameId)
+            ? tab.documents[0]
+            : null;
+        }
+      }
+    }
+
+    if (!document) {
+      console.warn(
+        'dropping stats for requestId',
+        requestId,
+        'no matching document',
+      );
+      return request;
+    }
 
     document.requestIds.add(requestId);
 
@@ -311,6 +383,6 @@ export class WebRequestStore {
         }
       }
     }
-    console.warn(stats);
+    this.reports.push(stats);
   }
 }

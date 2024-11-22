@@ -326,7 +326,7 @@ describe('RequestReporter', function () {
         }
       }
 
-      for (const snapshotName of ['0001']) {
+      for (const snapshotName of ['0004']) {
         it.only(snapshotName, async function () {
           const messages = [];
           communicationEmiter.addListener('send', (message) =>
@@ -354,16 +354,9 @@ describe('RequestReporter', function () {
             expect(message).to.deep.equal(snapshot[index]);
           });
 
-          for (const request of reporter.webRequestStore.requests.values()) {
-            try {
-              if (!request.documentId && !request.parentDocumentId) {
-                throw new Error('requets needs a document');
-              }
-            } catch (e) {
-              console.log(request)
-              throw e;
-            }
-          }
+          messages.filter(m => m.action === 'wtm.attrack.tp_events').forEach((message, index) => {
+            expect(reporter.webRequestStore.reports[index]).to.deep.equal(message.payload.data[0].tps);
+          });
         });
       }
     });
