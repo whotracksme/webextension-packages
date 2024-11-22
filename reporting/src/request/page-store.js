@@ -243,12 +243,21 @@ export default class PageStore {
   #onNavigationErrorOccured = (details) => {
     const { frameId, tabId, url, error } = details;
 
-    if (frameId !== 0) {
+    if (frameId !== 0 || !url.startsWith('http')) {
       return;
     }
 
-    // navigation aborted most likely due to redirect
-    // revert to previous page as soon a new navigation will start
+    /**
+     *
+        On Firefox some navigation can trigger following event sequence:
+
+        * onBeforeNavigate
+        * onErrorOccurred with "error":"Error code 2152398850"
+        * onBeforeNavigate
+        * onCommitted
+
+        That was causing an extra page object to be created which was messing up the previous page logic.
+     */
     if (error === 'Error code 2152398850') {
       const page = this.#pages.get(tabId);
 
