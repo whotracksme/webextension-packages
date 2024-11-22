@@ -280,6 +280,10 @@ export default class PageStore {
   getPageForRequest(context) {
     const { tabId, frameId, originUrl, type, initiator } = context;
     const page = this.#pages.get(tabId);
+
+    if (context.url.includes('wave.sndcdn.com')) {
+      debugger
+    }
     if (!page) {
       return null;
     }

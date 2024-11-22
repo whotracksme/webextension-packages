@@ -326,7 +326,7 @@ describe('RequestReporter', function () {
         }
       }
 
-      for (const snapshotName of ['0004']) {
+      for (const snapshotName of ['0001','0002','0003','0004']) {
         it.only(snapshotName, async function () {
           const messages = [];
           communicationEmiter.addListener('send', (message) =>

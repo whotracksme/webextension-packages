@@ -347,9 +347,12 @@ export class WebRequestStore {
         document = tab.documents[0];
       } else {
         for (const doc of tab.documents) {
-          document = doc[0].frameAncestors.find((d) => d.frameId === frameId)
-            ? tab.documents[0]
+          document = doc.frameAncestors.find((d) => d.frameId === frameId)
+            ? doc
             : null;
+          if (doc) {
+            break;
+          }
         }
       }
     }
