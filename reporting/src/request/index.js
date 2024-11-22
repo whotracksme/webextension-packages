@@ -307,7 +307,10 @@ export default class RequestReporter {
   }
 
   onBeforeRequest = (details) => {
-    if (!this.ready) return;
+    if (!this.ready) {
+      logger.warn('onBeforeRequest skipped (not ready)');
+      return;
+    }
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeRequest');
     // checkState
@@ -393,7 +396,10 @@ export default class RequestReporter {
   };
 
   onBeforeSendHeaders = (details) => {
-    if (!this.ready) return;
+    if (!this.ready) {
+      logger.warn('onBeforeSendHeaders skipped (not ready)');
+      return;
+    }
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onBeforeSendHeaders');
     // checkState
@@ -479,7 +485,10 @@ export default class RequestReporter {
   };
 
   onHeadersReceived = (details) => {
-    if (!this.ready) return;
+    if (!this.ready) {
+      logger.warn('onHeadersReceived skipped (not ready)');
+      return;
+    }
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     const response = new BlockingResponse(details, 'onHeadersReceived');
     // checkState
@@ -543,7 +552,10 @@ export default class RequestReporter {
   };
 
   onCompleted = (details) => {
-    if (!this.ready) return;
+    if (!this.ready) {
+      logger.warn('onCompleted skipped (not ready)');
+      return;
+    }
     this.whitelistedRequestCache.delete(details.requestId);
     const state = WebRequestContext.fromDetails(details, this.pageStore);
     // checkState
@@ -559,7 +571,10 @@ export default class RequestReporter {
   };
 
   onErrorOccurred = (details) => {
-    if (!this.ready) return;
+    if (!this.ready) {
+      logger.warn('onErrorOccurred skipped (not ready)');
+      return;
+    }
     this.whitelistedRequestCache.delete(details.requestId);
   };
 
@@ -709,6 +724,10 @@ export default class RequestReporter {
   }
 
   recordClick(event, context, href, sender) {
+    if (!this.ready) {
+      logger.warn('recordClick skipped (not ready)');
+      return;
+    }
     this.cookieContext.setContextFromEvent(event, context, href, sender);
     this.oAuthDetector.recordClick(sender);
   }
