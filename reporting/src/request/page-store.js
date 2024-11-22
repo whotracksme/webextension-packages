@@ -77,6 +77,9 @@ export default class PageStore {
     chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
+    chrome.webNavigation.onErrorOccurred.addListener(
+      this.#onNavigationErrorOccured,
+    );
     chrome.windows.onFocusChanged?.addListener(this.#onWindowFocusChanged);
 
     // popupate initially open tabs
@@ -102,6 +105,9 @@ export default class PageStore {
     );
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
+    );
+    chrome.webNavigation.onErrorOccurred.removeListener(
+      this.#onNavigationErrorOccured,
     );
     chrome.windows.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
   }
@@ -232,6 +238,24 @@ export default class PageStore {
     nextPage.previous = page;
     nextPage.state = PAGE_LOADING_STATE.NAVIGATING;
     this.#pages.set(tabId, nextPage);
+  };
+
+  #onNavigationErrorOccured = (details) => {
+    const { frameId, tabId, url, error } = details;
+
+    if (frameId !== 0) {
+      return;
+    }
+
+    // navigation aborted most likely due to redirect
+    // revert to previous page as soon a new navigation will start
+    if (error === 'Error code 2152398850') {
+      const page = this.#pages.get(tabId);
+
+      if (page && page.url === url) {
+        this.#pages.set(tabId, page.previous);
+      }
+    }
   };
 
   #onNavigationCommitted = (details) => {
