@@ -220,7 +220,7 @@ export default class PageStore {
       }
       // We are starting a navigation to a new page - if the previous page is complete (i.e. fully
       // loaded), stage it before we create the new page info.
-      if (page.state === PAGE_LOADING_STATE.COMPLETE) {
+      if (page.state === PAGE_LOADING_STATE.COMPLETE && !page.destroyed) {
         this.#stagePage(page);
       }
     }
