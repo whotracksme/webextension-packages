@@ -54,6 +54,7 @@ export default class RequestReporter {
         logger.info('Tracker', event, 'with url:', state.url);
       },
       isRequestAllowed = () => false,
+      dryRunMode = false,
     },
   ) {
     this.settings = settings;
@@ -63,6 +64,14 @@ export default class RequestReporter {
     this.onTrackerInteraction = onTrackerInteraction;
     this.getBrowserInfo = getBrowserInfo;
     this.isRequestAllowed = isRequestAllowed;
+    if (dryRunMode) {
+      logger.warn(
+        '[DRY_RUN] dry-run mode is enabled. Fingerprinting removal is disabled.',
+      );
+    } else {
+      logger.debug('Fingerprinting removal is enabled');
+    }
+    this.dryRunMode = dryRunMode;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
@@ -383,6 +392,17 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
     if (this.checkCompatibilityList(state) === false) {
+      return response.toWebRequestResponse();
+    }
+    if (this.dryRunMode) {
+      logger.warn(
+        '[DRY_RUN]: Skipping fingerprint removal for URL:',
+        details.url,
+      );
+      logger.info('[DRY_RUN]: Skipped fingerprint removal. Details:', {
+        details,
+        badTokens: state.badTokens,
+      });
       return response.toWebRequestResponse();
     }
 
