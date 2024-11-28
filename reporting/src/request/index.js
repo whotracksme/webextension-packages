@@ -134,31 +134,6 @@ export default class RequestReporter {
     return false;
   }
 
-  obfuscate(s, method) {
-    // used when action != 'block'
-    // default is a placeholder
-    switch (method) {
-      case 'empty':
-        return '';
-      case 'replace':
-        return shuffle(s);
-      case 'same':
-        return s;
-      case 'placeholder':
-        return this.config.placeHolder;
-      default:
-        return this.config.placeHolder;
-    }
-  }
-
-  getDefaultRule() {
-    if (this.isForceBlockEnabled()) {
-      return 'block';
-    }
-
-    return 'placeholder';
-  }
-
   isCookieEnabled() {
     return this.config.cookieEnabled;
   }
@@ -173,10 +148,6 @@ export default class RequestReporter {
 
   isReferrerEnabled() {
     return this.config.referrerEnabled;
-  }
-
-  isForceBlockEnabled() {
-    return this.config.forceBlockEnabled;
   }
 
   telemetry(message) {
@@ -403,15 +374,10 @@ export default class RequestReporter {
         details,
         badTokens: state.badTokens,
       });
-      return response.toWebRequestResponse();
+    } else if (this.applyBlock(state, response) === false) {
+      this.#reportTrackerInteraction('fingerprint-removed', state);
     }
 
-    this.#reportTrackerInteraction('fingerprint-removed', state);
-
-    // applyBlock
-    if (this.applyBlock(state, response) === false) {
-      return response.toWebRequestResponse();
-    }
     return response.toWebRequestResponse();
   };
 
@@ -440,14 +406,6 @@ export default class RequestReporter {
 
     this.pageLogger.onBeforeSendHeaders(state);
 
-    // overrideUserAgent
-    if (this.config.overrideUserAgent === true) {
-      const domainHash = truncatedHash(state.urlParts.generalDomain);
-      if (this.qs_whitelist.isTrackerDomain(domainHash)) {
-        response.modifyHeader('User-Agent', 'CLIQZ');
-        state.incrementStat('override_user_agent');
-      }
-    }
     // checkHasCookie
     // hasCookie flag is set by pageLogger.onBeforeSendHeaders
     if ((state.hasCookie === true) === false) {
@@ -491,16 +449,19 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
 
-    this.#reportTrackerInteraction('cookie-removed', state);
-
-    // blockCookie
-    state.incrementStat('cookie_blocked');
-    state.incrementStat('cookie_block_tp1');
-    response.modifyHeader('Cookie', '');
-    if (this.config.sendAntiTrackingHeader) {
-      response.modifyHeader(this.config.cliqzHeader, ' ');
+    if (this.dryRunMode) {
+      logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+    } else {
+      // blockCookie
+      state.incrementStat('cookie_blocked');
+      state.incrementStat('cookie_block_tp1');
+      response.modifyHeader('Cookie', '');
+      if (this.config.sendAntiTrackingHeader) {
+        response.modifyHeader(this.config.cliqzHeader, ' ');
+      }
+      state.page.counter += 1;
+      this.#reportTrackerInteraction('cookie-removed', state);
     }
-    state.page.counter += 1;
     return response.toWebRequestResponse();
   };
 
@@ -562,12 +523,16 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
 
-    this.#reportTrackerInteraction('cookie-removed', state);
+    if (this.dryRunMode) {
+      logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+    } else {
+      // blockSetCookie
+      response.modifyResponseHeader('Set-Cookie', '');
+      state.incrementStat('set_cookie_blocked');
+      state.page.counter += 1;
+      this.#reportTrackerInteraction('cookie-removed', state);
+    }
 
-    // blockSetCookie
-    response.modifyResponseHeader('Set-Cookie', '');
-    state.incrementStat('set_cookie_blocked');
-    state.page.counter += 1;
     return response.toWebRequestResponse();
   };
 
@@ -633,15 +598,12 @@ export default class RequestReporter {
     return true;
   }
 
-  applyBlock(state, _response) {
-    const response = _response;
+  applyBlock(state, response) {
     const badTokens = state.badTokens;
-    const rule = this.getDefaultRule();
 
     if (this.debug) {
       console.log(
         'ATTRACK',
-        rule,
         'URL:',
         state.urlParts.hostname,
         state.urlParts.pathname,
@@ -650,17 +612,15 @@ export default class RequestReporter {
       );
     }
 
-    if (rule === 'block') {
-      state.incrementStat(`token_blocked_${rule}`);
-      response.block();
-      response.shouldIncrementCounter = true;
-      return false;
+    let tmpUrl = state.url;
+
+    for (const token of badTokens) {
+      tmpUrl = tmpUrl.replace(
+        token,
+        this.obfuscate(token, this.config.placeHolder),
+      );
     }
 
-    let tmpUrl = state.url;
-    for (let i = 0; i < badTokens.length; i += 1) {
-      tmpUrl = tmpUrl.replace(badTokens[i], this.obfuscate(badTokens[i], rule));
-    }
     // In case unsafe tokens were in the hostname, the URI is not valid
     // anymore and we can cancel the request.
     if (!tmpUrl.startsWith(state.urlParts.origin)) {
@@ -668,12 +628,15 @@ export default class RequestReporter {
       return false;
     }
 
-    state.incrementStat(`token_blocked_${rule}`);
+    state.incrementStat(`token_blocked_placeholder`);
 
     this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
     response.redirectTo(tmpUrl);
-    response.modifyHeader(this.config.cliqzHeader, ' ');
+
+    if (this.config.sendAntiTrackingHeader) {
+      response.modifyHeader(this.config.cliqzHeader, ' ');
+    }
 
     state.page.counter += 1;
     return true;
