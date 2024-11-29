@@ -327,7 +327,7 @@ export default class RequestReporter {
     // checkExternalBlocking
     if (response.cancel === true || response.redirectUrl) {
       state.incrementStat('blocked_external');
-      response.shouldIncrementCounter = true;
+      state.page.counter += 1;
       return response.toWebRequestResponse();
     }
     // tokenExaminer.examineTokens
@@ -348,9 +348,7 @@ export default class RequestReporter {
     }
     // checkShouldBlock
     if (
-      (state.badTokens.length > 0 &&
-        this.qs_whitelist.isUpToDate() &&
-        !this.config.paused) === false
+      (state.badTokens.length > 0 && this.qs_whitelist.isUpToDate()) === false
     ) {
       return response.toWebRequestResponse();
     }
@@ -374,9 +372,11 @@ export default class RequestReporter {
         details,
         badTokens: state.badTokens,
       });
-    } else if (this.applyBlock(state, response) === false) {
-      this.#reportTrackerInteraction('fingerprint-removed', state);
+      this.#reportTrackerInteraction('fingerprint-detected', state);
+      return response.toWebRequestResponse();
     }
+
+    this.applyBlock(state, response);
 
     return response.toWebRequestResponse();
   };
@@ -441,9 +441,7 @@ export default class RequestReporter {
     }
     // shouldBlockCookie
     if (
-      (!this.checkIsWhitelisted(state) &&
-        this.isCookieEnabled(state) &&
-        !this.config.paused) === false
+      (!this.checkIsWhitelisted(state) && this.isCookieEnabled(state)) === false
     ) {
       state.incrementStat('bad_cookie_sent');
       return response.toWebRequestResponse();
@@ -451,6 +449,11 @@ export default class RequestReporter {
 
     if (this.dryRunMode) {
       logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+      logger.info('[DRY_RUN]: Skipped fingerprint removal. Details:', {
+        details,
+        cookie: response.getCookieData(),
+      });
+      this.#reportTrackerInteraction('cookie-detected', state);
     } else {
       // blockCookie
       state.incrementStat('cookie_blocked');
@@ -525,6 +528,11 @@ export default class RequestReporter {
 
     if (this.dryRunMode) {
       logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+      logger.info('[DRY_RUN]: Skipped cookie removal. Details:', {
+        details,
+        cookie: response.getResponseHeader('Set-Cookie'),
+      });
+      this.#reportTrackerInteraction('cookie-removed', state);
     } else {
       // blockSetCookie
       response.modifyResponseHeader('Set-Cookie', '');
@@ -612,33 +620,26 @@ export default class RequestReporter {
       );
     }
 
-    let tmpUrl = state.url;
+    let path =
+      state.urlParts.pathname + state.urlParts.search + state.urlParts.hash;
+    const prefix = state.url.split(path)[0];
 
     for (const token of badTokens) {
-      tmpUrl = tmpUrl.replace(
-        token,
-        this.obfuscate(token, this.config.placeHolder),
-      );
-    }
-
-    // In case unsafe tokens were in the hostname, the URI is not valid
-    // anymore and we can cancel the request.
-    if (!tmpUrl.startsWith(state.urlParts.origin)) {
-      response.block();
-      return false;
+      path = path.replace(token, this.config.placeHolder);
     }
 
     state.incrementStat(`token_blocked_placeholder`);
 
     this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
-    response.redirectTo(tmpUrl);
+    response.redirectTo(`${prefix}${path}`);
 
     if (this.config.sendAntiTrackingHeader) {
       response.modifyHeader(this.config.cliqzHeader, ' ');
     }
 
     state.page.counter += 1;
+    this.#reportTrackerInteraction('fingerprint-removed', state);
     return true;
   }
 

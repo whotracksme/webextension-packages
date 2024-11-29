@@ -66,8 +66,6 @@ export default class Config {
     this.safeKeyExpire = 7;
 
     Object.assign(this, defaults);
-
-    this.paused = false;
   }
 
   async init() {
