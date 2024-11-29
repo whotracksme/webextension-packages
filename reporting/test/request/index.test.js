@@ -326,7 +326,7 @@ describe('RequestReporter', function () {
         }
       }
 
-      for (const snapshotName of ['0001', '0002', '0003', '0004']) {
+      for (const snapshotName of ['0001', '0002', '0003', '0004', '0005', '0006']) {
         it(snapshotName, async function () {
           const messages = [];
           communicationEmiter.addListener('send', (message) =>
@@ -336,7 +336,7 @@ describe('RequestReporter', function () {
 
           // run twice to allow token telemetry to trigger
           playSnapshotScenario(chrome, snapshotName, {
-            rewriteUrls: { 'onet.pl': 'wp.pl', 'soundcloud.com': 'google.com' },
+            rewriteUrls: { 'onet.pl': 'wp.pl', 'soundcloud.com': 'google.com', 'nike.com': 'adidas.com' },
           });
           await processRunloopUntil(
             reporter.tokenTelemetry
