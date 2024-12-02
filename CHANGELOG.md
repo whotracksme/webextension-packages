@@ -1,3 +1,20 @@
+# v5.2.0 (Mon Dec 02 2024)
+
+#### 🚀 Enhancement
+
+- Add dry-run mode for anti-tracking [#142](https://github.com/whotracksme/webextension-packages/pull/142) ([@philipp-classen](https://github.com/philipp-classen) [@chrmod](https://github.com/chrmod))
+
+#### 🏠 Internal
+
+- Request: search engine scenario [#143](https://github.com/whotracksme/webextension-packages/pull/143) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.1.38 (Fri Nov 22 2024)
 
 #### 🐛 Bug Fix
