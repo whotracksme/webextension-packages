@@ -50,7 +50,6 @@ export class BlockingResponse {
     this.cancel = undefined;
     this.responseHeaders = undefined;
     this.requestHeaders = undefined;
-    this.shouldIncrementCounter = undefined;
     this.event = event;
   }
 
