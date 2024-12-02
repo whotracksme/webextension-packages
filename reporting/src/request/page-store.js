@@ -258,6 +258,7 @@ export default class PageStore {
 
         That was causing an extra page object to be created which was messing up the previous page logic.
      */
+    // 2152398850 stands for NS_BINDING_ABORTED https://searchfox.org/mozilla-central/rev/6597dd03bad82c891d084eed25cafd0c85fb333e/tools/ts/config/error_list.json#48
     if (error === 'Error code 2152398850') {
       const page = this.#pages.get(tabId);
 
