@@ -450,7 +450,7 @@ export default class RequestReporter {
       logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
       logger.info('[DRY_RUN]: Skipped fingerprint removal. Details:', {
         details,
-        cookie: response.getCookieData(),
+        cookie: state.getCookieData(),
       });
       this.#reportTrackerInteraction('cookie-detected', state);
     } else {
@@ -529,9 +529,9 @@ export default class RequestReporter {
       logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
       logger.info('[DRY_RUN]: Skipped cookie removal. Details:', {
         details,
-        cookie: response.getResponseHeader('Set-Cookie'),
+        cookie: state.getResponseHeader('Set-Cookie'),
       });
-      this.#reportTrackerInteraction('cookie-removed', state);
+      this.#reportTrackerInteraction('cookie-detected', state);
     } else {
       // blockSetCookie
       response.modifyResponseHeader('Set-Cookie', '');

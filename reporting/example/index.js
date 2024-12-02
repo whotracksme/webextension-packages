@@ -89,6 +89,7 @@ const urlReporter = new UrlReporter({
 });
 
 const requestReporter = new RequestReporter(config.request, {
+  dryRunMode: true,
   communication,
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
