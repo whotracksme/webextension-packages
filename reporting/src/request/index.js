@@ -24,7 +24,6 @@ import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
 import { HashProb, shouldCheckToken } from './hash/index.js';
 import { COOKIE_MODE, VERSION } from './config.js';
-import { shuffle } from './utils/utils.js';
 import random from '../random.js';
 
 import CookieContext from './steps/cookie-context.js';
@@ -54,6 +53,7 @@ export default class RequestReporter {
         logger.info('Tracker', event, 'with url:', state.url);
       },
       isRequestAllowed = () => false,
+      dryRunMode = false,
     },
   ) {
     this.settings = settings;
@@ -63,6 +63,14 @@ export default class RequestReporter {
     this.onTrackerInteraction = onTrackerInteraction;
     this.getBrowserInfo = getBrowserInfo;
     this.isRequestAllowed = isRequestAllowed;
+    if (dryRunMode) {
+      logger.warn(
+        '[DRY_RUN] dry-run mode is enabled. Fingerprinting removal is disabled.',
+      );
+    } else {
+      logger.debug('Fingerprinting removal is enabled');
+    }
+    this.dryRunMode = dryRunMode;
     this.VERSION = VERSION;
     this.LOG_KEY = 'attrack';
     this.debug = false;
@@ -125,31 +133,6 @@ export default class RequestReporter {
     return false;
   }
 
-  obfuscate(s, method) {
-    // used when action != 'block'
-    // default is a placeholder
-    switch (method) {
-      case 'empty':
-        return '';
-      case 'replace':
-        return shuffle(s);
-      case 'same':
-        return s;
-      case 'placeholder':
-        return this.config.placeHolder;
-      default:
-        return this.config.placeHolder;
-    }
-  }
-
-  getDefaultRule() {
-    if (this.isForceBlockEnabled()) {
-      return 'block';
-    }
-
-    return 'placeholder';
-  }
-
   isCookieEnabled() {
     return this.config.cookieEnabled;
   }
@@ -164,10 +147,6 @@ export default class RequestReporter {
 
   isReferrerEnabled() {
     return this.config.referrerEnabled;
-  }
-
-  isForceBlockEnabled() {
-    return this.config.forceBlockEnabled;
   }
 
   telemetry(message) {
@@ -347,7 +326,7 @@ export default class RequestReporter {
     // checkExternalBlocking
     if (response.cancel === true || response.redirectUrl) {
       state.incrementStat('blocked_external');
-      response.shouldIncrementCounter = true;
+      state.page.counter += 1;
       return response.toWebRequestResponse();
     }
     // tokenExaminer.examineTokens
@@ -368,9 +347,7 @@ export default class RequestReporter {
     }
     // checkShouldBlock
     if (
-      (state.badTokens.length > 0 &&
-        this.qs_whitelist.isUpToDate() &&
-        !this.config.paused) === false
+      (state.badTokens.length > 0 && this.qs_whitelist.isUpToDate()) === false
     ) {
       return response.toWebRequestResponse();
     }
@@ -385,13 +362,21 @@ export default class RequestReporter {
     if (this.checkCompatibilityList(state) === false) {
       return response.toWebRequestResponse();
     }
-
-    this.#reportTrackerInteraction('fingerprint-removed', state);
-
-    // applyBlock
-    if (this.applyBlock(state, response) === false) {
+    if (this.dryRunMode) {
+      logger.warn(
+        '[DRY_RUN]: Skipping fingerprint removal for URL:',
+        details.url,
+      );
+      logger.info('[DRY_RUN]: Skipped fingerprint removal. Details:', {
+        details,
+        badTokens: state.badTokens,
+      });
+      this.#reportTrackerInteraction('fingerprint-detected', state);
       return response.toWebRequestResponse();
     }
+
+    this.applyBlock(state, response);
+
     return response.toWebRequestResponse();
   };
 
@@ -420,14 +405,6 @@ export default class RequestReporter {
 
     this.pageLogger.onBeforeSendHeaders(state);
 
-    // overrideUserAgent
-    if (this.config.overrideUserAgent === true) {
-      const domainHash = truncatedHash(state.urlParts.generalDomain);
-      if (this.qs_whitelist.isTrackerDomain(domainHash)) {
-        response.modifyHeader('User-Agent', 'CLIQZ');
-        state.incrementStat('override_user_agent');
-      }
-    }
     // checkHasCookie
     // hasCookie flag is set by pageLogger.onBeforeSendHeaders
     if ((state.hasCookie === true) === false) {
@@ -463,24 +440,30 @@ export default class RequestReporter {
     }
     // shouldBlockCookie
     if (
-      (!this.checkIsWhitelisted(state) &&
-        this.isCookieEnabled(state) &&
-        !this.config.paused) === false
+      (!this.checkIsWhitelisted(state) && this.isCookieEnabled(state)) === false
     ) {
       state.incrementStat('bad_cookie_sent');
       return response.toWebRequestResponse();
     }
 
-    this.#reportTrackerInteraction('cookie-removed', state);
-
-    // blockCookie
-    state.incrementStat('cookie_blocked');
-    state.incrementStat('cookie_block_tp1');
-    response.modifyHeader('Cookie', '');
-    if (this.config.sendAntiTrackingHeader) {
-      response.modifyHeader(this.config.cliqzHeader, ' ');
+    if (this.dryRunMode) {
+      logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+      logger.info('[DRY_RUN]: Skipped fingerprint removal. Details:', {
+        details,
+        cookie: state.getCookieData(),
+      });
+      this.#reportTrackerInteraction('cookie-detected', state);
+    } else {
+      // blockCookie
+      state.incrementStat('cookie_blocked');
+      state.incrementStat('cookie_block_tp1');
+      response.modifyHeader('Cookie', '');
+      if (this.config.sendAntiTrackingHeader) {
+        response.modifyHeader(this.config.cliqzHeader, ' ');
+      }
+      state.page.counter += 1;
+      this.#reportTrackerInteraction('cookie-removed', state);
     }
-    state.page.counter += 1;
     return response.toWebRequestResponse();
   };
 
@@ -542,12 +525,21 @@ export default class RequestReporter {
       return response.toWebRequestResponse();
     }
 
-    this.#reportTrackerInteraction('cookie-removed', state);
+    if (this.dryRunMode) {
+      logger.warn('[DRY_RUN]: Skipping cookie removal for URL:', details.url);
+      logger.info('[DRY_RUN]: Skipped cookie removal. Details:', {
+        details,
+        cookie: state.getResponseHeader('Set-Cookie'),
+      });
+      this.#reportTrackerInteraction('cookie-detected', state);
+    } else {
+      // blockSetCookie
+      response.modifyResponseHeader('Set-Cookie', '');
+      state.incrementStat('set_cookie_blocked');
+      state.page.counter += 1;
+      this.#reportTrackerInteraction('cookie-removed', state);
+    }
 
-    // blockSetCookie
-    response.modifyResponseHeader('Set-Cookie', '');
-    state.incrementStat('set_cookie_blocked');
-    state.page.counter += 1;
     return response.toWebRequestResponse();
   };
 
@@ -613,15 +605,12 @@ export default class RequestReporter {
     return true;
   }
 
-  applyBlock(state, _response) {
-    const response = _response;
+  applyBlock(state, response) {
     const badTokens = state.badTokens;
-    const rule = this.getDefaultRule();
 
     if (this.debug) {
       console.log(
         'ATTRACK',
-        rule,
         'URL:',
         state.urlParts.hostname,
         state.urlParts.pathname,
@@ -630,32 +619,26 @@ export default class RequestReporter {
       );
     }
 
-    if (rule === 'block') {
-      state.incrementStat(`token_blocked_${rule}`);
-      response.block();
-      response.shouldIncrementCounter = true;
-      return false;
+    let path =
+      state.urlParts.pathname + state.urlParts.search + state.urlParts.hash;
+    const prefix = state.url.split(path)[0];
+
+    for (const token of badTokens) {
+      path = path.replace(token, this.config.placeHolder);
     }
 
-    let tmpUrl = state.url;
-    for (let i = 0; i < badTokens.length; i += 1) {
-      tmpUrl = tmpUrl.replace(badTokens[i], this.obfuscate(badTokens[i], rule));
-    }
-    // In case unsafe tokens were in the hostname, the URI is not valid
-    // anymore and we can cancel the request.
-    if (!tmpUrl.startsWith(state.urlParts.origin)) {
-      response.block();
-      return false;
-    }
-
-    state.incrementStat(`token_blocked_${rule}`);
+    state.incrementStat(`token_blocked_placeholder`);
 
     this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
 
-    response.redirectTo(tmpUrl);
-    response.modifyHeader(this.config.cliqzHeader, ' ');
+    response.redirectTo(`${prefix}${path}`);
+
+    if (this.config.sendAntiTrackingHeader) {
+      response.modifyHeader(this.config.cliqzHeader, ' ');
+    }
 
     state.page.counter += 1;
+    this.#reportTrackerInteraction('fingerprint-removed', state);
     return true;
   }
 
