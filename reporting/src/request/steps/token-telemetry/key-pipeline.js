@@ -87,6 +87,22 @@ export default class KeyPipeline extends CachedEntryPipeline {
           }
           let tokensToSend = Object.entries(tokens);
 
+          // In rare cases, the number of tokens may exceed the message size limit (currently 32K),
+          // such as when a website sends high-frequency requests with randomized IDs. To handle
+          // this scenario, two approaches were considered:
+          //
+          // 1. Chunking: Splitting the message into multiple smaller messages.
+          // 2. Sampling: Sending a random subset of token hashes.
+          //
+          // We implemented the second approach because the server-side aggregation aims to identify
+          // common tokens seen by enough clients. If a website sends many different values rapidly,
+          // they are likely random and unlikely to reach a quorum. Therefore, sending a random sample
+          // of token hashes should not impair the server's ability to identify common values and may
+          // even reduce noise.
+          //
+          // Exceeding the limit should be rare, and this measure serves as protection against edge cases.
+          // Currently, we are aware of only one page that triggered this issue:
+          // https://github.com/ghostery/broken-page-reports/issues/873#issuecomment-2450496021.
           if (tokensToSend.length > this.options.KEY_TOKENS_LIMIT) {
             logger.warn(
               '[Request keys-pipeline]',
