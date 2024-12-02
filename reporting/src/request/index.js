@@ -24,7 +24,6 @@ import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
 import { HashProb, shouldCheckToken } from './hash/index.js';
 import { COOKIE_MODE, VERSION } from './config.js';
-import { shuffle } from './utils/utils.js';
 import random from '../random.js';
 
 import CookieContext from './steps/cookie-context.js';
