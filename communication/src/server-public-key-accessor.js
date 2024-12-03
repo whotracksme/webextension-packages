@@ -12,6 +12,7 @@
 import logger from './logger.js';
 import { getTimeAsYYYYMMDD } from './timestamps.js';
 import { fromBase64 } from './encoding.js';
+import { FailedToFetchPublicKeys } from './errors.js';
 
 function isYYYYMMDD(date) {
   return typeof date === 'string' && /^[0-9]{8}$/.test(date);
@@ -72,21 +73,7 @@ export default class ServerPublicKeyAccessor {
 
     // not found on disk or outdated -> fetch from server
     if (!knownKeys) {
-      const url = `${this.collectorUrl}/config?fields=pubKeys`;
-      logger.info('Fetching new server public keys from', url);
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'omit',
-        redirect: 'manual',
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Failed to get config (${response.statusText}) from url=${url}`,
-        );
-      }
-      const { pubKeys } = await response.json();
-      logger.info('Fetched server public keys:', pubKeys);
-
+      const pubKeys = await this._fetchPublicKeys();
       const allKeys = Object.keys(pubKeys)
         .filter(isYYYYMMDD)
         .map((date) => [date, fromBase64(pubKeys[date])]);
@@ -102,6 +89,31 @@ export default class ServerPublicKeyAccessor {
     }
 
     this._knownKeys = knownKeys;
+  }
+
+  async _fetchPublicKeys() {
+    const url = `${this.collectorUrl}/config?fields=pubKeys`;
+    logger.info('Fetching new server public keys from', url);
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'omit',
+        redirect: 'manual',
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Failed to get config (${response.statusText}) from '${url}'`,
+        );
+      }
+      const { pubKeys } = await response.json();
+      logger.info('Fetched server public keys:', pubKeys);
+      return pubKeys;
+    } catch (e) {
+      throw new FailedToFetchPublicKeys(
+        `Failed to fetch public keys from '${url}'`,
+        { cause: e },
+      );
+    }
   }
 
   async importAndVerifyPubKeys(allKeys) {
