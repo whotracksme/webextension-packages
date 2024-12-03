@@ -8,7 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-
+import logger from '../logger.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
@@ -118,6 +118,10 @@ export default class PageStore {
   }
 
   #stagePage(page) {
+    if (page.destroyed) {
+      logger.warn('[PageStore] trying to stage a page multipe times', page.url);
+      return;
+    }
     makePageActive(page, false);
     page.destroyed = Date.now();
     // unset previous (to prevent history chain memory leak)
@@ -220,7 +224,7 @@ export default class PageStore {
       }
       // We are starting a navigation to a new page - if the previous page is complete (i.e. fully
       // loaded), stage it before we create the new page info.
-      if (page.state === PAGE_LOADING_STATE.COMPLETE && !page.destroyed) {
+      if (page.state === PAGE_LOADING_STATE.COMPLETE) {
         this.#stagePage(page);
       }
     }
