@@ -19,13 +19,13 @@
           "t": -1730735663859,
           "tps": {
             "a-v2.sndcdn.com": {
-              "c": 32,
-              "content_length": 444706,
-              "resp_ob": 32,
-              "scheme_https": 32,
-              "status_200": 32,
-              "type_2": 16,
-              "type_3": 15,
+              "c": 35,
+              "content_length": 447390,
+              "resp_ob": 35,
+              "scheme_https": 35,
+              "status_200": 35,
+              "type_2": 18,
+              "type_3": 16,
               "type_4": 1
             },
             "accounts.google.com": {
@@ -55,19 +55,37 @@
               "type_3": 2
             },
             "cf-hls-media.sndcdn.com": {
-              "c": 27,
-              "content_length": 3202255,
-              "has_qs": 27,
-              "resp_ob": 27,
-              "scheme_https": 27,
-              "status_200": 27,
-              "type_11": 27
+              "c": 37,
+              "content_length": 3842022,
+              "has_qs": 37,
+              "resp_ob": 37,
+              "scheme_https": 37,
+              "status_200": 37,
+              "type_11": 37
+            },
+            "d2g5n8b622dsn7.cloudfront.net": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_404": 1,
+              "type_11": 1
+            },
+            "events.statsigapi.net": {
+              "c": 2,
+              "content_length": 17,
+              "has_post": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_202": 1,
+              "type_11": 2
             },
             "featuregates.org": {
-              "c": 6,
-              "has_post": 3,
-              "scheme_https": 6,
-              "type_11": 6
+              "c": 8,
+              "has_post": 4,
+              "scheme_https": 8,
+              "type_11": 8
             },
             "geolocation.onetrust.com": {
               "c": 1,
@@ -75,12 +93,13 @@
               "type_11": 1
             },
             "i1.sndcdn.com": {
-              "c": 13,
-              "content_length": 186264,
-              "resp_ob": 13,
-              "scheme_https": 13,
-              "status_200": 13,
-              "type_3": 13
+              "c": 307,
+              "content_length": 826774,
+              "resp_ob": 307,
+              "scheme_https": 307,
+              "status_200": 307,
+              "type_11": 2,
+              "type_3": 305
             },
             "ingest.us.sentry.io": {
               "c": 1,
@@ -118,9 +137,9 @@
               "type_11": 1
             },
             "sb.scorecardresearch.com": {
-              "c": 1,
-              "scheme_https": 1,
-              "type_2": 1
+              "c": 4,
+              "scheme_https": 4,
+              "type_2": 4
             },
             "secure.quantserve.com": {
               "c": 1,
@@ -164,6 +183,14 @@
               "c": 1,
               "scheme_https": 1,
               "type_2": 1
+            },
+            "wave.sndcdn.com": {
+              "c": 4,
+              "content_length": 4921,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 4,
+              "type_11": 4
             },
             "www.googletagmanager.com": {
               "c": 3,
@@ -205,13 +232,13 @@
           "t": -1730735663859,
           "tps": {
             "a-v2.sndcdn.com": {
-              "c": 32,
-              "content_length": 444706,
-              "resp_ob": 32,
-              "scheme_https": 32,
-              "status_200": 32,
-              "type_2": 16,
-              "type_3": 15,
+              "c": 35,
+              "content_length": 447390,
+              "resp_ob": 35,
+              "scheme_https": 35,
+              "status_200": 35,
+              "type_2": 18,
+              "type_3": 16,
               "type_4": 1
             },
             "assets.web.soundcloud.cloud": {
@@ -241,19 +268,37 @@
               "type_3": 2
             },
             "cf-hls-media.sndcdn.com": {
-              "c": 27,
-              "content_length": 3202255,
-              "has_qs": 27,
-              "resp_ob": 27,
-              "scheme_https": 27,
-              "status_200": 27,
-              "type_11": 27
+              "c": 37,
+              "content_length": 3842022,
+              "has_qs": 37,
+              "resp_ob": 37,
+              "scheme_https": 37,
+              "status_200": 37,
+              "type_11": 37
+            },
+            "d2g5n8b622dsn7.cloudfront.net": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_404": 1,
+              "type_11": 1
+            },
+            "events.statsigapi.net": {
+              "c": 2,
+              "content_length": 17,
+              "has_post": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_202": 1,
+              "type_11": 2
             },
             "featuregates.org": {
-              "c": 6,
-              "has_post": 3,
-              "scheme_https": 6,
-              "type_11": 6
+              "c": 8,
+              "has_post": 4,
+              "scheme_https": 8,
+              "type_11": 8
             },
             "geolocation.onetrust.com": {
               "c": 1,
@@ -261,12 +306,13 @@
               "type_11": 1
             },
             "i1.sndcdn.com": {
-              "c": 13,
-              "content_length": 186264,
-              "resp_ob": 13,
-              "scheme_https": 13,
-              "status_200": 13,
-              "type_3": 13
+              "c": 307,
+              "content_length": 826774,
+              "resp_ob": 307,
+              "scheme_https": 307,
+              "status_200": 307,
+              "type_11": 2,
+              "type_3": 305
             },
             "ingest.us.sentry.io": {
               "c": 1,
@@ -304,9 +350,9 @@
               "type_11": 1
             },
             "sb.scorecardresearch.com": {
-              "c": 1,
-              "scheme_https": 1,
-              "type_2": 1
+              "c": 4,
+              "scheme_https": 4,
+              "type_2": 4
             },
             "secure.quantserve.com": {
               "c": 1,
@@ -350,6 +396,14 @@
               "c": 1,
               "scheme_https": 1,
               "type_2": 1
+            },
+            "wave.sndcdn.com": {
+              "c": 4,
+              "content_length": 4921,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 4,
+              "type_11": 4
             },
             "www.googletagmanager.com": {
               "c": 3,

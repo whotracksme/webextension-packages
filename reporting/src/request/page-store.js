@@ -8,7 +8,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
-
+import logger from '../logger.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
@@ -77,6 +77,9 @@ export default class PageStore {
     chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
+    chrome.webNavigation.onErrorOccurred.addListener(
+      this.#onNavigationErrorOccured,
+    );
     chrome.windows.onFocusChanged?.addListener(this.#onWindowFocusChanged);
 
     // popupate initially open tabs
@@ -103,6 +106,9 @@ export default class PageStore {
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
     );
+    chrome.webNavigation.onErrorOccurred.removeListener(
+      this.#onNavigationErrorOccured,
+    );
     chrome.windows.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
   }
 
@@ -112,6 +118,10 @@ export default class PageStore {
   }
 
   #stagePage(page) {
+    if (page.destroyed) {
+      logger.warn('[PageStore] trying to stage a page multipe times', page.url);
+      return;
+    }
     makePageActive(page, false);
     page.destroyed = Date.now();
     // unset previous (to prevent history chain memory leak)
@@ -232,6 +242,34 @@ export default class PageStore {
     nextPage.previous = page;
     nextPage.state = PAGE_LOADING_STATE.NAVIGATING;
     this.#pages.set(tabId, nextPage);
+  };
+
+  #onNavigationErrorOccured = (details) => {
+    const { frameId, tabId, url, error } = details;
+
+    if (frameId !== 0 || !url.startsWith('http')) {
+      return;
+    }
+
+    /**
+     *
+        On Firefox some navigation can trigger following event sequence:
+
+        * onBeforeNavigate
+        * onErrorOccurred with "error":"Error code 2152398850"
+        * onBeforeNavigate
+        * onCommitted
+
+        That was causing an extra page object to be created which was messing up the previous page logic.
+     */
+    // 2152398850 stands for NS_BINDING_ABORTED https://searchfox.org/mozilla-central/rev/6597dd03bad82c891d084eed25cafd0c85fb333e/tools/ts/config/error_list.json#48
+    if (error === 'Error code 2152398850') {
+      const page = this.#pages.get(tabId);
+
+      if (page && page.url === url) {
+        this.#pages.set(tabId, page.previous);
+      }
+    }
   };
 
   #onNavigationCommitted = (details) => {
