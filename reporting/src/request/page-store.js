@@ -77,7 +77,9 @@ export default class PageStore {
     chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
-    chrome.windows.onFocusChanged?.addListener(this.#onWindowFocusChanged);
+
+    // Note: not available on Firefox Android
+    chrome.windows?.onFocusChanged?.addListener(this.#onWindowFocusChanged);
 
     // popupate initially open tabs
     (await chrome.tabs.query({})).forEach((tab) => this.#onTabCreated(tab));
@@ -103,7 +105,7 @@ export default class PageStore {
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
     );
-    chrome.windows.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
+    chrome.windows?.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
   }
 
   checkIfEmpty() {
@@ -182,6 +184,7 @@ export default class PageStore {
     }
   };
 
+  // Note: not available on Firefox Android
   #onWindowFocusChanged = async (focusedWindowId) => {
     const activeTabs = await chrome.tabs.query({ active: true });
     for (const { id, windowId } of activeTabs) {
