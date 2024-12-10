@@ -1,3 +1,19 @@
+# v5.2.1 (Tue Dec 10 2024)
+
+#### 🐛 Bug Fix
+
+- Fix anti-tracking on Android [#147](https://github.com/whotracksme/webextension-packages/pull/147) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 📝 Documentation
+
+- Document sampling [#138](https://github.com/whotracksme/webextension-packages/pull/138) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.2.0 (Mon Dec 02 2024)
 
 #### 🚀 Enhancement
