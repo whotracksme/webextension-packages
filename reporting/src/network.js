@@ -72,7 +72,7 @@ export function isLocalIP(ip) {
 export class DnsResolver {
   constructor() {
     this.dns = new Map();
-    this._ttlInMs = DAY; // TODO: reconsider (if possible, make it small)
+    this._ttlInMs = DAY;
   }
 
   isPrivateURL(url) {
