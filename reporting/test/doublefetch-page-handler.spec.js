@@ -717,6 +717,48 @@ describe('#titlesMatchAfterDoublefetch', function () {
       }
     });
   });
+
+  describe('should tolerate removing a limited amount of chars in a longer title', function () {
+    describe('if most of the text is still preserved', function () {
+      for (const { before, after } of [
+        {
+          before:
+            'Darts-WM 2025: Alle Spiele heute live in TV und Stream schauen - COMPUTER BILD',
+          after:
+            'Darts-WM 2025: Alle Spiele live in TV und Stream schauen - COMPUTER BILD',
+        },
+        {
+          before:
+            'Darts-WM 2025: Alle Spiele heute live in TV und Stream schauen - COMPUTER BILD',
+          after:
+            'Darts-WM: Alle Spiele heute live in TV und Stream schauen - COMPUTER BILD',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldMatch(before, after);
+        });
+      }
+    });
+
+    describe('but reject if too much is removed', function () {
+      for (const { before, after } of [
+        {
+          before:
+            'Darts-WM 2025: Alle Spiele heute live in TV und Stream schauen - COMPUTER BILD',
+          after: 'Darts-WM 2025',
+        },
+        {
+          before:
+            'Darts-WM 2025: Alle Spiele heute live in TV und Stream schauen - COMPUTER BILD',
+          after: 'COMPUTER BILD',
+        },
+      ]) {
+        it(`- ${before} --> ${after}`, function () {
+          shouldNotMatch(before, after);
+        });
+      }
+    });
+  });
 });
 
 describe('#sanitizeActivity', function () {
