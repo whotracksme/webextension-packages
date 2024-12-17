@@ -87,7 +87,7 @@ describe('RequestReporter', function () {
   context('with pre-recorded events', function () {
     let reporter;
     let clock;
-    const communicationEmiter = new EventEmitter();
+    const communicationEmitter = new EventEmitter();
 
     beforeEach(async function () {
       globalThis.indexedDB = new IDBFactory();
@@ -100,18 +100,11 @@ describe('RequestReporter', function () {
           return '';
         },
       };
-      communicationEmiter.removeAllListeners();
-      const communication = {
-        send(msg) {
-          communicationEmiter.emit('send', msg);
-        },
-        sendInstant(msg) {
-          communicationEmiter.emit('sendInstant', msg);
-        },
-        trustedClock,
-      };
+      communicationEmitter.removeAllListeners();
       reporter = new RequestReporter(config, {
-        communication,
+        onMessageReady: (msg) => {
+          communicationEmitter.emit('send', msg);
+        },
         trustedClock,
         getBrowserInfo: () => ({ name: 'xx' }),
         countryProvider: { getSafeCountryCode: () => 'en' },
@@ -129,11 +122,11 @@ describe('RequestReporter', function () {
 
     context('synthetic events', function () {
       it('records stats from redirects', async function () {
-        const events = once(communicationEmiter, 'send');
+        const events = once(communicationEmitter, 'send');
 
         const tab = { id: 1, url: 'https://www.onet.pl/' };
         // creates a page
-        chrome.tabs.onCreated.dispatch(tab)
+        chrome.tabs.onCreated.dispatch(tab);
         // changes state to 'completed'
         chrome.webNavigation.onCompleted.dispatch({ tabId: tab.id, frameId: 0, });
 
@@ -221,7 +214,7 @@ describe('RequestReporter', function () {
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
-          communicationEmiter.once('send', resolve),
+          communicationEmitter.once('send', resolve),
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
@@ -237,7 +230,7 @@ describe('RequestReporter', function () {
     context('0004-ping', function () {
       it('reports pings', async function () {
         const eventPromise = new Promise((resolve) =>
-          communicationEmiter.once('send', resolve),
+          communicationEmitter.once('send', resolve),
         );
         await playScenario(chrome, {
           scenarioName: this.test.parent.title,
@@ -261,7 +254,7 @@ describe('RequestReporter', function () {
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
-          communicationEmiter.once('send', resolve),
+          communicationEmitter.once('send', resolve),
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
@@ -277,7 +270,7 @@ describe('RequestReporter', function () {
     context('0008-navigation', function () {
       it('reports 3rd parties', async function () {
         const eventPromise1 = new Promise((resolve) =>
-          communicationEmiter.once('send', resolve),
+          communicationEmitter.once('send', resolve),
         );
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
@@ -290,7 +283,7 @@ describe('RequestReporter', function () {
         });
         expect(event1.payload.data[0].tps).to.have.keys(['script1.localhost']);
         const eventPromise2 = new Promise((resolve) =>
-          communicationEmiter.once('send', resolve),
+          communicationEmitter.once('send', resolve),
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
@@ -329,7 +322,7 @@ describe('RequestReporter', function () {
       for (const snapshotName of ['0001', '0002', '0003', '0004', '0005', '0006']) {
         it(snapshotName, async function () {
           const messages = [];
-          communicationEmiter.addListener('send', (message) =>
+          communicationEmitter.addListener('send', (message) =>
             messages.push(cleanupMessage(message)),
           );
           playSnapshotScenario(chrome, snapshotName);

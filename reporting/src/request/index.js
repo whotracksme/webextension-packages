@@ -47,7 +47,7 @@ export default class RequestReporter {
     {
       trustedClock,
       countryProvider,
-      communication,
+      onMessageReady,
       getBrowserInfo,
       onTrackerInteraction = (event, state) => {
         logger.info('Tracker', event, 'with url:', state.url);
@@ -57,7 +57,7 @@ export default class RequestReporter {
     },
   ) {
     this.settings = settings;
-    this.communication = communication;
+    this.onMessageReady = onMessageReady;
     this.trustedClock = trustedClock;
     this.countryProvider = countryProvider;
     this.onTrackerInteraction = onTrackerInteraction;
@@ -150,11 +150,6 @@ export default class RequestReporter {
   }
 
   telemetry(message) {
-    if (!this.communication) {
-      logger.error('No provider provider loaded');
-      return;
-    }
-
     message.type = 'wtm.request';
     message.userAgent = this.userAgent;
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
@@ -168,8 +163,7 @@ export default class RequestReporter {
     message.payload.ctry = this.countryProvider.getSafeCountryCode();
 
     logger.debug('report', message);
-
-    this.communication.send(message);
+    this.onMessageReady(message);
   }
 
   /** Global module initialisation.
