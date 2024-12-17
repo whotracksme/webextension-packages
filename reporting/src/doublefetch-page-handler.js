@@ -28,6 +28,25 @@ const ALLOW_HTML_AND_TEXT = [
 ];
 
 /**
+ * Checks if one string (subsequence) can be derived from another string (sequence)
+ * by only removing characters. This means that the subsequence appears in the
+ * sequence in the same relative order but not necessarily consecutively.
+ *
+ * Example: "anna" is a subsequence of "banana", but "ab" is not.
+ */
+function isSubSequence({ sequence, subsequence }) {
+  let i = 0;
+  let j = 0;
+  while (i < subsequence.length && j < sequence.length) {
+    if (subsequence[i] === sequence[j]) {
+      i++;
+    }
+    j++;
+  }
+  return i === subsequence.length;
+}
+
+/**
  * This checks if the extracted title of a website is safe to share.
  * To decide, it compares it with the title on the doublefetch HTML.
  *
@@ -98,6 +117,18 @@ export function titlesMatchAfterDoublefetch({
         return true;
       }
     }
+  }
+
+  // Removing small parts of text should be generally safe. Note that
+  // this is still quite strict; edits like swapping characters or
+  // adding a single char will make this heuristic fail.
+  if (
+    before.length > after.length &&
+    after.length > 12 &&
+    after.length > 0.75 * before.length &&
+    isSubSequence({ sequence: before, subsequence: after })
+  ) {
+    return true;
   }
 
   return false;
