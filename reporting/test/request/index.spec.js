@@ -97,6 +97,7 @@ describe('request/index', function () {
         configUrl: 'http://cdn',
         remoteWhitelistUrl: 'http://cdn',
         localWhitelistUrl: '/base/assets/request',
+        messageSender: () => {},
       },
       {
         countryProvider: {},

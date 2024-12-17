@@ -304,7 +304,7 @@ export default class JobScheduler {
     // "min" value and an optional "max" value (if you want randomness).
     //
     // Examples:
-    // - { min: 2000} will delay by (at least) 2 seconds
+    // - { min: 2000 } will delay by (at least) 2 seconds
     // - { min: 2000, max: 3000 } will delay by (at least) 2-3 seconds
     //
     // Note: the real delay can be higher, since there is no guarantee

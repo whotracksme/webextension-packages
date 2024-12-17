@@ -29,6 +29,7 @@ import PersistedHashes from './persisted-hashes';
 import AliveCheck from './alive-check';
 import AliveMessageGenerator from './alive-message-generator';
 import SessionStorageWrapper from './session-storage';
+import AttrackMessageHandler from './communication-proxy/attrack-message-handler';
 import logger from './logger';
 import SelfCheck from './self-check';
 import { BloomFilter } from './bloom-filters';
@@ -152,6 +153,11 @@ export default class Reporting {
       storage,
       storageKey: 'alive_check',
     });
+
+    this.attrackMessageHandler = new AttrackMessageHandler({
+      communication,
+      jobScheduler: this.jobScheduler,
+    });
   }
 
   async init() {
@@ -268,6 +274,13 @@ export default class Reporting {
     // situation that the patterns are outdated and need to be fetched.
     // Thus, there should be no harm in calling it here.
     await this.patternsUpdater.update();
+  }
+
+  // Drop-in replacement for "communication.send". To be used by the
+  // request reporter. It is a synchronous fire-and-forget API. The
+  // message delivery will be best-effort. Also, it may be delayed.
+  forwardRequestReporterMessage(msg) {
+    this.attrackMessageHandler.sendInBackground(msg);
   }
 
   async selfChecks(check = new SelfCheck()) {
