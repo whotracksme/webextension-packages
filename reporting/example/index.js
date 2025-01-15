@@ -47,7 +47,11 @@ function createStorage() {
 
 const communication = {
   send(msg) {
-    console.warn('[Communication]', msg);
+    console.log(
+      '%c[DRY-RUN] send message:',
+      'color: blue; font-size: 30px;',
+      msg,
+    );
   },
   // TODO: use actuall anonymous-communication to access quorum
   sendInstant(msg) {
@@ -90,7 +94,13 @@ const urlReporter = new UrlReporter({
 
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
-  communication,
+  onMessageReady: (msg) => {
+    console.log(
+      '%c[DRY-RUN] request-reporter message ready:',
+      'color: green; font-size: 30px;',
+      msg,
+    );
+  },
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
   getBrowserInfo: () => ({ name: 'xx' }),
