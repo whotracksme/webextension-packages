@@ -1,3 +1,15 @@
+# v5.2.2 (Wed Jan 15 2025)
+
+#### 🐛 Bug Fix
+
+- Better error handling if fetching public keys fails [#146](https://github.com/whotracksme/webextension-packages/pull/146) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.2.1 (Tue Dec 10 2024)
 
 #### 🐛 Bug Fix
