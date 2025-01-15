@@ -32,7 +32,7 @@ const ALLOW_HTML_AND_TEXT = [
  * by only removing characters. This means that the subsequence appears in the
  * sequence in the same relative order but not necessarily consecutively.
  *
- * Example: "anna" is a subsequence of "banana", but "ab" is not.
+ * Example: "anana" is a subsequence of "banana", but "ab" is not.
  */
 function isSubSequence({ sequence, subsequence }) {
   let i = 0;
