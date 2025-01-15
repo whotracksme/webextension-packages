@@ -1,3 +1,20 @@
+# v6.0.0 (Wed Jan 15 2025)
+
+#### 💥 Breaking Change
+
+- Randomly delay sending of request reporter messages [#149](https://github.com/whotracksme/webextension-packages/pull/149) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🚀 Enhancement
+
+- Improve title matching [#150](https://github.com/whotracksme/webextension-packages/pull/150) ([@philipp-classen](https://github.com/philipp-classen) [@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v5.2.2 (Wed Jan 15 2025)
 
 #### 🐛 Bug Fix
