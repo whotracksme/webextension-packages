@@ -20,8 +20,8 @@
  * in the code (e.g. configuration errors, incorrect use of the API).
  */
 class ExtendableError extends Error {
-  constructor(message) {
-    super(message);
+  constructor(message, options) {
+    super(message, options);
     this.name = this.constructor.name;
     if (typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, this.constructor);
@@ -55,8 +55,8 @@ class ExtendableError extends Error {
  *    retried at a later point, or replaced by updated messages.
  */
 class RecoverableError extends ExtendableError {
-  constructor(message) {
-    super(message);
+  constructor(message, options) {
+    super(message, options);
     this.isRecoverableError = true;
     this.isPermanentError = false;
   }
@@ -70,15 +70,26 @@ class RecoverableError extends ExtendableError {
  * trying to send it again will again trigger the identical error.
  */
 class PermanentError extends ExtendableError {
-  constructor(message) {
-    super(message);
+  constructor(message, options) {
+    super(message, options);
     this.isRecoverableError = false;
     this.isPermanentError = true;
   }
 }
 
+/**
+ * The message size exceeded the limit of 32K.
+ */
 export class TooBigMsgError extends PermanentError {}
+
 export class TransportError extends RecoverableError {}
 export class ProtocolError extends PermanentError {}
 export class InvalidMessageError extends PermanentError {}
 export class ClockOutOfSync extends RecoverableError {}
+
+/**
+ * Thrown when the client failed to fetch public keys. Without
+ * current keys, it cannot setup the end-to-end encryption
+ * needed to communicate with the server.
+ */
+export class FailedToFetchPublicKeys extends RecoverableError {}
