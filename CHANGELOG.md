@@ -1,3 +1,15 @@
+# v6.1.0 (Thu Jan 16 2025)
+
+#### 🚀 Enhancement
+
+- MV3 support for anonymousHttpGet [#151](https://github.com/whotracksme/webextension-packages/pull/151) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.0.0 (Wed Jan 15 2025)
 
 #### 💥 Breaking Change
