@@ -17,8 +17,18 @@ import {
   UnableToOverrideHeadersError,
 } from './errors';
 import { split0 } from './utils';
+import SeqExecutor from './seq-executor';
 
 const SECOND = 1000;
+
+// This ID must not be used by other parts of the extension.
+const RESERVED_DNR_RULE_ID = 1333;
+
+function getExtensionDomain() {
+  getExtensionDomain.cached =
+    getExtensionDomain.cached || new URL(chrome.runtime.getURL('')).host;
+  return getExtensionDomain.cached;
+}
 
 /**
  * Note: 429 (too many requests) is intentionally not included in the list.
@@ -35,6 +45,111 @@ const httpStatusCodesThatShouldBeRetried = [
   504, // Gateway Timeout
   599, // Network Connect Timeout Error
 ];
+
+// The following code overwrite the headers of the request.
+// Note that "fetch" allows to overwrite headers in a simple declarative way,
+// but unfortunately it is limited. For example, it is not possible to
+// overwrite the cookie headers. The following code will work for all
+// type of headers.
+//
+// The matching logic is not perfect, but should be fairly accurate.
+// Ideally, we would want to run the handler only for the request that we
+// are about to trigger, but not for any other requests to avoid unintended
+// side-effects. To mitigate the risk, uninstall the handler at the first
+// opportunity: either if it is called or if the request finished
+// (and we know the handle will never be called).
+function headerOverrideViaWebRequestAPI(url, headers) {
+  let uninstallHandler;
+  let webRequestHandler = (details) => {
+    if (
+      details.url !== url ||
+      details.type !== 'xmlhttprequest' ||
+      details.method !== 'GET'
+    ) {
+      // does that match the request that we intended to trigger
+      return {};
+    }
+
+    // match: now we can already deregister the listener
+    // (it should not be executed multiple times)
+    uninstallHandler();
+    const headerNames = Object.keys(headers);
+    const normalizedHeaders = headerNames.map((x) => x.toLowerCase());
+
+    /* eslint-disable no-param-reassign */
+    details.requestHeaders = details.requestHeaders.filter(
+      (header) => !normalizedHeaders.includes(header.name.toLowerCase()),
+    );
+
+    headerNames.forEach((name) => {
+      details.requestHeaders.push({
+        name,
+        value: headers[name],
+      });
+    });
+
+    return {
+      requestHeaders: details.requestHeaders,
+    };
+  };
+
+  logger.debug('Installing temporary webrequest handler for URL:', url);
+  chrome.webRequest.onBeforeSendHeaders.addListener(
+    webRequestHandler,
+    {
+      urls: [url],
+    },
+    ['blocking', 'requestHeaders'],
+  );
+
+  uninstallHandler = () => {
+    if (webRequestHandler) {
+      logger.debug('Removing temporary webrequest handler for URL:', url);
+      chrome.webRequest.onBeforeSendHeaders.removeListener(webRequestHandler);
+      webRequestHandler = null;
+    }
+  };
+  return uninstallHandler;
+}
+
+// Like headerOverrideViaWebRequestAPI, but using the DNR API.
+async function headerOverrideViaDNR(url, headers) {
+  const requestHeaders = Object.entries(headers).map(([header, value]) => ({
+    header,
+    operation: 'set',
+    value,
+  }));
+  const rule = {
+    id: RESERVED_DNR_RULE_ID,
+    priority: 1,
+    action: {
+      type: 'modifyHeaders',
+      requestHeaders,
+    },
+    condition: {
+      urlFilter: url,
+      resourceTypes: ['xmlhttprequest'],
+      initiatorDomains: [getExtensionDomain()],
+    },
+  };
+  logger.debug('Installing temporary DNR rule for URL:', url);
+  await chrome.declarativeNetRequest.updateSessionRules({
+    addRules: [rule],
+  });
+  return () => {
+    logger.debug('Removing temporary DNR rule for URL:', url);
+    chrome.declarativeNetRequest
+      .updateSessionRules({
+        removeRuleIds: [rule.id],
+      })
+      .catch((e) => {
+        logger.warn('Failed to remove DNR rule', e);
+      });
+  };
+}
+
+// Enforces only one active double-fetch request at a time.
+const LOCK = new SeqExecutor();
 
 /**
  * Performs a HTTP Get. Given the constraints, it tries to include
@@ -70,196 +185,149 @@ const httpStatusCodesThatShouldBeRetried = [
  * (Maybe there is a way to generalize?)
  */
 export async function anonymousHttpGet(url, params = {}) {
-  const {
-    headers = null,
-    redirect = 'manual',
-    shouldFollowRedirect = () => true,
-    timeout = 15 * SECOND,
-    treat429AsPermanentError = false,
-    downloadLimit = 10 * 1024 * 1024, // 10 MB
-    allowedContentTypes = null,
-  } = params;
+  return LOCK.run(async () => {
+    const {
+      headers = null,
+      redirect = 'manual',
+      shouldFollowRedirect = () => true,
+      timeout = 15 * SECOND,
+      treat429AsPermanentError = false,
+      downloadLimit = 10 * 1024 * 1024, // 10 MB
+      allowedContentTypes = null,
+    } = params;
 
-  if (redirect !== 'follow' && params.shouldFollowRedirect) {
-    logger.warn(
-      'shouldFollowRedirect ignored because redirects will be automatically resolved',
-    );
-  }
+    if (redirect !== 'follow' && params.shouldFollowRedirect) {
+      logger.warn(
+        'shouldFollowRedirect ignored because redirects will be automatically resolved',
+      );
+    }
 
-  const controller = new AbortController();
-  const options = {
-    credentials: 'omit',
-    mode: 'no-cors',
-    redirect,
-    signal: controller.signal,
-  };
-
-  let timeoutTimer;
-  let timeoutTriggered = false;
-  if (timeout && timeout > 0) {
-    timeoutTimer = setTimeout(() => {
-      const msg = `Request to ${url} timed out (limit: ${timeout} ms)`;
-      controller.abort(new TemporarilyUnableToFetchUrlError(msg));
-      logger.warn(msg);
-      timeoutTimer = null;
-      timeoutTriggered = true;
-    }, timeout);
-  }
-
-  try {
-    // The following code overwrite the headers of the request.
-    // Note that "fetch" allows to overwrite headers in a simple declarative way,
-    // but unfortunately it is limited. For example, it is not possible to
-    // overwrite the cookie headers. The following code will work for all
-    // type of headers.
-    //
-    // The matching logic is not perfect but should be fairly accurate.
-    // Ideally, we would want to run the handler only for the request that we
-    // are about to trigger, but not for any other requests to avoid unintended
-    // side-effects. To mitigate the risk, uninstall the handler at the first
-    // opportunity: either if it is called or if the request finished
-    // (and we know the handle will never be called).
-    let webRequestHandler;
-    const uninstallHandler = () => {
-      if (webRequestHandler) {
-        chrome.webRequest.onBeforeSendHeaders.removeListener(webRequestHandler);
-        webRequestHandler = null;
-      }
+    const controller = new AbortController();
+    const options = {
+      credentials: 'omit',
+      mode: 'no-cors',
+      redirect,
+      signal: controller.signal,
     };
-    const headerNames = Object.keys(headers || {});
-    if (headerNames.length > 0) {
-      if (
-        !chrome.webRequest ||
-        !chrome.webRequest.onBeforeSendHeaders ||
-        !chrome.runtime.getManifest().permissions.includes('webRequestBlocking')
-      ) {
-        throw new UnableToOverrideHeadersError();
-      }
-      webRequestHandler = (details) => {
-        if (
-          details.url !== url ||
-          details.type !== 'xmlhttprequest' ||
-          details.method !== 'GET'
-        ) {
-          // does that match the request that we intended to trigger
-          return {};
-        }
 
-        // match: now we can already deregister the listener
-        // (it should not be executed multiple times)
-        uninstallHandler();
-        const normalizedHeaders = headerNames.map((x) => x.toLowerCase());
-
-        /* eslint-disable no-param-reassign */
-        details.requestHeaders = details.requestHeaders.filter(
-          (header) => !normalizedHeaders.includes(header.name.toLowerCase()),
-        );
-
-        headerNames.forEach((name) => {
-          details.requestHeaders.push({
-            name,
-            value: headers[name],
-          });
-        });
-
-        return {
-          requestHeaders: details.requestHeaders,
-        };
-      };
-
-      chrome.webRequest.onBeforeSendHeaders.addListener(
-        webRequestHandler,
-        {
-          urls: [url],
-        },
-        ['blocking', 'requestHeaders'],
-      );
+    let timeoutTimer;
+    let timeoutTriggered = false;
+    if (timeout && timeout > 0) {
+      timeoutTimer = setTimeout(() => {
+        const msg = `Request to ${url} timed out (limit: ${timeout} ms)`;
+        controller.abort(new TemporarilyUnableToFetchUrlError(msg));
+        logger.warn(msg);
+        timeoutTimer = null;
+        timeoutTriggered = true;
+      }, timeout);
     }
 
-    let response;
     try {
-      response = await fetch(url, options);
-    } catch (e) {
-      throw new TemporarilyUnableToFetchUrlError(`Failed to fetch url ${url}`, {
-        cause: e,
-      });
-    } finally {
-      uninstallHandler();
-    }
-    if (
-      response.status === 0 &&
-      (response.type == 'opaqueredirect' || response.type == 'opaque')
-    ) {
-      throw new PermanentlyUnableToFetchUrlError(
-        `Failed to fetch url ${url}: not allowed to follow redirects (response.type=${response.type})`,
-      );
-    }
-    if (response.url !== url && !shouldFollowRedirect(response.url)) {
-      throw new PermanentlyUnableToFetchUrlError(
-        `Failed to fetch url ${url}: detected forbidden redirect to ${response.url}`,
-      );
-    }
-
-    if (!response.ok) {
-      const msg = `Failed to fetch url ${url}: ${response.statusText}`;
-      if (response.status === 429) {
-        if (treat429AsPermanentError) {
-          throw new PermanentlyUnableToFetchUrlError(msg);
+      // optional cleanup operation that will be run after the request is completed
+      let cleanup = () => {};
+      if (headers && Object.keys(headers).length > 0) {
+        if (
+          chrome?.webRequest?.onBeforeSendHeaders &&
+          chrome.runtime
+            .getManifest()
+            .permissions.includes('webRequestBlocking')
+        ) {
+          cleanup = headerOverrideViaWebRequestAPI(url, headers);
+        } else if (chrome?.declarativeNetRequest?.updateSessionRules) {
+          cleanup = await headerOverrideViaDNR(url, headers);
+        } else {
+          throw new UnableToOverrideHeadersError();
         }
-        throw new RateLimitedByServerError(msg);
       }
-      if (httpStatusCodesThatShouldBeRetried.includes(response.status)) {
-        throw new TemporarilyUnableToFetchUrlError(msg);
-      }
-      throw new PermanentlyUnableToFetchUrlError(msg);
-    }
 
-    if (downloadLimit && downloadLimit > 0) {
-      const contentLength = response.headers.get('content-length');
-      if (contentLength && contentLength > downloadLimit) {
-        const err = new PermanentlyUnableToFetchUrlError(
-          `Exceeded size limit when fetching url ${url} (${contentLength} > ${downloadLimit})`,
+      let response;
+      try {
+        response = await fetch(url, options);
+      } catch (e) {
+        throw new TemporarilyUnableToFetchUrlError(
+          `Failed to fetch url ${url}`,
+          {
+            cause: e,
+          },
         );
-        controller.abort(err);
-        throw err;
+      } finally {
+        cleanup();
       }
-    }
+      if (
+        response.status === 0 &&
+        (response.type == 'opaqueredirect' || response.type == 'opaque')
+      ) {
+        throw new PermanentlyUnableToFetchUrlError(
+          `Failed to fetch url ${url}: not allowed to follow redirects (response.type=${response.type})`,
+        );
+      }
+      if (response.url !== url && !shouldFollowRedirect(response.url)) {
+        throw new PermanentlyUnableToFetchUrlError(
+          `Failed to fetch url ${url}: detected forbidden redirect to ${response.url}`,
+        );
+      }
 
-    if (allowedContentTypes) {
-      const value = response.headers.get('content-type');
-      if (value) {
-        const contentType = split0(value, ';').trim().toLowerCase();
-        if (!allowedContentTypes.includes(contentType)) {
+      if (!response.ok) {
+        const msg = `Failed to fetch url ${url}: ${response.statusText}`;
+        if (response.status === 429) {
+          if (treat429AsPermanentError) {
+            throw new PermanentlyUnableToFetchUrlError(msg);
+          }
+          throw new RateLimitedByServerError(msg);
+        }
+        if (httpStatusCodesThatShouldBeRetried.includes(response.status)) {
+          throw new TemporarilyUnableToFetchUrlError(msg);
+        }
+        throw new PermanentlyUnableToFetchUrlError(msg);
+      }
+
+      if (downloadLimit && downloadLimit > 0) {
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && contentLength > downloadLimit) {
           const err = new PermanentlyUnableToFetchUrlError(
-            `Unexpected "Content-Type" <${contentType}> (<${value}> not in {${allowedContentTypes}})`,
+            `Exceeded size limit when fetching url ${url} (${contentLength} > ${downloadLimit})`,
           );
           controller.abort(err);
           throw err;
         }
-      } else {
-        logger.warn(
-          'The URL',
-          url,
-          'did not return a "Content-Type" HTTP header.',
-          'Continue and assume the types are matching...',
-        );
       }
-    }
 
-    try {
-      return await response.text();
-    } catch (e) {
-      if (timeoutTriggered) {
+      if (allowedContentTypes) {
+        const value = response.headers.get('content-type');
+        if (value) {
+          const contentType = split0(value, ';').trim().toLowerCase();
+          if (!allowedContentTypes.includes(contentType)) {
+            const err = new PermanentlyUnableToFetchUrlError(
+              `Unexpected "Content-Type" <${contentType}> (<${value}> not in {${allowedContentTypes}})`,
+            );
+            controller.abort(err);
+            throw err;
+          }
+        } else {
+          logger.warn(
+            'The URL',
+            url,
+            'did not return a "Content-Type" HTTP header.',
+            'Continue and assume the types are matching...',
+          );
+        }
+      }
+
+      try {
+        return await response.text();
+      } catch (e) {
+        if (timeoutTriggered) {
+          throw new TemporarilyUnableToFetchUrlError(
+            `Failed to fetch url ${url} because the request timed out.`,
+          );
+        }
         throw new TemporarilyUnableToFetchUrlError(
-          `Failed to fetch url ${url} because the request timed out.`,
+          `Failed to fetch url ${url} (${e.message})`,
+          { cause: e },
         );
       }
-      throw new TemporarilyUnableToFetchUrlError(
-        `Failed to fetch url ${url} (${e.message})`,
-        { cause: e },
-      );
+    } finally {
+      clearTimeout(timeoutTimer);
     }
-  } finally {
-    clearTimeout(timeoutTimer);
-  }
+  });
 }
