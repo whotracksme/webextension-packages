@@ -4,6 +4,7 @@ import './reporting.spec.js';
 import './activity-estimator.spec.js';
 import './duplicate-detector.spec.js';
 import './doublefetch-page-handler.spec.js';
+import './http.spec.js';
 import './patterns.spec.js';
 import './patterns-updater.spec.js';
 import './job-scheduler.spec.js';

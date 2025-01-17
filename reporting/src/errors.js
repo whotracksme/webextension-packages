@@ -53,6 +53,11 @@ export class BadJobError extends PermanentError {}
 export class UnableToOverrideHeadersError extends PermanentError {}
 
 /**
+ * If the platform lacks the required APIs to support multi-step doublefetch.
+ */
+export class MultiStepDoublefetchNotSupportedError extends PermanentError {}
+
+/**
  * Thrown when requests failed, but where the client can try to
  * repeat the request without modification (e.g. timeouts will
  * fall into this category).
