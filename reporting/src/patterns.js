@@ -336,7 +336,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 3;
+const PATTERN_DSL_VERSION = 4;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but
@@ -415,12 +415,16 @@ export default class Patterns {
     }
     const doublefetchRequest = { url };
     if (this._rules[msgType].doublefetch) {
-      const { headers, followRedirects } = this._rules[msgType].doublefetch;
+      const { headers, followRedirects, steps } =
+        this._rules[msgType].doublefetch;
       if (followRedirects) {
         doublefetchRequest.redirect = 'follow';
       }
       if (headers) {
         doublefetchRequest.headers = headers;
+      }
+      if (steps) {
+        doublefetchRequest.steps = steps;
       }
     }
     return doublefetchRequest;

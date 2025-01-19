@@ -15,6 +15,7 @@ import {
   PermanentlyUnableToFetchUrlError,
   RateLimitedByServerError,
   UnableToOverrideHeadersError,
+  MultiStepDoublefetchNotSupportedError,
 } from './errors';
 import { split0 } from './utils';
 import SeqExecutor from './seq-executor';
@@ -148,6 +149,150 @@ async function headerOverrideViaDNR(url, headers) {
   };
 }
 
+// Note: the parameters are almost identical to "anonymousHttpGet"
+// with the exception that "step" is not defined. The implementation
+// here is only a single request, not a chain of requests.
+async function singleHttpGetStep(url, params = {}) {
+  const {
+    headers = null,
+    redirect = 'manual',
+    shouldFollowRedirect = () => true,
+    timeout = 15 * SECOND,
+    treat429AsPermanentError = false,
+    downloadLimit = 10 * 1024 * 1024, // 10 MB
+    allowedContentTypes = null,
+  } = params;
+
+  if (redirect !== 'follow' && params.shouldFollowRedirect) {
+    logger.warn(
+      'shouldFollowRedirect ignored because redirects will be automatically resolved',
+    );
+  }
+
+  const controller = new AbortController();
+  const options = {
+    credentials: 'omit',
+    mode: 'no-cors',
+    redirect,
+    signal: controller.signal,
+  };
+
+  let timeoutTimer;
+  let timeoutTriggered = false;
+  if (timeout && timeout > 0) {
+    timeoutTimer = setTimeout(() => {
+      const msg = `Request to ${url} timed out (limit: ${timeout} ms)`;
+      controller.abort(new TemporarilyUnableToFetchUrlError(msg));
+      logger.warn(msg);
+      timeoutTimer = null;
+      timeoutTriggered = true;
+    }, timeout);
+  }
+
+  try {
+    // optional cleanup operation that will be run after the request is completed
+    let cleanup = () => {};
+    if (headers && Object.keys(headers).length > 0) {
+      if (
+        chrome?.webRequest?.onBeforeSendHeaders &&
+        chrome.runtime.getManifest().permissions.includes('webRequestBlocking')
+      ) {
+        cleanup = headerOverrideViaWebRequestAPI(url, headers);
+      } else if (chrome?.declarativeNetRequest?.updateSessionRules) {
+        cleanup = await headerOverrideViaDNR(url, headers);
+      } else {
+        throw new UnableToOverrideHeadersError();
+      }
+    }
+
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (e) {
+      throw new TemporarilyUnableToFetchUrlError(`Failed to fetch url ${url}`, {
+        cause: e,
+      });
+    } finally {
+      cleanup();
+    }
+    if (
+      response.status === 0 &&
+      (response.type == 'opaqueredirect' || response.type == 'opaque')
+    ) {
+      throw new PermanentlyUnableToFetchUrlError(
+        `Failed to fetch url ${url}: not allowed to follow redirects (response.type=${response.type})`,
+      );
+    }
+    if (response.url !== url && !shouldFollowRedirect(response.url)) {
+      throw new PermanentlyUnableToFetchUrlError(
+        `Failed to fetch url ${url}: detected forbidden redirect to ${response.url}`,
+      );
+    }
+
+    if (!response.ok) {
+      const msg = `Failed to fetch url ${url}: ${response.statusText}`;
+      if (response.status === 429) {
+        if (treat429AsPermanentError) {
+          throw new PermanentlyUnableToFetchUrlError(msg);
+        }
+        throw new RateLimitedByServerError(msg);
+      }
+      if (httpStatusCodesThatShouldBeRetried.includes(response.status)) {
+        throw new TemporarilyUnableToFetchUrlError(msg);
+      }
+      throw new PermanentlyUnableToFetchUrlError(msg);
+    }
+
+    if (downloadLimit && downloadLimit > 0) {
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && contentLength > downloadLimit) {
+        const err = new PermanentlyUnableToFetchUrlError(
+          `Exceeded size limit when fetching url ${url} (${contentLength} > ${downloadLimit})`,
+        );
+        controller.abort(err);
+        throw err;
+      }
+    }
+
+    if (allowedContentTypes) {
+      const value = response.headers.get('content-type');
+      if (value) {
+        const contentType = split0(value, ';').trim().toLowerCase();
+        if (!allowedContentTypes.includes(contentType)) {
+          const err = new PermanentlyUnableToFetchUrlError(
+            `Unexpected "Content-Type" <${contentType}> (<${value}> not in {${allowedContentTypes}})`,
+          );
+          controller.abort(err);
+          throw err;
+        }
+      } else {
+        logger.warn(
+          'The URL',
+          url,
+          'did not return a "Content-Type" HTTP header.',
+          'Continue and assume the types are matching...',
+        );
+      }
+    }
+
+    try {
+      return await response.text();
+    } catch (e) {
+      if (timeoutTriggered) {
+        throw new TemporarilyUnableToFetchUrlError(
+          `Failed to fetch url ${url} because the request timed out.`,
+        );
+      }
+      throw new TemporarilyUnableToFetchUrlError(
+        `Failed to fetch url ${url} (${e.message})`,
+        { cause: e },
+      );
+    }
+  } finally {
+    clearTimeout(timeoutTimer);
+  }
+}
+
 // Enforces only one active double-fetch request at a time.
 const LOCK = new SeqExecutor();
 
@@ -178,6 +323,12 @@ const LOCK = new SeqExecutor();
  *     An optional list of supported Content-Types (e.g. "text/html").
  *     If given and the HTTP "Content-Type" header does not match, the
  *     function will fail with a permanent error.
+ * - steps (optional):
+ *     To configure multi-step double-fetch. That means, multiple requests
+ *     to the same URL can be performed; values seen in earlier request
+ *     can be used in later requests. Still, the chain of requests always
+ *     starts from a clean state. In other words, the temporary context is
+ *     fully isolated and will be discarded once all steps have completed.
  *
  * TODO: For pages like YouTube, double-fetch fails because of consent
  * pages. In the YouTube example, the following cookie could be set:
@@ -186,148 +337,104 @@ const LOCK = new SeqExecutor();
  */
 export async function anonymousHttpGet(url, params = {}) {
   return LOCK.run(async () => {
-    const {
-      headers = null,
-      redirect = 'manual',
-      shouldFollowRedirect = () => true,
-      timeout = 15 * SECOND,
-      treat429AsPermanentError = false,
-      downloadLimit = 10 * 1024 * 1024, // 10 MB
-      allowedContentTypes = null,
-    } = params;
+    const { steps = [], ...sharedParams } = params;
+    if (steps.length === 0) {
+      return singleHttpGetStep(url, sharedParams);
+    }
+    if (!chrome?.webRequest?.onHeadersReceived) {
+      throw new MultiStepDoublefetchNotSupportedError();
+    }
 
-    if (redirect !== 'follow' && params.shouldFollowRedirect) {
-      logger.warn(
-        'shouldFollowRedirect ignored because redirects will be automatically resolved',
+    // The context that can be queried with the placeholder syntax (e.g.
+    // "foo={{cookies:bar}"). The context is built from the requests from
+    // earlier steps. Currently, only cookies are provided, because this
+    // is a common use case to bypass consent dialogs; if needed we can
+    // extend it to other values (e.g. HTTP headers).
+    const ctx = {
+      cookie: new Map(),
+    };
+    const handler = (details) => {
+      for (let header of details.responseHeaders) {
+        if (header.name.toLowerCase() === 'set-cookie') {
+          for (const line of header.value.split('\n')) {
+            const start = line.indexOf('=');
+            if (start > 0) {
+              const key = line.slice(0, start);
+              const value = split0(line.slice(start + 1), ';');
+              ctx.cookie.set(key, value);
+            }
+          }
+        }
+      }
+      return { responseHeaders: details.responseHeaders };
+    };
+    try {
+      chrome.webRequest.onHeadersReceived.addListener(
+        handler,
+        { urls: [url] },
+        [
+          'responseHeaders',
+          'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
+        ],
+      );
+    } catch (e) {
+      chrome.webRequest.onHeadersReceived.addListener(
+        handler,
+        { urls: [url] },
+        ['responseHeaders'],
       );
     }
-
-    const controller = new AbortController();
-    const options = {
-      credentials: 'omit',
-      mode: 'no-cors',
-      redirect,
-      signal: controller.signal,
-    };
-
-    let timeoutTimer;
-    let timeoutTriggered = false;
-    if (timeout && timeout > 0) {
-      timeoutTimer = setTimeout(() => {
-        const msg = `Request to ${url} timed out (limit: ${timeout} ms)`;
-        controller.abort(new TemporarilyUnableToFetchUrlError(msg));
-        logger.warn(msg);
-        timeoutTimer = null;
-        timeoutTriggered = true;
-      }, timeout);
-    }
-
     try {
-      // optional cleanup operation that will be run after the request is completed
-      let cleanup = () => {};
-      if (headers && Object.keys(headers).length > 0) {
-        if (
-          chrome?.webRequest?.onBeforeSendHeaders &&
-          chrome.runtime
-            .getManifest()
-            .permissions.includes('webRequestBlocking')
-        ) {
-          cleanup = headerOverrideViaWebRequestAPI(url, headers);
-        } else if (chrome?.declarativeNetRequest?.updateSessionRules) {
-          cleanup = await headerOverrideViaDNR(url, headers);
-        } else {
-          throw new UnableToOverrideHeadersError();
+      let content;
+      for (const step of steps) {
+        const localParams = {
+          ...sharedParams,
+          ...step,
+        };
+        if (localParams.headers) {
+          localParams.headers = replacePlaceholders(localParams.headers, ctx);
         }
+        content = await singleHttpGetStep(url, localParams);
       }
-
-      let response;
-      try {
-        response = await fetch(url, options);
-      } catch (e) {
-        throw new TemporarilyUnableToFetchUrlError(
-          `Failed to fetch url ${url}`,
-          {
-            cause: e,
-          },
-        );
-      } finally {
-        cleanup();
-      }
-      if (
-        response.status === 0 &&
-        (response.type == 'opaqueredirect' || response.type == 'opaque')
-      ) {
-        throw new PermanentlyUnableToFetchUrlError(
-          `Failed to fetch url ${url}: not allowed to follow redirects (response.type=${response.type})`,
-        );
-      }
-      if (response.url !== url && !shouldFollowRedirect(response.url)) {
-        throw new PermanentlyUnableToFetchUrlError(
-          `Failed to fetch url ${url}: detected forbidden redirect to ${response.url}`,
-        );
-      }
-
-      if (!response.ok) {
-        const msg = `Failed to fetch url ${url}: ${response.statusText}`;
-        if (response.status === 429) {
-          if (treat429AsPermanentError) {
-            throw new PermanentlyUnableToFetchUrlError(msg);
-          }
-          throw new RateLimitedByServerError(msg);
-        }
-        if (httpStatusCodesThatShouldBeRetried.includes(response.status)) {
-          throw new TemporarilyUnableToFetchUrlError(msg);
-        }
-        throw new PermanentlyUnableToFetchUrlError(msg);
-      }
-
-      if (downloadLimit && downloadLimit > 0) {
-        const contentLength = response.headers.get('content-length');
-        if (contentLength && contentLength > downloadLimit) {
-          const err = new PermanentlyUnableToFetchUrlError(
-            `Exceeded size limit when fetching url ${url} (${contentLength} > ${downloadLimit})`,
-          );
-          controller.abort(err);
-          throw err;
-        }
-      }
-
-      if (allowedContentTypes) {
-        const value = response.headers.get('content-type');
-        if (value) {
-          const contentType = split0(value, ';').trim().toLowerCase();
-          if (!allowedContentTypes.includes(contentType)) {
-            const err = new PermanentlyUnableToFetchUrlError(
-              `Unexpected "Content-Type" <${contentType}> (<${value}> not in {${allowedContentTypes}})`,
-            );
-            controller.abort(err);
-            throw err;
-          }
-        } else {
-          logger.warn(
-            'The URL',
-            url,
-            'did not return a "Content-Type" HTTP header.',
-            'Continue and assume the types are matching...',
-          );
-        }
-      }
-
-      try {
-        return await response.text();
-      } catch (e) {
-        if (timeoutTriggered) {
-          throw new TemporarilyUnableToFetchUrlError(
-            `Failed to fetch url ${url} because the request timed out.`,
-          );
-        }
-        throw new TemporarilyUnableToFetchUrlError(
-          `Failed to fetch url ${url} (${e.message})`,
-          { cause: e },
-        );
-      }
+      return content;
     } finally {
-      clearTimeout(timeoutTimer);
+      chrome.webRequest.onHeadersReceived.removeListener(handler);
     }
   });
+}
+
+// Resolves placeholder expressions ("{{ }}"} with values provided by the
+// the context. See unit test for examples.
+//
+// Note: exported for tests only
+export function replacePlaceholders(headers, ctx) {
+  return Object.fromEntries(
+    Object.entries(headers).map(([key, value]) => {
+      const parts = [];
+      let pos = 0;
+      while (pos < value.length) {
+        const start = value.indexOf('{{', pos);
+        if (start < 0) {
+          parts.push(value.slice(pos));
+          break;
+        }
+        parts.push(value.slice(pos, start));
+        pos = start + 2;
+        const end = value.indexOf('}}', pos);
+        if (end < 0) {
+          throw new Error(`Corrupted placeholder expression: ${value}`);
+        }
+        const expression = value.slice(pos, end);
+        if (expression.startsWith('cookie:')) {
+          const cookieKey = expression.slice('cookie:'.length);
+          parts.push(ctx.cookie.get(cookieKey) || '');
+        } else {
+          throw new Error('currently only cookies are support');
+        }
+        pos = end + 2;
+      }
+      const newValue = parts.join('');
+      return [key, newValue];
+    }),
+  );
 }
