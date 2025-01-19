@@ -1,3 +1,15 @@
+# v6.2.0 (Sun Jan 19 2025)
+
+#### 🚀 Enhancement
+
+- Added support for multi-step doublefetch. [#152](https://github.com/whotracksme/webextension-packages/pull/152) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.1.0 (Thu Jan 16 2025)
 
 #### 🚀 Enhancement
