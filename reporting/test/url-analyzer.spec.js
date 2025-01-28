@@ -227,15 +227,23 @@ describe('#UrlAnalyzer', function () {
           'search-dd': {
             'https://duckduckgo.com/?q=eiffel+tower&t=h_&ia=web': {
               query: 'eiffel tower',
-              doublefetchUrl: 'https://duckduckgo.com/?q=eiffel+tower',
+              doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
             },
             'https://duckduckgo.com/?t=ffab&q=eiffel+tower&ia=web': {
               query: 'eiffel tower',
-              doublefetchUrl: 'https://duckduckgo.com/?q=eiffel+tower',
+              doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
             },
             'https://duckduckgo.com/?q=eiffel+tower': {
               query: 'eiffel tower',
-              doublefetchUrl: 'https://duckduckgo.com/?q=eiffel+tower',
+              doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
+            },
+            'https://duckduckgo.com/html?q=eiffel+tower': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
+            },
+            'https://html.duckduckgo.com/html?q=eiffel+tower': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
             },
           },
         })) {
