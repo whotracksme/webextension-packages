@@ -251,9 +251,9 @@ export default class RequestReporter {
 
   unload() {
     this.ready = false;
-    if (this.qs_whitelist) {
-      this.qs_whitelist.destroy();
-    }
+
+    this.config.unload();
+
     if (this.cookieContext) {
       this.cookieContext.unload();
     }
