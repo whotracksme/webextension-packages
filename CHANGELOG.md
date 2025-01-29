@@ -1,3 +1,15 @@
+# v6.3.1 (Wed Jan 29 2025)
+
+#### 🐛 Bug Fix
+
+- Fixed: TypeError: this.config is undefined [#155](https://github.com/whotracksme/webextension-packages/pull/155) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.3.0 (Wed Jan 29 2025)
 
 #### 🚀 Enhancement
