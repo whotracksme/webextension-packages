@@ -72,8 +72,11 @@ const URL_PATTERNS = [
   {
     category: 'search-dd',
     regexp:
-      /^https:[/][/]duckduckgo[.]com[/](?:html$|.*[?&]q=[^&]+.*&ia=web|[?]q=[^&]+$)/,
-    prefix: '?q=',
+      /^https:[/][/](?:html[.])?duckduckgo[.]com[/].*([?&]q=[^&]+.*&ia=web|[?]q=[^&]+$)/,
+    prefix: 'html?q=',
+    doublefetchHost() {
+      return 'html.duckduckgo.com';
+    },
   },
   {
     category: 'search-gh',
@@ -130,6 +133,7 @@ export default class UrlAnalyzer {
       regexp,
       prefix,
       queryFinder = (parsedUrl) => parsedUrl.searchParams.get('q'),
+      doublefetchHost = (parsedUrl) => parsedUrl.host,
     } of this._urlPatterns) {
       if (regexp.test(url)) {
         // Workaround for an encoding issue (source: https://stackoverflow.com/a/24417399/783510).
@@ -144,7 +148,8 @@ export default class UrlAnalyzer {
           return { isSupported: false };
         }
         const query_ = encodeURIComponent(query).replaceAll('%20', '+');
-        const doublefetchUrl = `https://${parsedUrl.host}/${prefix}${query_}`;
+        const host_ = doublefetchHost(parsedUrl);
+        const doublefetchUrl = `https://${host_}/${prefix}${query_}`;
         const doublefetchRequest = this.patterns.createDoublefetchRequest(
           category,
           doublefetchUrl,
