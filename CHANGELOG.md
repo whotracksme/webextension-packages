@@ -1,3 +1,20 @@
+# v6.3.0 (Wed Jan 29 2025)
+
+#### 🚀 Enhancement
+
+- URL analyzer tweak [#154](https://github.com/whotracksme/webextension-packages/pull/154) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- Request: fix unload [#153](https://github.com/whotracksme/webextension-packages/pull/153) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.2.0 (Sun Jan 19 2025)
 
 #### 🚀 Enhancement
