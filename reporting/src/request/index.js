@@ -252,17 +252,11 @@ export default class RequestReporter {
   unload() {
     this.ready = false;
 
-    this.config.unload();
-
-    if (this.cookieContext) {
-      this.cookieContext.unload();
-    }
-    if (this.tokenExaminer) {
-      this.tokenExaminer.unload();
-    }
-    if (this.tokenChecker) {
-      this.tokenChecker.unload();
-    }
+    this.config?.unload();
+    this.cookieContext?.unload();
+    this.tokenExaminer?.unload();
+    this.tokenChecker?.unload();
+    this.db?.unload();
 
     chrome.webRequest.onBeforeRequest.removeListener(this.onBeforeRequest);
     chrome.webRequest.onBeforeSendHeaders.removeListener(
@@ -272,9 +266,6 @@ export default class RequestReporter {
     chrome.webRequest.onCompleted.removeListener(this.onCompleted);
     chrome.webRequest.onErrorOccurred.removeListener(this.onErrorOccurred);
 
-    if (this.db) {
-      this.db.unload();
-    }
     clearInterval(this.dayChangedInterval);
     this.dayChangedInterval = null;
   }
