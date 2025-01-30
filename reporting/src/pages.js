@@ -299,6 +299,8 @@ class ActiveTab {
 /**
  * Responsible for aggregating information about open pages.
  *
+ * 1) Aggregation
+ *
  * It works by aggregating information from available extension APIs.
  * The implementation needs to be fault-tolerant to recover from inconsistent
  * states, loss of the state (if the service worker gets killed), lack of APIs
@@ -306,9 +308,23 @@ class ActiveTab {
  *
  * For error recovery, it may sacrifice precision by deleting information
  * that is most likely outdated or even wrong. The overall goal of this class
- * is to provide information that are reliable and match or exceed what the
+ * is to provide information that is reliable and matches or exceeds what the
  * chrome.tabs.query IP would get.
- * not called and events have been skipped.
+ *
+ * 2) Observerable "page" events
+ *
+ * In addition to providing access to the current state, the class will emit
+ * events that are domain-specific and higher-level than the browser APIs.
+ * "addObserver" can used by other classed to register a (synchronous)
+ * event handler.
+ *
+ * Note: These events are not intended to provide complete coverage (e.g.
+ * actions in incognito tabs will be omitted). If you need complete information,
+ * it is recommended to consume the browser APIs directly.
+ *
+ * ----------------------------------------------------------------------
+ *
+ * Cross-browser support:
  *
  * List of Safari quirks:
  * https://developer.apple.com/documentation/safariservices/safari_web_extensions/assessing_your_safari_web_extension_s_browser_compatibility
@@ -365,6 +381,9 @@ export default class Pages {
     this.isPageLoadMethodReliable =
       this.chrome.webNavigation?.onHistoryStateUpdated?.addListener &&
       this.chrome.webNavigation?.onHistoryStateUpdated?.removeListener;
+
+    // should be generally safe to keep always enabled (even on other platforms)
+    this.enableFirefoxAndroidQuirks = true;
   }
 
   addObserver(onPageEventCallback) {
@@ -845,6 +864,7 @@ export default class Pages {
     // listeners for chrome.webRequest API:
     if (this.chrome.webRequest) {
       for (const type of [
+        'onBeforeRequest', // note: unavailable on Safari
         'onBeforeRedirect', // note: unavailable on Safari
         'onResponseStarted', // note: unavailable on Safari
         'onCompleted', // note: unavailable on Safari
@@ -922,29 +942,63 @@ export default class Pages {
     };
   }
 
+  // Firefox quirks:
+  // * "pendingUrl" is not supported (https://bugzilla.mozilla.org/show_bug.cgi?id=1620774)
+  // * "openerTabId" is not available on Firefox for Android
   chrome_tabs_onCreated(tab) {
     if (tab.incognito) {
       this.openTabs.delete(tab.id);
       return;
     }
 
-    if (
-      tab.openerTabId === undefined ||
-      (tab.pendingUrl && !isRealPage(tab.pendingUrl))
-    ) {
+    if (tab.openerTabId !== undefined) {
+      if (tab.pendingUrl && !isRealPage(tab.pendingUrl)) {
+        // skip if it is clear that the destination is an internal page
+        return;
+      }
+
+      const openedFrom = this.openTabs.get(tab.openerTabId);
+      if (openedFrom) {
+        const oldEntry = this.openTabs.get(tab.id);
+        const entry = {
+          status: 'created',
+          ...oldEntry,
+          windowId: tab.windowId,
+          lastUpdatedAt: Date.now(),
+          pageId: ++this._pageIdGenerator,
+          openedFrom: { ...openedFrom },
+        };
+        this.openTabs.set(tab.id, entry);
+      }
       return;
     }
 
-    const openerTab = this.openTabs.get(tab.openerTabId);
-    if (openerTab) {
-      const oldEntry = this.openTabs.get(tab.id);
+    // On Firefox Android, it is more difficult, because the "openerTabId"
+    // is not implemented. But we can speculate and verify later (e.g. with
+    // webRequest.onBeforeRequest).
+    if (
+      this.enableFirefoxAndroidQuirks &&
+      tab.active === false &&
+      this.activeTab.tabId !== TAB_ID_NONE &&
+      tab.url === 'about:blank' &&
+      !this.openTabs.has(tab.id)
+    ) {
+      const activeTab = this.openTabs.get(this.activeTab.tabId);
+      if (!activeTab || !isRealPage(activeTab.url)) {
+        return;
+      }
+
+      const now = Date.now();
       const entry = {
         status: 'created',
-        ...oldEntry,
         windowId: tab.windowId,
-        lastUpdatedAt: Date.now(),
+        lastUpdatedAt: now,
         pageId: ++this._pageIdGenerator,
-        openerTab: { ...openerTab },
+        _unverifiedOpener__FirefoxAndroid__: {
+          openedFrom: { ...activeTab },
+          lastUpdatedAt: now,
+          expectedOriginUrl: activeTab.url,
+        },
       };
       this.openTabs.set(tab.id, entry);
     }
@@ -981,6 +1035,24 @@ export default class Pages {
 
       this._initAllOptionalFields(tabId, entry, now);
       this.openTabs.set(tabId, entry);
+
+      if (entry.search?.depth === 1) {
+        const { url, search, redirects = [] } = entry;
+        this.notifyObservers({
+          type: 'safe-search-landing',
+          tabId,
+          details: {
+            from: {
+              category: search.category,
+              query: search.query,
+            },
+            to: {
+              targetUrl: url,
+            },
+            redirects,
+          },
+        });
+      }
       return;
     }
 
@@ -1024,8 +1096,8 @@ export default class Pages {
         if (oldTabEntry) {
           if (oldTabEntry.status !== 'created') {
             entry.openedFrom = { ...oldTabEntry };
-          } else if (oldTabEntry.openerTab) {
-            entry.openedFrom = { ...oldTabEntry.openerTab };
+          } else if (oldTabEntry.openedFrom) {
+            entry.openedFrom = { ...oldTabEntry.openedFrom };
           }
 
           const redirects = entry.openedFrom?.pendingRedirects || [];
@@ -1044,12 +1116,9 @@ export default class Pages {
           // If a link opened in a new tab, we need to merge the opener.
           if (
             entry.openedFrom?.status === 'redirecting' &&
-            entry.openedFrom.openerTab
+            entry.openedFrom.openedFrom
           ) {
-            entry.openedFrom = {
-              ...entry.openedFrom.openerTab,
-              ...entry.openedFrom,
-            };
+            entry.openedFrom = { ...entry.openedFrom.openedFrom };
           }
 
           const previousUrl = entry.openedFrom?.url;
@@ -1076,7 +1145,6 @@ export default class Pages {
           };
         }
       }
-
       this.openTabs.set(tabId, entry);
       return;
     }
@@ -1090,7 +1158,7 @@ export default class Pages {
       let updated = false;
       if (tab.title && tab.title !== entry.title) {
         entry.title = tab.title;
-        entry.pageId = ++this._pageIdGenerator; // TODO: is this too conservative?
+        entry.pageId = ++this._pageIdGenerator;
         updated = true;
       }
       if (tab.url && tab.url !== entry.url) {
@@ -1136,6 +1204,36 @@ export default class Pages {
   }
 
   // Safari quirks:
+  // * This API is not available on iOS
+  chrome_webRequest_onBeforeRequest(details) {
+    const { incognito, type, tabId, originUrl } = details;
+    if (incognito || tabId === -1 || type !== 'main_frame') {
+      return;
+    }
+
+    if (this.enableFirefoxAndroidQuirks) {
+      const oldEntry = this.openTabs.get(tabId);
+      if (oldEntry?._unverifiedOpener__FirefoxAndroid__) {
+        let { _unverifiedOpener__FirefoxAndroid__: candidate, ...entry } =
+          oldEntry;
+        entry.lastUpdatedAt = Date.now();
+        if (
+          !entry.openedFrom &&
+          entry.status === 'created' &&
+          this.activeTab.tabId !== tabId &&
+          originUrl === candidate.expectedOriginUrl
+        ) {
+          entry.openedFrom = { ...candidate.openedFrom };
+          logger.debug('confirmed openedFrom:', oldEntry, '->', entry);
+        } else {
+          logger.debug('rejected openedFrom:', oldEntry, '->', entry);
+        }
+        this.openTabs.set(tabId, entry);
+      }
+    }
+  }
+
+  // Safari quirks:
   // * This API is not available
   chrome_webRequest_onBeforeRedirect(details) {
     if (details.initiator && details.initiator !== 'null' && details.ip) {
@@ -1153,11 +1251,17 @@ export default class Pages {
     const { tabId, statusCode, url: from, redirectUrl: to } = details;
     logger.debug('Detected redirect:', from, '->', to, 'with tabId', tabId);
 
+    const oldEntry = this.openTabs.get(tabId);
     const entry = {
-      ...this.openTabs.get(tabId),
+      ...oldEntry,
       status: 'redirecting',
       lastUpdatedAt: Date.now(),
     };
+
+    if (oldEntry && oldEntry.status === 'created' && oldEntry.openedFrom) {
+      entry.openedFrom = { ...oldEntry.openedFrom };
+    }
+
     const thisRedirect = {
       from,
       to,
@@ -1241,8 +1345,8 @@ export default class Pages {
       return;
     }
     const { tabId, sourceTabId, windowId } = details;
-    const openerTab = this.openTabs.get(sourceTabId);
-    if (!openerTab) {
+    const openedFrom = this.openTabs.get(sourceTabId);
+    if (!openedFrom) {
       return;
     }
 
@@ -1253,7 +1357,7 @@ export default class Pages {
       pageId: ++this._pageIdGenerator,
       windowId,
       lastUpdatedAt: Date.now(),
-      openerTab: { ...openerTab },
+      openedFrom: { ...openedFrom },
     };
     this.openTabs.set(tabId, entry);
   }
@@ -1282,8 +1386,28 @@ export default class Pages {
   // Safari quirks:
   // * The API exists, but "transitionType" is not supported
   chrome_webNavigation_onCommitted(details) {
-    if (details.frameId !== 0) return; // not top-level frame (of the active page)
+    const { tabId, frameId, url } = details;
+    if (frameId !== 0) return; // not top-level frame (of the active page)
 
+    let entry = this.openTabs.get(tabId);
+    if (!entry) {
+      logger.debug('Skipping navigation to', url, 'in private tab with', tabId);
+      return;
+    }
+
+    const now = Date.now();
+    entry = {
+      ...entry,
+      lastUpdated: now,
+
+      // Some pages trigger a history navigation with the identical URL
+      // immediately after loading. Remember the context here to be
+      // able to skip it later.
+      _previous_webNavigation_onCommitted: {
+        url,
+        lastUpdated: now,
+      },
+    };
     const isBackOrForward =
       details.transitionQualifiers?.includes('forward_back');
 
@@ -1298,16 +1422,15 @@ export default class Pages {
       // See also https://stackoverflow.com/q/25542015/783510
       forgetOpenedFrom = true;
     }
-    if (forgetOpenedFrom) {
-      const { tabId } = details;
-      const oldEntry = this.openTabs.get(tabId);
-      if (oldEntry?.previousUrl || oldEntry?.openedFrom) {
-        // this creates a copy, but omits the fields related to "opened from"
-        // eslint-disable-next-line no-unused-vars
-        const { previousUrl, openedFrom, search, ...entry } = { ...oldEntry };
-        this.openTabs.set(tabId, entry);
-      }
+    if (forgetOpenedFrom && (entry.previousUrl || entry.openedFrom)) {
+      // this creates a copy, but omits the fields related to "opened from"
+      // eslint-disable-next-line no-unused-vars
+      const { previousUrl, openedFrom, search, ...newEntry } = { ...entry };
+      entry = newEntry;
     }
+
+    this.openTabs.set(tabId, entry);
+    this._onWebNavigation(tabId, url, entry, { isHistoryNavigation: false });
   }
 
   // Safari quirks:
@@ -1317,15 +1440,21 @@ export default class Pages {
   // * 'server_redirect' is limited to top-level frames
   // * 'client_redirect' is not supplied when redirections are created by JavaScript.
   chrome_webNavigation_onHistoryStateUpdated(details) {
-    const { tabId, frameId, parentFrameId } = details;
+    const { tabId, frameId, parentFrameId, url } = details;
     if (frameId !== 0) return; // not top-level frame (of the active page)
     if (parentFrameId !== -1) return; // not main frame
 
-    const entry = this.openTabs.get(tabId);
-    if (!entry) {
-      logger.warn('Navigation event in a non-existing tab detected!');
+    const oldEntry = this.openTabs.get(tabId);
+    if (!oldEntry) {
+      logger.debug(
+        'Skipping history navigation to',
+        url,
+        'in private tab with',
+        tabId,
+      );
       return;
     }
+    const { _previous_webNavigation_onCommitted, ...entry } = oldEntry;
     this.openTabs.set(tabId, {
       ...entry,
       pageLoadMethod: 'history-navigation',
@@ -1333,6 +1462,65 @@ export default class Pages {
       lastUpdatedAt: Date.now(),
       pageId: ++this._pageIdGenerator,
     });
+
+    if (_previous_webNavigation_onCommitted?.url === url) {
+      logger.debug(
+        'Skipping page event for redundant history navigation to',
+        url,
+        'in tab',
+        tabId,
+      );
+    } else {
+      this._onWebNavigation(tabId, url, entry, { isHistoryNavigation: true });
+    }
+  }
+
+  _onWebNavigation(tabId, url, entry, { isHistoryNavigation }) {
+    // Note: on Firefox, this will also skip navigations to "about:blank"
+    if (!isRealPage(url)) {
+      return;
+    }
+
+    // check for inconsistencies (this would indicate a bug caused by
+    // wrong assumptions about the ordering of browser API events)
+    if (url !== entry.url) {
+      logger.warn(
+        'webNavigation reports a navigation in tab',
+        tabId,
+        'to',
+        url,
+        'This is inconsistent with the openTabs URL:',
+        entry.url,
+      );
+      return;
+    }
+
+    // immediately skip navigations to URLs that should never be shared
+    if (this.dnsResolver.isPrivateURL(url)) {
+      logger.debug('Skipping navigation to private URL:', url);
+      return;
+    }
+
+    logger.debug('Detected safe page navigation to URL:', url, 'in tab', tabId);
+    const pageEvent = {
+      type: 'safe-page-navigation',
+      url,
+      isHistoryNavigation,
+      tabId,
+    };
+    if (entry.redirects) {
+      pageEvent.redirects = entry.redirects.map(({ from, to, statusCode }) => ({
+        from: this.dnsResolver.isPrivateURL(from) ? null : from,
+        to: this.dnsResolver.isPrivateURL(to) ? null : to,
+        statusCode,
+      }));
+    }
+    if (entry.previousUrl) {
+      pageEvent.previousUrl = this.dnsResolver.isPrivateURL(entry.previousUrl)
+        ? null
+        : entry.previousUrl;
+    }
+    this.notifyObservers(pageEvent);
   }
 
   chrome_windows_onRemoved(windowId) {
@@ -1865,6 +2053,7 @@ export default class Pages {
   }
 }
 
+// exported for tests
 export const eventListenerQueue = new EventListenerQueue({
   connectTimeoutInMs: 1000,
   maxBufferLength: 1024,
