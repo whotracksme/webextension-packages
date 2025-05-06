@@ -1,3 +1,16 @@
+# v6.3.2 (Tue May 06 2025)
+
+#### 🐛 Bug Fix
+
+- Upgrade Github actions [#157](https://github.com/whotracksme/webextension-packages/pull/157) ([@philipp-classen](https://github.com/philipp-classen))
+- Update Linkedom [#156](https://github.com/whotracksme/webextension-packages/pull/156) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.3.1 (Wed Jan 29 2025)
 
 #### 🐛 Bug Fix
