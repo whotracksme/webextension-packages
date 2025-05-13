@@ -77,7 +77,7 @@ export function requireArrayOfStrings(value, name) {
     throw new Error(
       name
         ? `${name} should be an array of strings, but got: ${value}`
-        : `Paramter should be an array of strings, but got: ${value}`,
+        : `Parameter should be an array of strings, but got: ${value}`,
     );
   }
   value.forEach((x, idx) => {

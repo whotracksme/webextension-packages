@@ -15,6 +15,7 @@ import logger from './logger';
 import parseHtml from './html-parser';
 import { fastHash } from './utils';
 import random from './random';
+import { timezoneAgnosticDailyExpireAt } from './cooldowns';
 import { anonymousHttpGet } from './http';
 import { lookupBuiltinTransform } from './patterns';
 import { BadPatternError } from './errors';
@@ -23,30 +24,6 @@ function doublefetchQueryHash(query, category) {
   // defines a cooldown to avoid performing unnecessary
   // doublefetch requests in short order
   return fastHash(`dfq:${category}:${query.trim()}`, { truncate: true });
-}
-
-const HOUR = 60 * 60 * 1000;
-
-/**
- * Minimum delay before repeating doublefetch attempts
- * for queries (only counting successful attempts).
- * Waiting for next start of day (in UTC time) is recommended,
- * as trying to send messages earlier is a waste of resources.
- *
- * In addition, enforce a minimum cooldown, intended for people
- * living in timezones like US west coast where UTC midnight
- * happens during the day. Without a minimum cooldown, there is
- * the risk of introducing bias in the collected data, as we
- * would include repeated searches with higher likelihood than
- * in other parts of the world (e.g. Europe).
- */
-function chooseExpiration() {
-  const minCooldown = 8 * HOUR;
-  const tillNextUtcDay = new Date().setUTCHours(23, 59, 59, 999) + 1;
-  const tillCooldown = Date.now() + minCooldown;
-  const randomNoise = Math.ceil(random() * 2 * HOUR);
-
-  return Math.max(tillCooldown, tillNextUtcDay) + randomNoise;
 }
 
 function runSelector(item, selector, attr, baseURI) {
@@ -149,7 +126,8 @@ export default class SearchExtractor {
     }
 
     const queryHash = doublefetchQueryHash(query, category);
-    const expireAt = chooseExpiration();
+    const expireAt = timezoneAgnosticDailyExpireAt();
+
     const wasAdded = await this.persistedHashes.add(queryHash, expireAt);
     if (!wasAdded) {
       return discard('Query has been recently seen.');

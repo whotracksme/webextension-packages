@@ -16,6 +16,12 @@ import UrlAnalyzer from '../src/url-analyzer.js';
 import SessionStorageWrapper from '../src/session-storage.js';
 import Patterns from '../src/patterns.js';
 
+function waitForPendingMicrotasks() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 class ListenerMock {
   constructor() {
     this._listeners = new Set();
@@ -118,50 +124,76 @@ class ChromeApiMock {
     // eslint-disable-next-line no-undef
     const runSelfChecks = __karma__.config.ENABLE_SELF_CHECKS;
 
-    const history = [];
-    for (let step = 0; step < recordedEvents.length; step += 1) {
-      const { startedAt, api, event, args } = recordedEvents[step];
-
-      // (optional) build a log of the intermediate states
-      const stateBeforeAction = verbose
-        ? uut.describe(startedAt)
-        : '<unavailable: set VERBOSE_REPLAY to enable>';
-      history.push({
-        stateBeforeAction,
-        step,
-        ...recordedEvents[step],
-      });
-      if (history.length > 100) {
-        history.shift();
+    let step;
+    let stopObserving = false;
+    const emittedPageEvents = [];
+    uut.addObserver((event) => {
+      if (stopObserving) {
+        console.warn(
+          'page event seen after replay completed:',
+          JSON.stringify(event),
+        );
+        return;
       }
       if (verbose) {
-        console.log(`--- Executing step: ${step} ---`);
-        console.log(JSON.stringify(history.at(-1), null, 2));
+        console.log(
+          `page event triggered (step=${step}):`,
+          JSON.stringify(event),
+        );
       }
+      emittedPageEvents.push({ step, pageEvent: event });
+    });
 
-      // execute the next step (modifies the state)
-      this[api][event].dispatch(...args);
+    try {
+      const history = [];
+      for (step = 0; step < recordedEvents.length; step += 1) {
+        const { startedAt, api, event, args } = recordedEvents[step];
 
-      // (optional) run self-checks
-      // Warning: this is async, so it may change the observation!
-      if (runSelfChecks) {
-        const check = await uut.selfChecks();
-        const { status, overview, log } = check.report();
+        // (optional) build a log of the intermediate states
+        const stateBeforeAction = verbose
+          ? uut.describe(startedAt)
+          : '<unavailable: set VERBOSE_REPLAY to enable>';
+        history.push({
+          stateBeforeAction,
+          step,
+          ...recordedEvents[step],
+        });
+        if (history.length > 100) {
+          history.shift();
+        }
+        if (verbose) {
+          console.log(`--- Executing step: ${step} ---`);
+          console.log(JSON.stringify(history.at(-1), null, 2));
+        }
 
-        if (status === 'FAILED') {
-          const ppOverview = JSON.stringify(overview, null, 2);
-          console.error(
-            `*** self checks failed after step=${step}:\n`,
-            ppOverview,
-            '\n--- begin details ---:\n',
-            JSON.stringify(log, null, 2),
-            '\n--- end details ---',
-          );
-          throw new Error(
-            `self checks failed after step=${step} (for details, see logs)`,
-          );
+        // execute the next step (modifies the state)
+        this[api][event].dispatch(...args);
+
+        // (optional) run self-checks
+        // Warning: this is async, so it may change the observation!
+        if (runSelfChecks) {
+          const check = await uut.selfChecks();
+          const { status, overview, log } = check.report();
+
+          if (status === 'FAILED') {
+            const ppOverview = JSON.stringify(overview, null, 2);
+            console.error(
+              `*** self checks failed after step=${step}:\n`,
+              ppOverview,
+              '\n--- begin details ---:\n',
+              JSON.stringify(log, null, 2),
+              '\n--- end details ---',
+            );
+            throw new Error(
+              `self checks failed after step=${step} (for details, see logs)`,
+            );
+          }
         }
       }
+      await waitForPendingMicrotasks();
+      return emittedPageEvents;
+    } finally {
+      stopObserving = true;
     }
   }
 }
@@ -226,7 +258,6 @@ describe('#Pages', function () {
       try {
         expect(notes, '<notes>').to.be.a('string');
         expect(expectations, '<expectations>').to.be.an('object');
-        expect(expectations).to.contain.any.key('expectedTabs', 'activeTab');
         expect(initialState, '<events.initialState>').to.be.an('object');
         expect(recorded, '<events.recorded>').to.be.an('array');
       } catch (e) {
@@ -234,18 +265,72 @@ describe('#Pages', function () {
         throw e;
       }
 
-      await chromeApiMock.replay(uut, initialState, recorded);
+      const allEmittedPageEvents = await chromeApiMock.replay(
+        uut,
+        initialState,
+        recorded,
+      );
       const state = uut.describe();
       try {
-        const { expectedTabs, activeTab } = expectations;
+        const { expectedTabs, activeTab, pageEvents, ...unexpectedFields } =
+          expectations;
+        expect(unexpectedFields).to.eql({});
+
+        const pp = (x) => JSON.stringify(x, null, 2);
+
+        // Compares open tabs at the end of the scenario.
+        //
+        // Notes:
+        // * The given mapping from tabId to description is complete in that
+        //   sense that all keys (tabIds) must match.
+        // * However, it is a partial match, since you can leave out keys
+        //   in the page description. It will only enforce that all given
+        //   fields exist and match exactly; but it will ignore extra keys.
+        //
+        // Example 1: two open tabs (with tab 2 and 3)
+        //
+        // "expectedTabs": {
+        //   "2": {
+        //     "status": "complete",
+        //     "title": "Test page",
+        //     "url": "https://www.example.test/",
+        //     "windowId": 1,
+        //     "isActive": false,
+        //     "pageLoadMethod": "history-navigation",
+        //     "search": {
+        //       "category": "gh",
+        //       "query": "testing",
+        //       "depth": 0
+        //     }
+        //   },
+        //   "3": {
+        //     "status": "complete",
+        //   }
+        // }
         if (expectedTabs) {
-          expect(state?.openTabs).to.have.keys(Object.keys(expectedTabs));
-          for (const [tabId, data] of Object.entries(expectedTabs)) {
-            expect(state.openTabs[tabId]).to.deep.include(data);
+          const expectedTabIds = Object.keys(expectedTabs);
+          if (expectedTabIds.length !== 0) {
+            expect(state.openTabs).to.have.all.keys(expectedTabIds);
+            for (const [tabId, data] of Object.entries(expectedTabs)) {
+              expect(state.openTabs[tabId]).to.deep.include(data);
+            }
+          } else {
+            expect(Object.keys(state.openTabs)).to.eql([]);
           }
         }
 
-        const pp = (x) => JSON.stringify(x, null, 2);
+        // Compares the active tabs at the end of the scenario.
+        //
+        // Example 1: tabId=3 is active
+        //
+        // "activeTab": {
+        //   "tabId": 3
+        // }
+        //
+        // Example 2: No active tab
+        //
+        // "active": "none"
+        //
         if (activeTab === 'none') {
           if (state.activeTab !== undefined) {
             expect.fail(
@@ -266,6 +351,181 @@ describe('#Pages', function () {
                 '\n\n... to be present in\n' +
                 pp(state.activeTab),
             );
+          }
+        }
+
+        // Emitted page events:
+        //
+        // Notes:
+        // * If the ordering of "mustContain" is relevant, use "mustContainSequence"
+        //   It is like "mustContain", but does not rewind after finding a match.
+        // * To remove noise in the output:
+        //   "ignoredTypes": ["lazy-init", "page-updated", "activity-updated"]
+        // * Or focus on specific types with "focusType"
+        //
+        // "pageEvents": {
+        //   // filters:
+        //   "ignoredTypes": ["some-noisy-type"], // optional
+        //   "focusType": ["important-type", "another-important-one"], // optional
+        //
+        //   // expectations:
+        //   "mustContain": [
+        //     { // match exactly this message (needs to have exactly these tree fields)
+        //       "type": "A",
+        //       "x": "foo",
+        //       "y": "bar"
+        //     },
+        //     { // match exactly this message, but it can be before "A"
+        //       "type": "B",
+        //       "...": "ignore", // if there are more fields, it will still match
+        //     }
+        //   ],
+        //   "mustContainSequence": [
+        //     // these must be all present and in the following order
+        //     { "type": "first" },
+        //     { "type": "second" },
+        //     { "type": "third" }
+        //   ]
+        //   "mustNotContain": [
+        //     {
+        //       "type": "unexpected.signal",
+        //       "...": "ignore"
+        //     },
+        //     {
+        //       "x": "bad-value"
+        //       "...": "ignore"
+        //     }
+        //   ],
+        //   "counts": {
+        //     "first": 1, // there was exactly one message of type "first"
+        //     "second": 1,
+        //     "third": 1,
+        //   }
+        // }
+        if (pageEvents) {
+          const matches = (expectedPageEvent) => {
+            let shrink;
+            if (expectedPageEvent['...'] === 'ignore') {
+              expectedPageEvent = { ...expectedPageEvent };
+              delete expectedPageEvent['...'];
+              const focusedKeys = Object.keys(expectedPageEvent);
+
+              shrink = (fullPageEvent) => {
+                const obj = {};
+                focusedKeys.forEach((key) => (obj[key] = fullPageEvent[key]));
+                return obj;
+              };
+            } else {
+              shrink = (fullPageEvent) => fullPageEvent;
+            }
+
+            return ({ pageEvent }) => {
+              const actual = shrink(pageEvent);
+              try {
+                expect(actual).to.eql(expectedPageEvent);
+                return true;
+              } catch (e) {
+                return false;
+              }
+            };
+          };
+
+          const {
+            // Optional filters. To filter events before, or simplify to remove
+            // noise and make error messages for failed tests more readable.
+            focusedTypes = [],
+            ignoredTypes = [],
+
+            // checks:
+            mustContain,
+            mustContainSequence,
+            mustNotContain,
+            counts,
+          } = pageEvents;
+          let emittedPageEvents = [...allEmittedPageEvents];
+          if (focusedTypes.length > 0) {
+            const isFocused = ({ pageEvent }) =>
+              focusedTypes.includes(pageEvent.type);
+            emittedPageEvents = emittedPageEvents.filter(isFocused);
+          } else if (ignoredTypes.length > 0) {
+            const isIgnored = ({ pageEvent }) =>
+              ignoredTypes.includes(pageEvent.type);
+            emittedPageEvents = emittedPageEvents.filter((x) => !isIgnored(x));
+          }
+          if (mustContain) {
+            expect(mustContain, '<expectations.mustContain>').to.be.an('array');
+            for (const check of mustContain) {
+              if (!emittedPageEvents.some(matches(check))) {
+                expect.fail(
+                  `Failed to find matching page event.\n\n` +
+                    `List of all events:\n${pp(allEmittedPageEvents)}\n\n` +
+                    `----------------------------------------------------------------------\n\n` +
+                    `List of events after filter/focus:\n${pp(
+                      emittedPageEvents,
+                    )}\n\n` +
+                    `Expected to find a signal that satisfies: ${pp(check)}\n` +
+                    `Hint: if you want to ignore missing fields, use { "...": "ignore" }`,
+                );
+              }
+            }
+          }
+          if (mustContainSequence) {
+            expect(
+              mustContainSequence,
+              '<expectations.mustContainSequence>',
+            ).to.be.an('array');
+            let remainingEvents = [...emittedPageEvents];
+            for (const check of mustContainSequence) {
+              const isMatch = matches(check);
+              for (;;) {
+                const event = remainingEvents.shift();
+                if (!event) {
+                  expect.fail(
+                    `Failed to find matching sequence.\n\n` +
+                      `List of events after filter/focus:\n` +
+                      `${pp(emittedPageEvents)}\n\n` +
+                      `Expected to find a signal that satisfies: ${pp(
+                        check,
+                      )}\n` +
+                      `Hint: if you want to ignore missing fields, use { "...": "ignore" }`,
+                  );
+                }
+                if (isMatch(event)) {
+                  break;
+                }
+              }
+            }
+          }
+          if (mustNotContain) {
+            expect(mustNotContain, '<expectations.mustNotContain>').to.be.an(
+              'array',
+            );
+            for (const check of mustNotContain) {
+              const unexpectedEvent = emittedPageEvents.find(matches(check));
+              if (unexpectedEvent) {
+                const event = pp(unexpectedEvent);
+                expect.fail(
+                  `Found unexpected page event:${event}\n\nIt matches: ${pp(
+                    check,
+                  )}`,
+                );
+              }
+            }
+          }
+          if (counts) {
+            expect(counts, '<expectations.counts>').to.be.an('object');
+            for (const [eventType, expectedCount] of Object.entries(counts)) {
+              const events = allEmittedPageEvents.filter(
+                (x) => x.pageEvent.type === eventType,
+              );
+              if (events.length !== expectedCount) {
+                expect.fail(
+                  `List of all matching page events that have been found:\n` +
+                    JSON.stringify(events, null, 2) +
+                    `\n\nExpected ${expectedCount} of type ${eventType}, but found ${events.length}.`,
+                );
+              }
+            }
           }
         }
       } catch (e) {
@@ -552,18 +812,22 @@ describe('#Pages', function () {
                 console.log(`test ${name}: PASSED`);
               } catch (e) {
                 testsFailed.push({ name, error: e });
-                e.message = `Test fixture <${name}> failed: ${e}`;
+                e.message = `Test fixture <${name}> failed: ${e}\n\nTest fixture <${name}>`;
                 console.error(e);
                 if (e.results) {
                   console.log(`This was the scenario (${name}):\n
-----------------------------------------------------------------------
-${JSON.stringify(fixture.scenario.expectations, null, 2)}
-----------------------------------------------------------------------
+---------------------- begin scenario notes --------------------------
+${fixture.scenario?.notes || '<missing>'}
+----------------------- end scenario notes  --------------------------
+
+-------------------- begin scenario expectations ---------------------
+${JSON.stringify(fixture.scenario?.expectations || '<missing>', null, 2)}
+--------------------- end scenario expectations ----------------------
 
 But this was the actual state:\n
-----------------------------------------------------------------------
+--------------------- begin actual state -----------------------------
 ${JSON.stringify(e.results, null, 2)}
-----------------------------------------------------------------------
+---------------------- end actual state ------------------------------
 `);
                 }
               }
