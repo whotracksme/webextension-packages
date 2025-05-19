@@ -1,3 +1,15 @@
+# v7.0.0 (Mon May 19 2025)
+
+#### 💥 Breaking Change
+
+- Navigational tracking detection [#148](https://github.com/whotracksme/webextension-packages/pull/148) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v6.3.2 (Tue May 06 2025)
 
 #### 🐛 Bug Fix
