@@ -1,3 +1,15 @@
+# v7.1.0 (Mon May 19 2025)
+
+#### 🚀 Enhancement
+
+- Support for filtering out redundant signals [#159](https://github.com/whotracksme/webextension-packages/pull/159) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.0.0 (Mon May 19 2025)
 
 #### 💥 Breaking Change
