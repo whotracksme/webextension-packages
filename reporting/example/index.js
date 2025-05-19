@@ -10,7 +10,6 @@
  */
 import './setup.js';
 import { UrlReporter, RequestReporter, setLogLevel } from '../src/index.js';
-import rules from './rules.json';
 
 (chrome.action || chrome.browserAction).onClicked.addListener(() => {
   chrome.tabs.create({
@@ -53,7 +52,7 @@ const communication = {
       msg,
     );
   },
-  // TODO: use actuall anonymous-communication to access quorum
+  // TODO: use actual anonymous-communication to access quorum
   sendInstant(msg) {
     console.warn('[Communication instant]', msg);
     return Promise.resolve({
@@ -74,7 +73,7 @@ const communication = {
 const config = {
   url: {
     ALLOWED_COUNTRY_CODES: ['de'],
-    PATTERNS_URL: '',
+    PATTERNS_URL: 'https://cdn2.ghostery.com/wtm-chrome-desktop/patterns.json',
     CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
   },
   request: {
@@ -132,13 +131,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-(async function () {
-  await urlReporter.init();
-  await urlReporter.patterns.updatePatterns(rules);
-  await urlReporter.analyzeUrl('https://www.google.com/search?q=shoes');
-  await urlReporter.processPendingJobs();
-  await requestReporter.init();
-})();
+urlReporter.init().catch(console.error);
+requestReporter.init().catch(console.error);
 
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;

@@ -47,15 +47,14 @@ export default class PageAggregator {
     if (event.type === 'full-sync') {
       this.fullSync();
     } else if (event.type === 'lazy-init' || event.type === 'page-updated') {
-      // TODO: is there a down-side in increasing the cooldown?
-      // (especially, if there are many tabs open, it may become a problem)
       if (Date.now() > this._lastFullSync + COOLDOWN_FOR_FORCING_A_FULL_SYNC) {
         logger.debug('Forcing full sync');
         this.fullSync();
       } else {
-        const { tabId } = event;
-        this.syncTab(tabId);
+        this.syncTab(event.tabId);
       }
+    } else if (event.type === 'search-landing') {
+      this.syncTab(event.tabId);
     } else if (event.type === 'activity-updated') {
       const { urls, activityEstimator } = event;
       this._dbExecutor
@@ -63,8 +62,6 @@ export default class PageAggregator {
           await this.pagedb.updateActivity(urls, activityEstimator);
         })
         .catch(console.error);
-    } else {
-      logger.warn('Unexpected signal:', event);
     }
   }
 

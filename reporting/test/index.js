@@ -13,6 +13,7 @@ import './persisted-hashes.spec.js';
 import './url-analyzer.spec.js';
 import './alive-check.spec.js';
 import './alive-message-generator.spec.js';
+import './nav-tracking-detector.spec.js';
 import './network.spec.js';
 import './pagedb.spec.js';
 import './pages.spec.js';
