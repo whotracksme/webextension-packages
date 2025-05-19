@@ -16,19 +16,82 @@ import {
   RateLimitedByServerError,
   UnableToOverrideHeadersError,
   MultiStepDoublefetchNotSupportedError,
+  DynamicDoublefetchNotSupportedError,
 } from './errors';
-import { split0 } from './utils';
+import { requireString, split0 } from './utils';
 import SeqExecutor from './seq-executor';
+import { randomBetween } from './random';
 
 const SECOND = 1000;
 
 // This ID must not be used by other parts of the extension.
-const RESERVED_DNR_RULE_ID = 1333;
+const RESERVED_DNR_RULE_ID_HEADER_OVERRIDE = 1333;
+const RESERVED_DNR_RULE_ID_OFFSCREEN = 1334;
 
 function getExtensionDomain() {
   getExtensionDomain.cached =
     getExtensionDomain.cached || new URL(chrome.runtime.getURL('')).host;
   return getExtensionDomain.cached;
+}
+
+function identicalExceptForSearchParams(url1, url2) {
+  if (url1 === url2) {
+    return true;
+  }
+  const x = new URL(url1);
+  const y = new URL(url2);
+  x.search = '';
+  y.search = '';
+  return x.toString() === y.toString();
+}
+
+// A list of safe URL parameter modifier operations.
+// Rule of thumb:
+// * builtins to remove or randomize should be safe.
+// * replacing by arbitrary values could lead to unintended effects
+//   (e.g. for sites that can be redirected via URL parameters)
+const BUILTIN_PARAM_MODIFIERS = {
+  /**
+   * Replaced the old value with a random one (10-20 alpha-numeric characters).
+   */
+  random1: (oldValue) => {
+    requireString(oldValue);
+
+    const length = Math.round(randomBetween(6, 14));
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+
+    let result = '';
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.- ';
+    for (let i = 0; i < length; i++) {
+      result += characters[array[i] % characters.length];
+    }
+    return result.trim();
+  },
+};
+
+function createLocalUrl(url, params) {
+  const paramEntries = Object.entries(params);
+  if (paramEntries.length === 0) {
+    return url;
+  }
+
+  const modifiedUrl = new URL(url);
+  for (const [operation, queryKeyNames] of paramEntries) {
+    const func = BUILTIN_PARAM_MODIFIERS[operation];
+    if (!func) {
+      throw new Error(`Unsupported operation: <<${operation}>>`);
+    }
+    const { searchParams } = modifiedUrl;
+    for (const key of queryKeyNames) {
+      const val = searchParams.get(key);
+      if (val !== null) {
+        searchParams.set(key, func(val));
+      }
+    }
+  }
+  return modifiedUrl.toString();
 }
 
 /**
@@ -121,7 +184,7 @@ async function headerOverrideViaDNR(url, headers) {
     value,
   }));
   const rule = {
-    id: RESERVED_DNR_RULE_ID,
+    id: RESERVED_DNR_RULE_ID_HEADER_OVERRIDE,
     priority: 1,
     action: {
       type: 'modifyHeaders',
@@ -147,6 +210,83 @@ async function headerOverrideViaDNR(url, headers) {
         logger.warn('Failed to remove DNR rule', e);
       });
   };
+}
+
+async function tryCloseOffscreenDocument() {
+  try {
+    await chrome.offscreen.closeDocument();
+  } catch (e) {
+    if (e.message === 'No current offscreen document.') {
+      logger.debug('offscreen document already closed.');
+    } else {
+      throw e;
+    }
+  }
+}
+
+const OFFSCREEN_DOCUMENT_PATH = 'offscreen/doublefetch/index.html';
+
+async function withOffscreenDocumentReady(url, headers, asyncCallback) {
+  const cleanups = [];
+  try {
+    const domain = new URL(url).hostname;
+    const rule = {
+      id: RESERVED_DNR_RULE_ID_OFFSCREEN,
+      condition: {
+        initiatorDomains: [chrome.runtime.id],
+        requestDomains: [domain],
+        resourceTypes: ['sub_frame'],
+      },
+      action: {
+        type: 'modifyHeaders',
+        responseHeaders: [
+          { header: 'X-Frame-Options', operation: 'remove' },
+          { header: 'Frame-Options', operation: 'remove' },
+        ],
+      },
+    };
+
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [rule.id],
+      addRules: [rule],
+    });
+    cleanups.push(() =>
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [rule.id],
+      }),
+    );
+
+    const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      documentUrls: [offscreenUrl],
+    });
+    if (existingContexts.length > 0) {
+      // TODO: what do do here? Normally, it should not happen in our setup.
+      // Maybe close the document and continue?
+      logger.warn('Existing context found:', existingContexts);
+      throw new Error('Unexpected: existing context found');
+    }
+
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_DOCUMENT_PATH,
+      reasons: ['IFRAME_SCRIPTING'],
+      justification: 'credentialless iframe',
+    });
+    cleanups.push(() => tryCloseOffscreenDocument());
+
+    return await asyncCallback();
+  } finally {
+    await Promise.all(
+      cleanups.map(async (x) => {
+        try {
+          await x();
+        } catch (e) {
+          logger.warn('Unexpected error while cleaning up resources:', e);
+        }
+      }),
+    );
+  }
 }
 
 // Note: the parameters are almost identical to "anonymousHttpGet"
@@ -335,71 +475,228 @@ const LOCK = new SeqExecutor();
  * "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"
  * (Maybe there is a way to generalize?)
  */
-export async function anonymousHttpGet(url, params = {}) {
+export async function anonymousHttpGet(originalUrl, params = {}) {
   return LOCK.run(async () => {
     const { steps = [], ...sharedParams } = params;
     if (steps.length === 0) {
-      return singleHttpGetStep(url, sharedParams);
+      return singleHttpGetStep(originalUrl, sharedParams);
     }
     if (!chrome?.webRequest?.onHeadersReceived) {
       throw new MultiStepDoublefetchNotSupportedError();
     }
+    const hasDynamicSteps = steps.some((x) => x.dynamic);
+    if (hasDynamicSteps && !chrome?.offscreen?.createDocument) {
+      throw new DynamicDoublefetchNotSupportedError();
+    }
 
     // The context that can be queried with the placeholder syntax (e.g.
-    // "foo={{cookies:bar}"). The context is built from the requests from
-    // earlier steps. Currently, only cookies are provided, because this
-    // is a common use case to bypass consent dialogs; if needed we can
-    // extend it to other values (e.g. HTTP headers).
-    const ctx = {
-      cookie: new Map(),
+    // "foo={{cookie:bar}}"). The context is built from the requests from
+    // earlier steps. For instance, a use case is to bypass consent dialogs
+    // by modifying cookies.
+    const observer = {
+      // to be overwritten later to mark dependencies for the next step:
+      // e.g. "ctx.cookie.set('foo', '42')" will trigger onChange('cookie', 'foo', '42')
+      onChange: null,
     };
-    const handler = (details) => {
-      for (let header of details.responseHeaders) {
-        if (header.name.toLowerCase() === 'set-cookie') {
-          for (const line of header.value.split('\n')) {
-            const start = line.indexOf('=');
-            if (start > 0) {
-              const key = line.slice(0, start);
-              const value = split0(line.slice(start + 1), ';');
-              ctx.cookie.set(key, value);
+    const ctx = withContextObserver(
+      {
+        cookie: new Map(), // default ('set-cookies' in response)
+        cookie0: new Map(), // fallback ('cookies' in request)
+        param: new Map(), // URL params
+      },
+      observer,
+    );
+
+    let content;
+    for (
+      let unsafeStepIdx = 0;
+      unsafeStepIdx < steps.length;
+      unsafeStepIdx += 1
+    ) {
+      const stepIdx = unsafeStepIdx; // eliminate pitfalls due to mutability
+      const currentStep = steps[stepIdx];
+      const nextStep = steps[stepIdx + 1];
+      const localParams = {
+        ...sharedParams,
+        ...currentStep,
+      };
+
+      const readyForNextStep = new Promise((resolve, reject) => {
+        observer.onChange = null;
+        if (!currentStep.dynamic) {
+          resolve();
+          return;
+        }
+
+        try {
+          const graph = buildDependencyGraph(nextStep);
+          if (graph.allReady) {
+            resolve();
+            return;
+          }
+          observer.onChange = graph.onChange;
+          graph.onReady = resolve;
+        } catch (e) {
+          reject(e);
+        }
+      });
+
+      if (localParams.headers) {
+        localParams.headers = replacePlaceholders(localParams.headers, ctx);
+      }
+
+      const localUrl = createLocalUrl(originalUrl, localParams.params || {});
+      if (!identicalExceptForSearchParams(originalUrl, localUrl)) {
+        // By design, this should be impossible to reach. But by enforcing it, we
+        // eliminate the risk of ending up with unintended requests to different hosts.
+        throw new PermanentlyUnableToFetchUrlError(
+          `Rejected: local URL should only change params, but got: ${originalUrl} -> ${localUrl}`,
+        );
+      }
+
+      const { origin } = new URL(localUrl);
+      const matchedUrls = [`${origin}/*`];
+
+      const onBeforeSendHeaders = (details) => {
+        if (
+          details.tabId !== -1 ||
+          (details.type !== 'xmlhttprequest' && details.type !== 'sub_frame')
+        ) {
+          logger.debug('onBeforeSendHeaders[ignored]:', details);
+          return;
+        }
+
+        logger.debug('onBeforeSendHeaders[match]', details);
+        for (const header of details.requestHeaders) {
+          if (header.name.toLowerCase() === 'cookie') {
+            for (const line of header.value.split('\n')) {
+              const start = line.indexOf('=');
+              if (start > 0) {
+                const key = line.slice(0, start);
+                const value = split0(line.slice(start + 1), ';');
+                ctx.cookie0.set(key, value);
+              }
             }
           }
         }
-      }
-      return { responseHeaders: details.responseHeaders };
-    };
-    try {
-      chrome.webRequest.onHeadersReceived.addListener(
-        handler,
-        { urls: [url] },
-        [
-          'responseHeaders',
-          'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
-        ],
-      );
-    } catch (e) {
-      chrome.webRequest.onHeadersReceived.addListener(
-        handler,
-        { urls: [url] },
-        ['responseHeaders'],
-      );
-    }
-    try {
-      let content;
-      for (const step of steps) {
-        const localParams = {
-          ...sharedParams,
-          ...step,
-        };
-        if (localParams.headers) {
-          localParams.headers = replacePlaceholders(localParams.headers, ctx);
+        const { searchParams } = new URL(details.url);
+        for (const [key, value] of [...searchParams]) {
+          ctx.param.set(key, value);
         }
-        content = await singleHttpGetStep(url, localParams);
+      };
+      try {
+        chrome.webRequest.onBeforeSendHeaders.addListener(
+          onBeforeSendHeaders,
+          { urls: matchedUrls },
+          [
+            'requestHeaders',
+            'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
+          ],
+        );
+      } catch (e) {
+        chrome.webRequest.onBeforeSendHeaders.addListener(
+          onBeforeSendHeaders,
+          { urls: matchedUrls },
+          ['requestHeaders'],
+        );
       }
-      return content;
-    } finally {
-      chrome.webRequest.onHeadersReceived.removeListener(handler);
+
+      const onHeadersReceived = (details) => {
+        if (
+          details.tabId !== -1 ||
+          (details.type !== 'xmlhttprequest' && details.type !== 'sub_frame')
+        ) {
+          logger.debug('onHeaderReceived[ignored]:', details);
+          return { responseHeaders: details.responseHeaders };
+        }
+
+        logger.debug('onHeaderReceived[match]:', details);
+        for (const header of details.responseHeaders) {
+          if (header.name.toLowerCase() === 'set-cookie') {
+            for (const line of header.value.split('\n')) {
+              const start = line.indexOf('=');
+              if (start > 0) {
+                const key = line.slice(0, start);
+                const value = split0(line.slice(start + 1), ';');
+                ctx.cookie.set(key, value);
+              }
+            }
+          }
+        }
+        return { responseHeaders: details.responseHeaders };
+      };
+      try {
+        chrome.webRequest.onHeadersReceived.addListener(
+          onHeadersReceived,
+          { urls: matchedUrls },
+          [
+            'responseHeaders',
+            'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
+          ],
+        );
+      } catch (e) {
+        chrome.webRequest.onHeadersReceived.addListener(
+          onHeadersReceived,
+          { urls: matchedUrls },
+          ['responseHeaders'],
+        );
+      }
+      try {
+        if (currentStep.dynamic) {
+          // TODO: getting content of the last step is currently not implemented.
+          // If needed, one idea is to use content scripts in the offscreen document.
+          content = '';
+
+          await withOffscreenDocumentReady(localUrl, localParams, async () => {
+            const { ok, error } = await chrome.runtime.sendMessage({
+              target: 'offscreen:urlReporting',
+              type: 'request',
+              data: { url: localUrl },
+            });
+            if (!ok) {
+              throw new Error(
+                `Unexpected error (details: ${error || '<unavailable>'})`,
+              );
+            }
+
+            let timeout = null;
+            const timedOut = new Promise((resolve, reject) => {
+              const maxTime = params.timeout || 15 * SECOND;
+              timeout = setTimeout(() => {
+                timeout = null;
+                logger.warn(
+                  'Dynamic fetch of URL',
+                  localUrl,
+                  'exceeded the timeout of',
+                  maxTime,
+                  'ms. Details:',
+                  {
+                    localUrl,
+                    currentStep,
+                    nextStep,
+                    ctx,
+                  },
+                );
+                reject(`Timeout when dynamically fetching ${localUrl}`);
+              }, maxTime);
+            });
+            try {
+              await Promise.race([readyForNextStep, timedOut]);
+            } finally {
+              clearTimeout(timeout);
+            }
+          });
+        } else {
+          content = await singleHttpGetStep(localUrl, localParams);
+        }
+      } finally {
+        chrome.webRequest.onBeforeSendHeaders.removeListener(
+          onBeforeSendHeaders,
+        );
+        chrome.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
+      }
     }
+    return content;
   });
 }
 
@@ -424,17 +721,157 @@ export function replacePlaceholders(headers, ctx) {
         if (end < 0) {
           throw new Error(`Corrupted placeholder expression: ${value}`);
         }
-        const expression = value.slice(pos, end);
-        if (expression.startsWith('cookie:')) {
-          const cookieKey = expression.slice('cookie:'.length);
-          parts.push(ctx.cookie.get(cookieKey) || '');
-        } else {
-          throw new Error('currently only cookies are support');
+
+        const fullExpression = value.slice(pos, end);
+        let resolved;
+        for (const expr of fullExpression.split('||')) {
+          if (expr.startsWith('cookie:')) {
+            const key = expr.slice('cookie:'.length);
+            resolved = ctx.cookie.get(key);
+          } else if (expr.startsWith('cookie0:')) {
+            const key = expr.slice('cookie0:'.length);
+            resolved = ctx.cookie0.get(key);
+          } else if (expr.startsWith('param:')) {
+            const key = expr.slice('param:'.length);
+            resolved = ctx.param.get(key);
+          } else {
+            throw new Error(
+              `Unsupported expression: stopped at <<${expr}>> (full expression: ${fullExpression})`,
+            );
+          }
+          if (resolved) {
+            break;
+          }
         }
+        parts.push(resolved || '');
         pos = end + 2;
       }
       const newValue = parts.join('');
       return [key, newValue];
     }),
   );
+}
+
+// Note: exported for tests only
+export function findPlaceholders(text) {
+  const found = [];
+  let pos = 0;
+  for (;;) {
+    const startPos = text.indexOf('{{', pos);
+    if (startPos === -1) break;
+    const endPos = text.indexOf('}}', startPos + 2);
+    if (endPos === -1) break;
+
+    found.push(text.slice(startPos + 2, endPos));
+    pos = endPos + 2;
+  }
+  return found;
+}
+
+// Note: exported for tests only
+export function buildDependencyGraph(nextStep) {
+  const graph = {
+    allReady: true,
+    onChange: null,
+    onReady: () => {}, // can be overwritten by the caller
+  };
+
+  // 1) find all dependencies
+  // (if there are none, we can exit early without entering "observe-mode")
+  if (nextStep?.headers) {
+    const allTemplates = Object.values(nextStep.headers);
+    if (allTemplates.length > 0) {
+      // Keep track of which placeholders expression exist and by what
+      // (atomic) placeholders they get resolved. For instance, in the
+      // text "X={{cookie:A||cookie:B}}", there is one placeholder
+      // expression ("cookie:A||cookie:B"); it resolves once either
+      // "cookie:A" or "cookie:B" becomes available.
+      //
+      // The pending set would thus be { "cookie:A||cookie:B" }
+      // and the resolvedBy mapping would be: {
+      //   "cookie:A" => ["cookie:A||cookie:B"],
+      //   "cookie:B" => ["cookie:A||cookie:B"]
+      // }
+      const pendingExpressions = new Set();
+      const expressionResolvedByPlaceholder = new Map();
+
+      for (const template of allTemplates) {
+        for (const expression of findPlaceholders(template)) {
+          pendingExpressions.add(expression);
+
+          for (const placeholder of expression.split('||')) {
+            const unlocks =
+              expressionResolvedByPlaceholder.get(placeholder) || [];
+            if (!unlocks.includes(expression)) {
+              unlocks.push(expression);
+            }
+            expressionResolvedByPlaceholder.set(placeholder, unlocks);
+          }
+        }
+      }
+
+      // 2) if there are unresolved dependencies, switch to "observe-mode"
+      // The caller is expected to setup the "onReady" and "onChange" hooks.
+      // "onChange" should connect to the context observer.
+      if (pendingExpressions.size > 0) {
+        logger.debug('[observe-mode] waiting for:', pendingExpressions);
+        graph.allReady = false;
+        graph.onChange = (type, key, value) => {
+          if (!graph.allReady && value) {
+            const placeholder = `${type}:${key}`;
+            const resolvedExpressions =
+              expressionResolvedByPlaceholder.get(placeholder) || [];
+            for (const resolved of resolvedExpressions) {
+              if (pendingExpressions.delete(resolved)) {
+                logger.debug(
+                  '[observe-mode]',
+                  placeholder,
+                  '->',
+                  value,
+                  'resolved expression',
+                  resolved,
+                );
+                if (pendingExpressions.size === 0) {
+                  logger.debug('[observe-mode] all dependencies resolved');
+                  graph.allReady = true;
+                  graph.onReady();
+                  return;
+                }
+              }
+            }
+          }
+        };
+      }
+    }
+  }
+  return graph;
+}
+
+function withContextObserver(ctx, observer) {
+  const mapTypes = Object.keys(ctx);
+  mapTypes.forEach((type) => {
+    ctx[type] = new Proxy(ctx[type], {
+      get(target, property, receiver) {
+        if (property === 'set') {
+          return function (key, value) {
+            // the only interesting part (the rest of the function
+            // is boilerplate to delegate to the underlying map)
+            if (observer.onChange) {
+              observer.onChange(type, key, value);
+            }
+            return target.set(key, value);
+          };
+        }
+        if (property === 'size') {
+          return target.size;
+        }
+        const value = Reflect.get(target, property, receiver);
+        if (typeof value === 'function') {
+          return value.bind(target);
+        }
+        return value;
+      },
+    });
+  });
+  return ctx;
 }
