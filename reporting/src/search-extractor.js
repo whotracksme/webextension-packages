@@ -319,6 +319,18 @@ export default class SearchExtractor {
       messages.push({ body, deduplicateBy });
     }
     logger.debug('Found the following messages:', messages);
-    return messages;
+
+    const filteredMessages = messages.filter((msg) => {
+      const { omitIfExistsAny = [] } = output[msg.body.action];
+      const isRedundant = omitIfExistsAny.some((action) =>
+        messages.some((x) => x.body.action === action),
+      );
+      return !isRedundant;
+    });
+    if (messages.length !== filteredMessages.length) {
+      logger.debug('Remaining messages after filtering:', filteredMessages);
+    }
+
+    return filteredMessages;
   }
 }
