@@ -398,6 +398,84 @@ describe('#SearchExtractor', function () {
           .with.property('isPermanentError');
       });
 
+      it('should omit messages that are marked as being redundant', function () {
+        runScenario({
+          url: 'http://example.test/x?q=some-query',
+          query: 'some-query',
+          category: 'example-test',
+          ctry: 'de',
+          html: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Test page</title>
+    <
+  </head>
+  <body>
+    <a id="rellink" href="/foo?bar=42"></a>
+  </body>
+</html>`,
+          patterns: {
+            'example-test': {
+              input: {
+                'html body': {
+                  first: {
+                    rellink: {
+                      select: '#rellink',
+                      attr: 'href',
+                    },
+                  },
+                },
+              },
+              output: {
+                'test-action': {
+                  fields: [
+                    {
+                      key: 'rellink',
+                      source: 'html body',
+                    },
+                  ],
+                },
+                'redundant-test-action': {
+                  fields: [
+                    {
+                      key: 'rellink',
+                      source: 'html body',
+                    },
+                  ],
+                  omitIfExistsAny: ['test-action'], // exists, so it should be omitted
+                },
+                'non-redundant-test-action': {
+                  fields: [
+                    {
+                      key: 'rellink',
+                      source: 'html body',
+                    },
+                  ],
+                  omitIfExistsAny: ['some-message-that-does-not-exist'],
+                },
+              },
+            },
+          },
+          mustContain: [
+            {
+              action: 'test-action',
+              payload: {
+                rellink: 'http://example.test/foo?bar=42',
+              },
+            },
+            {
+              action: 'non-redundant-test-action',
+              payload: {
+                rellink: 'http://example.test/foo?bar=42',
+              },
+            },
+          ],
+          mustNotContain: [{ action: 'redundant-test-action' }],
+        });
+      });
+
       describe('during preprocessing', function () {
         it('should support removing an inner div', function () {
           runScenario({
