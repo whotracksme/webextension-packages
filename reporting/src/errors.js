@@ -58,6 +58,11 @@ export class UnableToOverrideHeadersError extends PermanentError {}
 export class MultiStepDoublefetchNotSupportedError extends PermanentError {}
 
 /**
+ * If the platform lacks the required APIs to support dynamic request doublefetch.
+ */
+export class DynamicDoublefetchNotSupportedError extends PermanentError {}
+
+/**
  * Thrown when requests failed, but where the client can try to
  * repeat the request without modification (e.g. timeouts will
  * fall into this category).
