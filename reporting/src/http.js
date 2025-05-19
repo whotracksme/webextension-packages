@@ -26,6 +26,7 @@ const SECOND = 1000;
 
 // This ID must not be used by other parts of the extension.
 const RESERVED_DNR_RULE_ID_HEADER_OVERRIDE = 1333;
+const RESERVED_DNR_RULE_ID_OFFSCREEN = 1334;
 
 function getExtensionDomain() {
   getExtensionDomain.cached =
@@ -228,6 +229,33 @@ const OFFSCREEN_DOCUMENT_PATH = 'offscreen/doublefetch/index.html';
 async function withOffscreenDocumentReady(url, headers, asyncCallback) {
   const cleanups = [];
   try {
+    const domain = new URL(url).hostname;
+    const rule = {
+      id: RESERVED_DNR_RULE_ID_OFFSCREEN,
+      condition: {
+        initiatorDomains: [chrome.runtime.id],
+        requestDomains: [domain],
+        resourceTypes: ['sub_frame'],
+      },
+      action: {
+        type: 'modifyHeaders',
+        responseHeaders: [
+          { header: 'X-Frame-Options', operation: 'remove' },
+          { header: 'Frame-Options', operation: 'remove' },
+        ],
+      },
+    };
+
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [rule.id],
+      addRules: [rule],
+    });
+    cleanups.push(() =>
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [rule.id],
+      }),
+    );
+
     const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
     const existingContexts = await chrome.runtime.getContexts({
       contextTypes: ['OFFSCREEN_DOCUMENT'],
