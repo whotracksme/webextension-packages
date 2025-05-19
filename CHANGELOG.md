@@ -1,3 +1,16 @@
+# v7.2.0 (Mon May 19 2025)
+
+#### 🚀 Enhancement
+
+- Initial support for dynamic double-fetch [#158](https://github.com/whotracksme/webextension-packages/pull/158) ([@philipp-classen](https://github.com/philipp-classen) [@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.1.0 (Mon May 19 2025)
 
 #### 🚀 Enhancement
