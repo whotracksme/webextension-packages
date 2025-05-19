@@ -243,7 +243,7 @@ async function withOffscreenDocumentReady(url, headers, asyncCallback) {
     await chrome.offscreen.createDocument({
       url: OFFSCREEN_DOCUMENT_PATH,
       reasons: ['IFRAME_SCRIPTING'],
-      justification: 'anonymous fetch with dynamic rendering',
+      justification: 'credentialless iframe',
     });
     cleanups.push(() => tryCloseOffscreenDocument());
 

@@ -1,4 +1,5 @@
 example/index.bundle.js
 example/content.bundle.js
+example/offscreen/*
 example/manifest.json
 scenarios/*

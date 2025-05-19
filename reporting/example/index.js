@@ -131,8 +131,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-urlReporter.init().catch(console.error);
-requestReporter.init().catch(console.error);
+(async () => {
+  await urlReporter.init();
+  await requestReporter.init();
+})();
 
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;

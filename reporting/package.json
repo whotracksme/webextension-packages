@@ -30,6 +30,7 @@
     "karma-sinon": "^1.0.5",
     "mocha": "^10.7.3",
     "rollup": "^2.79.1",
+    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-polyfill-node": "^0.8.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "sinon": "^15.2.0",
