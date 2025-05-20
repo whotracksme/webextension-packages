@@ -28,6 +28,39 @@ const SECOND = 1000;
 const RESERVED_DNR_RULE_ID_HEADER_OVERRIDE = 1333;
 const RESERVED_DNR_RULE_ID_OFFSCREEN = 1334;
 
+/**
+ * Depending on the context, there are different ways how requests are being
+ * triggered. For instance, the normal one is to use the fetch API; but
+ * with dynamic rendering using offscreen, it will be technically triggered
+ * from an iframe. That impacts how APIs should be later interpreted.
+ */
+const REQUEST_TYPE = {
+  FETCH_API: Symbol('FETCH_API'),
+  IFRAME: Symbol('IFRAME'),
+};
+
+// maps our REQUEST_TYPE to the type used in the webRequestAPI
+function matchesWebRequestApiType(requestType, webRequestApiType) {
+  if (requestType === REQUEST_TYPE.FETCH_API) {
+    return webRequestApiType === 'xmlhttprequest';
+  }
+  if (requestType === REQUEST_TYPE.IFRAME) {
+    return webRequestApiType === 'sub_frame';
+  }
+  throw new Error(`Unexpected requestType: ${requestType}`);
+}
+
+// maps our REQUEST_TYPE to the resource Type array used by the DNR API
+function requestTypeToDNRResourceTypes(requestType) {
+  if (requestType === REQUEST_TYPE.FETCH_API) {
+    return ['xmlhttprequest'];
+  }
+  if (requestType === REQUEST_TYPE.IFRAME) {
+    return ['sub_frame'];
+  }
+  throw new Error(`Unexpected requestType: ${requestType}`);
+}
+
 function getExtensionDomain() {
   getExtensionDomain.cached =
     getExtensionDomain.cached || new URL(chrome.runtime.getURL('')).host;
@@ -110,6 +143,29 @@ const httpStatusCodesThatShouldBeRetried = [
   599, // Network Connect Timeout Error
 ];
 
+// Overwrites the headers of the request to the given URL.
+// It automatically selects the mechanism (e.g. webRequestAPI, DNR)
+// based on the available APIs.
+//
+// Returns a cleanup callback to undo the changes.
+async function headerOverride(params) {
+  const { headers } = params;
+  if (!headers || Object.keys(headers).length === 0) {
+    return () => {};
+  }
+
+  if (
+    chrome?.webRequest?.onBeforeSendHeaders &&
+    chrome.runtime.getManifest().permissions.includes('webRequestBlocking')
+  ) {
+    return headerOverrideViaWebRequestAPI(params);
+  } else if (chrome?.declarativeNetRequest?.updateSessionRules) {
+    return await headerOverrideViaDNR(params);
+  } else {
+    throw new UnableToOverrideHeadersError();
+  }
+}
+
 // The following code overwrite the headers of the request.
 // Note that "fetch" allows to overwrite headers in a simple declarative way,
 // but unfortunately it is limited. For example, it is not possible to
@@ -122,13 +178,13 @@ const httpStatusCodesThatShouldBeRetried = [
 // side-effects. To mitigate the risk, uninstall the handler at the first
 // opportunity: either if it is called or if the request finished
 // (and we know the handle will never be called).
-function headerOverrideViaWebRequestAPI(url, headers) {
+function headerOverrideViaWebRequestAPI({ url, headers, requestType }) {
   let uninstallHandler;
   let webRequestHandler = (details) => {
     if (
       details.url !== url ||
-      details.type !== 'xmlhttprequest' ||
-      details.method !== 'GET'
+      details.method !== 'GET' ||
+      !matchesWebRequestApiType(requestType, details.type)
     ) {
       // does that match the request that we intended to trigger
       return {};
@@ -177,7 +233,7 @@ function headerOverrideViaWebRequestAPI(url, headers) {
 }
 
 // Like headerOverrideViaWebRequestAPI, but using the DNR API.
-async function headerOverrideViaDNR(url, headers) {
+async function headerOverrideViaDNR({ url, headers, requestType }) {
   const requestHeaders = Object.entries(headers).map(([header, value]) => ({
     header,
     operation: 'set',
@@ -192,22 +248,52 @@ async function headerOverrideViaDNR(url, headers) {
     },
     condition: {
       urlFilter: url,
-      resourceTypes: ['xmlhttprequest'],
+      resourceTypes: requestTypeToDNRResourceTypes(requestType),
       initiatorDomains: [getExtensionDomain()],
     },
   };
+
   logger.debug('Installing temporary DNR rule for URL:', url);
-  await chrome.declarativeNetRequest.updateSessionRules({
-    addRules: [rule],
-  });
+  const cleanup = await addDNRSessionRule(rule);
+
   return () => {
     logger.debug('Removing temporary DNR rule for URL:', url);
-    chrome.declarativeNetRequest
+    return cleanup();
+  };
+}
+
+async function addDNRSessionRule(rule) {
+  try {
+    await chrome.declarativeNetRequest.updateSessionRules({ addRules: [rule] });
+  } catch (e) {
+    try {
+      logger.warn(
+        'Unable to install DNR rule. Trying to delete rule first:',
+        rule,
+        e,
+      );
+      await chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [rule.id],
+      });
+    } catch (e2) {
+      logger.warn('Retry not possible (unable to remove DNR rule):', rule, e2);
+      throw e;
+    }
+
+    logger.debug('Second attempt to install DNR rule:', rule);
+    await chrome.declarativeNetRequest.updateSessionRules({
+      addRules: [rule],
+    });
+    logger.debug('Succeed in install DNR rule on the second attempt:', rule);
+  }
+
+  return () => {
+    return chrome.declarativeNetRequest
       .updateSessionRules({
         removeRuleIds: [rule.id],
       })
       .catch((e) => {
-        logger.warn('Failed to remove DNR rule', e);
+        logger.error('cleanup failed: unable to remove DNR rule:', rule, e);
       });
   };
 }
@@ -246,15 +332,15 @@ async function withOffscreenDocumentReady(url, headers, asyncCallback) {
       },
     };
 
-    await chrome.declarativeNetRequest.updateSessionRules({
-      removeRuleIds: [rule.id],
-      addRules: [rule],
+    const undoDNRChange = await addDNRSessionRule(rule);
+    cleanups.push(undoDNRChange);
+
+    const undoHeaderOverride = await headerOverride({
+      headers,
+      url,
+      requestType: REQUEST_TYPE.IFRAME,
     });
-    cleanups.push(() =>
-      chrome.declarativeNetRequest.updateSessionRules({
-        removeRuleIds: [rule.id],
-      }),
-    );
+    cleanups.push(undoHeaderOverride);
 
     const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
     const existingContexts = await chrome.runtime.getContexts({
@@ -330,22 +416,12 @@ async function singleHttpGetStep(url, params = {}) {
   }
 
   try {
-    // optional cleanup operation that will be run after the request is completed
-    let cleanup = () => {};
-    if (headers && Object.keys(headers).length > 0) {
-      if (
-        chrome?.webRequest?.onBeforeSendHeaders &&
-        chrome.runtime.getManifest().permissions.includes('webRequestBlocking')
-      ) {
-        cleanup = headerOverrideViaWebRequestAPI(url, headers);
-      } else if (chrome?.declarativeNetRequest?.updateSessionRules) {
-        cleanup = await headerOverrideViaDNR(url, headers);
-      } else {
-        throw new UnableToOverrideHeadersError();
-      }
-    }
-
     let response;
+    const undoHeaderOverride = await headerOverride({
+      headers,
+      url,
+      requestType: REQUEST_TYPE.FETCH_API,
+    });
     try {
       response = await fetch(url, options);
     } catch (e) {
@@ -353,8 +429,9 @@ async function singleHttpGetStep(url, params = {}) {
         cause: e,
       });
     } finally {
-      cleanup();
+      await undoHeaderOverride();
     }
+
     if (
       response.status === 0 &&
       (response.type == 'opaqueredirect' || response.type == 'opaque')
@@ -647,45 +724,49 @@ export async function anonymousHttpGet(originalUrl, params = {}) {
           // If needed, one idea is to use content scripts in the offscreen document.
           content = '';
 
-          await withOffscreenDocumentReady(localUrl, localParams, async () => {
-            const { ok, error } = await chrome.runtime.sendMessage({
-              target: 'offscreen:urlReporting',
-              type: 'request',
-              data: { url: localUrl },
-            });
-            if (!ok) {
-              throw new Error(
-                `Unexpected error (details: ${error || '<unavailable>'})`,
-              );
-            }
-
-            let timeout = null;
-            const timedOut = new Promise((resolve, reject) => {
-              const maxTime = params.timeout || 15 * SECOND;
-              timeout = setTimeout(() => {
-                timeout = null;
-                logger.warn(
-                  'Dynamic fetch of URL',
-                  localUrl,
-                  'exceeded the timeout of',
-                  maxTime,
-                  'ms. Details:',
-                  {
-                    localUrl,
-                    currentStep,
-                    nextStep,
-                    ctx,
-                  },
+          await withOffscreenDocumentReady(
+            localUrl,
+            localParams.headers,
+            async () => {
+              const { ok, error } = await chrome.runtime.sendMessage({
+                target: 'offscreen:urlReporting',
+                type: 'request',
+                data: { url: localUrl },
+              });
+              if (!ok) {
+                throw new Error(
+                  `Unexpected error (details: ${error || '<unavailable>'})`,
                 );
-                reject(`Timeout when dynamically fetching ${localUrl}`);
-              }, maxTime);
-            });
-            try {
-              await Promise.race([readyForNextStep, timedOut]);
-            } finally {
-              clearTimeout(timeout);
-            }
-          });
+              }
+
+              let timeout = null;
+              const timedOut = new Promise((resolve, reject) => {
+                const maxTime = params.timeout || 15 * SECOND;
+                timeout = setTimeout(() => {
+                  timeout = null;
+                  logger.warn(
+                    'Dynamic fetch of URL',
+                    localUrl,
+                    'exceeded the timeout of',
+                    maxTime,
+                    'ms. Details:',
+                    {
+                      localUrl,
+                      currentStep,
+                      nextStep,
+                      ctx,
+                    },
+                  );
+                  reject(`Timeout when dynamically fetching ${localUrl}`);
+                }, maxTime);
+              });
+              try {
+                await Promise.race([readyForNextStep, timedOut]);
+              } finally {
+                clearTimeout(timeout);
+              }
+            },
+          );
         } else {
           content = await singleHttpGetStep(localUrl, localParams);
         }
