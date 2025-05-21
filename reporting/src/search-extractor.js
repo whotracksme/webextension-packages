@@ -313,7 +313,7 @@ export default class SearchExtractor {
       const body = {
         action,
         payload,
-        ver: 3, // Note: no need to keep this number in sync among messages
+        ver: 4, // Note: no need to keep this number in sync among messages
         'anti-duplicates': Math.floor(random() * 10000000),
       };
       messages.push({ body, deduplicateBy });
