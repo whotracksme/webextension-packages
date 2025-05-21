@@ -1,3 +1,15 @@
+# v7.3.0 (Wed May 21 2025)
+
+#### 🚀 Enhancement
+
+- Added missing header overwrite in doublefetch [#160](https://github.com/whotracksme/webextension-packages/pull/160) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.2.0 (Mon May 19 2025)
 
 #### 🚀 Enhancement
