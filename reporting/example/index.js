@@ -73,7 +73,8 @@ const communication = {
 const config = {
   url: {
     ALLOWED_COUNTRY_CODES: ['de'],
-    PATTERNS_URL: 'https://cdn2.ghostery.com/wtm-chrome-desktop/patterns.json',
+    PATTERNS_URL:
+      'https://cdn2.ghostery.com/staging-patterns/wtm-chrome-desktop/patterns.json',
     CONFIG_URL: 'https://api.ghostery.net/api/v1/config',
   },
   request: {
