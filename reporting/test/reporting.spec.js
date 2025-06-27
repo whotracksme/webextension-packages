@@ -45,7 +45,6 @@ describe('#Reporting', function () {
       storage,
       communication,
       connectDatabase,
-      browserInfoProvider: async () => ({ browser: 'test' }),
     });
   });
 

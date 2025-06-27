@@ -38,13 +38,7 @@ import { BloomFilter } from './bloom-filters';
 const SECOND = 1000;
 
 export default class Reporting {
-  constructor({
-    config,
-    storage,
-    communication,
-    connectDatabase,
-    browserInfoProvider,
-  }) {
+  constructor({ config, storage, communication, connectDatabase }) {
     // Defines whether Reporting is fully initialized and has permission
     // to collect data.
     this.isActive = false;
@@ -152,7 +146,6 @@ export default class Reporting {
     });
 
     const aliveMessageGenerator = new AliveMessageGenerator({
-      browserInfoProvider,
       quorumChecker: this.quorumChecker,
       storage,
       storageKey: 'alive_config',
