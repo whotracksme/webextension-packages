@@ -106,7 +106,6 @@ describe('RequestReporter', function () {
           communicationEmitter.emit('send', msg);
         },
         trustedClock,
-        getBrowserInfo: () => ({ name: 'xx' }),
         countryProvider: { getSafeCountryCode: () => 'en' },
       });
       await reporter.init();

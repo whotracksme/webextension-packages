@@ -9,6 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import Bowser from 'bowser';
+
 /* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
 import Config from './config.js';
@@ -42,13 +44,14 @@ const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 
 export default class RequestReporter {
+  #userAgent;
+
   constructor(
     settings,
     {
       trustedClock,
       countryProvider,
       onMessageReady,
-      getBrowserInfo,
       onTrackerInteraction = (event, state) => {
         logger.info('Tracker', event, 'with url:', state.url);
       },
@@ -61,7 +64,6 @@ export default class RequestReporter {
     this.trustedClock = trustedClock;
     this.countryProvider = countryProvider;
     this.onTrackerInteraction = onTrackerInteraction;
-    this.getBrowserInfo = getBrowserInfo;
     this.isRequestAllowed = isRequestAllowed;
     if (dryRunMode) {
       logger.warn(
@@ -166,6 +168,30 @@ export default class RequestReporter {
     this.onMessageReady(message);
   }
 
+  get userAgent() {
+    if (this.#userAgent === undefined) {
+      try {
+        const userAgent = globalThis.navigator?.userAgent;
+        if (userAgent) {
+          const { browser } = Bowser.parse(userAgent);
+          this.#userAgent = {
+            'Chrome': 'chrome',
+            'Chromium': 'chrome',
+            'Firefox': 'firefox',
+            'Microsoft Edge': 'edge',
+            'Opera': 'opera',
+            'Safari': 'safari',
+            'Yandex Browser': 'yandex',
+          }[browser?.name];
+        }
+      } catch (e) {
+        logger.warn('Failed to determine userAgent', e);
+      }
+      this.#userAgent ||= '';
+    }
+    return this.#userAgent;
+  }
+
   /** Global module initialisation.
    */
   async init() {
@@ -209,8 +235,6 @@ export default class RequestReporter {
     );
 
     await this.pageStore.init();
-
-    this.userAgent = (await this.getBrowserInfo()).name;
 
     this.pageLogger = new PageLogger(this.config.placeHolder);
     this.cookieContext = new CookieContext(this.config, this.qs_whitelist);

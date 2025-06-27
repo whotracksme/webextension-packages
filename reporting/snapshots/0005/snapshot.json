@@ -130,7 +130,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -252,7 +252,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -693,7 +693,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1142,7 +1142,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1275,7 +1275,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1397,7 +1397,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1838,7 +1838,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -2287,7 +2287,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -2308,7 +2308,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -4590,7 +4590,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6876,7 +6876,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6902,7 +6902,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6928,6 +6928,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": "xx"
+    "userAgent": ""
   }
 ]
