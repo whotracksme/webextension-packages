@@ -10,7 +10,8 @@
  */
 
 import logger from './logger';
-import { requireParam, requireString, lazyInitAsync } from './utils';
+import { requireParam, requireString } from './utils';
+import Bowser from 'bowser';
 
 /**
  * Responsible for generating information to be included in the "alive" message.
@@ -24,27 +25,21 @@ import { requireParam, requireString, lazyInitAsync } from './utils';
  * breaks something on Windows.
  */
 export default class AliveMessageGenerator {
-  constructor({
-    browserInfoProvider,
-    navigatorApi,
-    quorumChecker,
-    storage,
-    storageKey,
-  }) {
-    requireParam(browserInfoProvider);
+  constructor({ navigatorApi, quorumChecker, storage, storageKey }) {
     this.quorumChecker = requireParam(quorumChecker);
     this.storage = requireParam(storage);
     this.storageKey = requireString(storageKey);
     this.navigatorApi = navigatorApi || globalThis.navigator;
+  }
 
-    this.staticConfigProvider = lazyInitAsync(async () =>
-      this._generateBaseConfig(await browserInfoProvider()),
-    );
+  get staticConfig() {
+    this._staticConfig ||= this._generateBaseConfig();
+    return this._staticConfig;
   }
 
   async generateMessage(ctry, hour) {
     const config = {
-      ...(await this.staticConfigProvider()),
+      ...this.staticConfig,
       ctry,
     };
 
@@ -71,35 +66,37 @@ export default class AliveMessageGenerator {
       browser: '',
       version: '',
       os: '',
+      platform: '',
+      engine: '',
       language: '',
       ctry: '--',
       t: hour,
     };
   }
 
-  _generateBaseConfig(browserInfo) {
-    // extracts only the major version (e.g. "96.0.1" -> 96)
-    let version = parseInt(browserInfo.version, 10);
-    if (isNaN(version)) {
-      version = '';
-    } else {
-      version = String(version);
-    }
+  _generateBaseConfig() {
+    let browser, version, os, platform, engine;
+    const { language, userAgent } = this.navigatorApi;
+    if (userAgent) {
+      const browserInfo = Bowser.parse(userAgent);
+      browser = browserInfo.browser?.name;
+      os = browserInfo.os?.name;
+      platform = browserInfo.platform?.type;
+      engine = browserInfo.engine?.name;
 
-    let language;
-    try {
-      language = this.navigatorApi.language;
-    } catch (e) {
-      logger.warn(
-        '"navigator" API unavailable (should only happen when run in NodeJs 20 or lower)',
-      );
+      // extracts only the major version (e.g. "96.0.1" -> 96)
+      const majorVersion = parseInt(browserInfo.browser?.version, 10);
+      if (!isNaN(majorVersion)) {
+        version = String(majorVersion);
+      }
     }
-    language = language || '';
 
     return {
-      browser: browserInfo.browser || '',
-      version, // major version
-      os: browserInfo.os || '',
+      browser: browser || '',
+      version: version || '', // major version
+      os: os || '',
+      platform: platform || '', // e.g. 'desktop'
+      engine: engine || '', // e.g. 'Blink'
       language: language || '', // e.g. 'en-US'
     };
   }

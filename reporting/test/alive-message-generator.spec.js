@@ -18,18 +18,15 @@ describe('#AliveMessageGenerator', function () {
   const anotherHour = '2024030804';
 
   const storageKey = 'some-storage-key';
-  let browserInfoProvider;
   let navigatorApi;
   let quorumChecker;
   let storage;
   let uut;
 
-  let _browserInfo;
   let _shouldPassQuorum;
 
   function newAliveMessageGenerator() {
     return new AliveMessageGenerator({
-      browserInfoProvider,
       navigatorApi,
       quorumChecker,
       storage,
@@ -37,8 +34,8 @@ describe('#AliveMessageGenerator', function () {
     });
   }
 
-  // Helper that simulate an event like a restart of the service worker/background script:
-  // it keeps the storage but purges everything that was in memory.
+  // Helper that simulates an event like a restart of the service worker/background script:
+  // it keeps the storage, but purges everything that was in memory.
   async function simulateRestart() {
     uut = newAliveMessageGenerator();
   }
@@ -52,16 +49,11 @@ describe('#AliveMessageGenerator', function () {
   }
 
   beforeEach(() => {
-    _browserInfo = {
-      browser: 'Firefox',
-      version: '122',
-      os: 'Linux',
-      language: 'en-US',
-    };
     navigatorApi = {
+      userAgent:
+        'Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0',
       language: 'en-US',
     };
-    browserInfoProvider = async () => _browserInfo;
 
     quorumChecker = {
       _incCalls: 0,
@@ -154,19 +146,17 @@ describe('#AliveMessageGenerator', function () {
     runGenericTests();
 
     it('should share the config', async function () {
-      _browserInfo = {
-        browser: 'Firefox',
-        version: '122.1',
-        os: 'Linux',
-        language: 'en-US',
-      };
+      navigatorApi.userAgent =
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
       navigatorApi.language = 'de-DE';
 
       const message = await uut.generateMessage('de', '2024010203');
       expect(message).to.eql({
-        browser: 'Firefox',
-        version: '122', // only major version
+        browser: 'Chrome',
+        version: '138', // only major version
         os: 'Linux',
+        platform: 'desktop',
+        engine: 'Blink',
         language: 'de-DE', // from window.navigator
         ctry: 'de',
         t: '2024010203',
@@ -184,6 +174,8 @@ describe('#AliveMessageGenerator', function () {
         browser: '',
         version: '',
         os: '',
+        platform: '',
+        engine: '',
         language: '',
         ctry: '--',
         t: '2024010203',
