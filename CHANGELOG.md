@@ -1,3 +1,19 @@
+# v7.4.0 (Tue Jul 01 2025)
+
+#### 🚀 Enhancement
+
+- Remove browserInfoProvider dependency [#162](https://github.com/whotracksme/webextension-packages/pull/162) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Uses the staging patterns for the example extension [#161](https://github.com/whotracksme/webextension-packages/pull/161) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.3.0 (Wed May 21 2025)
 
 #### 🚀 Enhancement
