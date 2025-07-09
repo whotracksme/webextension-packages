@@ -11,7 +11,7 @@
 
 import logger from './logger';
 import { randomBetween } from './random';
-import { BadJobError } from './errors';
+import { BadJobError, BadJobHandlerError } from './errors';
 import SeqExecutor from './seq-executor';
 import { equalityCanBeProven } from './utils';
 import SelfCheck from './self-check';
@@ -55,21 +55,38 @@ class JobTester {
     return jobEntries.splice(0, pos);
   }
 
-  // Note: smaller is of higher priority
+  /**
+   * Computes the priority of a job. Smaller is of higher priority.
+   *
+   * When ordering jobs by their priority, the order should remain stable over time.
+   * Formally, if "p(t,j)" is the priority function for job "j" at a given time "t",
+   * the following property should hold:
+   *
+   * For all jobs j1,j2 and for all times t1, t2 with t2 > t1:
+   * ```
+   *   p(t1,j1) <= p(t1,j2)  ==>  p(t2,j1) <= p(t2,j2)
+   * ```
+   *
+   * Note: it automatically holds if p does not rely on the time. In other
+   * words, this is a sufficient, but not necessary condition:
+   * ```
+   *   For all times t1, t2 and for all jobs j: p(t1,j) == p(t2,j)
+   * ```
+   */
   computePriority(jobEntry) {
-    // TODO: this could be improved (though prefer old jobs is not a bad strategy)
-    return jobEntry._meta.createdAt;
+    // This will order jobs primarily by the time when they become ready.
+    // It also guarantees that jobs that are ready will be sorted before
+    // jobs that are still blocked.
+    //
+    // To break ties between multiple jobs that are ready, it will run the
+    // oldest jobs first; thus, eliminating the possiblity of starvation.
+    //
+    // Note: preserves ordering, since the time is not used.
+    return Math.max(jobEntry._meta.createdAt, jobEntry._meta.readyAt);
   }
 
   compareJobsByPriority(jobEntry1, jobEntry2) {
-    if (this.isJobReady(jobEntry1)) {
-      return -1;
-    } else if (this.isJobReady(jobEntry2)) {
-      return 1;
-    }
-    const prio1 = this.computePriority(jobEntry1);
-    const prio2 = this.computePriority(jobEntry2);
-    return prio1 - prio2;
+    return this.computePriority(jobEntry1) - this.computePriority(jobEntry2);
   }
 
   sortJobs(jobEntries) {
@@ -166,6 +183,7 @@ export default class JobScheduler {
       // TODO: maybe add a flag to control if failed jobs should be put in the dlq
       // (and only added back if there was was a successful execution of that type before)
     };
+    this._ensureValidHandlerConfig(this.defaultConfig);
     this.handlerConfigs = {};
 
     // Note: this data structure is intended to be in a format that can be
@@ -189,6 +207,9 @@ export default class JobScheduler {
   }
 
   registerHandler(type, handler, config = {}) {
+    const fullConfig = { ...this.defaultConfig, ...config };
+    this._ensureValidHandlerConfig(fullConfig);
+
     if (this.active) {
       logger.warn(
         'Job handler for type',
@@ -202,12 +223,12 @@ export default class JobScheduler {
       logger.warn('Redefining handler for type:', type);
     }
     this.handlers[type] = handler;
-    this.handlerConfigs[type] = { ...this.defaultConfig, ...config };
+    this.handlerConfigs[type] = fullConfig;
     logger.debug(
       'Registered job handler for',
       type,
       'with config:',
-      this.handlerConfigs[type],
+      fullConfig,
     );
     this._resetPrecomputed();
   }
@@ -843,6 +864,52 @@ export default class JobScheduler {
   _ensureValidState(state) {
     if (!JobScheduler.STATES.includes(state)) {
       throw new Error(`Invalid state: ${state}`);
+    }
+  }
+
+  // Validates the config that is passed when registering job handlers.
+  _ensureValidHandlerConfig(config) {
+    if (!config) {
+      throw new BadJobHandlerError('Missing config');
+    }
+    let numCheckedKeys = 0;
+    const expectInt = (key, extraCheck) => {
+      if (!Number.isInteger(config[key])) {
+        throw new BadJobHandlerError(
+          `Expected field "${key}" to be an integer, but got: ${config[key]}`,
+        );
+      }
+      if (extraCheck && !extraCheck(config[key])) {
+        throw new BadJobHandlerError(
+          `Illegal value found in field "${key}": <<${config[key]}>>`,
+        );
+      }
+      numCheckedKeys += 1;
+    };
+    const expectBool = (key) => {
+      if (config[key] !== true && config[key] !== false) {
+        throw new BadJobHandlerError(
+          `Expected field "${key}" to be bool, but got: ${config[key]}`,
+        );
+      }
+      numCheckedKeys += 1;
+    };
+    const nonNegative = (x) => x >= 0;
+
+    expectInt('priority');
+    expectInt('ttlInMs', nonNegative);
+    expectInt('maxJobsTotal', nonNegative);
+    expectInt('cooldownInMs', nonNegative);
+    expectInt('maxAutoRetriesAfterError', nonNegative);
+    expectBool('autoRetryAfterError');
+
+    if (numCheckedKeys !== Object.keys(config).length) {
+      const unexpectedKeys = Object.keys(config).filter(
+        (key) => !Object.hasOwn(this.defaultConfig, key),
+      );
+      throw new BadJobHandlerError(
+        `Invalid config: found unexpected keys: [${unexpectedKeys.join(', ')}]`,
+      );
     }
   }
 
