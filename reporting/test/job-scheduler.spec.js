@@ -25,11 +25,11 @@ const YEAR = 365 * DAY;
 function mockStorage(storageKey) {
   return {
     async get(key) {
-      expect(key).to.equal(storageKey);
+      expect(key).to.eql(storageKey);
       return this._content;
     },
     async set(key, obj) {
-      expect(key).to.equal(storageKey);
+      expect(key).to.eql(storageKey);
       this._content = obj;
     },
   };
@@ -296,7 +296,7 @@ describe('#JobScheduler', function () {
       await passesSelfChecks();
     });
 
-    it('should allow to processPendingJobs when the queue, but jobs are registered', async function () {
+    it('should allow to processPendingJobs when the queue is empty, but jobs are registered', async function () {
       uut.registerHandler('dummy', () => expect.fail('should never be called'));
       await uut.init();
       await uut.processPendingJobs();
@@ -450,7 +450,7 @@ describe('#JobScheduler', function () {
       await uut.registerJob(job1);
       await uut.processPendingJobs();
       expectJobIsDone(job1);
-      expect(uut.stats.jobRegistered).to.equal(1);
+      expect(uut.stats.jobRegistered).to.eql(1);
       expect(uut.stats.jobSucceeded).to.eql(1);
 
       // job2 -> undefined (does not spawn)
@@ -458,7 +458,7 @@ describe('#JobScheduler', function () {
       await uut.registerJob(job2);
       await uut.processPendingJobs();
       expectJobIsDone(job2);
-      expect(uut.stats.jobRegistered).to.equal(2);
+      expect(uut.stats.jobRegistered).to.eql(2);
       expect(uut.stats.jobSucceeded).to.eql(2);
 
       // job3 -> [] (does not spawn)
@@ -466,7 +466,7 @@ describe('#JobScheduler', function () {
       await uut.registerJob(job3);
       await uut.processPendingJobs();
       expectJobIsDone(job3);
-      expect(uut.stats.jobRegistered).to.equal(3);
+      expect(uut.stats.jobRegistered).to.eql(3);
       expect(uut.stats.jobSucceeded).to.eql(3);
 
       // job4 -> job5
@@ -479,10 +479,75 @@ describe('#JobScheduler', function () {
       await uut.processPendingJobs();
       expectJobIsDone(job4);
       expectJobIsDone(job5);
-      expectJobIsDone(job6);
+
       expectJobIsDone(job7);
-      expect(uut.stats.jobRegistered).to.equal(7);
+      expect(uut.stats.jobRegistered).to.eql(7);
       expect(uut.stats.jobSucceeded).to.eql(7);
+    });
+
+    it('should not let one long-lived job block newly added short-lived jobs forever', async function () {
+      this.timeout(20 * SECOND);
+
+      const type = 'testjob';
+      uut.registerHandler(type, () => {});
+      await uut.init();
+
+      const start = Date.now();
+      const longLivedJob = {
+        type,
+        args: {
+          name: 'long-lived',
+          createdAt: Date.now(),
+        },
+        config: {
+          readyAt: start + DAY,
+          ttlInMs: 2 * DAY,
+        },
+      };
+      await uut.registerJob(longLivedJob);
+      expect(uut.stats.jobRegistered).to.eql(1);
+      expect(uut.stats.jobSucceeded).to.eql(0);
+
+      let shortLiveJobsCount = 0;
+      const mkShortLivedJob = () => {
+        return {
+          type,
+          args: {
+            name: ++shortLiveJobsCount,
+            createdAt: Date.now(),
+          },
+          config: {
+            readyIn: { min: 10 * SECOND },
+            ttlInMs: 2 * HOUR,
+          },
+        };
+      };
+      await passesSelfChecks();
+
+      while (Date.now() < longLivedJob.config.readyAt) {
+        expect(uut.stats.jobSucceeded).to.be.below(uut.stats.jobRegistered);
+        await uut.processPendingJobs();
+        expect(uut.stats.jobSucceeded).to.be.at.most(uut.stats.jobRegistered);
+
+        await uut.registerJob(mkShortLivedJob());
+        expect(uut.stats.jobRejected).to.eql(0);
+        expect(uut.stats.jobExpired).to.eql(0);
+        expect(uut.stats.jobFailed).to.eql(0);
+        expect(uut.stats.jobRegistered).to.eql(1 + shortLiveJobsCount);
+        expect(uut.stats.jobSucceeded).to.be.below(uut.stats.jobRegistered);
+
+        await clock.tickAsync(10 * MINUTE);
+        await passesSelfChecks();
+      }
+
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      expect(uut.stats.jobExpired).to.eql(0);
+      expect(uut.stats.jobSucceeded).to.eql(uut.stats.jobRegistered);
+      expect(uut.stats.jobRejected).to.eql(0);
+      expect(uut.stats.jobFailed).to.eql(0);
+      await passesSelfChecks();
     });
   });
 
@@ -562,6 +627,8 @@ describe('#JobScheduler', function () {
     maxJobTypes = 20,
     minReadyIn = 0,
     maxReadyIn = 1 * MONTH,
+    minExpireIn = 1 * SECOND,
+    maxExpireIn = 1 * MONTH,
     minTTL = 1 * SECOND,
     maxTTL = 12 * MONTH,
     maxJobsPerType = 10000,
@@ -569,31 +636,57 @@ describe('#JobScheduler', function () {
     maxAutoRetriesAfterError = 100,
     maxClockJump = 6 * MONTH, // also simulates if a machines goes to sleep
   } = {}) {
+    // these fields are reserved for the config passed to the jobHandler
+    const commonJobConfigFields = () => ({
+      priority: fc.integer(),
+      ttlInMs: fc.integer({ min: minTTL, max: maxTTL }),
+      maxJobsTotal: fc.integer({ min: 1, max: maxJobsPerType }),
+      cooldownInMs: fc.nat(maxCooldown),
+      autoRetryAfterError: fc.boolean(),
+      maxAutoRetriesAfterError: fc.nat(maxAutoRetriesAfterError),
+    });
+    const individualJobConfigFields = () => ({
+      readyIn: fc.record(
+        {
+          min: fc.nat(minReadyIn),
+          max: fc.option(fc.integer({ min: minReadyIn, max: maxReadyIn })),
+        },
+        {
+          requiredKeys: ['min'],
+        },
+      ),
+      expireIn: fc.record(
+        {
+          min: fc.nat(minExpireIn),
+          max: fc.option(fc.integer({ min: minExpireIn, max: maxExpireIn })),
+        },
+        {
+          requiredKeys: ['min'],
+        },
+      ),
+    });
+
     const numToJobType = (x) => `testjob${x}`;
     const arbitraryJobType = () => fc.nat(maxJobTypes - 1).map(numToJobType);
     const arbitraryJobArgs = () => fc.array(fc.nat());
-    const arbitraryJobConfig = () => {
-      return fc.record({
-        priority: fc.option(fc.integer()),
-        ttlInMs: fc.option(fc.integer({ min: minTTL, max: maxTTL })),
-        readyIn: fc.option(
-          fc.record({
-            min: fc.nat(minReadyIn),
-            max: fc.option(fc.integer({ min: minReadyIn, max: maxReadyIn })),
-          }),
-        ),
-        maxJobsTotal: fc.option(fc.nat(fc.nat(1, maxJobsPerType))),
-        cooldownInMs: fc.option(fc.nat(maxCooldown)),
-        autoRetryAfterError: fc.option(fc.boolean()),
-        maxAutoRetriesAfterError: fc.option(fc.nat(maxAutoRetriesAfterError)),
-      });
-    };
+    const arbitraryJobConfig = () =>
+      fc.record(commonJobConfigFields(), { requiredKeys: [] });
     const arbitraryJob = () => {
       return fc
         .tuple(
           arbitraryJobType(),
           fc.option(arbitraryJobArgs()),
-          fc.option(arbitraryJobConfig()),
+          fc.option(
+            fc.record(
+              {
+                ...commonJobConfigFields(),
+                ...individualJobConfigFields(),
+              },
+              {
+                requiredKeys: [],
+              },
+            ),
+          ),
         )
         .map(([type, args, config]) => ({
           type,

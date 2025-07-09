@@ -48,6 +48,12 @@ class PermanentError extends ExtendableError {
 export class BadJobError extends PermanentError {}
 
 /**
+ * For job handlers that are ill-formed (e.g. have missing or invalid fields
+ * in their configuration).
+ */
+export class BadJobHandlerError extends PermanentError {}
+
+/**
  * If trying to override HTTP headers, but the platform does not support it.
  */
 export class UnableToOverrideHeadersError extends PermanentError {}
