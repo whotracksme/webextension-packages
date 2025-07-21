@@ -25,7 +25,7 @@ import SelfCheck from './self-check';
  * dropped! To avoid that, you can define an optional migration
  * (see _tryDataMigration).
  */
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -47,7 +47,11 @@ class JobTester {
     return this.now >= jobEntry._meta.expireAt;
   }
 
-  expireJobs(jobEntries) {
+  // Note: this will not guarantee that all expired jobs get removed.
+  // It will only look at the jobs at the begin of the queue. Typically,
+  // that should be enough to eventually reap them. If you need stronger
+  // guarantees, you will have to do a full scan.
+  tryExpireJobs(jobEntries) {
     let pos = 0;
     while (pos < jobEntries.length && this.isJobExpired(jobEntries[pos])) {
       pos += 1;
@@ -139,17 +143,20 @@ class JobTester {
  *   to clean up the queues fast enough. The second assumption is that
  *   executing jobs when the service worker is already running should be
  *   more resource friendly than waking up the user's device.
- *   (TODO: Revisit this statement in the future. It would not be difficult
- *   to add if needed: set an alert and call "processPendingJobs".)
  */
 export default class JobScheduler {
-  static STATES = ['running', 'ready', 'waiting', 'dlq'];
+  static STATES = [
+    'running', // jobs are that currently being executed
+    'ready', // jobs are ready to be executed (ignoring optional cooldowns)
+    'waiting', // jobs that are no ready to start
+    'retryable', // jobs that failed with an ephemeral error
+  ];
 
   static EVENTS = [
     'jobRegistered',
     'jobStarted',
     'jobSucceeded',
-    'jobFailed', // TODO: what is the semantic? (permanently failed or retried?)
+    'jobFailed',
     'jobExpired',
     'jobRejected',
     'syncedToDisk',
@@ -178,10 +185,7 @@ export default class JobScheduler {
       cooldownInMs: 0,
 
       // error handling:
-      autoRetryAfterError: true,
-      maxAutoRetriesAfterError: 3,
-      // TODO: maybe add a flag to control if failed jobs should be put in the dlq
-      // (and only added back if there was was a successful execution of that type before)
+      maxAutoRetriesAfterError: 2, // (give up after three attempts in total)
     };
     this._ensureValidHandlerConfig(this.defaultConfig);
     this.handlerConfigs = {};
@@ -300,6 +304,7 @@ export default class JobScheduler {
   }
 
   async registerJobs(jobs, { now = Date.now(), autoTrigger = true } = {}) {
+    await this.ready();
     jobs.forEach((job) => this._registerJob(job, now));
     if (autoTrigger) {
       this._scheduleProcessPendingJobs();
@@ -378,13 +383,9 @@ export default class JobScheduler {
       },
     };
 
-    if (this.getTotalJobs() >= this.globalJobLimit) {
-      this.notifyObservers('jobRejected', 'global job limit reached', jobEntry);
-      return;
-    }
-    const localLimit = this.handlerConfigs[type]?.maxJobsTotal;
-    if (localLimit && this.getTotalJobsOfType(type) >= localLimit) {
-      this.notifyObservers('jobRejected', 'local job limit reached', jobEntry);
+    const { ok, reason } = this._checkJobLimits(type, now);
+    if (!ok) {
+      this.notifyObservers('jobRejected', jobEntry, reason);
       return;
     }
 
@@ -397,15 +398,65 @@ export default class JobScheduler {
     }
   }
 
+  _checkJobLimits(jobType, now = Date.now()) {
+    const reject = (reason) => ({ ok: false, reason });
+    const ok = () => ({ ok: true });
+
+    const localLimit = this.handlerConfigs[jobType]?.maxJobsTotal;
+    if (localLimit && this.getTotalJobsOfType(jobType) >= localLimit) {
+      // Before giving up, make a best-effort attempt to expire local jobs.
+      // Not guaranteed to find something, since it will only look at the
+      // start of the queue; yet it is likely that expired jobs are
+      // in front.
+      const {
+        ready = [],
+        waiting = [],
+        retryable = [],
+      } = this.jobQueues[jobType];
+
+      const jobTester = new JobTester(now);
+      if (
+        this._tryExpireJobsInQueue(waiting, jobTester).numExpired === 0 &&
+        this._tryExpireJobsInQueue(ready, jobTester).numExpired === 0 &&
+        this._tryExpireJobsInQueue(retryable, jobTester).numExpired === 0
+      ) {
+        const deletedJob = retryable.shift();
+        if (deletedJob) {
+          logger.warn('Dropping oldest failed job to free space for new job:', {
+            deletedJob,
+          });
+          this._markAsDirty();
+          return ok(); // early exit since we now freed room for one job
+        } else {
+          return reject('local job limit reached');
+        }
+      }
+    }
+
+    // Currently, there are no attempts to clean up other queues.
+    // That is intentional.
+    //
+    // The rationale is that the global job limit should be conservative
+    // enough that a single queue cannot fill it. But when getting
+    // near the global limits, it is likely that there are already
+    // so many jobs in the system that slowing down by rejecting
+    // jobs looks like a good idea anyways; it might drop more jobs
+    // than necessary, but should reduce load on the system.
+    if (this.getTotalJobs() >= this.globalJobLimit) {
+      return reject('global job limit reached');
+    }
+
+    return ok();
+  }
+
   _pushToQueue({ jobEntry, state, now = Date.now() }) {
     this._ensureValidState(state);
     const { type } = jobEntry.job;
-    if (!this.jobQueues[type]) {
-      this.jobQueues[type] = Object.fromEntries(
-        JobScheduler.STATES.map((x) => [x, []]),
-      );
-    }
-    this.jobQueues[type][state] = this.jobQueues[type][state] || [];
+    this.jobQueues[type] ||= Object.fromEntries(
+      JobScheduler.STATES.map((x) => [x, []]),
+    );
+    this.jobQueues[type][state] ||= [];
+
     const len = this.jobQueues[type][state].length;
     if (len > 0 && state === 'waiting') {
       const lastJob = this.jobQueues[type][state][len - 1];
@@ -415,6 +466,39 @@ export default class JobScheduler {
     }
     this.jobQueues[type][state].push(jobEntry);
     this._markAsDirty();
+  }
+
+  _tryPushToRetryableQueue(jobEntry, now = Date.now()) {
+    const { job, _meta } = jobEntry;
+
+    let attemptsLeft;
+    if (Number.isInteger(_meta.attemptsLeft)) {
+      attemptsLeft = _meta.attemptsLeft - 1;
+    } else {
+      attemptsLeft =
+        job.config?.maxAutoRetriesAfterError ??
+        this.handlerConfigs[job.type]?.maxAutoRetriesAfterError ??
+        this.defaultConfig.maxAutoRetriesAfterError;
+    }
+    if (attemptsLeft <= 0) {
+      return false;
+    }
+
+    const retryJob = {
+      job,
+      _meta: {
+        ..._meta,
+
+        // Little detail: setting it to "now" will guarantee that it is at
+        // the end of the queue (in contrast to 0). By design, all jobs in
+        // the retry job are always ready (otherwise they would not have
+        // been executed before).
+        readyAt: now,
+        attemptsLeft,
+      },
+    };
+    this._pushToQueue({ jobEntry: retryJob, state: 'retryable', now });
+    return true;
   }
 
   _removeFromRunningQueue(jobEntry, now = Date.now()) {
@@ -452,32 +536,58 @@ export default class JobScheduler {
         }
         this._pushToQueue({ jobEntry, state: 'running', now });
         let newJobs;
+        let success = false;
         try {
           this.notifyObservers('jobStarted', jobEntry);
-          newJobs = await this._runJob(jobEntry.job);
+          newJobs = (await this._runJob(jobEntry.job)) || [];
+          success = true;
           this.notifyObservers('jobSucceeded', jobEntry);
         } catch (e) {
+          let pendingRetry = false;
           if (e.isPermanentError) {
-            logger.warn('Job failed:', jobEntry.job, e.message);
+            logger.error('Job failed:', jobEntry.job, e.message);
           } else if (e.isRecoverableError) {
-            // TODO: implement retry
-            logger.warn('Job failed (skip retry):', jobEntry.job, e);
+            if (this._tryPushToRetryableQueue(jobEntry, now)) {
+              pendingRetry = true;
+              logger.warn('Job failed (pushed for retry):', jobEntry.job, e);
+            } else {
+              logger.error('Job failed (no more retries):', jobEntry.job, e);
+            }
           } else {
             logger.error('Job failed (unexpected error):', jobEntry.job, e);
           }
-          this.notifyObservers('jobFailed', jobEntry, e);
+          this.notifyObservers('jobFailed', jobEntry, {
+            pendingRetry,
+            exception: e,
+          });
         } finally {
           now = Date.now();
           this._removeFromRunningQueue(jobEntry, now);
         }
 
-        if (newJobs && newJobs.length > 0) {
-          logger.debug('Job', jobEntry.job, 'spawned', newJobs);
-          for (const job of newJobs) {
-            try {
-              this._registerJob(job, now);
-            } catch (e) {
-              logger.error('Failed to register spawned job:', job, e);
+        if (success) {
+          if (newJobs.length > 0) {
+            logger.debug('Job', jobEntry.job, 'spawned', newJobs);
+            for (const job of newJobs) {
+              try {
+                this._registerJob(job, now);
+              } catch (e) {
+                logger.error('Failed to register spawned job:', job, e);
+              }
+            }
+          }
+
+          const { type } = jobEntry.job;
+          const { retryable = [] } = this.jobQueues[type];
+          if (retryable.length > 0) {
+            this._tryExpireJobsInQueue(retryable, new JobTester(now));
+            if (retryable.length > 0) {
+              const jobEntry = this.jobQueues[type].retryable.shift();
+              logger.debug(
+                'Reinserting previously failed job into the ready queue:',
+                jobEntry.job,
+              );
+              this._pushToQueue({ jobEntry, state: 'ready', now });
             }
           }
         }
@@ -505,16 +615,16 @@ export default class JobScheduler {
     }
   }
 
-  _expireJobsInAllQueue(jobTester) {
-    for (const queue of Object.values(this.jobQueue)) {
-      this._expireJobsInQueue(queue, jobTester);
+  _tryExpireJobsInQueue(queue, jobTester) {
+    const expiredJobs = jobTester.tryExpireJobs(queue);
+    const numExpired = expiredJobs.length;
+    if (numExpired > 0) {
+      this._markAsDirty();
+      for (const jobEntry of expiredJobs) {
+        this.notifyObservers('jobExpired', jobEntry);
+      }
     }
-  }
-
-  _expireJobsInQueue(queue, jobTester) {
-    for (const jobEntry of jobTester.expireJobs(queue)) {
-      this.notifyObservers('jobExpired', jobEntry);
-    }
+    return { numExpired, expiredJobs };
   }
 
   _findNextJobToRun(now = Date.now()) {
@@ -531,13 +641,13 @@ export default class JobScheduler {
           this.cooldowns[type] = null;
         }
         const { ready = [], waiting = [] } = this.jobQueues[type] || {};
-        this._expireJobsInQueue(ready, jobTester);
+        this._tryExpireJobsInQueue(ready, jobTester);
         const nextJob = ready.shift();
         if (nextJob) {
           types.unshift(types.pop()); // to improve fairness
           return nextJob;
         }
-        this._expireJobsInQueue(waiting, jobTester);
+        this._tryExpireJobsInQueue(waiting, jobTester);
         if (waiting.length > 0) {
           queuesToRescan.push(type);
         }
@@ -549,8 +659,7 @@ export default class JobScheduler {
       for (const type of queuesToRescan) {
         const { waiting = [] } = this.jobQueues[type];
         if (waiting.length > 0) {
-          this._sortWaitingQueue(type, jobTester);
-          this._expireJobsInQueue(waiting, jobTester);
+          this._sortWaitingQueue(type, jobTester, { removeExpiredJobs: true });
           let pos = 0;
           while (pos < waiting.length && jobTester.isJobReady(waiting[pos])) {
             pos += 1;
@@ -629,6 +738,8 @@ export default class JobScheduler {
     if (persistedState?.jobQueues) {
       const now = Date.now();
       const jobTester = new JobTester(now);
+      const isJobCreationTimeOK = ({ _meta }) => _meta.createdAt < now + DAY;
+
       for (const [type, queues] of Object.entries(persistedState.jobQueues)) {
         try {
           if (!queues) {
@@ -639,7 +750,29 @@ export default class JobScheduler {
             if (!Array.isArray(jobEntries)) {
               throw new Error(`Bad job queue in state=${state}`);
             }
-            jobEntries.forEach((x) => this._ensureValidJobEntry(x));
+
+            const corruptedJobs = [];
+            jobEntries.forEach((jobEntry) => {
+              this._ensureValidJobEntry(jobEntry);
+
+              if (!isJobCreationTimeOK(jobEntry)) {
+                // Note: this is an ultra-rare edge case where the system clock
+                // was in the future while registering the job. Purging them
+                // may be necessary, since these jobs may otherwise be blocked
+                // for years - eating up slots and eventually preventing new
+                // jobs from being registered.
+                corruptedJobs.push(jobEntry);
+              }
+            });
+
+            if (corruptedJobs.length > 0) {
+              logger.warn(
+                'Detected clock jump. Purging affected jobs:',
+                corruptedJobs,
+              );
+              queues[state] = [...jobEntries].filter(isJobCreationTimeOK);
+              this._markAsDirty();
+            }
           }
           if (queues.running && queues.running.length > 0) {
             // TODO: potentially add the running job into the queue again (it is repeatible)
@@ -648,11 +781,24 @@ export default class JobScheduler {
               queues.running,
             );
             queues.running = [];
+            this._markAsDirty();
           }
+
+          let alive = 0;
           for (const state of JobScheduler.STATES) {
             if (queues[state]) {
-              this._expireJobsInQueue(queues[state], jobTester);
+              this._tryExpireJobsInQueue(queues[state], jobTester);
+              alive += queues[state].length;
             }
+          }
+          if (alive === 0 && !this.handlers[type]) {
+            logger.info(
+              'Cleaning up empty queue of type:',
+              type,
+              '(likely dead, since no handler was found)',
+            );
+            delete persistedState.jobQueues[type];
+            this._markAsDirty();
           }
         } catch (e) {
           logger.warn(
@@ -661,6 +807,7 @@ export default class JobScheduler {
             e,
           );
           delete persistedState.jobQueues[type];
+          this._markAsDirty();
         }
       }
       this.jobQueues = persistedState.jobQueues;
@@ -714,6 +861,25 @@ export default class JobScheduler {
    * that, you can migrate jobs (either all or only selected types).
    */
   _tryDataMigration(persistedState) {
+    // -- begin of 1 ==> 2 (2025-07) ---
+    const log = (...args) => logger.info('[migrate: 1=>2]', ...args);
+    if (persistedState.dbVersion === 1) {
+      log('Migrating jobs...');
+      for (const queue of Object.values(persistedState.jobQueues)) {
+        if (queue.dlq) {
+          log('"dlq" renamed as "retryable"');
+          queue.retryable = queue.dlq;
+          delete queue.dlq;
+        }
+      }
+      persistedState.dbVersion = 2;
+      log('Migrating jobs...DONE');
+    }
+    if (persistedState.dbVersion === 2) {
+      return persistedState;
+    }
+    // -- end of 1 ==> 2 migration ---
+
     logger.warn(
       'DB_VERSION changed. Discarding the old state:',
       persistedState,
@@ -772,9 +938,16 @@ export default class JobScheduler {
     }
   }
 
-  _sortWaitingQueue(type, jobTester) {
+  _sortWaitingQueue(type, jobTester, { removeExpiredJobs = false } = {}) {
+    if (removeExpiredJobs) {
+      this._tryExpireJobsInQueue(this.jobQueues[type].waiting, jobTester);
+    }
+
     if (!this._precomputed().waitingQueueSortedFlags[type]) {
       jobTester.sortJobs(this.jobQueues[type].waiting);
+      if (removeExpiredJobs) {
+        this._tryExpireJobsInQueue(this.jobQueues[type].waiting, jobTester);
+      }
       this._precomputed().waitingQueueSortedFlags[type] = true;
     }
   }
@@ -804,11 +977,11 @@ export default class JobScheduler {
     return count;
   }
 
-  getTotalJobsInDlq() {
+  getTotalJobsWaitingForRetry() {
     let count = 0;
     for (const queue of Object.values(this.jobQueues)) {
-      if (queue.dlq) {
-        count += queue.dlq.length;
+      if (queue.retryable) {
+        count += queue.retryable.length;
       }
     }
     return count;
@@ -886,14 +1059,6 @@ export default class JobScheduler {
       }
       numCheckedKeys += 1;
     };
-    const expectBool = (key) => {
-      if (config[key] !== true && config[key] !== false) {
-        throw new BadJobHandlerError(
-          `Expected field "${key}" to be bool, but got: ${config[key]}`,
-        );
-      }
-      numCheckedKeys += 1;
-    };
     const nonNegative = (x) => x >= 0;
 
     expectInt('priority');
@@ -901,7 +1066,6 @@ export default class JobScheduler {
     expectInt('maxJobsTotal', nonNegative);
     expectInt('cooldownInMs', nonNegative);
     expectInt('maxAutoRetriesAfterError', nonNegative);
-    expectBool('autoRetryAfterError');
 
     if (numCheckedKeys !== Object.keys(config).length) {
       const unexpectedKeys = Object.keys(config).filter(

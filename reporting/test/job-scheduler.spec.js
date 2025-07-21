@@ -13,6 +13,10 @@ import { expect, assert } from 'chai';
 import sinon from 'sinon';
 import * as fc from 'fast-check';
 
+import {
+  BadJobError,
+  TemporarilyUnableToFetchUrlError,
+} from '../src/errors.js';
 import JobScheduler from '../src/job-scheduler.js';
 
 const SECOND = 1000;
@@ -86,6 +90,20 @@ describe('#JobScheduler', function () {
 
   function someJob(type = 'testjob') {
     return { type };
+  }
+
+  function someRecoverableError(msg = '[testing] RecoverableError') {
+    const err = new TemporarilyUnableToFetchUrlError(msg);
+    expect(err.isRecoverableError).to.be.true;
+    expect(err.isPermanentError).to.be.false;
+    return err;
+  }
+
+  function somePermanentError(msg = '[testing] PermanentError') {
+    const err = new BadJobError(msg);
+    expect(err.isRecoverableError).to.be.false;
+    expect(err.isPermanentError).to.be.true;
+    return err;
   }
 
   async function runScriptedScenario({
@@ -216,7 +234,7 @@ describe('#JobScheduler', function () {
         expect(uut.getTotalJobs()).to.eql(i + 1);
       }
 
-      // now the limit is reached and jobs will be rejectec
+      // now the limit is reached and jobs will be rejected
       await uut.registerJob(someJob());
       expect(jobRejectedEvents).to.eql(1);
       expect(uut.stats.jobRegistered).to.eql(uut.globalJobLimit);
@@ -572,6 +590,338 @@ describe('#JobScheduler', function () {
       await uut.sync();
       expect(uut._describeJobs().queueLength).to.eql(1);
     });
+
+    it('should not overwrite newly registered jobs when restoring the queue', async function () {
+      const start = Date.now();
+      const type = 'testjob';
+      const mkJob = () => ({
+        type,
+        config: {
+          readyAt: start + DAY,
+        },
+      });
+
+      uut.registerHandler(type, () => {});
+      await uut.init();
+      await uut.registerJob(mkJob());
+      await clock.tickAsync(1 * MINUTE);
+      expect(uut._describeJobs().queueLength).to.eql(1);
+
+      await simulateRestart();
+      uut.registerHandler(type, () => {});
+      await uut.init();
+      await uut.registerJob(mkJob());
+      await clock.tickAsync(1 * MINUTE);
+      expect(uut._describeJobs().queueLength).to.eql(2);
+
+      await simulateRestart();
+      uut.registerHandler(type, () => {});
+      await uut.init();
+      await uut.registerJob(mkJob());
+      await clock.tickAsync(1 * MINUTE);
+      expect(uut._describeJobs().queueLength).to.eql(3);
+    });
+  });
+
+  describe('when jobs fail', function () {
+    it('should put a job in the "retryable" queue if the error is recoverable', async function () {
+      let numCalls = 0;
+      uut.registerHandler(someJob().type, () => {
+        numCalls += 1;
+        if (numCalls === 1) {
+          throw someRecoverableError(
+            '[testing] expected to fail on the first call',
+          );
+        }
+      });
+
+      await uut.init();
+      await uut.registerJob(someJob());
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      // Initially, it is only put in the retry queue.
+      expect(numCalls).to.eql(1);
+      expect(uut.stats.jobStarted).to.eql(1);
+      expect(uut.stats.jobSucceeded).to.eql(0);
+      expect(uut.stats.jobFailed).to.eql(1);
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(1);
+    });
+
+    it('should execute the retry, once a job of the same type succeeded', async function () {
+      let numCalls = 0;
+      uut.registerHandler(someJob().type, () => {
+        numCalls += 1;
+        if (numCalls === 1) {
+          throw someRecoverableError(
+            '[testing] expected to fail on the first call',
+          );
+        }
+      });
+      await uut.init();
+
+      // the first job will fail
+      const first = someJob();
+      await uut.registerJob(first);
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      expect(numCalls).to.eql(1);
+      expect(uut.stats.jobStarted).to.eql(1);
+      expect(uut.stats.jobSucceeded).to.eql(0);
+      expect(uut.stats.jobFailed).to.eql(1);
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(1);
+      await passesSelfChecks();
+
+      // the second job will succeed
+      const second = someJob();
+      await uut.registerJob(second);
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      // at this point, the first job may or may not have been retried.
+      expect(numCalls).to.be.at.least(2);
+      expect(uut.stats.jobStarted).to.be.at.least(2);
+      expect(uut.stats.jobSucceeded).to.be.at.least(1);
+      expect(uut.stats.jobFailed).to.eql(1);
+      expect(uut.getTotalJobsWaitingForRetry()).to.be.at.most(1);
+      await passesSelfChecks();
+
+      // let enough time elapse to ensure that there are no cooldowns
+      await clock.tickAsync(1 * DAY);
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      expect(numCalls).to.eql(3);
+      expect(uut.stats.jobStarted).to.eql(3);
+      expect(uut.stats.jobSucceeded).to.eql(2);
+      expect(uut.stats.jobFailed).to.eql(1);
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(0);
+      await passesSelfChecks();
+    });
+
+    it('should drop jobs that failed permanently', async function () {
+      let numCalls = 0;
+      uut.registerHandler(someJob().type, () => {
+        numCalls += 1;
+        throw somePermanentError('[testing] expected to fail every time');
+      });
+
+      await uut.init();
+      await uut.registerJob(someJob());
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      expect(numCalls).to.eql(1);
+      expect(uut.stats.jobStarted).to.eql(1);
+      expect(uut.stats.jobSucceeded).to.eql(0);
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(0);
+    });
+
+    it('should drop jobs that failed because of unknown error (e.g. bugs in the code)', async function () {
+      let numCalls = 0;
+      uut.registerHandler(someJob().type, () => {
+        numCalls += 1;
+        new URL(''); // forces a runtime error (simulating a bug in the code)
+      });
+
+      await uut.init();
+      await uut.registerJob(someJob());
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      expect(numCalls).to.eql(1);
+      expect(uut.stats.jobStarted).to.eql(1);
+      expect(uut.stats.jobSucceeded).to.eql(0);
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(0);
+    });
+
+    it('should eventually drop recoverable jobs if they fail too often', async function () {
+      const config = {
+        maxAutoRetriesAfterError: 4,
+      };
+      const handler = async (job) => {
+        const { shouldThrow } = job.args;
+        if (shouldThrow) {
+          throw someRecoverableError('[testing] expected to always fail');
+        }
+      };
+
+      const type = 'testjob';
+      uut.registerHandler(type, handler, config);
+      const mkFailingJob = () => ({
+        type,
+        args: { shouldThrow: true },
+      });
+      const mkSucceedingJob = () => ({
+        type,
+        args: { shouldThrow: false },
+      });
+
+      // 1) register one failing job, which is intended to be repeated "maxRetries" times
+      await uut.init();
+      await uut.registerJob(mkFailingJob());
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      // 2) to make it being retried, spawn "maxRetries" successful job
+      const numSuccessfulJobs = config.maxAutoRetriesAfterError;
+      for (let i = 0; i < numSuccessfulJobs; i += 1) {
+        await uut.registerJob(mkSucceedingJob());
+        await uut.processPendingJobs();
+        await clock.runAllAsync();
+      }
+
+      // Expected outcome:
+      // - failing: 1 job, plus "maxRetries" retries
+      // - succeeding: "maxRetries" jobs to force retries
+      //
+      // In total, (1 + maxRetries) + maxRetries
+      //           [   failed     ]   [ success ]
+      expect(uut.stats.jobStarted).to.eql(
+        1 + 2 * config.maxAutoRetriesAfterError,
+      );
+      expect(uut.stats.jobFailed).to.eql(1 + config.maxAutoRetriesAfterError);
+      expect(uut.stats.jobSucceeded).to.eql(config.maxAutoRetriesAfterError);
+      expect(uut.getTotalJobs()).to.eql(0);
+
+      // new successful jobs will also not result in failed jobs getting rerun
+      const { jobStarted, jobFailed, jobSucceeded } = uut.stats;
+      await uut.registerJob(mkSucceedingJob());
+      expect(uut.getTotalJobs()).to.eql(1);
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+
+      // one extra successful one, but no more errors
+      expect(uut.stats.jobStarted).to.eql(jobStarted + 1);
+      expect(uut.stats.jobSucceeded).to.eql(jobSucceeded + 1);
+      expect(uut.stats.jobFailed).to.eql(jobFailed);
+      expect(uut.getTotalJobs()).to.eql(0);
+    });
+
+    describe('should not let failed jobs prevent new jobs from being started', function () {
+      [0, 1, 2 * SECOND, 2 * MINUTE, 1 * HOUR].forEach((cooldownInMs) => {
+        it(`with cooldown=${cooldownInMs} ms`, async function () {
+          const type = 'testjob';
+          const jobsNeverStarted = new Set();
+
+          const mkJob = (id) => {
+            const job = {
+              type,
+              args: { id },
+            };
+            jobsNeverStarted.add(id);
+            return job;
+          };
+
+          const handler = async (job) => {
+            jobsNeverStarted.delete(job.args.id);
+            throw someRecoverableError('[testing] expected to always fail');
+          };
+
+          const maxJobsTotal = 10;
+          const config = {
+            maxJobsTotal,
+            cooldownInMs,
+          };
+          uut.registerHandler(type, handler, config);
+          await uut.init();
+
+          // When jobs are exected, they will always fail. Still, it should
+          // be possible to keep starting new ones.
+          const numJobs = 2 * maxJobsTotal;
+          for (let i = 1; i <= numJobs; i += 1) {
+            await uut.registerJob(mkJob(i));
+            expect(uut.stats.jobRejected).to.eql(0);
+            expect(uut.stats.jobRegistered).to.eql(i);
+            expect(uut.stats.jobStarted).to.be.at.most(i);
+            expect(uut.stats.jobFailed).to.be.at.most(i);
+            await uut.processPendingJobs();
+            await clock.tickAsync(cooldownInMs);
+            await clock.runAllAsync();
+          }
+
+          expect(uut.stats.jobRejected).to.eql(0);
+          expect(uut.stats.jobRegistered).to.eql(numJobs);
+          expect(uut.stats.jobStarted).to.be.at.most(numJobs);
+          expect(uut.stats.jobFailed).to.be.at.most(numJobs);
+          expect([...jobsNeverStarted]).to.be.empty;
+        });
+      });
+    });
+  });
+
+  describe('should keep the persisted state minimal', function () {
+    it('should eventually remove queues from removed jobs', async function () {
+      const garbage = someJob(`garbage-${Math.random()}`);
+      const current = someJob(`current-${Math.random()}`);
+
+      uut.registerHandler(garbage.type, () => {});
+      uut.registerHandler(current.type, () => {});
+      await uut.init();
+      await uut.registerJob(garbage);
+      await uut.registerJob(current);
+      expect(uut.jobQueues[garbage.type]).to.exist;
+      expect(uut.jobQueues[current.type]).to.exist;
+      await clock.runAllAsync();
+
+      await simulateRestart();
+      uut.registerHandler(garbage.type, () => {}); // here it still exists
+      uut.registerHandler(current.type, () => {});
+      await uut.init();
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+      expect(uut.jobQueues[garbage.type]).to.exist;
+      expect(uut.jobQueues[current.type]).to.exist;
+      await clock.tickAsync(1 * YEAR);
+
+      await simulateRestart();
+      uut.registerHandler(current.type, () => {}); // Note that 'garbage' is missing
+      await uut.init();
+      await uut.processPendingJobs();
+      await clock.runAllAsync();
+      expect(uut.jobQueues[garbage.type]).to.not.exist;
+      expect(uut.jobQueues[current.type]).to.exist;
+    });
+
+    it('should clean-up left-overs after an extensive clock-jump, followed by a correction', async function () {
+      const type = 'testjob';
+      const mkJob = () => {
+        const job = {
+          type,
+          args: {},
+          config: {
+            readyIn: { min: 1 * HOUR },
+          },
+        };
+        return job;
+      };
+      const handler = () =>
+        expect.fail('jobs were not supposed to run in this test');
+
+      const start = Date.now();
+      clock.setSystemTime(start + 20 * YEAR); // let the clock be in an inconsistent state
+
+      uut.registerHandler(type, handler);
+      await uut.init();
+      await uut.registerJob(mkJob());
+      await uut.registerJob(mkJob());
+      await clock.runAllAsync();
+      expect(uut.getTotalJobs()).to.eql(2);
+
+      await simulateRestart();
+      uut.registerHandler(type, handler);
+      await uut.init();
+      await clock.runAllAsync();
+      expect(uut.getTotalJobs()).to.eql(2); // still exist
+
+      await simulateRestart();
+      clock.setSystemTime(start); // now the clock corrects
+      uut.registerHandler(type, handler);
+      await uut.init();
+      await clock.runAllAsync();
+      expect(uut.getTotalJobs()).to.eql(0); // the jobs are gone
+    });
   });
 
   describe('[scripted scenarios]', function () {
@@ -642,7 +992,6 @@ describe('#JobScheduler', function () {
       ttlInMs: fc.integer({ min: minTTL, max: maxTTL }),
       maxJobsTotal: fc.integer({ min: 1, max: maxJobsPerType }),
       cooldownInMs: fc.nat(maxCooldown),
-      autoRetryAfterError: fc.boolean(),
       maxAutoRetriesAfterError: fc.nat(maxAutoRetriesAfterError),
     });
     const individualJobConfigFields = () => ({

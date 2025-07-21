@@ -66,8 +66,14 @@ export async function runClockUntilJobQueueIsEmpty(
     }
   }
 
+  // To ensure that initialization is completed. Otherwise, job
+  // registrations may still be hanging.
+  await clock.runAllAsync();
+
   let iter = 0;
-  while (jobScheduler.getTotalJobs() > jobScheduler.getTotalJobsInDlq()) {
+  while (
+    jobScheduler.getTotalJobs() > jobScheduler.getTotalJobsWaitingForRetry()
+  ) {
     iter += 1;
     if (iter > maxIterations) {
       throw new Error(`Exceeded maximum steps (steps=${maxIterations})`);
