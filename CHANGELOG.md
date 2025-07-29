@@ -1,3 +1,15 @@
+# v7.4.1 (Tue Jul 29 2025)
+
+#### 🐛 Bug Fix
+
+- Job scheduling: tweaked scheduling and misconfiguration detection [#163](https://github.com/whotracksme/webextension-packages/pull/163) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.4.0 (Tue Jul 01 2025)
 
 #### 🚀 Enhancement
