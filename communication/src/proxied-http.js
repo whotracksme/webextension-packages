@@ -12,7 +12,7 @@
 import { encodeWithPadding } from './padding.js';
 import { fromBase64, toBase64, fromUTF8, toUTF8 } from './encoding.js';
 import { inflate } from './zlib.js';
-import { ProtocolError } from './errors.js';
+import { ProtocolError, TransportError } from './errors.js';
 
 const ANONYMOUS_COMMUNICATION_PROTOCOL_VERSION = 1;
 const ANONYMOUS_COMMUNICATION_ECDH_P256_AES_128_GCM = 0xea;
@@ -99,18 +99,37 @@ export default class ProxiedHttp {
       'Key-Date': serverPublicKeyDate,
     };
 
-    const response = await fetch(this._chooseRandomProxyUrl(), {
-      method: 'POST',
-      headers,
-      credentials: 'omit',
-      cache: 'no-store',
-      redirect: 'manual',
-      body: ciphertext,
-    });
+    const proxyUrl = this._chooseRandomProxyUrl();
+    let response;
+    try {
+      response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'omit',
+        cache: 'no-store',
+        redirect: 'manual',
+        body: ciphertext,
+      });
+    } catch (e) {
+      throw new TransportError(`Failed to send data to '${proxyUrl}'`, {
+        cause: e,
+      });
+    }
     if (!response.ok) {
+      if (response.status === 429 || response.status >= 500) {
+        throw new TransportError(
+          `Failed to send data (${response.statusText})`,
+        );
+      }
       throw new Error(`Failed to send data (${response.statusText})`);
     }
-    let data = new Uint8Array(await response.arrayBuffer());
+
+    let data;
+    try {
+      data = new Uint8Array(await response.arrayBuffer());
+    } catch (e) {
+      throw new TransportError('Failed to process response data', { cause: e });
+    }
 
     const serverIV = response.headers.get('Encryption-IV');
     if (serverIV) {
