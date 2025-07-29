@@ -1,3 +1,15 @@
+# v7.5.0 (Tue Jul 29 2025)
+
+#### 🚀 Enhancement
+
+- Error recovery [#164](https://github.com/whotracksme/webextension-packages/pull/164) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.4.1 (Tue Jul 29 2025)
 
 #### 🐛 Bug Fix
