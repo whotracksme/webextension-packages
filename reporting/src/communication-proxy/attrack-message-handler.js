@@ -49,7 +49,7 @@ export default class AttrackMessageHandler {
         priority: -1000,
         cooldownInMs: 1 * SECOND,
         maxJobsTotal: 500,
-        maxTTL: 14 * DAY,
+        ttlInMs: 14 * DAY,
       },
     );
   }
