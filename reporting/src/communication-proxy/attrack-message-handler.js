@@ -26,13 +26,13 @@ export default class AttrackMessageHandler {
 
     this._configOverride = {
       'wtm.attrack.tokensv2': {
-        readyIn: { min: 2 * SECOND, max: 4 * HOUR },
+        readyIn: { min: 13 * MINUTE, max: 4 * HOUR },
       },
       'wtm.attrack.keysv2': {
-        readyIn: { min: 2 * SECOND, max: 4 * HOUR },
+        readyIn: { min: 19 * MINUTE, max: 4 * HOUR },
       },
       'wtm.attrack.tp_events': {
-        readyIn: { min: 2 * SECOND, max: 30 * MINUTE },
+        readyIn: { min: 23 * MINUTE, max: 2 * HOUR },
       },
     };
 
@@ -47,7 +47,7 @@ export default class AttrackMessageHandler {
       },
       {
         priority: -1000,
-        cooldownInMs: 1 * SECOND,
+        cooldownInMs: 2 * SECOND,
         maxJobsTotal: 500,
         ttlInMs: 14 * DAY,
       },
