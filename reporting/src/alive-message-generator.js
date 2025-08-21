@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { requireParam, requireString } from './utils';
+import { requireParam, requireString, lazyInitAsync } from './utils';
 import Bowser from 'bowser';
 
 /**
@@ -30,16 +30,14 @@ export default class AliveMessageGenerator {
     this.storage = requireParam(storage);
     this.storageKey = requireString(storageKey);
     this.navigatorApi = navigatorApi || globalThis.navigator;
-  }
-
-  get staticConfig() {
-    this._staticConfig ||= this._generateBaseConfig();
-    return this._staticConfig;
+    this.staticConfigProvider = lazyInitAsync(
+      this._generateBaseConfig.bind(this),
+    );
   }
 
   async generateMessage(ctry, hour) {
     const config = {
-      ...this.staticConfig,
+      ...(await this.staticConfigProvider()),
       ctry,
     };
 
@@ -74,12 +72,19 @@ export default class AliveMessageGenerator {
     };
   }
 
-  _generateBaseConfig() {
+  async _generateBaseConfig() {
     let browser, version, os, platform, engine;
     const { language, userAgent } = this.navigatorApi;
     if (userAgent) {
       const browserInfo = Bowser.parse(userAgent);
       browser = browserInfo.browser?.name;
+      if (browser === 'Chrome' && (await this._looksLikeBrave())) {
+        logger.debug(
+          'Chrome user agent detected, but the API says it is Brave',
+        );
+        browser = 'Chrome (Brave)';
+      }
+
       os = browserInfo.os?.name;
       platform = browserInfo.platform?.type;
       engine = browserInfo.engine?.name;
@@ -142,5 +147,15 @@ export default class AliveMessageGenerator {
 
   _deterministicStringify(obj) {
     return JSON.stringify(Object.fromEntries(Object.entries(obj).sort()));
+  }
+
+  async _looksLikeBrave() {
+    try {
+      return !!(
+        this.navigatorApi.brave && (await this.navigatorApi.brave.isBrave())
+      );
+    } catch (e) {
+      return false;
+    }
   }
 }

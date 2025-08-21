@@ -162,6 +162,30 @@ describe('#AliveMessageGenerator', function () {
         t: '2024010203',
       });
     });
+
+    it('should detect Brave', async function () {
+      // Brave uses the Chrome user agent, but extended the navigator API to detect it
+      navigatorApi.userAgent =
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36';
+      navigatorApi.language = 'de-DE';
+      navigatorApi.brave = {
+        async isBrave() {
+          return true;
+        },
+      };
+
+      const message = await uut.generateMessage('de', '2025082113');
+      expect(message).to.eql({
+        browser: 'Chrome (Brave)',
+        version: '139', // Chrome major version (though taken from Brave 1.81.136)
+        os: 'Linux',
+        platform: 'desktop',
+        engine: 'Blink',
+        language: 'de-DE', // from window.navigator
+        ctry: 'de',
+        t: '2025082113',
+      });
+    });
   });
 
   describe('if quorum is not reached', function () {
