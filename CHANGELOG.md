@@ -1,3 +1,15 @@
+# v7.7.0 (Tue Aug 26 2025)
+
+#### 🚀 Enhancement
+
+- "alive" signal: distinguish Brave from Chrome [#165](https://github.com/whotracksme/webextension-packages/pull/165) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.6.0 (Tue Aug 26 2025)
 
 #### 🚀 Enhancement
