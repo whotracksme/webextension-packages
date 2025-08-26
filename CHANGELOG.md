@@ -1,3 +1,15 @@
+# v7.6.0 (Tue Aug 26 2025)
+
+#### 🚀 Enhancement
+
+- Mitigate midnight spike of anti-tracking signals [#166](https://github.com/whotracksme/webextension-packages/pull/166) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.5.0 (Tue Jul 29 2025)
 
 #### 🚀 Enhancement
