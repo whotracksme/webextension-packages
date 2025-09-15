@@ -1,3 +1,15 @@
+# v7.7.1 (Mon Sep 15 2025)
+
+#### 🐛 Bug Fix
+
+- Fix: offscreen window size attributes [#167](https://github.com/whotracksme/webextension-packages/pull/167) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v7.7.0 (Tue Aug 26 2025)
 
 #### 🚀 Enhancement
