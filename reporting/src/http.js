@@ -309,8 +309,8 @@ async function tryCloseOffscreenDocument() {
     }
   }
 }
-
-const OFFSCREEN_DOCUMENT_PATH = 'offscreen/doublefetch/index.html';
+const OFFSCREEN_DOCUMENT_PREFIX = 'offscreen/doublefetch/';
+const OFFSCREEN_DOCUMENT_PATH = `${OFFSCREEN_DOCUMENT_PREFIX}index.html`;
 
 async function withOffscreenDocumentReady(url, headers, asyncCallback) {
   const cleanups = [];
@@ -334,6 +334,29 @@ async function withOffscreenDocumentReady(url, headers, asyncCallback) {
 
     const undoDNRChange = await addDNRSessionRule(rule);
     cleanups.push(undoDNRChange);
+
+    await chrome.scripting.registerContentScripts([
+      {
+        id: 'offscreen-fix',
+        matches: [`https://*.${domain}/*`, `https://${domain}/*`],
+        js: [`${OFFSCREEN_DOCUMENT_PREFIX}/offscreen-fix.js`],
+        runAt: 'document_start',
+        allFrames: true,
+        world: 'MAIN',
+      },
+    ]);
+    cleanups.push(() => {
+      chrome.scripting
+        .unregisterContentScripts({
+          ids: ['offscreen-fix'],
+        })
+        .catch((e) => {
+          logger.error(
+            'cleanup failed: unable to remove offscreen content script:',
+            e,
+          );
+        });
+    });
 
     const undoHeaderOverride = await headerOverride({
       headers,
