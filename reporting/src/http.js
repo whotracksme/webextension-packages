@@ -309,8 +309,8 @@ async function tryCloseOffscreenDocument() {
     }
   }
 }
-const OFFSCREEN_DOCUMENT_PREFIX = 'offscreen/doublefetch/';
-const OFFSCREEN_DOCUMENT_PATH = `${OFFSCREEN_DOCUMENT_PREFIX}index.html`;
+const OFFSCREEN_DOCUMENT_PREFIX = 'offscreen/doublefetch';
+const OFFSCREEN_DOCUMENT_PATH = `${OFFSCREEN_DOCUMENT_PREFIX}/index.html`;
 
 async function withOffscreenDocumentReady(url, headers, asyncCallback) {
   const cleanups = [];
