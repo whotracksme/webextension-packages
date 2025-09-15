@@ -29,6 +29,7 @@ module.exports = [
       copy({
         targets: [
           { src: 'src/offscreen/doublefetch/index.html', dest: 'example/offscreen/doublefetch/' },
+          { src: 'src/offscreen/doublefetch/offscreen-fix.js', dest: 'example/offscreen/doublefetch/' },
         ]
       })
     ]
