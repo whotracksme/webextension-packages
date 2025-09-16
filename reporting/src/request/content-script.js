@@ -26,8 +26,8 @@ export function recordMouseDown(ev) {
 
         count += 1;
       }
-    } catch (ee) {
-      console.warn('WTM Reporting: failed to record context from mousedown');
+    } catch {
+      // fail silently
     }
 
     return undefined;
