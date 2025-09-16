@@ -181,7 +181,7 @@ export default class NavTrackingDetector {
     // less sensitive than arbitrary 'host -> host' navigations. Thus,
     // it is likely that additional checks will be needed to support them.
     // For now, start start without it.
-    console.debug('[STUB]: general navigation are not yet covered', event);
+    logger.debug('[STUB]: general navigation are not yet covered', event);
   }
 
   // special case: public search engine landings
