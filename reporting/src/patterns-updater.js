@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { randBetween, clamp } from './utils';
+import { randBetween, clamp, parseUntrustedJSON } from './utils';
 import SelfChecks from './self-check';
 
 const SECOND = 1000;
@@ -202,7 +202,9 @@ export default class PatternsUpdater {
         );
       }
       const newPatterns = await response.text();
-      const rules = JSON.parse(newPatterns);
+      const rules = parseUntrustedJSON(newPatterns, {
+        maxSize: 1024 * 1024, // 1 MB
+      });
 
       // Bookkeeping to detect if the server just released an update.
       // It is useful for debugging, but it also means we should

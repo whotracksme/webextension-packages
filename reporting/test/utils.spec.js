@@ -16,6 +16,7 @@ import {
   chunk,
   flattenObject,
   equalityCanBeProven,
+  parseUntrustedJSON,
   lazyInitAsync,
 } from '../src/utils.js';
 
@@ -150,6 +151,65 @@ describe('#equalityCanBeProven', function () {
         ),
       ).to.eql(false);
     });
+  });
+});
+
+describe('#parseUntrustedJSON', function () {
+  describe('should be a drop-in replacement for JSON.parse for safe data', function () {
+    for (const json of [
+      '{"foo": "bar"}',
+      '[{"foo": 42, "bar": []}]',
+      '{"a": [1, 2, {"b": 3}], "c": {"d": {"e": 4}}}',
+    ]) {
+      it(`- well-formed input: <<${json}>>`, function () {
+        expect(parseUntrustedJSON(json)).to.eql(JSON.parse(json));
+      });
+    }
+
+    for (const badJson of [
+      '',
+      'some broken JSON',
+      '{{{',
+      123,
+      null,
+      undefined,
+      { foo: 'bar' },
+      [],
+    ]) {
+      it(`- corrupted input: <<${badJson}>>`, function () {
+        expect(() => parseUntrustedJSON(badJson)).to.throw;
+      });
+    }
+  });
+
+  describe('should detect __proto__ fields', function () {
+    it('at the top level', function () {
+      // by default, we should reject this input
+      const json = '{"foo":42, "__proto__":{"admin": true} }';
+      expect(() => parseUntrustedJSON(json)).to.throw;
+
+      // unless we want to process such data (but without the __proto__ field)
+      const sanitized = parseUntrustedJSON(json, { sanitizeSilently: true });
+      expect(sanitized.__proto__.admin).to.be.undefined;
+
+      // Note: this would normally happen
+      expect(JSON.parse(json).__proto__.admin).to.be.true;
+    });
+
+    it('nested within the JSON', function () {
+      const json =
+        '{"foo":42, "bar": {"baz": 123, "__proto__": {"admin": true}}}';
+      expect(() => parseUntrustedJSON(json)).to.throw;
+
+      const sanitized = parseUntrustedJSON(json, { sanitizeSilently: true });
+      expect(sanitized.bar.__proto__.admin).to.be.undefined;
+    });
+  });
+
+  it('should reject input that exceeds the maximum length', function () {
+    const json = '{"foo": "bar"}';
+    expect(() => parseUntrustedJSON(json, { maxSize: 3 })).to.throw;
+    expect(parseUntrustedJSON(json, { maxSize: 1024 }).foo).to.eql('bar');
   });
 });
 
