@@ -34,19 +34,19 @@
     "communication"
   ],
   "devDependencies": {
-    "auto": "^11.1.1",
+    "auto": "^11.3.0",
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "prettier": "2.5.1"
   },
   "dependencies": {
-    "@cliqz/url-parser": "^1.1.5",
+    "@ghostery/url-parser": "^1.3.0",
     "date-fns": "^2.29.3",
-    "idb": "^7.1.1",
-    "linkedom": "^0.18.10",
+    "idb": "^8.0.3",
+    "linkedom": "^0.18.12",
     "pako": "^2.1.0",
-    "tldts-experimental": "^6.0.11",
-    "bowser": "^2.11.0"
+    "tldts-experimental": "^7.0.14",
+    "bowser": "^2.12.1"
   }
 }

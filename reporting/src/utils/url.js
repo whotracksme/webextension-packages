@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { ImmutableURL } from '@cliqz/url-parser';
+import { ImmutableURL } from '@ghostery/url-parser';
 
 /**
  * This is an abstraction over URL with caching and basic error handling built in. The main
