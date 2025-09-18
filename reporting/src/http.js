@@ -398,9 +398,26 @@ async function withOffscreenDocumentReady(url, headers, asyncCallback) {
   }
 }
 
+// This is the recovery page returned if the "emptyHtml" flag is set.
+//
+// Changes to this HTML should be treated like API changes.
+// If you need to change it, prefer to do it in a backward compatible
+// way by adding extra meta tags.
+const EMPTY_RESCUE_HTML = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="rescue" content="error">
+    <title>Empty</title>
+  </head>
+<body></body>
+</html>
+`;
+
 // Note: the parameters are almost identical to "anonymousHttpGet"
-// with the exception that "step" is not defined. The implementation
-// here is only a single request, not a chain of requests.
+// with the exception that "step" and "emptyHTML" is not defined.
+// The implementation here is only a single request, not a chain of requests.
 async function singleHttpGetStep(url, params = {}) {
   const {
     headers = null,
@@ -569,17 +586,28 @@ const LOCK = new SeqExecutor();
  *     can be used in later requests. Still, the chain of requests always
  *     starts from a clean state. In other words, the temporary context is
  *     fully isolated and will be discarded once all steps have completed.
- *
- * TODO: For pages like YouTube, double-fetch fails because of consent
- * pages. In the YouTube example, the following cookie could be set:
- * "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"
- * (Maybe there is a way to generalize?)
+ * - onError (optional):
+ *     A fallback configuration for error recovery.
+ * - emptyHtml (default: false):
+ *     Bypasses the fetch and returns an empty HTML document
+ *     (see EMPTY_RESCUE_HTML).
+ *     This can sometimes be useful, especially for error recovery,
+ *     to gracefully handle with failed requests.
  */
 export async function anonymousHttpGet(originalUrl, params = {}) {
-  return LOCK.run(async () => {
-    const { steps = [], ...sharedParams } = params;
+  return LOCK.run(() => anonymousHttpGet_(originalUrl, params));
+}
+
+async function anonymousHttpGet_(originalUrl, params = {}) {
+  const { steps = [], emptyHtml = false, onError, ...sharedParams } = params;
+  if (emptyHtml) {
+    logger.debug('Returning empty HTML for URL:', originalUrl);
+    return EMPTY_RESCUE_HTML;
+  }
+
+  try {
     if (steps.length === 0) {
-      return singleHttpGetStep(originalUrl, sharedParams);
+      return await singleHttpGetStep(originalUrl, sharedParams);
     }
     if (!chrome?.webRequest?.onHeadersReceived) {
       throw new MultiStepDoublefetchNotSupportedError();
@@ -616,10 +644,7 @@ export async function anonymousHttpGet(originalUrl, params = {}) {
       const stepIdx = unsafeStepIdx; // eliminate pitfalls due to mutability
       const currentStep = steps[stepIdx];
       const nextStep = steps[stepIdx + 1];
-      const localParams = {
-        ...sharedParams,
-        ...currentStep,
-      };
+      const localParams = { ...sharedParams, ...currentStep };
 
       const readyForNextStep = new Promise((resolve, reject) => {
         observer.onChange = null;
@@ -801,7 +826,22 @@ export async function anonymousHttpGet(originalUrl, params = {}) {
       }
     }
     return content;
-  });
+  } catch (e) {
+    if (onError) {
+      const rescueParams = {
+        ...sharedParams,
+        ...onError,
+      };
+      logger.info(
+        'Entering rescue path for URL:',
+        originalUrl,
+        'Config:',
+        rescueParams,
+      );
+      return anonymousHttpGet_(originalUrl, rescueParams);
+    }
+    throw e;
+  }
 }
 
 // Resolves placeholder expressions ("{{ }}"} with values provided by the

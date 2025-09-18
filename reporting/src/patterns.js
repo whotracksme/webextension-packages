@@ -20,6 +20,7 @@ import {
   requireBoolean,
   requireObject,
   requireArrayOfStrings,
+  parseUntrustedJSON,
 } from './utils';
 
 /**
@@ -286,7 +287,10 @@ const TRANSFORMS = new Map(
       requireString(path);
       requireBoolean(extractObjects);
       try {
-        let obj = JSON.parse(text);
+        let obj = parseUntrustedJSON(text, {
+          maxSize: 1024 * 1024, // 1 MB
+          sanitizeSilently: true,
+        });
         for (const field of path.split('.')) {
           if (!Object.hasOwn(obj, field)) {
             return '';
@@ -336,7 +340,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 6;
+const PATTERN_DSL_VERSION = 7;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but
@@ -413,21 +417,31 @@ export default class Patterns {
     if (!this._rules[msgType]) {
       return null;
     }
-    const doublefetchRequest = { url };
-    if (this._rules[msgType].doublefetch) {
-      const { headers, followRedirects, steps } =
-        this._rules[msgType].doublefetch;
+    const convert = (
+      { followRedirects, headers, steps, emptyHtml, onError },
+      target = {},
+    ) => {
       if (followRedirects) {
-        doublefetchRequest.redirect = 'follow';
+        target.redirect = 'follow';
       }
       if (headers) {
-        doublefetchRequest.headers = headers;
+        target.headers = headers;
       }
       if (steps) {
-        doublefetchRequest.steps = steps;
+        target.steps = steps;
       }
-    }
-    return doublefetchRequest;
+      if (typeof emptyHtml === 'boolean') {
+        target.emptyHtml = emptyHtml;
+      }
+      if (onError) {
+        target.onError = convert(onError);
+      }
+      return target;
+    };
+
+    // Start with the mandatory "url" field and fill the remaining,
+    // optional fields from the configuration from patterns.
+    return convert(this._rules[msgType].doublefetch || {}, { url });
   }
 
   _sanitizeRules(rules) {

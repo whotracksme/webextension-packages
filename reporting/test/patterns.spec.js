@@ -12,7 +12,7 @@
 import { expect } from 'chai';
 import fc from 'fast-check';
 
-import { lookupBuiltinTransform } from '../src/patterns.js';
+import Patterns, { lookupBuiltinTransform } from '../src/patterns.js';
 
 describe('Test builtin primitives', function () {
   describe('#queryParam', function () {
@@ -911,6 +911,163 @@ describe('Test builtin primitives', function () {
             const result = trim(untrustedText);
             expect(result).to.be.a('string').and.to.eql(untrustedText.trim());
           }),
+        );
+      });
+    });
+  });
+});
+
+describe('Patterns', function () {
+  describe('#createDoublefetchRequest', function () {
+    it('should default to an empty request', function () {
+      const uut = new Patterns();
+      const msgType = 'some-message-type';
+      const url = 'https://example.test/foo';
+
+      // message type is known, but has no explicit config
+      uut.updatePatterns({
+        [msgType]: {
+          input: {},
+          output: {},
+        },
+      });
+      expect(uut.createDoublefetchRequest(msgType, url)).to.eql({ url });
+    });
+
+    it('should return null if the message type is unknown', function () {
+      const uut = new Patterns();
+      const msgType = 'some-message-type';
+      const url = 'https://example.test/foo';
+
+      uut.updatePatterns({});
+      expect(uut.createDoublefetchRequest(msgType, url)).to.eql(null);
+    });
+
+    // General helper to verify that the doublefetch section from the
+    // pattern rules is correctly converted to a doublefetch request.
+    function check({ config: doublefetch, result: outputForUrl }) {
+      expect(doublefetch).to.be.an('object');
+      expect(outputForUrl).to.be.a('function');
+
+      const uut = new Patterns();
+      const msgType = 'some-message-type';
+      const url = 'https://example.test/foo';
+
+      uut.updatePatterns({
+        [msgType]: {
+          doublefetch,
+          input: {},
+          output: {},
+        },
+      });
+
+      const actual = uut.createDoublefetchRequest(msgType, url);
+      const expected = outputForUrl(url);
+      expect(actual).to.eql(expected);
+    }
+
+    describe('should translate followRedirects=true to redirect=follow', function () {
+      it('in a flat example', function () {
+        check({
+          config: {
+            followRedirects: true,
+          },
+          result: (url) => ({
+            url,
+            redirect: 'follow',
+          }),
+        });
+      });
+
+      it('in a nested example', function () {
+        check({
+          config: {
+            onError: {
+              followRedirects: true,
+            },
+          },
+          result: (url) => ({
+            url,
+            onError: {
+              redirect: 'follow',
+            },
+          }),
+        });
+      });
+    });
+
+    describe('should forward', function () {
+      // Specialized function for the common use case that the doublefetch
+      // config in the patterns will be identical to the doublefetch request.
+      function shouldForward(config) {
+        check({
+          config,
+          result: (url) => ({
+            url,
+            ...config,
+          }),
+        });
+      }
+
+      it('empty configs', function () {
+        shouldForward({});
+      });
+
+      it('header overwrites', function () {
+        shouldForward({
+          headers: {
+            foo: 'foo',
+            bar: 'bar',
+          },
+        });
+      });
+
+      it('simple steps', function () {
+        shouldForward({
+          steps: [{ dynamic: true }, {}],
+        });
+      });
+
+      it('emptyHtml', function () {
+        shouldForward({ emptyHtml: true });
+        shouldForward({ emptyHtml: false });
+      });
+
+      it('onError', function () {
+        shouldForward({ onError: {} });
+        shouldForward({ onError: { emptyHtml: true } });
+        shouldForward({ onError: { headers: { foo: 'foo' } } });
+      });
+    });
+
+    describe('should drop unexpected fields', function () {
+      function shouldDrop(config) {
+        check({
+          config,
+          result: (url) => ({ url }),
+        });
+      }
+
+      function shouldOnlyKeep(config, keep) {
+        check({
+          config,
+          result: (url) => ({ url, ...keep }),
+        });
+      }
+
+      it('in a flat example', function () {
+        shouldDrop({ foo: 'unexpected field' });
+        shouldDrop({ __proto__: { admin: true } });
+      });
+
+      it('in a nested example', function () {
+        shouldOnlyKeep(
+          { onError: { foo: 'unexpected field' } },
+          { onError: {} },
+        );
+        shouldOnlyKeep(
+          { onError: { __proto__: { admin: true } } },
+          { onError: {} },
         );
       });
     });

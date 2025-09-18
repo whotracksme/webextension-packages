@@ -306,6 +306,43 @@ export function split0(str, on) {
 }
 
 /**
+ * Drop-in replacement for JSON.parse if you need to handle untrusted data.
+ *
+ * Warning: this implementation will not be able to magically solve all
+ * possible attacks. Depending on the specific use case, additional
+ * verifications may be needed (e.g. allowing only specific known fields).
+ */
+export function parseUntrustedJSON(
+  untrustedJson,
+  { sanitizeSilently = false, maxSize } = {},
+) {
+  if (typeof untrustedJson !== 'string') {
+    throw new Error(
+      'Untrusted JSON detected: unexpected input to be of type "string"',
+    );
+  }
+  if (!isNil(maxSize) && untrustedJson.length > maxSize) {
+    throw new Error(
+      `Untrusted JSON detected: input exceeded maximum size of ${maxSize}`,
+    );
+  }
+
+  if (sanitizeSilently) {
+    const filterBadKeys = (key, value) =>
+      key === '__proto__' ? undefined : value;
+    return JSON.parse(untrustedJson, filterBadKeys);
+  }
+
+  const failOnBadKeys = (key, value) => {
+    if (key === '__proto__') {
+      throw new Error('Untrusted JSON detected: unexpected __proto__');
+    }
+    return value;
+  };
+  return JSON.parse(untrustedJson, failOnBadKeys);
+}
+
+/**
  * Lazy initialized variables:
  * - evaluated once at the first request
  * - never evaluated more than once

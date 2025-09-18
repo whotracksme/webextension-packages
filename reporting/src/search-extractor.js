@@ -135,10 +135,9 @@ export default class SearchExtractor {
 
     let doc;
     try {
-      const html = await anonymousHttpGet(doublefetchRequest.url, {
-        headers: doublefetchRequest.headers,
-        redirect: doublefetchRequest.redirect,
-        steps: doublefetchRequest.steps,
+      const { url, ...params } = doublefetchRequest;
+      const html = await anonymousHttpGet(url, {
+        ...params,
         treat429AsPermanentError: true,
       });
       doc = await parseHtml(html);
