@@ -1751,7 +1751,7 @@ export default class Pages {
       return CANCEL_LAZY_VAR;
     }
     try {
-      const wrappedResult = await chrome.scripting.executeScript({
+      const wrappedResult = await this.chrome.scripting.executeScript({
         target: {
           tabId,
         },
