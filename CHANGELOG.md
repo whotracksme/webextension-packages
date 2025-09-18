@@ -1,3 +1,21 @@
+# v7.7.2 (Thu Sep 18 2025)
+
+#### 🐛 Bug Fix
+
+- Update dependencies [#172](https://github.com/whotracksme/webextension-packages/pull/172) ([@philipp-classen](https://github.com/philipp-classen))
+- Fixed: use logger instead of console [#168](https://github.com/whotracksme/webextension-packages/pull/168) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Remove unnecessary log [#169](https://github.com/whotracksme/webextension-packages/pull/169) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.7.1 (Mon Sep 15 2025)
 
 #### 🐛 Bug Fix
