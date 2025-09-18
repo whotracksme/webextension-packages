@@ -18,8 +18,8 @@
     "@rollup/plugin-json": "^5.0.0",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "chai": "^5.2.0",
-    "chai-as-promised": "^8.0.1",
-    "fake-indexeddb": "^6.0.0",
+    "chai-as-promised": "^8.0.2",
+    "fake-indexeddb": "^6.2.2",
     "fast-check": "^3.3.0",
     "karma": "^6.4.1",
     "karma-chai": "^0.1.0",
@@ -34,16 +34,16 @@
     "rollup-plugin-polyfill-node": "^0.8.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "sinon": "^21.0.0",
-    "sinon-chai": "^4.0.0",
+    "sinon-chai": "^4.0.1",
     "sinon-chrome": "^3.0.1",
     "web-ext": "^8.2.0"
   },
   "dependencies": {
-    "@cliqz/url-parser": "^1.1.5",
+    "@ghostery/url-parser": "^1.3.0",
     "date-fns": "^2.29.3",
-    "idb": "^7.1.1",
+    "idb": "^8.0.3",
     "linkedom": "^0.18.10",
-    "tldts-experimental": "^6.0.11"
+    "tldts-experimental": "^7.0.14"
   },
   "exports": {
     ".": "./src/index.js",
