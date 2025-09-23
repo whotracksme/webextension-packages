@@ -234,8 +234,9 @@ export default class DoublefetchPageHandler {
 
     const config = {
       priority: -1000,
-      cooldownInMs: 3 * SECOND,
       maxJobsTotal: 200,
+      cooldownInMs: 3 * SECOND,
+      maxAutoRetriesAfterError: 1,
     };
     jobScheduler.registerHandler(
       'doublefetch-page',
