@@ -8,7 +8,7 @@
     "lint.fix": "eslint --fix reporting/ communication/",
     "test": "npm run test --workspaces --if-present ",
     "test.unit": "npm run test.unit --workspaces --if-present",
-    "release": "auto shipit"
+    "release": "auto shipit -v"
   },
   "publishConfig": {
     "access": "public"
