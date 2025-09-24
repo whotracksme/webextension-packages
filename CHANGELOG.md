@@ -1,3 +1,22 @@
+# v7.8.0 (Wed Sep 24 2025)
+
+#### 🚀 Enhancement
+
+- Better error recovery in doublefetch [#170](https://github.com/whotracksme/webextension-packages/pull/170) ([@philipp-classen](https://github.com/philipp-classen))
+- Clear jobScheduler queues faster [#173](https://github.com/whotracksme/webextension-packages/pull/173) ([@philipp-classen](https://github.com/philipp-classen))
+- Tweak: if chrome.scripting.registerContentScripts is unable, [#171](https://github.com/whotracksme/webextension-packages/pull/171) ([@philipp-classen](https://github.com/philipp-classen))
+- Only for consistency: use the local chrome object instead of the global [#171](https://github.com/whotracksme/webextension-packages/pull/171) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- debugging release errors: Enable more verbose logs for "auto shipit" [#175](https://github.com/whotracksme/webextension-packages/pull/175) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.7.2 (Thu Sep 18 2025)
 
 #### 🐛 Bug Fix
