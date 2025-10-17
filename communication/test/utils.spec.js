@@ -40,4 +40,24 @@ describe('#sortObjectKeys', function () {
       }),
     );
   });
+
+  it('should support object with "toString" property', function () {
+    // Note: used to throw (found by QuickCheck)
+    const obj1 = {
+      x: {
+        toString: null,
+      },
+      y: {},
+    };
+    const obj2 = {
+      y: {},
+      x: {
+        toString: null,
+      },
+    };
+
+    const obj1Json = JSON.stringify(sortObjectKeys(obj1));
+    const obj2Json = JSON.stringify(sortObjectKeys(obj2));
+    expect(obj1Json).to.eql(obj2Json);
+  });
 });

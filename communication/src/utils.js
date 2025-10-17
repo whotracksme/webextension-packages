@@ -24,5 +24,9 @@
  * to recursively sort the object keys.
  */
 export function sortObjectKeys(obj) {
-  return Object.fromEntries(Object.entries(obj).sort());
+  const sortByKeys = (x, y) => {
+    if (x[0] === y[0]) return 0;
+    return x[0] < y[0] ? -1 : 1;
+  };
+  return Object.fromEntries(Object.entries(obj).sort(sortByKeys));
 }
