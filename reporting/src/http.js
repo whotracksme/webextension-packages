@@ -28,6 +28,10 @@ const SECOND = 1000;
 const RESERVED_DNR_RULE_ID_HEADER_OVERRIDE = 1333;
 const RESERVED_DNR_RULE_ID_OFFSCREEN = 1334;
 
+// This should be above all rules of the adblocker engine.
+// Otherwise, exclusion rules will effectively disable them.
+const DNR_HEADER_OVERWRITE_PRIORITY = (1 << 30) - 1;
+
 /**
  * Depending on the context, there are different ways how requests are being
  * triggered. For instance, the normal one is to use the fetch API; but
@@ -241,7 +245,7 @@ async function headerOverrideViaDNR({ url, headers, requestType }) {
   }));
   const rule = {
     id: RESERVED_DNR_RULE_ID_HEADER_OVERRIDE,
-    priority: 1,
+    priority: DNR_HEADER_OVERWRITE_PRIORITY,
     action: {
       type: 'modifyHeaders',
       requestHeaders,
