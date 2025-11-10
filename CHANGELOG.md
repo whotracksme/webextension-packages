@@ -1,3 +1,15 @@
+# v7.9.0 (Mon Nov 10 2025)
+
+#### 🚀 Enhancement
+
+- Avoid conflicts between adblocker and temporary DNR overwrites [#177](https://github.com/whotracksme/webextension-packages/pull/177) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.8.0 (Wed Sep 24 2025)
 
 #### 🚀 Enhancement
