@@ -190,7 +190,7 @@ function headerOverrideViaWebRequestAPI({ url, headers, requestType }) {
       details.method !== 'GET' ||
       !matchesWebRequestApiType(requestType, details.type)
     ) {
-      // does that match the request that we intended to trigger
+      // does not match the request that we intended to trigger
       return {};
     }
 
