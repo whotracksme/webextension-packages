@@ -1,3 +1,19 @@
+# v7.10.0 (Mon Dec 01 2025)
+
+#### 🚀 Enhancement
+
+- More robust detection of private networks for high traffic websites [#178](https://github.com/whotracksme/webextension-packages/pull/178) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- Handle edge cases like "toString: null" fields [#176](https://github.com/whotracksme/webextension-packages/pull/176) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.9.0 (Mon Nov 10 2025)
 
 #### 🚀 Enhancement
