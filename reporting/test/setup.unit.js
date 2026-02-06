@@ -13,6 +13,22 @@ import 'fake-indexeddb/auto';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import chaiAsPromised from 'chai-as-promised';
+import chrome from 'sinon-chrome';
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
+
+// Fill in missing APIs if sinon-chrome did not provide them
+chrome.webRequest.OnBeforeRequestOptions ||= {
+  blocking: 'blocking',
+  requestBody: 'requestBody',
+};
+chrome.webRequest.OnBeforeSendHeadersOptions ||= {
+  blocking: 'blocking',
+  requestHeaders: 'requestHeaders',
+};
+chrome.webRequest.OnHeadersReceivedOptions ||= {
+  blocking: 'blocking',
+  responseHeaders: 'responseHeaders',
+  extraHeaders: 'extraHeaders',
+};

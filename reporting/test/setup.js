@@ -17,6 +17,21 @@ chai.use(sinonChai);
 
 setLogLevel('off');
 
+// Fill in missing APIs if sinon-chrome did not provide them
+chrome.webRequest.OnBeforeRequestOptions ||= {
+  blocking: 'blocking',
+  requestBody: 'requestBody',
+};
+chrome.webRequest.OnBeforeSendHeadersOptions ||= {
+  blocking: 'blocking',
+  requestHeaders: 'requestHeaders',
+};
+chrome.webRequest.OnHeadersReceivedOptions ||= {
+  blocking: 'blocking',
+  responseHeaders: 'responseHeaders',
+  extraHeaders: 'extraHeaders',
+};
+
 window.chrome = chrome;
 
 // This global object installs a timeout, which will confuse tests that mock
