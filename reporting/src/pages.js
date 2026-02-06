@@ -20,6 +20,7 @@ import {
 } from './utils';
 import { DnsResolver } from './network';
 import ActivityEstimator from './activity-estimator';
+import Observable from './observable';
 import { analyzePageStructure } from './page-structure';
 import EventListenerQueue from './event-listener-queue';
 import SelfCheck from './self-check';
@@ -343,7 +344,7 @@ export default class Pages {
     this.isActive = false;
     this.urlAnalyzer = requireParam(urlAnalyzer);
     this.newPageApprover = requireParam(newPageApprover);
-    this.observers = [];
+    this._observable = new Observable();
 
     this.openTabs = new OpenTabs(this);
     this.activeTab = new ActiveTab(this);
@@ -387,7 +388,15 @@ export default class Pages {
   }
 
   addObserver(onPageEventCallback) {
-    this.observers.push(onPageEventCallback);
+    this._observable.addObserver(onPageEventCallback);
+  }
+
+  removeObserver(onPageEventCallback) {
+    this._observable.removeObserver(onPageEventCallback);
+  }
+
+  notifyObservers(event) {
+    this._observable.notifyObservers(event);
   }
 
   async init() {
@@ -725,16 +734,6 @@ export default class Pages {
     this.activeTab.flush();
     this.activityEstimator.flush();
     eventListenerQueue.close();
-  }
-
-  notifyObservers(event) {
-    this.observers.forEach((observer) => {
-      try {
-        observer(event);
-      } catch (e) {
-        logger.error('Unexpected error in observer', e);
-      }
-    });
   }
 
   describe(now = Date.now()) {

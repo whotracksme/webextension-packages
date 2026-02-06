@@ -72,8 +72,11 @@ describe('#PageAggregator', function () {
 
   describe('#init', function () {
     it('load + unload should not fail', async function () {
+      expect(uut.active).to.be.false;
       await uut.init();
+      expect(uut.active).to.be.true;
       uut.unload();
+      expect(uut.active).to.be.false;
     });
 
     it('should support multiple init and unload calls', async function () {

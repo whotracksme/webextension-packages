@@ -16,6 +16,7 @@ import {
   chunk,
   flattenObject,
   equalityCanBeProven,
+  includesMiddleChar,
   parseUntrustedJSON,
   lazyInitAsync,
 } from '../src/utils.js';
@@ -151,6 +152,47 @@ describe('#equalityCanBeProven', function () {
         ),
       ).to.eql(false);
     });
+  });
+});
+
+describe('#includesMiddleChar', function () {
+  it('should detect inner matches', function () {
+    expect(includesMiddleChar('a+b', '+')).to.be.true;
+    expect(includesMiddleChar('a+b+c', '+')).to.be.true;
+    expect(includesMiddleChar('+a+b+c', '+')).to.be.true;
+    expect(includesMiddleChar('a+b+c+', '+')).to.be.true;
+    expect(includesMiddleChar('+a+b+c+', '+')).to.be.true;
+    expect(includesMiddleChar('++a++b++c++', '+')).to.be.true;
+    expect(includesMiddleChar('+a+b+', '+')).to.be.true;
+  });
+
+  it('should ignore leading matches', function () {
+    expect(includesMiddleChar('+ab', '+')).to.be.false;
+    expect(includesMiddleChar('++ab', '+')).to.be.false;
+    expect(includesMiddleChar('++ab', '+')).to.be.false;
+  });
+
+  it('should ignore trailing matches', function () {
+    expect(includesMiddleChar('ab+', '+')).to.be.false;
+    expect(includesMiddleChar('ab++', '+')).to.be.false;
+    expect(includesMiddleChar('ab+++', '+')).to.be.false;
+  });
+
+  it('should handle empty inputs', function () {
+    expect(includesMiddleChar('', '+')).be.false;
+  });
+
+  it('should handle inputs with no other chars', function () {
+    expect(includesMiddleChar('+', '+')).be.false;
+    expect(includesMiddleChar('++', '+')).be.false;
+    expect(includesMiddleChar('+++', '+')).be.false;
+  });
+
+  it('should handle non-matching inputs', function () {
+    expect(includesMiddleChar('foo', '+')).be.false;
+    expect(includesMiddleChar('+a+', '+')).be.false;
+    expect(includesMiddleChar('+ab+', '+')).be.false;
+    expect(includesMiddleChar('+++a+++', '+')).be.false;
   });
 });
 
