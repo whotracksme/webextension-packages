@@ -43,6 +43,12 @@ import PageStore from './page-store.js';
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 
+function hasBlockingWebRequest() {
+  return chrome.runtime
+    .getManifest()
+    .permissions.includes('webRequestBlocking');
+}
+
 export default class RequestReporter {
   #userAgent;
 
@@ -83,32 +89,34 @@ export default class RequestReporter {
     });
 
     this.ready = false;
-    const urls = ['http://*/*', 'https://*/*'];
-    // TODO: find a way to detect if blocking webRequest is available on Brave and Opera
-    const blockingWebRequest = chrome.runtime
-      .getManifest()
-      .permissions.includes('webRequestBlocking');
 
+    const safeOptions = [
+      'extraHeaders',
+      'requestBody',
+      'requestHeaders',
+      'responseHeaders',
+    ];
+    if (hasBlockingWebRequest()) {
+      safeOptions.push('blocking');
+    }
+    const safeSpecInfoFor = (options) =>
+      Object.values(options).filter((x) => safeOptions.includes(x));
+
+    const urls = ['http://*/*', 'https://*/*'];
     chrome.webRequest.onBeforeRequest.addListener(
       this.onBeforeRequest,
       { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnBeforeRequestOptions)
-        : undefined,
+      safeSpecInfoFor(chrome.webRequest.OnBeforeRequestOptions),
     );
     chrome.webRequest.onBeforeSendHeaders.addListener(
       this.onBeforeSendHeaders,
       { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnBeforeSendHeadersOptions)
-        : undefined,
+      safeSpecInfoFor(chrome.webRequest.OnBeforeSendHeadersOptions),
     );
     chrome.webRequest.onHeadersReceived.addListener(
       this.onHeadersReceived,
       { urls },
-      blockingWebRequest
-        ? Object.values(chrome.webRequest.OnHeadersReceivedOptions)
-        : undefined,
+      safeSpecInfoFor(chrome.webRequest.OnHeadersReceivedOptions),
     );
     chrome.webRequest.onCompleted.addListener(this.onCompleted, { urls });
     chrome.webRequest.onErrorOccurred.addListener(this.onErrorOccurred, {
