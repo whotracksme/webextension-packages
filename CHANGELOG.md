@@ -1,3 +1,27 @@
+# v7.11.0 (Fri Feb 06 2026)
+
+#### 🚀 Enhancement
+
+- Fix request listeners setup [#179](https://github.com/whotracksme/webextension-packages/pull/179) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- CI: fix npm publishing [#181](https://github.com/whotracksme/webextension-packages/pull/181) ([@chrmod](https://github.com/chrmod))
+- Update release workflow for npm registry settings [#180](https://github.com/whotracksme/webextension-packages/pull/180) ([@chrmod](https://github.com/chrmod))
+
+#### ⚠️ Pushed to `main`
+
+- Nodejs update ([@chrmod](https://github.com/chrmod))
+- Update repo name ([@chrmod](https://github.com/chrmod))
+- Enable OIDC (intended to fix the NPM publishing errors) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.10.0 (Mon Dec 01 2025)
 
 #### 🚀 Enhancement
