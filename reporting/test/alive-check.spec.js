@@ -38,8 +38,8 @@ describe('#AliveCheck', function () {
     });
   }
 
-  // Helper that simulate an event like a restart of the service worker/background script:
-  // it keeps the storage but purges everything that was in memory.
+  // Helper that simulates an event like a restart of the service worker/background script:
+  // it keeps the storage, but purges everything that was in memory.
   async function simulateRestart() {
     uut = newAliveCheck();
   }

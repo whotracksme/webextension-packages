@@ -30,15 +30,46 @@ import PersistedHashes from './persisted-hashes';
 import AliveCheck from './alive-check';
 import AliveMessageGenerator from './alive-message-generator';
 import SessionStorageWrapper from './session-storage';
+import PopularityEstimator from './popularity-estimator';
+import PopularityVoteHandler from './popularity-vote-handler';
+import PausedDomainsReporter from './paused-domains-reporter';
 import AttrackMessageHandler from './communication-proxy/attrack-message-handler';
+import Observable from './observable';
+import { requireString, requireBoolean } from './utils';
 import logger from './logger';
 import SelfCheck from './self-check';
 import { BloomFilter } from './bloom-filters';
 
 const SECOND = 1000;
 
+function disabledService() {
+  return {
+    isActive: false,
+    init: () => Promise.resolve(),
+    unload: () => {},
+    selfChecks: async (check = new SelfCheck()) => check,
+  };
+}
+
 export default class Reporting {
-  constructor({ config, storage, communication, connectDatabase }) {
+  constructor({
+    config,
+    storage,
+    communication,
+    connectDatabase,
+
+    // Optional integration of pause functionality.
+    // If running in an environment that has no concept
+    // of pausing, it can be safely omitted.
+    //
+    // Stub implementation:
+    // {
+    //   getFilteringMode: () => 'default',
+    //   isHostnamePaused: (_hostname) => false,
+    //   connectHostnamePausingEvents: (_notify) => {},
+    // }
+    pauseState,
+  }) {
     // Defines whether Reporting is fully initialized and has permission
     // to collect data.
     this.isActive = false;
@@ -145,6 +176,23 @@ export default class Reporting {
       jobScheduler: this.jobScheduler,
     });
 
+    this.popularityEstimator = new PopularityEstimator({
+      storage,
+      storageKey: 'popularity_estimator',
+      connectDatabase,
+      jobScheduler: this.jobScheduler,
+    });
+    this.pages.addObserver(
+      this.popularityEstimator.onPageEvent.bind(this.popularityEstimator),
+    );
+    this.popularityVoteHandler = new PopularityVoteHandler({
+      jobScheduler: this.jobScheduler,
+      communication,
+      quorumChecker: this.quorumChecker,
+      countryProvider: this.countryProvider,
+      pauseState,
+    });
+
     const aliveMessageGenerator = new AliveMessageGenerator({
       quorumChecker: this.quorumChecker,
       storage,
@@ -163,6 +211,34 @@ export default class Reporting {
       communication,
       jobScheduler: this.jobScheduler,
     });
+
+    const hostnamePauseEvents = new Observable();
+    if (pauseState) {
+      pauseState.connectHostnamePausingEvents((msg) => {
+        if (this.active) {
+          // validate external message
+          const { hostname, paused } = msg;
+          requireString(hostname);
+          requireBoolean(paused);
+
+          hostnamePauseEvents.notify({ hostname, paused });
+        }
+      });
+      const filterModeProvider = pauseState.getFilteringMode.bind(pauseState);
+      this.pausedDomainsReporter = new PausedDomainsReporter({
+        filterModeProvider,
+      });
+      hostnamePauseEvents.addObserver(
+        this.pausedDomainsReporter.onPauseEvent.bind(
+          this.pausedDomainsReporter,
+        ),
+      );
+    } else {
+      logger.debug(
+        'Disabling pausedDomainsReporter (requires access to the pause state)',
+      );
+      this.pausedDomainsReporter = disabledService();
+    }
   }
 
   async init() {
@@ -205,6 +281,8 @@ export default class Reporting {
       this.patternsUpdater.init(),
       this.countryProvider.init(),
       this.jobScheduler.init(),
+      this.popularityEstimator.init(),
+      this.pausedDomainsReporter.init(),
     ]);
 
     logger.debug('Fully initialized and ready');
@@ -220,6 +298,8 @@ export default class Reporting {
       this.navTrackingDetector.unload();
       this.pageAggregator.unload();
       this.jobScheduler.unload();
+      this.popularityEstimator.unload();
+      this.pausedDomainsReporter.unload();
 
       // Attempt to finish all pending changes, though it would not
       // be critical if we lose them. Important operations should
@@ -275,7 +355,7 @@ export default class Reporting {
 
   async _ensurePatternsAreUpToDate() {
     // Currently, the PatternsUpdater needs to be externally triggered.
-    // This implementation detail could be avoided, if the PatternsUpdater
+    // This implementation detail could be avoided if the PatternsUpdater
     // could use a browser API like timers in persistent background pages
     // or the Alert API (Manifest V3).
     // The "update" function is a quick operation unless for the rare
@@ -295,17 +375,22 @@ export default class Reporting {
     if (!this.isActive) {
       check.warn('reporting is not enabled');
     }
-    await Promise.all([
-      this.pages.selfChecks(check.for('pages')),
-      this.pagedb.selfChecks(check.for('pagedb')),
-      this.patterns.selfChecks(check.for('patterns')),
-      this.patternsUpdater.selfChecks(check.for('patternsUpdater')),
-      this.bloomFilter.selfChecks(check.for('bloomFilter')),
-      this.jobScheduler.selfChecks(check.for('jobScheduler')),
-      this.quorumChecker.selfChecks(check.for('quorumChecker')),
-      this.newPageApprover.selfChecks(check.for('newPageApprover')),
-      this.pageSessionStore.selfChecks(check.for('pageSessionStore')),
-    ]);
+
+    await Promise.all(
+      [
+        'pages',
+        'pagedb',
+        'patterns',
+        'patternsUpdater',
+        'bloomFilter',
+        'jobScheduler',
+        'quorumChecker',
+        'newPageApprover',
+        'pageSessionStore',
+        'popularityEstimator',
+      ].map((x) => this[x].selfChecks(check.for(x))),
+    );
+
     return check;
   }
 }

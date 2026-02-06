@@ -50,6 +50,20 @@ export function requireIntOrNull(value, name) {
   return value;
 }
 
+// Expects a UTC timestamp represented as Unix period:
+// - PASS: requireUTC(Date.now())
+// - FAIL: requireUTC(new Date())
+export function requireUTC(value, name) {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(
+      name
+        ? `${name} should be a UTC timestamp, but got: <${value}>`
+        : `Parameter should be a UTC timestamp, but got: <${value}>`,
+    );
+  }
+  return value;
+}
+
 export function requireString(value, name) {
   if (typeof value !== 'string') {
     throw new Error(
@@ -303,6 +317,32 @@ export function roundUpToNextUTCMidnight(unixEpoch) {
 export function split0(str, on) {
   const pos = str.indexOf(on);
   return pos < 0 ? str : str.slice(0, pos);
+}
+
+/**
+ * Checks if a string contains a specified character at least once,
+ * excluding any leading or trailing occurrences of that character.
+ *
+ * Example:
+ * 1) includesMiddleChar('a+b', '+') ==> true
+ * 2) includesMiddleChar('+ab', '+') ==> false
+ * 3) includesMiddleChar('ab+', '+') ==> false
+ */
+export function includesMiddleChar(str, char) {
+  let start = 0;
+  let end = str.length - 1;
+  while (start < end && str[start] === char) {
+    start += 1;
+  }
+  while (end > start && str[end] === char) {
+    end -= 1;
+  }
+  for (let i = start; i < end; i += 1) {
+    if (str[i] === char) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
