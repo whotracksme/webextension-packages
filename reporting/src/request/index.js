@@ -99,24 +99,33 @@ export default class RequestReporter {
     if (hasBlockingWebRequest()) {
       safeOptions.push('blocking');
     }
-    const safeSpecInfoFor = (options) =>
-      Object.values(options).filter((x) => safeOptions.includes(x));
+    const safeSpecInfoFor = (optionsName) => {
+      const options = chrome.webRequest[optionsName];
+      if (!options) {
+        logger.warn(
+          `chrome.webRequest.${optionsName} unavailable. `,
+          'Falling back to defaults for the "extraSpecInfo" parameter.',
+        );
+        return undefined;
+      }
+      return Object.values(options).filter((x) => safeOptions.includes(x));
+    };
 
     const urls = ['http://*/*', 'https://*/*'];
     chrome.webRequest.onBeforeRequest.addListener(
       this.onBeforeRequest,
       { urls },
-      safeSpecInfoFor(chrome.webRequest.OnBeforeRequestOptions),
+      safeSpecInfoFor('OnBeforeRequestOptions'),
     );
     chrome.webRequest.onBeforeSendHeaders.addListener(
       this.onBeforeSendHeaders,
       { urls },
-      safeSpecInfoFor(chrome.webRequest.OnBeforeSendHeadersOptions),
+      safeSpecInfoFor('OnBeforeSendHeadersOptions'),
     );
     chrome.webRequest.onHeadersReceived.addListener(
       this.onHeadersReceived,
       { urls },
-      safeSpecInfoFor(chrome.webRequest.OnHeadersReceivedOptions),
+      safeSpecInfoFor('OnHeadersReceivedOptions'),
     );
     chrome.webRequest.onCompleted.addListener(this.onCompleted, { urls });
     chrome.webRequest.onErrorOccurred.addListener(this.onErrorOccurred, {
