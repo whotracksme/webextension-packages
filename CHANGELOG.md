@@ -1,3 +1,15 @@
+# v7.11.2 (Tue Feb 17 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed DNS resolution heuristic [#183](https://github.com/whotracksme/webextension-packages/pull/183) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.11.1 (Thu Feb 12 2026)
 
 #### 🐛 Bug Fix
