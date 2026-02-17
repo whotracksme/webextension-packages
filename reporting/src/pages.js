@@ -1236,8 +1236,8 @@ export default class Pages {
   // Safari quirks:
   // * This API is not available
   chrome_webRequest_onBeforeRedirect(details) {
-    if (details.initiator && details.initiator !== 'null' && details.ip) {
-      this._cacheDnsResolution(details.initiator, details.ip);
+    if (details.url && details.ip) {
+      this._cacheDnsResolution(details.url, details.ip);
     }
     if (details.type !== 'main_frame') {
       return;
@@ -1292,8 +1292,8 @@ export default class Pages {
   // Safari quirks:
   // * This API is not available
   chrome_webRequest_onResponseStarted(details) {
-    if (details.initiator && details.initiator !== 'null' && details.ip) {
-      this._cacheDnsResolution(details.initiator, details.ip);
+    if (details.url && details.ip) {
+      this._cacheDnsResolution(details.url, details.ip);
     }
   }
 
