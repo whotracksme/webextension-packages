@@ -165,6 +165,7 @@ export default class JobScheduler {
   constructor({ storage, storageKey }) {
     this.storage = storage;
     this.storageKey = storageKey;
+    this._autoFlushTimer = null;
 
     this.active = false;
     this.handlers = {};
@@ -828,13 +829,17 @@ export default class JobScheduler {
   }
 
   _markAsDirty() {
-    if (!this._autoFlushTimer) {
-      setTimeout(() => this._writeJobsToDisk(), 0);
+    if (this._autoFlushTimer === null) {
+      this._pendingFlush = setTimeout(() => {
+        this._writeJobsToDisk().catch((e) => {
+          logger.error('Failed to write jobs', e);
+        });
+      }, 0);
     }
   }
 
   _clearAutoFlushTimer() {
-    if (this._autoFlushTimer) {
+    if (this._autoFlushTimer !== null) {
       clearTimeout(this._autoFlushTimer);
       this._autoFlushTimer = null;
     }
