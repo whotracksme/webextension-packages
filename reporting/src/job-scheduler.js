@@ -829,7 +829,7 @@ export default class JobScheduler {
 
   _markAsDirty() {
     if (!this._autoFlushTimer) {
-      setTimeout(() => this._writeJobsToDisk(), 0);
+      this._autoFlushTimer = setTimeout(() => this._writeJobsToDisk(), 0);
     }
   }
 
@@ -842,10 +842,15 @@ export default class JobScheduler {
 
   async _writeJobsToDisk() {
     this._clearAutoFlushTimer();
-    return this.storage.set(this.storageKey, {
-      dbVersion: DB_VERSION,
-      jobQueues: this.jobQueues,
-    });
+    this._flushChain = (this._flushChain || Promise.resolve())
+      .catch(() => {})
+      .then(() =>
+        this.storage.set(this.storageKey, {
+          dbVersion: DB_VERSION,
+          jobQueues: this.jobQueues,
+        }),
+      );
+    return this._flushChain;
   }
 
   /**
