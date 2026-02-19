@@ -1,3 +1,16 @@
+# v7.11.3 (Thu Feb 19 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: group write operation [#186](https://github.com/whotracksme/webextension-packages/pull/186) ([@philipp-classen](https://github.com/philipp-classen))
+- Increase request reporter version [#184](https://github.com/whotracksme/webextension-packages/pull/184) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.11.2 (Tue Feb 17 2026)
 
 #### 🐛 Bug Fix
