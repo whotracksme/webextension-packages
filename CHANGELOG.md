@@ -1,3 +1,15 @@
+# v7.11.4 (Fri Feb 27 2026)
+
+#### 🐛 Bug Fix
+
+- Experiment: sequentialize writes to work around a Safari bug [#187](https://github.com/whotracksme/webextension-packages/pull/187) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.11.3 (Thu Feb 19 2026)
 
 #### 🐛 Bug Fix
