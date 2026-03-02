@@ -1,3 +1,15 @@
+# v7.12.0 (Mon Mar 02 2026)
+
+#### 🚀 Enhancement
+
+- Increase request reporter version [#188](https://github.com/whotracksme/webextension-packages/pull/188) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.11.4 (Fri Feb 27 2026)
 
 #### 🐛 Bug Fix
