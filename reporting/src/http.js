@@ -454,7 +454,6 @@ async function singleHttpGetStep(url, params = {}) {
   const controller = new AbortController();
   const options = {
     credentials: 'omit',
-    mode: 'no-cors',
     redirect,
     signal: controller.signal,
   };
