@@ -1,3 +1,15 @@
+# v7.12.1 (Tue Mar 10 2026)
+
+#### 🐛 Bug Fix
+
+- Fix doublefetch by removing the 'no-cors' option [#189](https://github.com/whotracksme/webextension-packages/pull/189) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.12.0 (Mon Mar 02 2026)
 
 #### 🚀 Enhancement
