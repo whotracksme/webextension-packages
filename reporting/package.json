@@ -43,7 +43,7 @@
     "date-fns": "^2.29.3",
     "idb": "^8.0.3",
     "linkedom": "^0.18.10",
-    "tldts-experimental": "^7.0.14"
+    "tldts-experimental": "^7.0.27"
   },
   "exports": {
     ".": "./src/index.js",
