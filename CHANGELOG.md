@@ -1,3 +1,15 @@
+# v7.12.3 (Mon Mar 30 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Cleanup: also upgrade dependency in the main package.json ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.12.2 (Mon Mar 30 2026)
 
 #### 🐛 Bug Fix
