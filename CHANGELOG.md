@@ -1,3 +1,15 @@
+# v7.12.2 (Mon Mar 30 2026)
+
+#### 🐛 Bug Fix
+
+- Upgrade tldts-experimental: detect .bd domains [#191](https://github.com/whotracksme/webextension-packages/pull/191) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.12.1 (Tue Mar 10 2026)
 
 #### 🐛 Bug Fix
