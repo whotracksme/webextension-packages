@@ -46,7 +46,7 @@
     "idb": "^8.0.3",
     "linkedom": "^0.18.12",
     "pako": "^2.1.0",
-    "tldts-experimental": "^7.0.14",
+    "tldts-experimental": "^7.0.27",
     "bowser": "^2.12.1"
   }
 }
