@@ -145,10 +145,13 @@ export default class PopularityVoteHandler {
     let vote = [hostname, ...path].join('/');
 
     // Prepare to include additional information from the adblocker if available.
+    // The pause check must use the original hostname: the user pauses real
+    // hostnames, not their sanitized form, so passing the masked variant would
+    // always report `paused: false` for any hostname that needed sanitization.
     let adblocker;
     if (this.pauseState) {
       adblocker = {
-        paused: this.pauseState.isHostnamePaused(hostname),
+        paused: this.pauseState.isHostnamePaused(unsafeHostname),
         mode: this.pauseState.getFilteringMode(),
       };
     }
