@@ -257,7 +257,7 @@ export default class PopularityEstimator {
         this._rotationConfig ||= await this._loadRotationConfig(now);
         await this._expireRotationCooldowns(now);
         await this._processCompletedRotations(now);
-        this._scheduleNextRotationCheck(now);
+        this._scheduleNextRotationCheck();
         this._rotationFailuresInARow = 0;
       } catch (e) {
         // Should normally not happen, because it should be doing only disk IO
@@ -277,11 +277,11 @@ export default class PopularityEstimator {
         if (this._rotationFailuresInARow >= 3) {
           try {
             logger.error(
-              'Too many rotation errors in a row. Puring state in an attempt to recover',
+              'Too many rotation errors in a row. Purging state in an attempt to recover',
             );
             await this.purgeAllState();
             logger.info(
-              'Successfully purge the state. Rotations will be retry on the next visit.',
+              'Successfully purged the state. Rotations will be retried on the next visit.',
             );
             this._nextRotationCheck = now;
           } catch (e) {
@@ -561,7 +561,7 @@ export default class PopularityEstimator {
       ...this._allCounters.map((counter) => counter.clear()),
     ]);
     const errors = results.filter((result) => result.status === 'rejected');
-    if (errors.length == 0) {
+    if (errors.length === 0) {
       logger.info(
         'Successfully cleared all state (including rotation config and counters)',
       );

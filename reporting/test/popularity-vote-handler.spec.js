@@ -279,6 +279,60 @@ describe('#PopularityVoteHandler', function () {
       }
     });
 
+    describe('pause state lookup', function () {
+      it('queries pauseState with the unsanitized hostname', async function () {
+        // UUID-formatted subdomain is guaranteed to be masked by the
+        // sanitizer (the UUID prefilter in hash-detector-v2). After
+        // sanitization the hostname becomes "#??#.example.com", but the
+        // pause check must still see the *original* hostname — otherwise
+        // anything the user has paused with an unusual subdomain would
+        // always be reported as paused=false.
+        const unsafeHostname =
+          '12345678-1234-1234-1234-123456789012.example.com';
+
+        const isHostnamePaused = sinon.stub();
+        isHostnamePaused.withArgs(unsafeHostname).returns(true);
+        isHostnamePaused.returns(false);
+        pauseState.isHostnamePaused = isHostnamePaused;
+
+        const urlProjection = 'hostname';
+        const countType = 'visits';
+        const intervalType = '1d';
+
+        const prepareVotingJob = {
+          type: 'popularity-estimator:prepare-voting:v1',
+          args: {
+            urlProjection,
+            countType,
+            intervalType,
+            sample: {
+              value: unsafeHostname,
+              count: 1,
+            },
+          },
+        };
+        quorumChecker._everythingReachesQuorum();
+        countryProvider._ctry = 'de';
+
+        await expectExactlyTheseSignals(
+          prepareVotingJob,
+          [
+            {
+              type: { urlProjection, countType, intervalType },
+              ctry: 'de',
+              adblocker: {
+                paused: true,
+                mode: 'default',
+              },
+            },
+          ],
+          { ignoreMasking: true },
+        );
+
+        expect(isHostnamePaused.calledWith(unsafeHostname)).to.be.true;
+      });
+    });
+
     describe('[property based testing]', function () {
       it('should not crash for arbitrary URLs', async function () {
         this.timeout(20 * SECOND);

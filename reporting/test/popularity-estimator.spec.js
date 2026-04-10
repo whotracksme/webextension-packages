@@ -260,6 +260,59 @@ describe('#PopularityEstimator', function () {
       await passesSelfChecks();
     });
 
+    describe('when jobScheduler.registerJobs fails', function () {
+      // Documents current behavior: a registerJobs failure is silently
+      // swallowed, samples are lost (counters were already cleared by the
+      // rotation), and the estimator does NOT enter the failure-retry path.
+      // If you change this behavior, update this test.
+      it('swallows the failure and drops the rotation samples', async () => {
+        await ensureAllRotationsStarted();
+
+        // Generate enough visits that a rotation will have something to sample.
+        for (let i = 0; i < 50; i += 1) {
+          navigateTo(`example${i}.test`);
+          await clock.tickAsync(1 * MINUTE);
+        }
+        await uut.flush();
+
+        // Force registerJobs to fail just before the rotation drains samples.
+        const registerJobs = sinon
+          .stub(jobScheduler, 'registerJobs')
+          .rejects(new Error('simulated registerJobs failure'));
+
+        // Drive a rotation past expireAt and trigger processing.
+        await ensureAllRotationsFinished();
+        navigateTo('trigger-rotation.test');
+        await clock.runToLastAsync();
+
+        // The failure was swallowed: rotation checks completed normally and
+        // the estimator did NOT enter its failure-retry path.
+        expect(registerJobs.called).to.be.true;
+        expect(uut._rotationFailuresInARow).to.equal(0);
+
+        // No jobs reached the scheduler observer (registerJobs was stubbed),
+        // so jobsRegistered is empty.
+        expect(jobsRegistered).to.eql([]);
+
+        // Sample loss: counters were cleared as part of the failed rotation,
+        // so a subsequent successful rotation cannot recover them. Restore
+        // registerJobs and force another rotation cycle — there should be no
+        // residual samples from the previous period.
+        registerJobs.restore();
+        const before = jobsRegistered.length;
+        await ensureAllRotationsFinished();
+        navigateTo('trigger-second-rotation.test');
+        await clock.runToLastAsync();
+        const newJobs = jobsRegistered.slice(before);
+        for (const job of newJobs) {
+          expect(
+            job.args.sample.value,
+            'a job sampled from the previous (cleared) period leaked through',
+          ).to.not.match(/^example\d+\.test/);
+        }
+      });
+    });
+
     describe('#flush', function () {
       describe('it should not lose state after an extension restart', function () {
         it('when flush is explicitly called', async () => {

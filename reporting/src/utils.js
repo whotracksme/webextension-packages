@@ -258,7 +258,7 @@ function sortedObjectEntries(x) {
  * If it returns true, you may assume that both inputs represent
  * the same data.
 
- * WARN: This implemenation will not detect identity in all situations;
+ * WARN: This implementation will not detect identity in all situations;
  * you may still get false for identical objects.
  * If you need stronger guarantees, use a real deepEqual implementation.
  *

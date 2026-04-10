@@ -57,7 +57,7 @@ export default class PersistedCounters {
 
   async flush() {
     this._pendingFlush = null;
-    if (this._pendingCounters.size == 0) {
+    if (this._pendingCounters.size === 0) {
       return;
     }
 

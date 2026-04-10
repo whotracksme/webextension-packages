@@ -13,6 +13,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Reporting from '../src/reporting.js';
+import PausedDomainsReporter from '../src/paused-domains-reporter.js';
 
 import InMemoryDatabase from './helpers/in-memory-database.js';
 
@@ -23,6 +24,33 @@ function waitForPromisesToFinish() {
 describe('#Reporting', function () {
   let uut;
 
+  function buildReporting({ pauseState } = {}) {
+    const config = {
+      ALLOWED_COUNTRY_CODES: ['us', 'de'],
+      PATTERNS_URL: 'https://some-patterns-endpoint.test',
+      CONFIG_URL: 'https://some-config-endpoint.test',
+    };
+    const storage = {
+      get: async () => undefined, // assume nothing was stored yet
+    };
+    const communication = {
+      async send() {},
+      trustedClock: {},
+    };
+    const connectDatabase = (/*prefix*/) => new InMemoryDatabase();
+    sinon.stub(window, 'fetch').callsFake(async (url) => ({
+      ok: false,
+      statusText: `Stub server has been configured to fail (this is expected): request to ${url}`,
+    }));
+    return new Reporting({
+      config,
+      storage,
+      communication,
+      connectDatabase,
+      pauseState,
+    });
+  }
+
   for (const withPauseState of [true, false]) {
     describe(
       withPauseState
@@ -31,40 +59,14 @@ describe('#Reporting', function () {
 
       function () {
         beforeEach(async function () {
-          const config = {
-            ALLOWED_COUNTRY_CODES: ['us', 'de'],
-            PATTERNS_URL: 'https://some-patterns-endpoint.test',
-            CONFIG_URL: 'https://some-config-endpoint.test',
-          };
-          const storage = {
-            get: async () => undefined, // assume nothing was stored yet
-          };
-          const communication = {
-            async send() {},
-            trustedClock: {},
-          };
-          const connectDatabase = (/*prefix*/) => new InMemoryDatabase();
-          sinon.stub(window, 'fetch').callsFake(async (url) => ({
-            ok: false,
-            statusText: `Stub server has been configured to fail (this is expected): request to ${url}`,
-          }));
-
-          // optional components
-          let pauseState;
-          if (withPauseState) {
-            pauseState = {
-              getFilteringMode: () => 'default',
-              isHostnamePaused: (/*hostname*/) => false,
-              connectHostnamePausingEvents: (/*notify*/) => {},
-            };
-          }
-          uut = new Reporting({
-            config,
-            storage,
-            communication,
-            connectDatabase,
-            pauseState,
-          });
+          const pauseState = withPauseState
+            ? {
+                getFilteringMode: () => 'default',
+                isHostnamePaused: (/*hostname*/) => false,
+                connectHostnamePausingEvents: (/*notify*/) => {},
+              }
+            : undefined;
+          uut = buildReporting({ pauseState });
         });
 
         afterEach(function () {
@@ -223,4 +225,84 @@ describe('#Reporting', function () {
       },
     );
   }
+
+  describe('hostname pause events', function () {
+    let pauseNotify;
+    let onPauseEvent;
+
+    beforeEach(function () {
+      // Reporting binds onPauseEvent at construction time, so the spy must
+      // be installed on the prototype *before* the instance is built.
+      onPauseEvent = sinon.spy(PausedDomainsReporter.prototype, 'onPauseEvent');
+
+      pauseNotify = null;
+      const pauseState = {
+        getFilteringMode: () => 'default',
+        isHostnamePaused: () => false,
+        connectHostnamePausingEvents: (notify) => {
+          pauseNotify = notify;
+        },
+      };
+      uut = buildReporting({ pauseState });
+    });
+
+    afterEach(function () {
+      try {
+        uut.unload();
+        uut = null;
+      } finally {
+        onPauseEvent.restore();
+        window.fetch.restore();
+      }
+    });
+
+    it('forwards incoming pause events to PausedDomainsReporter', async () => {
+      await uut.init();
+      expect(
+        pauseNotify,
+        'pauseState.connectHostnamePausingEvents was never called',
+      ).to.be.a('function');
+
+      pauseNotify({ hostname: 'example.com', paused: true });
+
+      expect(onPauseEvent.calledOnce).to.be.true;
+      expect(onPauseEvent.firstCall.args[0]).to.deep.include({
+        hostname: 'example.com',
+        paused: true,
+      });
+    });
+
+    it('does not forward pause events before init or after unload', async () => {
+      // Before init: notify is wired up at construction, but the
+      // observer body is gated on isActive.
+      pauseNotify({ hostname: 'example.com', paused: true });
+      expect(
+        onPauseEvent.called,
+        'pause event leaked through before init',
+      ).to.be.false;
+
+      await uut.init();
+      uut.unload();
+
+      pauseNotify({ hostname: 'example.com', paused: false });
+      expect(
+        onPauseEvent.called,
+        'pause event leaked through after unload',
+      ).to.be.false;
+    });
+
+    it('rejects malformed pause events', async () => {
+      await uut.init();
+
+      expect(() =>
+        pauseNotify({ hostname: 123, paused: true }),
+      ).to.throw(/hostname/);
+      expect(() =>
+        pauseNotify({ hostname: 'example.com', paused: 'yes' }),
+      ).to.throw(/paused/);
+      expect(() => pauseNotify({})).to.throw();
+
+      expect(onPauseEvent.called).to.be.false;
+    });
+  });
 });

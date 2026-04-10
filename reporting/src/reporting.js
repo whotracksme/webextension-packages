@@ -215,13 +215,13 @@ export default class Reporting {
     const hostnamePauseEvents = new Observable();
     if (pauseState) {
       pauseState.connectHostnamePausingEvents((msg) => {
-        if (this.active) {
+        if (this.isActive) {
           // validate external message
           const { hostname, paused } = msg;
-          requireString(hostname);
-          requireBoolean(paused);
+          requireString(hostname, 'hostname');
+          requireBoolean(paused, 'paused');
 
-          hostnamePauseEvents.notify({ hostname, paused });
+          hostnamePauseEvents.notifyObservers({ hostname, paused });
         }
       });
       const filterModeProvider = pauseState.getFilteringMode.bind(pauseState);
