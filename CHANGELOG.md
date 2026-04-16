@@ -1,3 +1,15 @@
+# v8.0.0 (Thu Apr 16 2026)
+
+#### 💥 Breaking Change
+
+- Popularity reporting and preparation for breakage detection [#193](https://github.com/whotracksme/webextension-packages/pull/193) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v7.12.3 (Mon Mar 30 2026)
 
 #### ⚠️ Pushed to `main`
