@@ -1,36 +1,18 @@
 # reporting/example
 
-Example extension that loads the reporting library. Two ways to run it.
+Scripted extension runner with log capture. For the interactive
+`web-ext run` loop, see the package-level `../README.md`.
 
-## Build
-
-```
-npm --workspace=reporting run build
-```
-
-Produces `index.bundle.js`, `content.bundle.js`, and the offscreen
-bundle. The scripted runner below requires these; karma does its own
-bundling per-spec and does not need this step.
-
-## Interactive (DevTools + live reload)
-
-```
-npm --workspace=reporting start
-```
-
-Runs `web-ext run -t chromium` with DevTools — useful for manual
-exploration.
-
-## Scripted runner with log capture
+## Usage
 
 ```
 node reporting/example/run.mjs --url https://example.com --wait 10
 ```
 
+Requires built bundles — run `npm --workspace=reporting run build` first.
+
 What it does:
 
-- Verifies `index.bundle.js` and `content.bundle.js` exist (exits with
-  a message if `npm run build` is needed)
 - Launches Chrome Canary via wdio with `--enable-unsafe-extension-debugging`
 - Installs the unpacked extension via WebDriver BiDi `webExtension.install`
 - Subscribes to BiDi `log.entryAdded` for page + content-script console
@@ -50,7 +32,7 @@ Flags:
 - `--browser-version <channel>` — `canary` (default), `dev`, `beta`,
   `stable`, or an explicit version
 
-### Control server (with `--keep-open`)
+## Control server (`--keep-open`)
 
 Drive a long-lived runner without restarting the browser between steps:
 
@@ -69,7 +51,7 @@ GET  /logs/tail?lines=N                              → {lines: [...]}
   Returns `409` if no SW is currently attached — MV3 service workers may
   have idled out; poke it first with a navigation.
 
-### Why Chrome Canary
+## Why Chrome Canary
 
 Two reasons stable Chrome doesn't work today:
 
