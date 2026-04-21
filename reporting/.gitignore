@@ -3,3 +3,4 @@ example/content.bundle.js
 example/offscreen/*
 example/manifest.json
 scenarios/*
+!scenarios/README.md

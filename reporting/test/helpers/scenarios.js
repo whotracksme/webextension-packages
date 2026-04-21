@@ -72,7 +72,10 @@ export function recordSnapshot(name, messages) {
     }
   }
   const sortedMessages = sortObjectKeys(messages);
-  fs.writeFileSync(snapshotPath, JSON.stringify(sortedMessages, null, 2));
+  fs.writeFileSync(
+    snapshotPath,
+    JSON.stringify(sortedMessages, null, 2) + '\n',
+  );
 }
 
 export function readSnapshot(name) {

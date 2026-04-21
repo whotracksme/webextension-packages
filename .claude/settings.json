@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(npx karma:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(python3 -c ':*)",
+      "Bash(git:*)",
+      "Bash(npm run:*)",
+      "Bash(npm --workspace=reporting run:*)",
+      "Bash(npm --workspace=communication run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ci:*)",
+      "Bash(node reporting/example/run.mjs:*)",
+      "Bash(npx eslint:*)"
+    ]
+  }
+}

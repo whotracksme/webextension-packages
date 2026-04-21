@@ -335,10 +335,14 @@ describe('RequestReporter', function () {
               .NEW_ENTRY_MIN_AGE,
           );
 
-          // eslint-disable-next-line no-undef
-          if (process.argv.includes('--record-snapshot')) {
+          /* eslint-disable no-undef */
+          if (
+            process.argv.includes('--record-snapshot') ||
+            process.env.RECORD_SNAPSHOT
+          ) {
             recordSnapshot(snapshotName, messages);
           }
+          /* eslint-enable no-undef */
 
           const snapshot = await readSnapshot(snapshotName);
           expect(messages).to.have.lengthOf(snapshot.length);
