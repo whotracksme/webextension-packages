@@ -5,7 +5,13 @@ const commonjs = require('@rollup/plugin-commonjs');
 const json = require('@rollup/plugin-json');
 
 module.exports = {
-  plugins: [nodePolyfills(), nodeResolve(), sourcemaps(), commonjs(), json()],
+  plugins: [
+    nodePolyfills(),
+    nodeResolve(),
+    sourcemaps(),
+    commonjs({ strictRequires: ['**/cssom/**'] }),
+    json(),
+  ],
   external: ['chai', 'sinon'],
   output: {
     globals: {
