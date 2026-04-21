@@ -1,3 +1,15 @@
+# v8.0.1 (Tue Apr 21 2026)
+
+#### 🐛 Bug Fix
+
+- Developer tooling for the request pipeline [#195](https://github.com/whotracksme/webextension-packages/pull/195) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v8.0.0 (Thu Apr 16 2026)
 
 #### 💥 Breaking Change
