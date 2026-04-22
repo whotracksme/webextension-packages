@@ -129,13 +129,13 @@ export default class DocumentStore {
   }
 
   unload() {
+    for (const doc of Array.from(this.#documents.values())) {
+      this.#holdDocument(doc);
+    }
     if (this.#timer) {
       clearTimeout(this.#timer);
       this.#timer = null;
       this.#timerDueAt = Infinity;
-    }
-    for (const doc of Array.from(this.#documents.values())) {
-      this.#holdDocument(doc);
     }
     this.#documents.clear();
     this.#docIndex.clear();
@@ -394,8 +394,8 @@ export default class DocumentStore {
 
     // Chrome 106+ always provides documentId; synthesize for older
     // fixtures so attribution and dedupe have a key.
-    this.#synthSeq += 1;
-    const effectiveDocId = documentId || `synth:${tabId}:${this.#synthSeq}`;
+    const effectiveDocId =
+      documentId || `synth:${tabId}:${(this.#synthSeq += 1)}`;
 
     // bfcache restore: committed docId matches a held document. Cancel
     // its hold and restore it to the tab.
@@ -408,6 +408,8 @@ export default class DocumentStore {
       const entry = this.#held.get(effectiveDocId);
       this.#held.delete(effectiveDocId);
       const restored = entry.document;
+      restored.destroyed = null;
+      setActive(restored, !!this.#tabContext.get(tabId)?.active);
       for (const docId of restored.documentIds) {
         this.#docIndex.set(docId, restored);
       }
