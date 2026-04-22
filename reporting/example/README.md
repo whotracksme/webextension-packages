@@ -51,6 +51,60 @@ GET  /logs/tail?lines=N                              → {lines: [...]}
   Returns `409` if no SW is currently attached — MV3 service workers may
   have idled out; poke it first with a navigation.
 
+## Verifying request attribution end-to-end
+
+The request reporter emits two kinds of line you can grep out of
+`logs/run.log`:
+
+- `[attrib] <type> <url> doc=<documentId> -> <pageUrl>` — one per
+  `onBeforeRequest`, showing which page each request resolved to. Driven
+  by a `logger.debug` in `RequestReporter.onBeforeRequest`; requires
+  `setLogLevel('debug')` (the example sets it).
+- `[tp_events] {...}` — each `wtm.attrack.tp_events` message, printed
+  by the example's `onMessageReady`. Fires ~15s after a document
+  leaves its tab (the `HOLD_MS` in `document-store.js`).
+
+Typical session:
+
+```
+# terminal A
+npm --workspace=reporting run build
+node reporting/example/run.mjs --keep-open
+
+# terminal B
+curl -sX POST http://127.0.0.1:7878/navigate -H 'content-type: application/json' \
+  -d '{"url":"https://www.aarp.org/"}'
+sleep 12
+curl -sX POST http://127.0.0.1:7878/navigate -H 'content-type: application/json' \
+  -d '{"url":"https://www.ghostery.com/"}'
+sleep 20          # stage delay + headroom
+
+# inspect reports
+curl -s 'http://127.0.0.1:7878/logs/tail?lines=30000' \
+  | jq -r '.lines[]' | grep '\[tp_events\]' | sed 's/.*\[tp_events\] //' \
+  | jq -c '{host: .payload.data[0].hostname, tps: (.payload.data[0].tps | keys | length)}'
+```
+
+Things to check:
+
+- **Late beacons land on the source document.** Filter `[attrib]` lines
+  timestamped *after* the ghostery nav, resolved to an aarp URL — that
+  is the `#evicted` map working. E.g. a `ping` to
+  `aarpprivacy.my.onetrust.com/request/v1/consentreceipts` arriving a
+  few milliseconds after navigating away should still attribute to
+  `https://www.aarp.org`.
+- **No cross-page leaks.** Group `[attrib]` by request-host → page-host
+  (`gawk`-friendly). The only legitimate cross-host line you should see
+  is the *main-frame* request for the new page (`main_frame
+  https://www.next/ -> https://www.prev/`), because main-frame requests
+  fire before `onCommitted` and fall back to the current tab's page so
+  `oAuthDetector.checkMainFrames` can still run. Those requests are
+  filtered out of reporting by the `!state.isMainFrame` pipeline guard
+  before any stats accumulate.
+- **Reports only fire when there is something to report.** Pages whose
+  `tps` is empty (e.g. `ghostery.com`, which only loads its own
+  first-party assets) are suppressed in `#reportPage` — expected.
+
 ## Why Chrome Canary
 
 Two reasons stable Chrome doesn't work today:

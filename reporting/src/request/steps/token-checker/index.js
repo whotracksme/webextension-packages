@@ -71,18 +71,15 @@ export default class TokenChecker {
       state.isTracker,
       state.isPrivate,
     );
-    // set stats
-    if (state.incrementStat) {
-      Object.keys(stats).forEach((key) => {
-        if (stats[key] > 0) {
-          state.incrementStat(`token.has_${key}`);
-          state.incrementStat(`token.${key}`, stats[key]);
-        }
-      });
-      if (state.badTokens.length > 0) {
-        state.incrementStat('bad_qs');
-        state.incrementStat('bad_tokens', state.badTokens.length);
+    Object.keys(stats).forEach((key) => {
+      if (stats[key] > 0) {
+        state.incrementStat(`token.has_${key}`);
+        state.incrementStat(`token.${key}`, stats[key]);
       }
+    });
+    if (state.badTokens.length > 0) {
+      state.incrementStat('bad_qs');
+      state.incrementStat('bad_tokens', state.badTokens.length);
     }
     return true;
   }

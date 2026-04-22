@@ -11,7 +11,8 @@
 
 /* eslint no-param-reassign: 'off' */
 
-// maps string (web-ext) to int (FF cpt). Anti-tracking still uses these legacy types.
+// Legacy Firefox content-policy type integers, kept for wire-format
+// compatibility with existing tp_events consumers.
 const TYPE_LOOKUP = {
   other: 1,
   script: 2,
@@ -35,12 +36,27 @@ const TYPE_LOOKUP = {
   web_manifest: 22,
 };
 
-export default class PageLogger {
+/**
+ * Extracts per-request counters into the owning document's
+ * `requestStats` bucket (via `state.incrementStat`).
+ *
+ * Two kinds of method here:
+ *
+ *   - `recordRequest*`: pure observational counters. Do not mutate
+ *     pipeline-level state. Safe to add/remove without affecting
+ *     downstream checks.
+ *   - `extractRequestCookie` / `extractResponseCookie`: parse the
+ *     Cookie / Set-Cookie headers into `state.hasCookie` /
+ *     `state.hasSetCookie`, which the pipeline reads as a gate for
+ *     cookie-blocking. These also emit their own observational
+ *     counters because they touch the same bytes anyway.
+ */
+export default class RequestStats {
   constructor(placeHolder) {
     this.placeHolder = placeHolder;
   }
 
-  onBeforeRequest(state) {
+  recordRequestShape(state) {
     state.incrementStat('c');
     if (state.urlParts.search.length > 0) {
       state.incrementStat('has_qs');
@@ -57,7 +73,6 @@ export default class PageLogger {
 
     state.incrementStat(`type_${TYPE_LOOKUP[state.type] || 'unknown'}`);
 
-    // log protocol (secure or not)
     const isHTTP = (protocol) => protocol === 'http:' || protocol === 'https:';
     const scheme = isHTTP(state.urlParts.protocol)
       ? state.urlParts.scheme
@@ -69,8 +84,7 @@ export default class PageLogger {
     }
   }
 
-  onBeforeSendHeaders(state) {
-    // referer stats
+  recordRefererLeak(state) {
     const referrer = state.getReferrer();
     if (referrer && referrer.indexOf(state.tabUrl) > -1) {
       state.incrementStat('referer_leak_header');
@@ -87,7 +101,18 @@ export default class PageLogger {
         state.incrementStat('referer_leak_path');
       }
     }
-    // check if the request contains a cookie
+  }
+
+  recordResponseShape(state) {
+    state.incrementStat('resp_ob');
+    state.incrementStat(
+      'content_length',
+      parseInt(state.getResponseHeader('Content-Length'), 10) || 0,
+    );
+    state.incrementStat(`status_${state.statusCode}`);
+  }
+
+  extractRequestCookie(state) {
     state.cookieData = state.getCookieData();
     const hasCookie = state.cookieData && state.cookieData.length > 5;
     if (hasCookie) {
@@ -96,19 +121,11 @@ export default class PageLogger {
     state.hasCookie = hasCookie;
   }
 
-  onHeadersReceived(state) {
-    state.incrementStat('resp_ob');
-    state.incrementStat(
-      'content_length',
-      parseInt(state.getResponseHeader('Content-Length'), 10) || 0,
-    );
-    state.incrementStat(`status_${state.statusCode}`);
-
+  extractResponseCookie(state) {
     const setCookie = state.getResponseHeader('Set-Cookie');
     const hasSetCookie = setCookie && setCookie.length > 5;
     if (hasSetCookie) {
       state.incrementStat('set_cookie_set');
-      // log samesite=none: explicit cross site cookies
       if (setCookie.toLowerCase().indexOf('samesite=none') !== -1) {
         state.incrementStat('set_cookie_samesite_none');
       }

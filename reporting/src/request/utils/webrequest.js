@@ -112,37 +112,25 @@ function createHeadersGetter(headers) {
  */
 export class WebRequestContext {
   /**
-   * "Smart" constructor for `WebRequestContext`. It will make sure that the same
-   * information is provided for different browsers (e.g.: Chrome and Firefox) as
-   * well as provide convenient helpers for parsed URLs, etc. It will also not
-   * return a wrapper for background requests.
+   * Chrome-only: populate Ghostery-side fields on a webRequest details
+   * object and resolve the owning page by documentId.
    */
-  static fromDetails(details, pageStore) {
+  static fromDetails(details, documentStore) {
     const context = details;
 
-    // Check if we have a URL
     if (!context.url) {
       return null;
     }
 
-    // Sub frames book keeping
-    if (context.type === 'sub_frame') {
-      pageStore.onSubFrame(context);
-    }
+    const isMainFrame = context.type === 'main_frame';
+    const page = documentStore.getDocumentForRequest(context);
 
-    // Get context on this page
-    const page = pageStore.getPageForRequest(context);
-
-    // Ghostery-specific extensions to webRequest details
     context.page = page;
-    context.tabUrl = context.tabUrl || (page && page.url);
+    // For main-frame requests the first-party URL is the request URL
+    // itself. For everything else it's the owning document's URL.
+    context.tabUrl = isMainFrame ? context.url : page?.url || '';
     context.isPrivate = page ? page.isPrivate : null;
-    context.isMainFrame = context.type === 'main_frame';
-
-    if (!context.tabUrl) {
-      context.tabUrl =
-        context.originUrl || context.initiator || context.documentUrl;
-    }
+    context.isMainFrame = isMainFrame;
 
     return new WebRequestContext(context);
   }
@@ -162,17 +150,6 @@ export class WebRequestContext {
   incrementStat(statName, c) {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
-  }
-
-  /**
-   * Optionally, a CNAME record can be requested from DNS for `this.url`. If
-   * available, it will be communicated by calling this method. We then set two
-   * new attributes on the WebRequestContext object so that users of the
-   * pipeline can access this information.
-   */
-  setCNAME(cname) {
-    this.cnameUrl = this.url.replace(this.urlParts.hostname, cname);
-    this.cnameUrlParts = parse(this.cnameUrl);
   }
 
   getRequestHeader(name) {

@@ -122,12 +122,12 @@ export default class CookieContext {
   checkVisitCache(state) {
     // check if the response has been received yet
     const stage = state.statusCode !== undefined ? 'set_cookie' : 'cookie';
-    const tabId = state.tabId;
+    const scope = state.page.documentIds[0];
     const diff =
-      Date.now() - (this.visitCache.get(`${tabId}:${state.hostGD}`) || 0);
+      Date.now() - (this.visitCache.get(`${scope}:${state.hostGD}`) || 0);
     if (
       diff < TIME_ACTIVE &&
-      this.visitCache.get(`${tabId}:${state.sourceGD}`)
+      this.visitCache.get(`${scope}:${state.sourceGD}`)
     ) {
       state.incrementStat(`${stage}_allow_visitcache`);
       return false;
@@ -140,7 +140,7 @@ export default class CookieContext {
       const stage = state.statusCode !== undefined ? 'set_cookie' : 'cookie';
       const time = Date.now();
       const url = state.url;
-      const tabId = state.tabId;
+      const scope = state.page.documentIds[0];
       const urlParts = state.urlParts;
       const sourceGD = state.tabUrlParts.generalDomain;
       const hostGD = state.urlParts.generalDomain;
@@ -151,7 +151,7 @@ export default class CookieContext {
           hostGD === this.contextFromEvent.cGD &&
           sourceGD === this.contextFromEvent.pageGD
         ) {
-          this.visitCache.set(`${tabId}:${hostGD}`, time);
+          this.visitCache.set(`${scope}:${hostGD}`, time);
           state.incrementStat(`${stage}_allow_userinit_same_context_gd`);
           return false;
         }
@@ -159,7 +159,7 @@ export default class CookieContext {
         if (this.contextFromEvent.html.indexOf(pu) !== -1) {
           // the url is in pu
           if (urlParts && urlParts.hostname && urlParts.hostname !== '') {
-            this.visitCache.set(`${tabId}:${hostGD}`, time);
+            this.visitCache.set(`${scope}:${hostGD}`, time);
             state.incrementStat(`${stage}_allow_userinit_same_gd_link`);
             return false;
           }
@@ -169,7 +169,7 @@ export default class CookieContext {
           !this.contextFromEvent.cGD &&
           this.contextFromEvent.possibleCGD.has(hostGD)
         ) {
-          this.visitCache.set(`${tabId}:${hostGD}`, time);
+          this.visitCache.set(`${scope}:${hostGD}`, time);
           state.incrementStat(`${stage}_allow_userinit_same_script_gd`);
           return false;
         }

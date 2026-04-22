@@ -8,15 +8,14 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "ed84bc069c79dc56",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760326457,
+          "t": 0,
           "tps": {
             "717de196af402b1a6e14814863cd92bb.safeframe.googlesyndication.com": {
               "c": 2,
@@ -566,6 +565,7 @@
             "euw1.smartadserver.com": {
               "c": 1,
               "has_qs": 1,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "scheme_https": 1,
               "type_3": 1
@@ -590,7 +590,7 @@
               "content_length": 112,
               "has_post": 5,
               "has_qs": 15,
-              "referer_leak_path": 12,
+              "referer_leak_path": 13,
               "referer_leak_site": 13,
               "resp_ob": 20,
               "scheme_https": 21,
@@ -790,12 +790,13 @@
               "type_3": 1
             },
             "ingestion.contentinsights.com": {
-              "c": 1,
+              "c": 2,
               "content_length": 1,
-              "has_qs": 1,
+              "has_qs": 2,
               "resp_ob": 1,
-              "scheme_https": 1,
+              "scheme_https": 2,
               "status_204": 1,
+              "type_10": 1,
               "type_3": 1
             },
             "ingestion.smartocto.com": {
@@ -916,17 +917,15 @@
               "type_4": 9
             },
             "onet.hit.gemius.pl": {
-              "c": 15,
-              "content_length": 74608,
-              "has_post": 1,
-              "has_qs": 10,
+              "c": 14,
+              "content_length": 74565,
+              "has_qs": 9,
               "referer_leak_path": 7,
-              "referer_leak_site": 8,
-              "resp_ob": 15,
-              "scheme_https": 15,
-              "status_200": 14,
+              "referer_leak_site": 7,
+              "resp_ob": 14,
+              "scheme_https": 14,
+              "status_200": 13,
               "status_301": 1,
-              "type_10": 1,
               "type_2": 14
             },
             "pa.openx.net": {
@@ -940,13 +939,15 @@
             },
             "pagead2.googlesyndication.com": {
               "c": 17,
-              "content_length": 185822,
+              "content_length": 185780,
+              "has_post": 1,
               "has_qs": 13,
-              "resp_ob": 15,
+              "resp_ob": 14,
               "scheme_https": 17,
-              "status_200": 9,
+              "status_200": 8,
               "status_204": 6,
-              "type_11": 9,
+              "type_10": 1,
+              "type_11": 8,
               "type_2": 5,
               "type_3": 3
             },
@@ -1003,14 +1004,14 @@
               "type_3": 12
             },
             "play.google.com": {
-              "c": 10,
+              "c": 7,
               "content_length": 917,
-              "has_post": 10,
-              "has_qs": 10,
+              "has_post": 7,
+              "has_qs": 7,
               "resp_ob": 7,
-              "scheme_https": 10,
+              "scheme_https": 7,
               "status_200": 7,
-              "type_11": 10
+              "type_11": 7
             },
             "pr-bh.ybp.yahoo.com": {
               "c": 3,
@@ -1247,6 +1248,7 @@
               "c": 3,
               "content_length": 2,
               "has_qs": 3,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "resp_ob": 2,
               "scheme_https": 3,
@@ -1568,17 +1570,17 @@
               "type_2": 5
             },
             "www.youtube.com": {
-              "c": 36,
+              "c": 31,
               "content_length": 1743961,
-              "has_post": 12,
-              "has_qs": 20,
+              "has_post": 8,
+              "has_qs": 15,
               "referer_leak_path": 5,
-              "referer_leak_site": 7,
+              "referer_leak_site": 5,
               "resp_ob": 31,
-              "scheme_https": 36,
+              "scheme_https": 31,
               "status_200": 24,
               "status_204": 7,
-              "type_11": 16,
+              "type_11": 11,
               "type_2": 14,
               "type_3": 2,
               "type_4": 2,
@@ -1619,7 +1621,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1630,15 +1632,14 @@
           "active": 0,
           "c": 1,
           "counter": 11,
-          "frames": {},
           "hostname": "cf28373a52818d8a",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760326457,
+          "t": 0,
           "tps": {
             "717de196af402b1a6e14814863cd92bb.safeframe.googlesyndication.com": {
               "c": 2,
@@ -2194,6 +2195,7 @@
             "euw1.smartadserver.com": {
               "c": 1,
               "has_qs": 1,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "scheme_https": 1,
               "type_3": 1
@@ -2218,7 +2220,7 @@
               "content_length": 112,
               "has_post": 5,
               "has_qs": 15,
-              "referer_leak_path": 12,
+              "referer_leak_path": 13,
               "referer_leak_site": 13,
               "resp_ob": 20,
               "scheme_https": 21,
@@ -2421,12 +2423,13 @@
               "type_3": 1
             },
             "ingestion.contentinsights.com": {
-              "c": 1,
+              "c": 2,
               "content_length": 1,
-              "has_qs": 1,
+              "has_qs": 2,
               "resp_ob": 1,
-              "scheme_https": 1,
+              "scheme_https": 2,
               "status_204": 1,
+              "type_10": 1,
               "type_3": 1
             },
             "ingestion.smartocto.com": {
@@ -2545,17 +2548,15 @@
               "type_4": 9
             },
             "onet.hit.gemius.pl": {
-              "c": 15,
-              "content_length": 74608,
-              "has_post": 1,
-              "has_qs": 10,
+              "c": 14,
+              "content_length": 74565,
+              "has_qs": 9,
               "referer_leak_path": 7,
-              "referer_leak_site": 8,
-              "resp_ob": 15,
-              "scheme_https": 15,
-              "status_200": 14,
+              "referer_leak_site": 7,
+              "resp_ob": 14,
+              "scheme_https": 14,
+              "status_200": 13,
               "status_301": 1,
-              "type_10": 1,
               "type_2": 14
             },
             "pa.openx.net": {
@@ -2569,13 +2570,15 @@
             },
             "pagead2.googlesyndication.com": {
               "c": 17,
-              "content_length": 185822,
+              "content_length": 185780,
+              "has_post": 1,
               "has_qs": 13,
-              "resp_ob": 15,
+              "resp_ob": 14,
               "scheme_https": 17,
-              "status_200": 9,
+              "status_200": 8,
               "status_204": 6,
-              "type_11": 9,
+              "type_10": 1,
+              "type_11": 8,
               "type_2": 5,
               "type_3": 3
             },
@@ -2632,14 +2635,14 @@
               "type_3": 12
             },
             "play.google.com": {
-              "c": 10,
+              "c": 7,
               "content_length": 917,
-              "has_post": 10,
-              "has_qs": 10,
+              "has_post": 7,
+              "has_qs": 7,
               "resp_ob": 7,
-              "scheme_https": 10,
+              "scheme_https": 7,
               "status_200": 7,
-              "type_11": 10
+              "type_11": 7
             },
             "pr-bh.ybp.yahoo.com": {
               "c": 3,
@@ -2878,6 +2881,7 @@
               "c": 3,
               "content_length": 2,
               "has_qs": 3,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "resp_ob": 2,
               "scheme_https": 3,
@@ -3200,17 +3204,17 @@
               "type_2": 5
             },
             "www.youtube.com": {
-              "c": 36,
+              "c": 31,
               "content_length": 1743961,
-              "has_post": 12,
-              "has_qs": 20,
+              "has_post": 8,
+              "has_qs": 15,
               "referer_leak_path": 5,
-              "referer_leak_site": 7,
+              "referer_leak_site": 5,
               "resp_ob": 31,
-              "scheme_https": 36,
+              "scheme_https": 31,
               "status_200": 24,
               "status_204": 7,
-              "type_11": 16,
+              "type_11": 11,
               "type_2": 14,
               "type_3": 2,
               "type_4": 2,
@@ -3251,7 +3255,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -3272,7 +3276,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3462,7 +3466,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3652,7 +3656,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3678,7 +3682,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3704,7 +3708,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3730,7 +3734,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3756,7 +3760,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3782,7 +3786,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3808,7 +3812,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3834,7 +3838,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -3860,6 +3864,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   }
 ]

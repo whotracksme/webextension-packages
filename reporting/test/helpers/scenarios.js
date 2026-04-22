@@ -140,6 +140,18 @@ function playEvents(chrome, events, options = {}) {
             }
           }
         }
+        // When a scenario is replayed with URL rewrites we want the
+        // replay to look like a *different* browsing session to the
+        // reporter — otherwise the documentId-based dedupe will drop
+        // everything as already-reported. Prefix documentIds so each
+        // replay has its own identity.
+        if (options.documentIdPrefix) {
+          for (const prop of ['documentId', 'parentDocumentId']) {
+            if (event[prop]) {
+              event[prop] = options.documentIdPrefix + event[prop];
+            }
+          }
+        }
         return event;
       });
       if (events.api === 'tabs' && event.event === 'onCreated') {
