@@ -182,9 +182,21 @@ export default class DocumentStore {
       return null;
     }
     // Legacy-fixture path (no documentId on webRequest). Fall back to
-    // the tab's currently-visible document.
+    // the tab's currently-visible document. If none exists yet,
+    // lazy-create one: main_frame requests carry the page URL
+    // directly; for sub-resources fall back to the URL captured at
+    // tabs.onCreated time, which is how older fixtures shape tabs.
     const rootDocId = this.#tabToDocument.get(tabId);
-    return (rootDocId && this.#documents.get(rootDocId)) || null;
+    if (rootDocId) {
+      return this.#documents.get(rootDocId) || null;
+    }
+    const ctx = this.#tabContext.get(tabId);
+    const fallbackUrl = type === 'main_frame' ? url : ctx?.url;
+    if (!fallbackUrl) {
+      return null;
+    }
+    const synthId = `synth:${tabId}:${(this.#synthSeq += 1)}`;
+    return this.#createForTab({ tabId, documentId: synthId, url: fallbackUrl });
   }
 
   #createForTab({ tabId, documentId, url }) {
@@ -331,6 +343,7 @@ export default class DocumentStore {
     this.#tabContext.set(tab.id, {
       isPrivate: !!tab.incognito,
       active: !!tab.active,
+      url: tab.url || '',
     });
   };
 
