@@ -72,6 +72,23 @@ export default class DocumentStore {
   #documents;
   #docIndex;
   #held;
+  // #tabToDocument and #tabContext bridge tab-lifecycle events to the
+  // document timeline. Chrome fires tabs.onCreated / onActivated /
+  // onUpdated / onRemoved independently of webRequest and
+  // webNavigation, and some fire *before* any document exists for the
+  // tab (e.g. tabs.onActivated on a brand-new tab before its
+  // main-frame webRequest). The document record itself still owns
+  // isPrivate / activeFrom / activeTime; these two maps are just the
+  // buffer so those signals aren't lost in the gap between tab events
+  // and document creation.
+  //   #tabToDocument:  tabId -> rootDocumentId of the currently-visible
+  //                    document. Used to route tab events onto the
+  //                    right document and to detect the "previous"
+  //                    document when a new one commits in the tab.
+  //   #tabContext:     tabId -> { isPrivate, active, url } snapshot of
+  //                    the latest tab-lifecycle state. Read by
+  //                    #createForTab so new documents are born with
+  //                    the correct initial flags.
   #tabToDocument;
   #tabContext;
   #onDocumentReleased;
