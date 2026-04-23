@@ -4,3 +4,5 @@ example/offscreen/*
 example/manifest.json
 scenarios/*
 !scenarios/README.md
+!scenarios/2026-04-23/
+!scenarios/2026-04-23/*.log

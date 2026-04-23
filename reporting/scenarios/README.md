@@ -38,6 +38,11 @@ WIP or kept for a future regression test):
 - `2024-08-02-02/` (empty)
 - `2024-09-27/{0001-quick-close,0002-quick-navigation,0003-prefetch}`
 - `2024-09-30/0003-prefetch`
+- `2026-04-23/` — refreshed Chromium recordings covering the existing
+  scenarios plus new ones aimed at the document-centric attribution
+  work: `0006-preconnect`, `0007-prerender`, `0009-beacon`, a full
+  `0003` soundcloud session, and a `google2` search-results session.
+  Source: `github.com/ghostery/webextension-event-recorder/output`.
 
 ## Related: `../snapshots/`
 
