@@ -171,7 +171,7 @@ describe('RequestReporter', function () {
       it('detects no 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         expect(
@@ -191,7 +191,7 @@ describe('RequestReporter', function () {
       it('detects 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         expect(
@@ -209,7 +209,7 @@ describe('RequestReporter', function () {
       it('reports 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
@@ -226,17 +226,40 @@ describe('RequestReporter', function () {
       });
     });
 
-    context('0004-ping', function () {
-      it('reports pings', async function () {
+    context('0003-prefetch', function () {
+      it('reports prefetched 3rd parties', async function () {
+        const { seenTabIds } = await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2026-04-23',
+        });
+        await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
           communicationEmitter.once('send', resolve),
         );
-        await playScenario(chrome, {
+        // force stage all pages
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await clock.runToLast();
+        const event = await eventPromise;
+        expect(event).to.deep.include({
+          action: 'wtm.attrack.tp_events',
+        });
+        expect(event.payload.data[0].tps).to.have.keys(['subdomain.localhost']);
+      });
+    });
+
+    context('0004-ping', function () {
+      it('reports pings', async function () {
+        const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02-1',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
-        // first tp_event from the page that sent ping
+        const eventPromise = new Promise((resolve) =>
+          communicationEmitter.once('send', resolve),
+        );
+        // force stage all pages
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
           action: 'wtm.attrack.tp_events',
@@ -249,7 +272,7 @@ describe('RequestReporter', function () {
       it('reports 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
@@ -266,6 +289,43 @@ describe('RequestReporter', function () {
       });
     });
 
+    context('0006-preconnect', function () {
+      it('does not attribute preconnect hints as 3rd parties', async function () {
+        const { seenTabIds } = await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2026-04-23',
+        });
+        await clock.runToLast();
+        expect(reporter.pageStore.checkIfEmpty()).to.be.false;
+        expect(seenTabIds).to.have.property('size', 1);
+        const tabId = seenTabIds.values().next().value;
+        const tab = reporter.pageStore.getPageForRequest({ tabId, frameId: 0 });
+        // preconnect opens a socket but fires no webRequest, so no
+        // third-party counters should accumulate.
+        expect(tab.requestStats).to.be.empty;
+      });
+    });
+
+    context('0007-prerender', function () {
+      it('keeps prerender stats off the visible page', async function () {
+        const { seenTabIds } = await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2026-04-23',
+        });
+        await clock.runToLast();
+        expect(reporter.pageStore.checkIfEmpty()).to.be.false;
+        // The visible localhost:8080 page has no third parties; the
+        // prerendered document lives on a separate tab and is not
+        // counted against the one the user is looking at.
+        const visibleTabId = seenTabIds.values().next().value;
+        const tab = reporter.pageStore.getPageForRequest({
+          tabId: visibleTabId,
+          frameId: 0,
+        });
+        expect(tab.requestStats).to.be.empty;
+      });
+    });
+
     context('0008-navigation', function () {
       it('reports 3rd parties', async function () {
         const eventPromise1 = new Promise((resolve) =>
@@ -273,7 +333,7 @@ describe('RequestReporter', function () {
         );
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02-2',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const event1 = await eventPromise1;
@@ -296,6 +356,39 @@ describe('RequestReporter', function () {
         expect(event1.payload.data[0].hostname).to.not.be.equal(
           event2.payload.data[0].hostname,
         );
+      });
+    });
+
+    context('0009-beacon', function () {
+      // SKIP: passes only on the documentId-centric attribution
+      // branch. User searches on search.localhost, clicks through to
+      // landing.localhost, and the search document fires two beacons
+      // to beacon.localhost (click handler + pagehide). Each beacon
+      // webRequest carries the search document's documentId, so
+      // correct attribution keeps beacon.localhost on search's
+      // tp_events. Main's tabId+previous-chain logic misattributes
+      // the beacons to a staged-and-dead page, silently dropping
+      // them.
+      it.skip('attributes late beacon to the source document', async function () {
+        const events = [];
+        communicationEmitter.on('send', (msg) => {
+          if (msg.action === 'wtm.attrack.tp_events') {
+            events.push(msg);
+          }
+        });
+        const { seenTabIds } = await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2026-04-23',
+        });
+        await clock.runToLast();
+        // Force-stage remaining pages so any held documents flush.
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await clock.runToLast();
+        const emittedBeacon = events.some((e) =>
+          Object.keys(e.payload.data[0].tps).includes('beacon.localhost'),
+        );
+        expect(emittedBeacon, 'beacon.localhost must land in some tp_events')
+          .to.be.true;
       });
     });
 
