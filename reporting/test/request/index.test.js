@@ -171,7 +171,7 @@ describe('RequestReporter', function () {
       it('detects no 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         expect(
@@ -191,7 +191,7 @@ describe('RequestReporter', function () {
       it('detects 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         expect(
@@ -209,7 +209,7 @@ describe('RequestReporter', function () {
       it('reports 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
@@ -228,15 +228,17 @@ describe('RequestReporter', function () {
 
     context('0004-ping', function () {
       it('reports pings', async function () {
+        const { seenTabIds } = await playScenario(chrome, {
+          scenarioName: this.test.parent.title,
+          scenarioRelease: '2026-04-23',
+        });
+        await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
           communicationEmitter.once('send', resolve),
         );
-        await playScenario(chrome, {
-          scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02-1',
-        });
+        // force stage all pages
+        seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
         await clock.runToLast();
-        // first tp_event from the page that sent ping
         const event = await eventPromise;
         expect(event).to.deep.include({
           action: 'wtm.attrack.tp_events',
@@ -249,7 +251,7 @@ describe('RequestReporter', function () {
       it('reports 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const eventPromise = new Promise((resolve) =>
@@ -273,7 +275,7 @@ describe('RequestReporter', function () {
         );
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
-          scenarioRelease: '2024-08-02-2',
+          scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
         const event1 = await eventPromise1;

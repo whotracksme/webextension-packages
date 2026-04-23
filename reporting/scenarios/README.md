@@ -26,23 +26,20 @@ Scenarios actively used by `reporting/test/request/index.test.js`:
 
 | Release          | Scenario          | What it covers                                                     |
 | ---------------- | ----------------- | ------------------------------------------------------------------ |
-| `2024-08-02`     | `0001-empty-page` | Plain page load with no third-party resources — `requestStats` must stay empty. |
-| `2024-08-02`     | `0002-3rd-party`  | Page with a single third-party script; verifies detection + the `wtm.attrack.tp_events` report shape. |
-| `2024-08-02`     | `0005-preload`    | `<link rel=preload>` triggers the tracker path through a different webRequest ordering. |
-| `2024-08-02-1`   | `0004-ping`       | Navigator `sendBeacon`/ping endpoints (non-XHR background request). |
-| `2024-08-02-2`   | `0008-navigation` | Two successive navigations on the same tab; each page's trackers must be reported to the right page hostname. |
+| `2026-04-23`     | `0001-empty-page` | Plain page load with no third-party resources — `requestStats` must stay empty. |
+| `2026-04-23`     | `0002-3rd-party`  | Page with a single third-party script; verifies detection + the `wtm.attrack.tp_events` report shape. |
+| `2026-04-23`     | `0004-ping`       | Navigator `sendBeacon`/ping endpoints (non-XHR background request). |
+| `2026-04-23`     | `0005-preload`    | `<link rel=preload>` triggers the tracker path through a different webRequest ordering. |
+| `2026-04-23`     | `0008-navigation` | Two successive navigations on the same tab; each page's trackers must be reported to the right page hostname. |
 
-Scenarios present on disk but not referenced by any current test (likely
-WIP or kept for a future regression test):
+The `2026-04-23` release also ships Chromium recordings for scenarios
+not yet wired into the test suite: `0003-prefetch`, `0006-preconnect`,
+`0007-prerender`, `0009-beacon` — useful targets for exercising the
+document-centric attribution paths.
 
-- `2024-08-02-02/` (empty)
-- `2024-09-27/{0001-quick-close,0002-quick-navigation,0003-prefetch}`
-- `2024-09-30/0003-prefetch`
-- `2026-04-23/` — refreshed Chromium recordings covering the existing
-  scenarios plus new ones aimed at the document-centric attribution
-  work: `0006-preconnect`, `0007-prerender`, `0009-beacon`, and a
-  full `0003` soundcloud session.
-  Source: `github.com/ghostery/webextension-event-recorder/output`.
+Earlier releases (`2024-08-02`, `2024-08-02-1`, `2024-08-02-2`,
+`2024-09-27`, `2024-09-30`) remain available via the on-demand
+download path and are referenced by tests pinned to them.
 
 ## Related: `../snapshots/`
 
