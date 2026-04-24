@@ -9,13 +9,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import logger from '../logger.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
 
 const PAGE_LOADING_STATE = {
-  CREATED: 'created',
-  NAVIGATING: 'navigating',
   COMMITTED: 'committed',
   COMPLETE: 'complete',
 };
@@ -29,76 +28,75 @@ function makePageActive(page, active) {
   }
 }
 
-function createPageFromTab(tab) {
-  const { id, active, url, incognito, created } = tab;
-  const page = {};
-  page.id = id;
-  page.url = url;
-  page.isPrivate = incognito || false;
-  page.isPrivateServer = false;
-  page.created = created || Date.now();
-  page.destroyed = null;
-  page.frames = {
-    0: {
-      parentFrameId: -1,
-      url,
-    },
+function createPage({ tabId, documentId, url, isPrivate, active }) {
+  return {
+    id: tabId,
+    documentId,
+    documentIds: [documentId],
+    url: url || '',
+    isPrivate: !!isPrivate,
+    isPrivateServer: false,
+    created: Date.now(),
+    destroyed: null,
+    state: PAGE_LOADING_STATE.COMMITTED,
+    activeTime: 0,
+    activeFrom: active ? Date.now() : 0,
+    requestStats: {},
+    annotations: {},
+    counter: 0,
   };
-  page.state = PAGE_LOADING_STATE.CREATED;
-
-  page.activeTime = 0;
-  page.activeFrom = active ? Date.now() : 0;
-
-  page.requestStats = {};
-  page.annotations = {};
-  page.counter = 0;
-  page.previous = null;
-  return page;
 }
 
 export default class PageStore {
   #notifyPageStageListeners;
+  // rootDocumentId -> page; persisted across SW restarts.
   #pages;
+  // Any documentId (root or sub-frame) -> owning page. Rebuilt on init.
+  #documentIndex;
+  // tabId -> { isPrivate, active }; used at commit time so a new page
+  // inherits the current tab's flags.
+  #tabContext;
 
   constructor({ notifyPageStageListeners }) {
     this.#pages = new ChromeStorageMap({
-      storageKey: 'wtm-url-reporting:page-store:tabs',
+      storageKey: 'wtm-request-reporting:page-store:pages',
       ttlInMs: PAGE_TTL,
     });
+    this.#documentIndex = new Map();
+    this.#tabContext = new Map();
     this.#notifyPageStageListeners = notifyPageStageListeners;
   }
 
   async init() {
     await this.#pages.isReady;
+    for (const page of this.#pages.values()) {
+      for (const docId of page.documentIds) {
+        this.#documentIndex.set(docId, page);
+      }
+    }
     chrome.tabs.onCreated.addListener(this.#onTabCreated);
     chrome.tabs.onUpdated.addListener(this.#onTabUpdated);
     chrome.tabs.onRemoved.addListener(this.#onTabRemoved);
     chrome.tabs.onActivated.addListener(this.#onTabActivated);
-    chrome.webNavigation.onBeforeNavigate.addListener(this.#onBeforeNavigate);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
-
-    // Note: not available on Firefox Android
+    // Not available on Firefox Android.
     chrome.windows?.onFocusChanged?.addListener(this.#onWindowFocusChanged);
 
-    // popupate initially open tabs
-    (await chrome.tabs.query({})).forEach((tab) => this.#onTabCreated(tab));
+    for (const tab of await chrome.tabs.query({})) {
+      this.#onTabCreated(tab);
+    }
+    // Emit any stored page whose documents the browser no longer has.
+    await this.flush();
   }
 
   unload() {
-    this.#pages.forEach((serializedPage) => {
-      const page = createPageFromTab(serializedPage);
-      this.#stagePage(page);
-    });
-    this.#pages.clear();
-
+    this.#documentIndex.clear();
+    this.#tabContext.clear();
     chrome.tabs.onCreated.removeListener(this.#onTabCreated);
     chrome.tabs.onUpdated.removeListener(this.#onTabUpdated);
     chrome.tabs.onRemoved.removeListener(this.#onTabRemoved);
     chrome.tabs.onActivated.removeListener(this.#onTabActivated);
-    chrome.webNavigation.onBeforeNavigate.removeListener(
-      this.#onBeforeNavigate,
-    );
     chrome.webNavigation.onCommitted.removeListener(
       this.#onNavigationCommitted,
     );
@@ -109,214 +107,195 @@ export default class PageStore {
   }
 
   checkIfEmpty() {
-    // this operations can potentially be expensive
     return this.#pages.countNonExpiredKeys() === 0;
+  }
+
+  // Test helper: returns the first stored page for `tabId`.
+  findPageForTab(tabId) {
+    for (const page of this.#pages.values()) {
+      if (page.id === tabId) return page;
+    }
+    return undefined;
+  }
+
+  // Emit every stored page whose documents are no longer live. Called
+  // on SW startup and on tab removal.
+  async flush() {
+    const live = await this.#collectLiveDocumentIds();
+    for (const rootDocumentId of Array.from(this.#pages.keys())) {
+      const page = this.#pages.get(rootDocumentId);
+      if (!page) continue;
+      if (!page.documentIds.some((d) => live.has(d))) {
+        this.#stagePage(page);
+      }
+    }
+  }
+
+  async #collectLiveDocumentIds() {
+    const live = new Set();
+    let tabs;
+    try {
+      tabs = await chrome.tabs.query({});
+    } catch (e) {
+      logger.debug('PageStore: tabs.query failed during flush', e);
+      return live;
+    }
+    await Promise.all(
+      tabs.map((tab) =>
+        chrome.webNavigation
+          .getAllFrames({ tabId: tab.id })
+          .then((frames) => {
+            for (const frame of frames || []) {
+              if (frame.documentId) live.add(frame.documentId);
+            }
+          })
+          .catch(() => {}),
+      ),
+    );
+    return live;
   }
 
   #stagePage(page) {
     makePageActive(page, false);
     page.destroyed = Date.now();
-    // unset previous (to prevent history chain memory leak)
-    page.previous = undefined;
-    this.#pages.set(page.id, page);
+    for (const docId of page.documentIds) {
+      if (this.#documentIndex.get(docId) === page) {
+        this.#documentIndex.delete(docId);
+      }
+    }
+    this.#pages.delete(page.documentId);
     this.#notifyPageStageListeners(page);
   }
 
-  /**
-   * Create a new `tabContext` for the new tab
-   */
+  #indexDocument(page, documentId) {
+    if (!page.documentIds.includes(documentId)) {
+      page.documentIds.push(documentId);
+    }
+    this.#documentIndex.set(documentId, page);
+  }
+
+  #setTabActive(tabId, active) {
+    const ctx = this.#tabContext.get(tabId);
+    if (ctx) ctx.active = active;
+    for (const page of this.#pages.values()) {
+      if (page.id === tabId) {
+        makePageActive(page, active);
+        this.#pages.set(page.documentId, page);
+      }
+    }
+  }
+
   #onTabCreated = (tab) => {
-    this.#pages.set(tab.id, createPageFromTab(tab));
-  };
-
-  /**
-   * Update an existing tab or create it if we do not have a context yet.
-   */
-  #onTabUpdated = (tabId, info, tab) => {
-    let page = this.#pages.get(tabId);
-    if (!page) {
-      page = createPageFromTab(tab);
-    }
-
-    // Update `isPrivate` and `url` if available
-    page.isPrivate = tab.incognito;
-    makePageActive(page, tab.active);
-    if (info.url !== undefined) {
-      page.url = info.url;
-    }
-
-    this.#pages.set(tabId, page);
-  };
-
-  /**
-   * Remove tab context for `tabId`.
-   */
-  #onTabRemoved = (tabId) => {
-    const page = this.#pages.get(tabId);
-    if (!page) {
-      return;
-    }
-    if (page.state === PAGE_LOADING_STATE.COMPLETE) {
-      this.#stagePage(page);
-    }
-    this.#pages.delete(tabId);
-  };
-
-  #onTabActivated = (details) => {
-    const { previousTabId, tabId } = details;
-    // if previousTabId is not set (e.g. on chrome), set all tabs to inactive
-    // otherwise, we only have to mark the previous tab as inactive
-    if (!previousTabId) {
-      for (const page of this.#pages.values()) {
-        makePageActive(page, false);
-        this.#pages.set(page.id, page);
-      }
-    } else if (this.#pages.has(previousTabId)) {
-      const previousPage = this.#pages.get(previousTabId);
-      makePageActive(previousPage, false);
-      this.#pages.set(previousPage.id, previousPage);
-    }
-
-    if (this.#pages.has(tabId)) {
-      const page = this.#pages.get(tabId);
-      makePageActive(page, true);
-      this.#pages.set(page.id, page);
-    }
-  };
-
-  // Note: not available on Firefox Android
-  #onWindowFocusChanged = async (focusedWindowId) => {
-    const activeTabs = await chrome.tabs.query({ active: true });
-    for (const { id, windowId } of activeTabs) {
-      const page = this.#pages.get(id);
-      if (!page) {
-        continue;
-      }
-      makePageActive(page, windowId === focusedWindowId);
-      this.#pages.set(id, page);
-    }
-  };
-
-  #onBeforeNavigate = (details) => {
-    const { frameId, tabId, url, timeStamp } = details;
-
-    if (frameId !== 0) {
-      return;
-    }
-
-    const page = this.#pages.get(tabId);
-
-    if (page) {
-      // ignore duplicated #onBeforeNavigate https://bugzilla.mozilla.org/show_bug.cgi?id=1732564
-      if (
-        page.id === tabId &&
-        page.url === url &&
-        page.created + 200 > timeStamp
-      ) {
-        return;
-      }
-      // We are starting a navigation to a new page - if the previous page is complete (i.e. fully
-      // loaded), stage it before we create the new page info.
-      if (page.state === PAGE_LOADING_STATE.COMPLETE) {
-        this.#stagePage(page);
-      }
-    }
-
-    // create a new page for the navigation
-    this.#pages.delete(tabId);
-
-    const nextPage = createPageFromTab({
-      id: tabId,
-      active: false,
-      url,
-      incognito: page ? page.isPrivate : false,
-      created: timeStamp,
+    this.#tabContext.set(tab.id, {
+      isPrivate: !!tab.incognito,
+      active: !!tab.active,
     });
-    nextPage.previous = page;
-    nextPage.state = PAGE_LOADING_STATE.NAVIGATING;
-    this.#pages.set(tabId, nextPage);
   };
 
-  #onNavigationCommitted = (details) => {
-    const { frameId, tabId } = details;
-    const page = this.#pages.get(tabId);
-
-    if (!page) {
-      return;
-    }
-
-    if (frameId === 0) {
-      page.state = PAGE_LOADING_STATE.COMMITTED;
-      this.#pages.set(tabId, page);
-    } else if (!page.frames[frameId]) {
-      // frame created without request
-      this.onSubFrame(details);
-    }
-  };
-
-  #onNavigationCompleted = (details) => {
-    const { frameId, tabId } = details;
-    const page = this.#pages.get(tabId);
-    if (!page) {
-      return;
-    }
-    if (frameId === 0) {
-      page.state = PAGE_LOADING_STATE.COMPLETE;
-    }
-    this.#pages.set(tabId, page);
-  };
-
-  onSubFrame = (details) => {
-    const { tabId, frameId, parentFrameId, url } = details;
-    const page = this.#pages.get(tabId);
-    if (!page) {
-      return;
-    }
-    // Keep track of frameUrl as well as parent frame
-    page.frames[frameId] = {
-      parentFrameId,
-      url,
+  #onTabUpdated = (tabId, _info, tab) => {
+    const ctx = {
+      isPrivate: !!tab.incognito,
+      active: !!tab.active,
     };
-    this.#pages.set(tabId, page);
+    this.#tabContext.set(tabId, ctx);
+    for (const page of this.#pages.values()) {
+      if (page.id === tabId) {
+        page.isPrivate = ctx.isPrivate;
+        makePageActive(page, ctx.active);
+        this.#pages.set(page.documentId, page);
+      }
+    }
   };
 
-  getPageForRequest(context) {
-    const { tabId, frameId, originUrl, type, initiator } = context;
-    const page = this.#pages.get(tabId);
-    if (!page) {
-      return null;
-    }
+  #onTabRemoved = (tabId) => {
+    this.#tabContext.delete(tabId);
+    // Tab is gone from tabs.query + webNavigation.getAllFrames, so its
+    // pages won't be in the live set and flush will emit them.
+    this.flush().catch((e) =>
+      logger.debug('PageStore: flush after onRemoved failed', e),
+    );
+  };
 
-    // check if the current page has the given frame id, otherwise check if it belongs to the
-    // previous page
-    if (!page.frames[frameId]) {
-      if (page.previous && page.previous.frames[frameId]) {
-        return page.previous;
+  #onTabActivated = ({ previousTabId, tabId }) => {
+    if (previousTabId) {
+      this.#setTabActive(previousTabId, false);
+    } else {
+      for (const otherTabId of this.#tabContext.keys()) {
+        if (otherTabId !== tabId) this.#setTabActive(otherTabId, false);
       }
-      return null;
     }
+    this.#setTabActive(tabId, true);
+  };
 
-    const couldBePreviousPage =
-      frameId === 0 && type !== 'main_frame' && page.previous;
+  #onWindowFocusChanged = async (focusedWindowId) => {
+    for (const { id, windowId } of await chrome.tabs.query({ active: true })) {
+      this.#setTabActive(id, windowId === focusedWindowId);
+    }
+  };
 
-    // for main frame requests: check if the origin url is from the previous page (Firefox)
-    if (
-      couldBePreviousPage &&
-      page.url !== originUrl &&
-      page.previous.url === originUrl
-    ) {
-      return page.previous;
+  #onNavigationCommitted = ({
+    frameId,
+    tabId,
+    documentId,
+    parentDocumentId,
+    url,
+  }) => {
+    if (frameId !== 0) {
+      // Sub-frame: attach its documentId to the parent's owning page.
+      if (this.#documentIndex.has(documentId)) return;
+      const owner = parentDocumentId
+        ? this.#documentIndex.get(parentDocumentId)
+        : null;
+      if (!owner) return;
+      this.#indexDocument(owner, documentId);
+      this.#pages.set(owner.documentId, owner);
+      return;
     }
-    // on Chrome we have `initiator` which only contains the origin. In this case, check for a
-    // different origin
-    if (
-      couldBePreviousPage &&
-      initiator &&
-      !page.url.startsWith(initiator) &&
-      page.previous.url.startsWith(initiator)
-    ) {
-      return page.previous;
+    // Main-frame. For a bfcache restore the documentId still exists
+    // in storage — keep that record and its accumulated stats.
+    let page = this.#pages.get(documentId);
+    if (!page) {
+      const ctx = this.#tabContext.get(tabId) || {};
+      page = createPage({ tabId, documentId, url, ...ctx });
     }
-    return page;
+    page.state = PAGE_LOADING_STATE.COMMITTED;
+    page.url = url;
+    this.#indexDocument(page, documentId);
+    this.#pages.set(documentId, page);
+  };
+
+  #onNavigationCompleted = ({ frameId, documentId }) => {
+    if (frameId !== 0) return;
+    const page = this.#pages.get(documentId);
+    if (!page) return;
+    page.state = PAGE_LOADING_STATE.COMPLETE;
+    this.#pages.set(documentId, page);
+  };
+
+  getPageForRequest({ documentId, parentDocumentId, documentLifecycle }) {
+    // Prerendered documents were never activated by the user;
+    // attributing trackers to them would report pages the user never
+    // saw. `pending_deletion` (beforeunload/pagehide late beacons) and
+    // `cached` (bfcache pagehide) are legitimate.
+    if (documentLifecycle === 'prerender') return null;
+    if (documentId) {
+      const direct = this.#documentIndex.get(documentId);
+      if (direct) return direct;
+    }
+    // A sub-frame's webRequest can fire before its onCommitted is
+    // processed, and the iframe's own HTML fetch may have no
+    // documentId at all. Resolve via parentDocumentId and remember
+    // the sub-frame's documentId for the next event.
+    if (parentDocumentId) {
+      const owner = this.#documentIndex.get(parentDocumentId);
+      if (owner) {
+        if (documentId) {
+          this.#indexDocument(owner, documentId);
+          this.#pages.set(owner.documentId, owner);
+        }
+        return owner;
+      }
+    }
+    return null;
   }
 }

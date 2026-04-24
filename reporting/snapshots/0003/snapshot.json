@@ -5,18 +5,18 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 719940,
           "c": 1,
           "counter": 0,
           "frames": {},
           "hostname": "9aba68162365e081",
-          "path": "c276371b0ce2bacd",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1730735620824,
+          "t": 719940,
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
@@ -99,14 +99,14 @@
               "type_3": 298
             },
             "ingest.us.sentry.io": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
+              "c": 2,
+              "content_length": 4,
+              "has_post": 2,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
             },
             "js-agent.newrelic.com": {
               "c": 2,
@@ -204,18 +204,18 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 719940,
           "c": 1,
           "counter": 0,
           "frames": {},
           "hostname": "1d5920f4b44b27a8",
-          "path": "c276371b0ce2bacd",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1730735620824,
+          "t": 719940,
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
@@ -301,14 +301,14 @@
               "type_3": 298
             },
             "ingest.us.sentry.io": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
+              "c": 2,
+              "content_length": 4,
+              "has_post": 2,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
             },
             "js-agent.newrelic.com": {
               "c": 2,

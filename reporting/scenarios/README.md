@@ -24,18 +24,17 @@ present locally — the repository tracks them once pulled. See
 
 Scenarios actively used by `reporting/test/request/index.test.js`:
 
-| Release          | Scenario          | What it covers                                                     |
-| ---------------- | ----------------- | ------------------------------------------------------------------ |
-| `2026-04-23`     | `0001-empty-page` | Plain page load with no third-party resources — `requestStats` must stay empty. |
-| `2026-04-23`     | `0002-3rd-party`  | Page with a single third-party script; verifies detection + the `wtm.attrack.tp_events` report shape. |
-| `2026-04-23`     | `0004-ping`       | Navigator `sendBeacon`/ping endpoints (non-XHR background request). |
-| `2026-04-23`     | `0005-preload`    | `<link rel=preload>` triggers the tracker path through a different webRequest ordering. |
-| `2026-04-23`     | `0008-navigation` | Two successive navigations on the same tab; each page's trackers must be reported to the right page hostname. |
-
-The `2026-04-23` release also ships Chromium recordings for scenarios
-not yet wired into the test suite: `0003-prefetch`, `0006-preconnect`,
-`0007-prerender`, `0009-beacon` — useful targets for exercising the
-document-centric attribution paths.
+| Release          | Scenario           | What it covers                                                     |
+| ---------------- | ------------------ | ------------------------------------------------------------------ |
+| `2026-04-23`     | `0001-empty-page`  | Plain page load with no third-party resources — `requestStats` must stay empty. |
+| `2026-04-23`     | `0002-3rd-party`   | Page with a single third-party script; verifies detection + the `wtm.attrack.tp_events` report shape. |
+| `2026-04-23`     | `0003-prefetch`    | `<link rel=prefetch>` to a cross-subdomain URL; the prefetched third party must appear in `tp_events`. |
+| `2026-04-23`     | `0004-ping`        | Navigator `sendBeacon`/ping endpoints (non-XHR background request). |
+| `2026-04-23`     | `0005-preload`     | `<link rel=preload>` triggers the tracker path through a different webRequest ordering. |
+| `2026-04-23`     | `0006-preconnect`  | `<link rel=preconnect>` opens a socket but fires no webRequest — `requestStats` must stay empty. |
+| `2026-04-23`     | `0007-prerender`   | Prerendered document on a separate tab must not leak third parties into the visible page. |
+| `2026-04-23`     | `0008-navigation`  | Two successive navigations on the same tab; each page's trackers must be reported to the right page hostname. |
+| `2026-04-23`     | `0009-beacon`      | Click + `pagehide` beacons fired from the source document during a tab navigation must attribute to that document, not the successor. |
 
 Earlier releases (`2024-08-02`, `2024-08-02-1`, `2024-08-02-2`,
 `2024-09-27`, `2024-09-30`) remain available via the on-demand
@@ -54,11 +53,8 @@ Approximate content (by inspection of `tps` keys):
 | Snapshot | Site          | Notes                                                          |
 | -------- | ------------- | -------------------------------------------------------------- |
 | `0001`   | onet.pl       | Polish news portal, ~160 third-party domains.                 |
-| `0002`   | onet.pl       | Shorter session, ~94 third parties.                           |
 | `0003`   | soundcloud.com| Stream playback, CDN + Statsig + OneTrust.                    |
-| `0004`   | soundcloud.com| Smaller session.                                               |
 | `0005`   | nike.com      | E-commerce, bluecore + doubleclick + bing.                    |
-| `0006`   | nike.com      | Variant session.                                               |
 
 The snapshot test replays each events stream twice — the second time with
 URL rewrites (`onet.pl→wp.pl`, `soundcloud.com→google.com`,
