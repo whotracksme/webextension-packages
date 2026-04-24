@@ -24,7 +24,6 @@ import { BlockingResponse, WebRequestContext } from './utils/webrequest.js';
 import * as datetime from './utils/time.js';
 import QSWhitelist2 from './qs-whitelist2.js';
 import TempSet from './utils/temp-set.js';
-import { HashProb, shouldCheckToken } from './hash/index.js';
 import { COOKIE_MODE, VERSION } from './config.js';
 import random from '../random.js';
 
@@ -220,8 +219,6 @@ export default class RequestReporter {
     });
     await this.config.init();
 
-    this.hashProb = new HashProb();
-
     // load all caches:
     // Large dynamic caches are loaded via the persist module, which will
     // lazily propegate changes back to the browser's sqlite database.
@@ -265,23 +262,17 @@ export default class RequestReporter {
       this.qs_whitelist,
       this.config,
       this.db,
-      this.shouldCheckToken.bind(this),
       this.config.tokenTelemetry,
       this.trustedClock,
     );
     await this.tokenTelemetry.init();
 
-    this.tokenExaminer = new TokenExaminer(
-      this.qs_whitelist,
-      this.config,
-      this.shouldCheckToken.bind(this),
-    );
+    this.tokenExaminer = new TokenExaminer(this.qs_whitelist, this.config);
     await this.tokenExaminer.init();
 
     this.tokenChecker = new TokenChecker(
       this.qs_whitelist,
       {},
-      this.shouldCheckToken.bind(this),
       this.config,
       this.db,
     );
@@ -711,10 +702,6 @@ export default class RequestReporter {
     if (this.tokenChecker) {
       this.tokenChecker.tokenDomain.clear();
     }
-  }
-
-  shouldCheckToken(tok) {
-    return shouldCheckToken(this.hashProb, this.config.shortTokenLength, tok);
   }
 
   onPageStaged(page) {
