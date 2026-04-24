@@ -89,8 +89,9 @@ export default class RequestReporter {
     this.pageStore = new PageStore({
       notifyPageStageListeners: this.onPageStaged.bind(this),
     });
-    // Dedupe tp_events by root documentId so a bfcache-restored page
-    // (same documentId, fresh page record) isn't reported twice.
+    // Dedupe tp_events by root documentId across concurrent flushes
+    // and across SW restarts that stage and then re-see the same
+    // documentId (e.g. bfcache after a startup sweep).
     this.reportedDocuments = new ChromeStorageMap({
       storageKey: 'wtm-request-reporting:reported-documents',
       ttlInMs: REPORTED_DOCUMENTS_TTL,
