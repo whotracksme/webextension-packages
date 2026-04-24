@@ -8,140 +8,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
-          "hostname": "0a137b375cc3881a",
-          "path": "18fc53a52a033fe7",
-          "placeHolder": false,
-          "ra": 0,
-          "redirects": [],
-          "redirectsPlaceHolder": [],
-          "scheme": "https",
-          "t": -1732456092505,
-          "tps": {
-            "encrypted-tbn0.gstatic.com": {
-              "c": 8,
-              "content_length": 79366,
-              "has_qs": 8,
-              "resp_ob": 8,
-              "scheme_https": 8,
-              "status_200": 8,
-              "type_3": 8
-            },
-            "encrypted-tbn1.gstatic.com": {
-              "c": 3,
-              "content_length": 33554,
-              "has_qs": 3,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_3": 3
-            },
-            "encrypted-tbn2.gstatic.com": {
-              "c": 15,
-              "content_length": 129166,
-              "has_qs": 15,
-              "resp_ob": 15,
-              "scheme_https": 15,
-              "status_200": 15,
-              "type_3": 15
-            },
-            "encrypted-tbn3.gstatic.com": {
-              "c": 14,
-              "content_length": 149606,
-              "has_qs": 14,
-              "resp_ob": 14,
-              "scheme_https": 14,
-              "status_200": 14,
-              "type_3": 14
-            },
-            "fonts.gstatic.com": {
-              "c": 3,
-              "content_length": 24934,
-              "resp_ob": 2,
-              "scheme_https": 3,
-              "status_200": 2,
-              "type_14": 2,
-              "type_3": 1
-            },
-            "maps.gstatic.com": {
-              "c": 1,
-              "content_length": 508,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_3": 1
-            },
-            "ogads-pa.googleapis.com": {
-              "c": 1,
-              "content_length": 30,
-              "has_post": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 2,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_204": 1,
-              "type_10": 1,
-              "type_3": 1
-            },
-            "www.gstatic.com": {
-              "c": 15,
-              "content_length": 1636308,
-              "has_ps": 9,
-              "resp_ob": 15,
-              "scheme_https": 15,
-              "status_200": 15,
-              "type_2": 10,
-              "type_3": 4,
-              "type_4": 1
-            },
-            "www.nike.com": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_1": 1
-            },
-            "www.zalando.pl": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_1": 1
-            }
-          },
-          "triggeringTree": {},
-          "tsv": "",
-          "tsv_id": false
-        }
-      ],
-      "day": "2018-10-11",
-      "ts": "",
-      "ver": "0.105"
-    },
-    "ts": "",
-    "type": "wtm.request",
-    "userAgent": ""
-  },
-  {
-    "action": "wtm.attrack.tp_events",
-    "payload": {
-      "ctry": "en",
-      "data": [
-        {
-          "active": 0,
-          "c": 1,
-          "counter": 0,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -149,19 +15,20 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456106627,
+          "t": 0,
           "tps": {
             "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
               "type_11": 4
             },
             "c.go-mpulse.net": {
@@ -229,16 +96,6 @@
               "scheme_https": 1,
               "status_200": 1,
               "type_2": 1
-            },
-            "www.googleadservices.com": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 1,
-              "status_204": 2,
-              "type_10": 1
             }
           },
           "triggeringTree": {},
@@ -252,7 +109,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -263,7 +120,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -271,7 +127,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456117381,
+          "t": 0,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -327,17 +183,16 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 7,
-              "content_length": 252,
-              "has_post": 7,
-              "has_qs": 7,
-              "referer_leak_path": 7,
-              "referer_leak_site": 7,
-              "resp_ob": 7,
-              "scheme_https": 7,
-              "status_200": 4,
-              "status_204": 3,
-              "type_10": 4,
+              "c": 3,
+              "content_length": 179,
+              "has_post": 3,
+              "has_qs": 3,
+              "referer_leak_path": 3,
+              "referer_leak_site": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 1,
+              "status_204": 2,
               "type_11": 3
             },
             "bat.bing.com": {
@@ -693,7 +548,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -704,7 +559,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -712,7 +566,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456127382,
+          "t": 0,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -1142,7 +996,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1153,7 +1007,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "0a137b375cc3881a",
           "path": "18fc53a52a033fe7",
           "placeHolder": false,
@@ -1161,7 +1014,1138 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456092505,
+          "t": 0,
+          "tps": {
+            "encrypted-tbn0.gstatic.com": {
+              "c": 8,
+              "content_length": 79366,
+              "has_qs": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 8,
+              "type_3": 8
+            },
+            "encrypted-tbn1.gstatic.com": {
+              "c": 3,
+              "content_length": 33554,
+              "has_qs": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_3": 3
+            },
+            "encrypted-tbn2.gstatic.com": {
+              "c": 15,
+              "content_length": 129166,
+              "has_qs": 15,
+              "resp_ob": 15,
+              "scheme_https": 15,
+              "status_200": 15,
+              "type_3": 15
+            },
+            "encrypted-tbn3.gstatic.com": {
+              "c": 14,
+              "content_length": 149606,
+              "has_qs": 14,
+              "resp_ob": 14,
+              "scheme_https": 14,
+              "status_200": 14,
+              "type_3": 14
+            },
+            "fonts.gstatic.com": {
+              "c": 3,
+              "content_length": 24934,
+              "resp_ob": 2,
+              "scheme_https": 3,
+              "status_200": 2,
+              "type_14": 2,
+              "type_3": 1
+            },
+            "maps.gstatic.com": {
+              "c": 1,
+              "content_length": 508,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_3": 1
+            },
+            "ogads-pa.googleapis.com": {
+              "c": 1,
+              "content_length": 30,
+              "has_post": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "www.googleadservices.com": {
+              "c": 3,
+              "content_length": 3,
+              "has_post": 2,
+              "has_qs": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_204": 3,
+              "type_10": 2,
+              "type_3": 1
+            },
+            "www.gstatic.com": {
+              "c": 15,
+              "content_length": 1636308,
+              "has_ps": 9,
+              "resp_ob": 15,
+              "scheme_https": 15,
+              "status_200": 15,
+              "type_2": 10,
+              "type_3": 4,
+              "type_4": 1
+            },
+            "www.nike.com": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_1": 1
+            },
+            "www.zalando.pl": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_1": 1
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 0,
+          "hostname": "0f0bb2c75b3049b7",
+          "path": "35d408fa0755f33b",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
+          "tps": {
+            "bam.nr-data.net": {
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
+              "type_11": 4
+            },
+            "c.go-mpulse.net": {
+              "c": 1,
+              "content_length": 51,
+              "has_qs": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "js-agent.newrelic.com": {
+              "c": 1,
+              "content_length": 33155,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "manifest.prod.boltdns.net": {
+              "c": 2,
+              "content_length": 560,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.salesforce-scrt.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_204": 1,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.site.com": {
+              "c": 17,
+              "content_length": 603470,
+              "has_qs": 4,
+              "referer_leak_site": 1,
+              "resp_ob": 17,
+              "scheme_https": 17,
+              "status_200": 17,
+              "type_1": 11,
+              "type_11": 1,
+              "type_2": 3,
+              "type_4": 1,
+              "type_7": 1
+            },
+            "reporting.cdndex.io": {
+              "c": 1,
+              "has_post": 1,
+              "scheme_https": 1,
+              "type_11": 1
+            },
+            "s.go-mpulse.net": {
+              "c": 1,
+              "content_length": 31332,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 0,
+          "hostname": "0f0bb2c75b3049b7",
+          "path": "35d408fa0755f33b",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
+          "tps": {
+            "4171764.fls.doubleclick.net": {
+              "c": 3,
+              "content_length": 1238,
+              "has_ps": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 1,
+              "status_302": 1,
+              "status_404": 1,
+              "type_2": 1,
+              "type_7": 2
+            },
+            "ad.doubleclick.net": {
+              "c": 3,
+              "content_length": 16458,
+              "has_ps": 3,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 3,
+              "status_200": 2,
+              "type_2": 1,
+              "type_3": 2
+            },
+            "adservice.google.com": {
+              "c": 2,
+              "content_length": 84,
+              "has_ps": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_3": 2
+            },
+            "api.bluecore.com": {
+              "c": 1,
+              "content_length": 97380,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "api.contester.net": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "bam.nr-data.net": {
+              "c": 3,
+              "content_length": 179,
+              "has_post": 3,
+              "has_qs": 3,
+              "referer_leak_path": 3,
+              "referer_leak_site": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 1,
+              "status_204": 2,
+              "type_11": 3
+            },
+            "bat.bing.com": {
+              "c": 5,
+              "content_length": 14574,
+              "has_post": 1,
+              "has_qs": 3,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "status_200": 2,
+              "status_204": 3,
+              "type_10": 1,
+              "type_2": 2,
+              "type_3": 2
+            },
+            "bat.bing.net": {
+              "c": 1,
+              "content_length": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_204": 1,
+              "type_10": 1
+            },
+            "connect.facebook.net": {
+              "c": 2,
+              "content_length": 79778,
+              "has_qs": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_2": 2
+            },
+            "ct.pinterest.com": {
+              "c": 6,
+              "content_length": 4817,
+              "has_qs": 4,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 6,
+              "scheme_https": 6,
+              "status_200": 6,
+              "type_11": 4,
+              "type_2": 1,
+              "type_7": 1
+            },
+            "googleads.g.doubleclick.net": {
+              "c": 1,
+              "content_length": 2627,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "insight.adsrvr.org": {
+              "c": 1,
+              "content_length": 1,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_7": 1
+            },
+            "insights-collector.newrelic.com": {
+              "c": 1,
+              "content_length": 63,
+              "has_post": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "js-agent.newrelic.com": {
+              "c": 1,
+              "content_length": 33155,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "js.adsrvr.org": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "lantern.roeyecdn.com": {
+              "c": 1,
+              "content_length": 1803,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "manifest.prod.boltdns.net": {
+              "c": 2,
+              "content_length": 560,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.salesforce-scrt.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_204": 1,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.site.com": {
+              "c": 3,
+              "content_length": 2441,
+              "has_qs": 2,
+              "referer_leak_site": 1,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_11": 1,
+              "type_2": 1,
+              "type_7": 1
+            },
+            "onsitestats.bluecore.com": {
+              "c": 1,
+              "content_length": 23,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "pagead2.googlesyndication.com": {
+              "c": 3,
+              "content_length": 73408,
+              "has_qs": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_11": 1,
+              "type_2": 2
+            },
+            "region1.analytics.google.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_204": 2,
+              "type_11": 1,
+              "type_3": 1
+            },
+            "reporting.cdndex.io": {
+              "c": 1,
+              "has_post": 1,
+              "scheme_https": 1,
+              "type_11": 1
+            },
+            "s.pinimg.com": {
+              "c": 2,
+              "content_length": 25293,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_2": 2
+            },
+            "sc-static.net": {
+              "c": 1,
+              "content_length": 23798,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "sdk-api-v1.singular.net": {
+              "c": 2,
+              "content_length": 23,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
+            },
+            "siteassets.bluecore.com": {
+              "c": 2,
+              "content_length": 4335,
+              "has_qs": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 1,
+              "type_2": 1
+            },
+            "stats.g.doubleclick.net": {
+              "c": 2,
+              "content_length": 2,
+              "has_post": 1,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_204": 2,
+              "type_10": 1,
+              "type_3": 1
+            },
+            "td.doubleclick.net": {
+              "c": 3,
+              "content_length": 48,
+              "has_ps": 1,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_7": 3
+            },
+            "tr.snapchat.com": {
+              "c": 4,
+              "content_length": 192,
+              "has_post": 1,
+              "has_qs": 3,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 4,
+              "type_10": 1,
+              "type_11": 1,
+              "type_3": 1,
+              "type_7": 1
+            },
+            "web-sdk-cdn.singular.net": {
+              "c": 1,
+              "content_length": 46796,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "www.dwin1.com": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "www.facebook.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_3": 2
+            },
+            "www.google-analytics.com": {
+              "c": 5,
+              "content_length": 21102,
+              "has_post": 1,
+              "has_qs": 4,
+              "referer_leak_path": 4,
+              "referer_leak_site": 4,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "status_200": 5,
+              "type_11": 1,
+              "type_2": 1,
+              "type_3": 3
+            },
+            "www.google.com": {
+              "c": 2,
+              "content_length": 43,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_302": 1,
+              "type_10": 1,
+              "type_3": 1
+            },
+            "www.google.pl": {
+              "c": 3,
+              "content_length": 126,
+              "has_qs": 3,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_3": 3
+            },
+            "www.googleadservices.com": {
+              "c": 2,
+              "content_length": 1,
+              "has_ps": 1,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 2,
+              "status_200": 1,
+              "type_10": 1,
+              "type_2": 1
+            },
+            "www.googletagmanager.com": {
+              "c": 15,
+              "content_length": 765833,
+              "has_qs": 14,
+              "referer_leak_path": 1,
+              "referer_leak_site": 2,
+              "resp_ob": 15,
+              "scheme_https": 15,
+              "status_200": 14,
+              "status_204": 1,
+              "type_2": 8,
+              "type_3": 6,
+              "type_7": 1
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 0,
+          "hostname": "0f0bb2c75b3049b7",
+          "path": "35d408fa0755f33b",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
+          "tps": {
+            "4171764.fls.doubleclick.net": {
+              "c": 3,
+              "content_length": 1064,
+              "has_ps": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 1,
+              "status_302": 1,
+              "status_404": 1,
+              "type_2": 1,
+              "type_7": 2
+            },
+            "ad.doubleclick.net": {
+              "c": 5,
+              "content_length": 16461,
+              "has_ps": 5,
+              "has_qs": 2,
+              "referer_leak_path": 4,
+              "referer_leak_site": 4,
+              "resp_ob": 3,
+              "scheme_https": 5,
+              "status_200": 2,
+              "status_302": 1,
+              "type_2": 1,
+              "type_3": 4
+            },
+            "adservice.google.com": {
+              "c": 2,
+              "content_length": 84,
+              "has_ps": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_3": 2
+            },
+            "api.bluecore.com": {
+              "c": 1,
+              "content_length": 97380,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "api.contester.net": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "bam.nr-data.net": {
+              "c": 4,
+              "content_length": 203,
+              "has_post": 4,
+              "has_qs": 4,
+              "referer_leak_path": 4,
+              "referer_leak_site": 4,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 2,
+              "status_204": 2,
+              "type_11": 4
+            },
+            "bat.bing.com": {
+              "c": 5,
+              "content_length": 14574,
+              "has_post": 1,
+              "has_qs": 3,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "status_200": 2,
+              "status_204": 3,
+              "type_10": 1,
+              "type_2": 2,
+              "type_3": 2
+            },
+            "bat.bing.net": {
+              "c": 1,
+              "content_length": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_204": 1,
+              "type_10": 1
+            },
+            "connect.facebook.net": {
+              "c": 2,
+              "content_length": 79778,
+              "has_qs": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_2": 2
+            },
+            "ct.pinterest.com": {
+              "c": 6,
+              "content_length": 4817,
+              "has_qs": 4,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 6,
+              "scheme_https": 6,
+              "status_200": 6,
+              "type_11": 4,
+              "type_2": 1,
+              "type_7": 1
+            },
+            "googleads.g.doubleclick.net": {
+              "c": 1,
+              "content_length": 2476,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "insight.adsrvr.org": {
+              "c": 1,
+              "content_length": 1,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_7": 1
+            },
+            "insights-collector.newrelic.com": {
+              "c": 1,
+              "content_length": 63,
+              "has_post": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "js-agent.newrelic.com": {
+              "c": 1,
+              "content_length": 33155,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "js.adsrvr.org": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "lantern.roeye.com": {
+              "c": 1,
+              "content_length": 1,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_3": 1
+            },
+            "lantern.roeyecdn.com": {
+              "c": 1,
+              "content_length": 1803,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "manifest.prod.boltdns.net": {
+              "c": 2,
+              "content_length": 560,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.salesforce-scrt.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_qs": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_204": 1,
+              "type_11": 2
+            },
+            "nikeconsumerservices.my.site.com": {
+              "c": 17,
+              "content_length": 603470,
+              "has_qs": 4,
+              "referer_leak_site": 1,
+              "resp_ob": 17,
+              "scheme_https": 17,
+              "status_200": 17,
+              "type_1": 11,
+              "type_11": 1,
+              "type_2": 3,
+              "type_4": 1,
+              "type_7": 1
+            },
+            "onsitestats.bluecore.com": {
+              "c": 1,
+              "content_length": 23,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "pagead2.googlesyndication.com": {
+              "c": 3,
+              "content_length": 73408,
+              "has_qs": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_11": 1,
+              "type_2": 2
+            },
+            "reporting.cdndex.io": {
+              "c": 1,
+              "content_length": 8,
+              "has_post": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_11": 1
+            },
+            "s.go-mpulse.net": {
+              "c": 1,
+              "content_length": 31332,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "s.pinimg.com": {
+              "c": 2,
+              "content_length": 25293,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_2": 2
+            },
+            "s0.2mdn.net": {
+              "c": 1,
+              "content_length": 43,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_3": 1
+            },
+            "sc-static.net": {
+              "c": 1,
+              "content_length": 23798,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "sdk-api-v1.singular.net": {
+              "c": 2,
+              "content_length": 23,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 2
+            },
+            "siteassets.bluecore.com": {
+              "c": 2,
+              "content_length": 4335,
+              "has_qs": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_11": 1,
+              "type_2": 1
+            },
+            "td.doubleclick.net": {
+              "c": 2,
+              "content_length": 32,
+              "has_ps": 1,
+              "has_qs": 1,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_7": 2
+            },
+            "tr.snapchat.com": {
+              "c": 4,
+              "content_length": 285,
+              "has_post": 1,
+              "has_qs": 3,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 4,
+              "type_10": 1,
+              "type_2": 1,
+              "type_3": 1,
+              "type_7": 1
+            },
+            "web-sdk-cdn.singular.net": {
+              "c": 1,
+              "content_length": 46796,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "www.dwin1.com": {
+              "c": 1,
+              "content_length": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "status_200": 1,
+              "type_2": 1
+            },
+            "www.facebook.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_3": 2
+            },
+            "www.google-analytics.com": {
+              "c": 3,
+              "content_length": 21032,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_200": 3,
+              "type_11": 1,
+              "type_2": 1,
+              "type_3": 1
+            },
+            "www.google.com": {
+              "c": 2,
+              "content_length": 43,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 1,
+              "status_302": 1,
+              "type_10": 1,
+              "type_3": 1
+            },
+            "www.google.pl": {
+              "c": 2,
+              "content_length": 84,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_200": 2,
+              "type_3": 2
+            },
+            "www.googleadservices.com": {
+              "c": 2,
+              "content_length": 1,
+              "has_ps": 1,
+              "has_qs": 1,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
+              "resp_ob": 1,
+              "scheme_https": 2,
+              "status_200": 1,
+              "type_10": 1,
+              "type_2": 1
+            },
+            "www.googletagmanager.com": {
+              "c": 9,
+              "content_length": 765827,
+              "has_qs": 8,
+              "referer_leak_site": 1,
+              "resp_ob": 9,
+              "scheme_https": 9,
+              "status_200": 9,
+              "type_2": 8,
+              "type_7": 1
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 0,
+          "hostname": "0a137b375cc3881a",
+          "path": "18fc53a52a033fe7",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
           "tps": {
             "encrypted-tbn0.gstatic.com": {
               "c": 8,
@@ -1234,14 +2218,14 @@
               "type_1": 1
             },
             "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 2,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_204": 1,
-              "type_10": 1,
+              "c": 3,
+              "content_length": 3,
+              "has_post": 2,
+              "has_qs": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_204": 3,
+              "type_10": 2,
               "type_3": 1
             },
             "www.gstatic.com": {
@@ -1275,1019 +2259,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
-  },
-  {
-    "action": "wtm.attrack.tp_events",
-    "payload": {
-      "ctry": "en",
-      "data": [
-        {
-          "active": 0,
-          "c": 1,
-          "counter": 0,
-          "frames": {},
-          "hostname": "0f0bb2c75b3049b7",
-          "path": "35d408fa0755f33b",
-          "placeHolder": false,
-          "ra": 0,
-          "redirects": [],
-          "redirectsPlaceHolder": [],
-          "scheme": "https",
-          "t": -1732456106627,
-          "tps": {
-            "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
-              "type_11": 4
-            },
-            "c.go-mpulse.net": {
-              "c": 1,
-              "content_length": 51,
-              "has_qs": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "js-agent.newrelic.com": {
-              "c": 1,
-              "content_length": 33155,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "manifest.prod.boltdns.net": {
-              "c": 2,
-              "content_length": 560,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.salesforce-scrt.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 1,
-              "status_204": 1,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.site.com": {
-              "c": 17,
-              "content_length": 603470,
-              "has_qs": 4,
-              "referer_leak_site": 1,
-              "resp_ob": 17,
-              "scheme_https": 17,
-              "status_200": 17,
-              "type_1": 11,
-              "type_11": 1,
-              "type_2": 3,
-              "type_4": 1,
-              "type_7": 1
-            },
-            "reporting.cdndex.io": {
-              "c": 1,
-              "has_post": 1,
-              "scheme_https": 1,
-              "type_11": 1
-            },
-            "s.go-mpulse.net": {
-              "c": 1,
-              "content_length": 31332,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "www.googleadservices.com": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 1,
-              "status_204": 2,
-              "type_10": 1
-            }
-          },
-          "triggeringTree": {},
-          "tsv": "",
-          "tsv_id": false
-        }
-      ],
-      "day": "2018-10-11",
-      "ts": "",
-      "ver": "0.105"
-    },
-    "ts": "",
-    "type": "wtm.request",
-    "userAgent": ""
-  },
-  {
-    "action": "wtm.attrack.tp_events",
-    "payload": {
-      "ctry": "en",
-      "data": [
-        {
-          "active": 0,
-          "c": 1,
-          "counter": 0,
-          "frames": {},
-          "hostname": "0f0bb2c75b3049b7",
-          "path": "35d408fa0755f33b",
-          "placeHolder": false,
-          "ra": 0,
-          "redirects": [],
-          "redirectsPlaceHolder": [],
-          "scheme": "https",
-          "t": -1732456117381,
-          "tps": {
-            "4171764.fls.doubleclick.net": {
-              "c": 3,
-              "content_length": 1238,
-              "has_ps": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 1,
-              "status_302": 1,
-              "status_404": 1,
-              "type_2": 1,
-              "type_7": 2
-            },
-            "ad.doubleclick.net": {
-              "c": 3,
-              "content_length": 16458,
-              "has_ps": 3,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 3,
-              "status_200": 2,
-              "type_2": 1,
-              "type_3": 2
-            },
-            "adservice.google.com": {
-              "c": 2,
-              "content_length": 84,
-              "has_ps": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_3": 2
-            },
-            "api.bluecore.com": {
-              "c": 1,
-              "content_length": 97380,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "api.contester.net": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "bam.nr-data.net": {
-              "c": 7,
-              "content_length": 252,
-              "has_post": 7,
-              "has_qs": 7,
-              "referer_leak_path": 7,
-              "referer_leak_site": 7,
-              "resp_ob": 7,
-              "scheme_https": 7,
-              "status_200": 4,
-              "status_204": 3,
-              "type_10": 4,
-              "type_11": 3
-            },
-            "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
-              "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
-              "type_2": 2,
-              "type_3": 2
-            },
-            "bat.bing.net": {
-              "c": 1,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_204": 1,
-              "type_10": 1
-            },
-            "connect.facebook.net": {
-              "c": 2,
-              "content_length": 79778,
-              "has_qs": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_2": 2
-            },
-            "ct.pinterest.com": {
-              "c": 6,
-              "content_length": 4817,
-              "has_qs": 4,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 6,
-              "scheme_https": 6,
-              "status_200": 6,
-              "type_11": 4,
-              "type_2": 1,
-              "type_7": 1
-            },
-            "googleads.g.doubleclick.net": {
-              "c": 1,
-              "content_length": 2627,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "insight.adsrvr.org": {
-              "c": 1,
-              "content_length": 1,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_7": 1
-            },
-            "insights-collector.newrelic.com": {
-              "c": 1,
-              "content_length": 63,
-              "has_post": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "js-agent.newrelic.com": {
-              "c": 1,
-              "content_length": 33155,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "js.adsrvr.org": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "lantern.roeyecdn.com": {
-              "c": 1,
-              "content_length": 1803,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "manifest.prod.boltdns.net": {
-              "c": 2,
-              "content_length": 560,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.salesforce-scrt.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 1,
-              "status_204": 1,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.site.com": {
-              "c": 3,
-              "content_length": 2441,
-              "has_qs": 2,
-              "referer_leak_site": 1,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_11": 1,
-              "type_2": 1,
-              "type_7": 1
-            },
-            "onsitestats.bluecore.com": {
-              "c": 1,
-              "content_length": 23,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "pagead2.googlesyndication.com": {
-              "c": 3,
-              "content_length": 73408,
-              "has_qs": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_11": 1,
-              "type_2": 2
-            },
-            "region1.analytics.google.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_204": 2,
-              "type_11": 1,
-              "type_3": 1
-            },
-            "reporting.cdndex.io": {
-              "c": 1,
-              "has_post": 1,
-              "scheme_https": 1,
-              "type_11": 1
-            },
-            "s.pinimg.com": {
-              "c": 2,
-              "content_length": 25293,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_2": 2
-            },
-            "sc-static.net": {
-              "c": 1,
-              "content_length": 23798,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "sdk-api-v1.singular.net": {
-              "c": 2,
-              "content_length": 23,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 2
-            },
-            "siteassets.bluecore.com": {
-              "c": 2,
-              "content_length": 4335,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 1,
-              "type_2": 1
-            },
-            "stats.g.doubleclick.net": {
-              "c": 2,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_204": 2,
-              "type_10": 1,
-              "type_3": 1
-            },
-            "td.doubleclick.net": {
-              "c": 3,
-              "content_length": 48,
-              "has_ps": 1,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_7": 3
-            },
-            "tr.snapchat.com": {
-              "c": 4,
-              "content_length": 192,
-              "has_post": 1,
-              "has_qs": 3,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 4,
-              "type_10": 1,
-              "type_11": 1,
-              "type_3": 1,
-              "type_7": 1
-            },
-            "web-sdk-cdn.singular.net": {
-              "c": 1,
-              "content_length": 46796,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "www.dwin1.com": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "www.facebook.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_3": 2
-            },
-            "www.google-analytics.com": {
-              "c": 5,
-              "content_length": 21102,
-              "has_post": 1,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 5,
-              "scheme_https": 5,
-              "status_200": 5,
-              "type_11": 1,
-              "type_2": 1,
-              "type_3": 3
-            },
-            "www.google.com": {
-              "c": 2,
-              "content_length": 43,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 1,
-              "status_302": 1,
-              "type_10": 1,
-              "type_3": 1
-            },
-            "www.google.pl": {
-              "c": 3,
-              "content_length": 126,
-              "has_qs": 3,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_3": 3
-            },
-            "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_ps": 1,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_200": 1,
-              "type_10": 1,
-              "type_2": 1
-            },
-            "www.googletagmanager.com": {
-              "c": 15,
-              "content_length": 765833,
-              "has_qs": 14,
-              "referer_leak_path": 1,
-              "referer_leak_site": 2,
-              "resp_ob": 15,
-              "scheme_https": 15,
-              "status_200": 14,
-              "status_204": 1,
-              "type_2": 8,
-              "type_3": 6,
-              "type_7": 1
-            }
-          },
-          "triggeringTree": {},
-          "tsv": "",
-          "tsv_id": false
-        }
-      ],
-      "day": "2018-10-11",
-      "ts": "",
-      "ver": "0.105"
-    },
-    "ts": "",
-    "type": "wtm.request",
-    "userAgent": ""
-  },
-  {
-    "action": "wtm.attrack.tp_events",
-    "payload": {
-      "ctry": "en",
-      "data": [
-        {
-          "active": 0,
-          "c": 1,
-          "counter": 0,
-          "frames": {},
-          "hostname": "0f0bb2c75b3049b7",
-          "path": "35d408fa0755f33b",
-          "placeHolder": false,
-          "ra": 0,
-          "redirects": [],
-          "redirectsPlaceHolder": [],
-          "scheme": "https",
-          "t": -1732456127382,
-          "tps": {
-            "4171764.fls.doubleclick.net": {
-              "c": 3,
-              "content_length": 1064,
-              "has_ps": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 1,
-              "status_302": 1,
-              "status_404": 1,
-              "type_2": 1,
-              "type_7": 2
-            },
-            "ad.doubleclick.net": {
-              "c": 5,
-              "content_length": 16461,
-              "has_ps": 5,
-              "has_qs": 2,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 3,
-              "scheme_https": 5,
-              "status_200": 2,
-              "status_302": 1,
-              "type_2": 1,
-              "type_3": 4
-            },
-            "adservice.google.com": {
-              "c": 2,
-              "content_length": 84,
-              "has_ps": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_3": 2
-            },
-            "api.bluecore.com": {
-              "c": 1,
-              "content_length": 97380,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "api.contester.net": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
-              "type_11": 4
-            },
-            "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
-              "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
-              "type_2": 2,
-              "type_3": 2
-            },
-            "bat.bing.net": {
-              "c": 1,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_204": 1,
-              "type_10": 1
-            },
-            "connect.facebook.net": {
-              "c": 2,
-              "content_length": 79778,
-              "has_qs": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_2": 2
-            },
-            "ct.pinterest.com": {
-              "c": 6,
-              "content_length": 4817,
-              "has_qs": 4,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 6,
-              "scheme_https": 6,
-              "status_200": 6,
-              "type_11": 4,
-              "type_2": 1,
-              "type_7": 1
-            },
-            "googleads.g.doubleclick.net": {
-              "c": 1,
-              "content_length": 2476,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "insight.adsrvr.org": {
-              "c": 1,
-              "content_length": 1,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_7": 1
-            },
-            "insights-collector.newrelic.com": {
-              "c": 1,
-              "content_length": 63,
-              "has_post": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "js-agent.newrelic.com": {
-              "c": 1,
-              "content_length": 33155,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "js.adsrvr.org": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "lantern.roeye.com": {
-              "c": 1,
-              "content_length": 1,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_3": 1
-            },
-            "lantern.roeyecdn.com": {
-              "c": 1,
-              "content_length": 1803,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "manifest.prod.boltdns.net": {
-              "c": 2,
-              "content_length": 560,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.salesforce-scrt.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_qs": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 1,
-              "status_204": 1,
-              "type_11": 2
-            },
-            "nikeconsumerservices.my.site.com": {
-              "c": 17,
-              "content_length": 603470,
-              "has_qs": 4,
-              "referer_leak_site": 1,
-              "resp_ob": 17,
-              "scheme_https": 17,
-              "status_200": 17,
-              "type_1": 11,
-              "type_11": 1,
-              "type_2": 3,
-              "type_4": 1,
-              "type_7": 1
-            },
-            "onsitestats.bluecore.com": {
-              "c": 1,
-              "content_length": 23,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "pagead2.googlesyndication.com": {
-              "c": 3,
-              "content_length": 73408,
-              "has_qs": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_11": 1,
-              "type_2": 2
-            },
-            "reporting.cdndex.io": {
-              "c": 1,
-              "content_length": 8,
-              "has_post": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_11": 1
-            },
-            "s.go-mpulse.net": {
-              "c": 1,
-              "content_length": 31332,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "s.pinimg.com": {
-              "c": 2,
-              "content_length": 25293,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_2": 2
-            },
-            "s0.2mdn.net": {
-              "c": 1,
-              "content_length": 43,
-              "has_qs": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_3": 1
-            },
-            "sc-static.net": {
-              "c": 1,
-              "content_length": 23798,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "sdk-api-v1.singular.net": {
-              "c": 2,
-              "content_length": 23,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 2
-            },
-            "siteassets.bluecore.com": {
-              "c": 2,
-              "content_length": 4335,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_11": 1,
-              "type_2": 1
-            },
-            "td.doubleclick.net": {
-              "c": 2,
-              "content_length": 32,
-              "has_ps": 1,
-              "has_qs": 1,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_7": 2
-            },
-            "tr.snapchat.com": {
-              "c": 4,
-              "content_length": 285,
-              "has_post": 1,
-              "has_qs": 3,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 4,
-              "type_10": 1,
-              "type_2": 1,
-              "type_3": 1,
-              "type_7": 1
-            },
-            "web-sdk-cdn.singular.net": {
-              "c": 1,
-              "content_length": 46796,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "www.dwin1.com": {
-              "c": 1,
-              "content_length": 1,
-              "resp_ob": 1,
-              "scheme_https": 1,
-              "status_200": 1,
-              "type_2": 1
-            },
-            "www.facebook.com": {
-              "c": 2,
-              "content_length": 2,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_3": 2
-            },
-            "www.google-analytics.com": {
-              "c": 3,
-              "content_length": 21032,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 3,
-              "scheme_https": 3,
-              "status_200": 3,
-              "type_11": 1,
-              "type_2": 1,
-              "type_3": 1
-            },
-            "www.google.com": {
-              "c": 2,
-              "content_length": 43,
-              "has_post": 1,
-              "has_qs": 2,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 1,
-              "status_302": 1,
-              "type_10": 1,
-              "type_3": 1
-            },
-            "www.google.pl": {
-              "c": 2,
-              "content_length": 84,
-              "has_qs": 2,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 2,
-              "scheme_https": 2,
-              "status_200": 2,
-              "type_3": 2
-            },
-            "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_ps": 1,
-              "has_qs": 1,
-              "referer_leak_path": 1,
-              "referer_leak_site": 1,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_200": 1,
-              "type_10": 1,
-              "type_2": 1
-            },
-            "www.googletagmanager.com": {
-              "c": 9,
-              "content_length": 765827,
-              "has_qs": 8,
-              "referer_leak_site": 1,
-              "resp_ob": 9,
-              "scheme_https": 9,
-              "status_200": 9,
-              "type_2": 8,
-              "type_7": 1
-            }
-          },
-          "triggeringTree": {},
-          "tsv": "",
-          "tsv_id": false
-        }
-      ],
-      "day": "2018-10-11",
-      "ts": "",
-      "ver": "0.105"
-    },
-    "ts": "",
-    "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -2308,7 +2280,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -4590,7 +4562,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6876,7 +6848,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6902,7 +6874,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -6928,6 +6900,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   }
 ]

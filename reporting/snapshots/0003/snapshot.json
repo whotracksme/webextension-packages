@@ -8,15 +8,14 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "9aba68162365e081",
-          "path": "c276371b0ce2bacd",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1730735620824,
+          "t": 0,
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
@@ -196,7 +195,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -207,15 +206,14 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "1d5920f4b44b27a8",
-          "path": "c276371b0ce2bacd",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1730735620824,
+          "t": 0,
           "tps": {
             "a-v2.sndcdn.com": {
               "c": 35,
@@ -398,7 +396,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -419,7 +417,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -609,7 +607,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -799,6 +797,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   }
 ]

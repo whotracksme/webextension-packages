@@ -8,15 +8,14 @@
           "active": 0,
           "c": 1,
           "counter": 89,
-          "frames": {},
           "hostname": "ed84bc069c79dc56",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760356317,
+          "t": 0,
           "tps": {
             "a.teads.tv": {
               "c": 4,
@@ -1108,7 +1107,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1119,15 +1118,14 @@
           "active": 0,
           "c": 1,
           "counter": 95,
-          "frames": {},
           "hostname": "cf28373a52818d8a",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760356317,
+          "t": 0,
           "tps": {
             "a.teads.tv": {
               "c": 4,
@@ -2225,7 +2223,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -2246,7 +2244,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2272,7 +2270,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2298,7 +2296,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2324,7 +2322,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2350,7 +2348,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2376,7 +2374,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2402,7 +2400,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2428,7 +2426,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2454,7 +2452,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2480,7 +2478,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -2506,6 +2504,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   }
 ]

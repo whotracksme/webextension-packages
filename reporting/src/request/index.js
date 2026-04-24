@@ -9,8 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import Bowser from 'bowser';
-
 /* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
 import Config from './config.js';
@@ -29,7 +27,7 @@ import { COOKIE_MODE, VERSION } from './config.js';
 import random from '../random.js';
 
 import CookieContext from './steps/cookie-context.js';
-import PageLogger from './steps/page-logger.js';
+import RequestStats from './steps/request-stats.js';
 import TokenChecker from './steps/token-checker/index.js';
 import TokenExaminer from './steps/token-examiner.js';
 import TokenTelemetry from './steps/token-telemetry/index.js';
@@ -38,7 +36,8 @@ import {
   checkSameGeneralDomain,
   checkValidContext,
 } from './steps/check-context.js';
-import PageStore from './page-store.js';
+import DocumentStore from './document-store.js';
+import ReportedDocuments from './reported-documents.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
@@ -49,9 +48,15 @@ function hasBlockingWebRequest() {
     .permissions.includes('webRequestBlocking');
 }
 
-export default class RequestReporter {
-  #userAgent;
+function detectChromiumFamily() {
+  const ua = globalThis.navigator?.userAgent || '';
+  if (ua.includes('Edg/')) return 'edge';
+  if (ua.includes('OPR/') || ua.includes('Opera')) return 'opera';
+  if (ua.includes('YaBrowser')) return 'yandex';
+  return 'chrome';
+}
 
+export default class RequestReporter {
   constructor(
     settings,
     {
@@ -84,8 +89,15 @@ export default class RequestReporter {
     this.debug = false;
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
-    this.pageStore = new PageStore({
-      notifyPageStageListeners: this.onPageStaged.bind(this),
+    this.reportedDocuments = new ReportedDocuments();
+    // DocumentStore holds a document for HOLD_MS after it leaves its
+    // tab so late beacons still attribute correctly and bfcache
+    // restores can cancel the report. Then it hands the finalized
+    // document here as a fire-and-forget signal; all throttling /
+    // retry / persistence of the actual send belongs to whatever
+    // scheduler the host wires onMessageReady into.
+    this.documentStore = new DocumentStore({
+      onDocumentReleased: (doc) => this.#reportPage(doc),
     });
 
     this.ready = false;
@@ -170,7 +182,7 @@ export default class RequestReporter {
 
   telemetry(message) {
     message.type = 'wtm.request';
-    message.userAgent = this.userAgent;
+    message.userAgent = detectChromiumFamily();
     message.ts = this.trustedClock.getTimeAsYYYYMMDD();
     message['anti-duplicates'] = Math.floor(random() * 10000000);
 
@@ -185,30 +197,6 @@ export default class RequestReporter {
     this.onMessageReady(message);
   }
 
-  get userAgent() {
-    if (this.#userAgent === undefined) {
-      try {
-        const userAgent = globalThis.navigator?.userAgent;
-        if (userAgent) {
-          const { browser } = Bowser.parse(userAgent);
-          this.#userAgent = {
-            'Chrome': 'chrome',
-            'Chromium': 'chrome',
-            'Firefox': 'firefox',
-            'Microsoft Edge': 'edge',
-            'Opera': 'opera',
-            'Safari': 'safari',
-            'Yandex Browser': 'yandex',
-          }[browser?.name];
-        }
-      } catch (e) {
-        logger.warn('Failed to determine userAgent', e);
-      }
-      this.#userAgent ||= '';
-    }
-    return this.#userAgent;
-  }
-
   /** Global module initialisation.
    */
   async init() {
@@ -219,6 +207,8 @@ export default class RequestReporter {
       trustedClock: this.trustedClock,
     });
     await this.config.init();
+
+    await this.reportedDocuments.init();
 
     this.hashProb = new HashProb();
 
@@ -251,9 +241,9 @@ export default class RequestReporter {
       DAY_CHANGE_INTERVAL,
     );
 
-    await this.pageStore.init();
+    await this.documentStore.init();
 
-    this.pageLogger = new PageLogger(this.config.placeHolder);
+    this.requestStats = new RequestStats(this.config.placeHolder);
     this.cookieContext = new CookieContext(this.config, this.qs_whitelist);
     await this.cookieContext.init();
 
@@ -297,6 +287,7 @@ export default class RequestReporter {
     this.cookieContext?.unload();
     this.tokenExaminer?.unload();
     this.tokenChecker?.unload();
+    this.documentStore?.unload();
     this.db?.unload();
 
     chrome.webRequest.onBeforeRequest.removeListener(this.onBeforeRequest);
@@ -316,30 +307,33 @@ export default class RequestReporter {
       logger.warn('onBeforeRequest skipped (not ready)');
       return;
     }
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(details, this.documentStore);
+    logger.debug(
+      '[attrib]',
+      details.type,
+      details.url,
+      'doc=',
+      details.documentId,
+      '->',
+      state?.page?.url ?? '<unattributed>',
+    );
     const response = new BlockingResponse(details, 'onBeforeRequest');
     // checkState
     if (checkValidContext(state) === false) {
       return response.toWebRequestResponse();
     }
-    // oAuthDetector.checkMainFrames
-    if (this.oAuthDetector.checkMainFrames(state) === false) {
+    this.oAuthDetector.checkMainFrames(state);
+    if (state.isMainFrame) {
       return response.toWebRequestResponse();
     }
-    // checkIsMainDocument
-    if (!state.isMainFrame === false) {
-      return response.toWebRequestResponse();
-    }
-    // checkSameGeneralDomain
     if (checkSameGeneralDomain(state) === false) {
       return response.toWebRequestResponse();
     }
-    // cancelRecentlyModified
     if (this.cancelRecentlyModified(state, response) === false) {
       return response.toWebRequestResponse();
     }
 
-    this.pageLogger.onBeforeRequest(state);
+    this.requestStats.recordRequestShape(state);
 
     // logIsTracker
     if (
@@ -411,29 +405,25 @@ export default class RequestReporter {
       logger.warn('onBeforeSendHeaders skipped (not ready)');
       return;
     }
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(details, this.documentStore);
     const response = new BlockingResponse(details, 'onBeforeSendHeaders');
     // checkState
     if (checkValidContext(state) === false) {
       return response.toWebRequestResponse();
     }
-    // cookieContext.assignCookieTrust
     this.cookieContext.assignCookieTrust(state);
 
-    // checkIsMainDocument
-    if (!state.isMainFrame === false) {
+    if (state.isMainFrame) {
       return response.toWebRequestResponse();
     }
-    // checkSameGeneralDomain
     if (checkSameGeneralDomain(state) === false) {
       return response.toWebRequestResponse();
     }
 
-    this.pageLogger.onBeforeSendHeaders(state);
+    this.requestStats.recordRefererLeak(state);
+    this.requestStats.extractRequestCookie(state);
 
-    // checkHasCookie
-    // hasCookie flag is set by pageLogger.onBeforeSendHeaders
-    if ((state.hasCookie === true) === false) {
+    if (!state.hasCookie) {
       return response.toWebRequestResponse();
     }
     // checkIsCookieWhitelisted
@@ -498,26 +488,23 @@ export default class RequestReporter {
       logger.warn('onHeadersReceived skipped (not ready)');
       return;
     }
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(details, this.documentStore);
     const response = new BlockingResponse(details, 'onHeadersReceived');
     // checkState
     if (checkValidContext(state) === false) {
       return response.toWebRequestResponse();
     }
-    // checkIsMainDocument
-    if (!state.isMainFrame === false) {
+    if (state.isMainFrame) {
       return response.toWebRequestResponse();
     }
-    // checkSameGeneralDomain
     if (checkSameGeneralDomain(state) === false) {
       return response.toWebRequestResponse();
     }
 
-    // pageLogger.onHeadersReceived
-    this.pageLogger.onHeadersReceived(state);
+    this.requestStats.recordResponseShape(state);
+    this.requestStats.extractResponseCookie(state);
 
-    // checkSetCookie
-    if ((state.hasSetCookie === true) === false) {
+    if (!state.hasSetCookie) {
       return response.toWebRequestResponse();
     }
     // shouldBlockCookie
@@ -575,7 +562,7 @@ export default class RequestReporter {
       return;
     }
     this.whitelistedRequestCache.delete(details.requestId);
-    const state = WebRequestContext.fromDetails(details, this.pageStore);
+    const state = WebRequestContext.fromDetails(details, this.documentStore);
     // checkState
     if (checkValidContext(state) === false) {
       return false;
@@ -621,14 +608,17 @@ export default class RequestReporter {
   }
 
   cancelRecentlyModified(state, response) {
-    const sourceTab = state.tabId;
-    const url = state.url;
-    if (this.recentlyModified.has(sourceTab + url)) {
-      this.recentlyModified.delete(sourceTab + url);
+    const key = this.#recentlyModifiedKey(state);
+    if (this.recentlyModified.has(key)) {
+      this.recentlyModified.delete(key);
       response.block();
       return false;
     }
     return true;
+  }
+
+  #recentlyModifiedKey(state) {
+    return `${state.documentId}|${state.url}`;
   }
 
   applyBlock(state, response) {
@@ -655,7 +645,10 @@ export default class RequestReporter {
 
     state.incrementStat(`token_blocked_placeholder`);
 
-    this.recentlyModified.add(state.tabId + state.url, RECENTLY_MODIFIED_TTL);
+    this.recentlyModified.add(
+      this.#recentlyModifiedKey(state),
+      RECENTLY_MODIFIED_TTL,
+    );
 
     response.redirectTo(`${prefix}${path}`);
 
@@ -717,19 +710,22 @@ export default class RequestReporter {
     return shouldCheckToken(this.hashProb, this.config.shortTokenLength, tok);
   }
 
-  onPageStaged(page) {
-    if (page.state === 'complete' && !page.isPrivate && !page.isPrivateServer) {
-      const payload = buildPageLoadObject(page);
-      if (
-        payload.scheme.startsWith('http') &&
-        Object.keys(payload.tps).length > 0
-      ) {
-        this.telemetry({
-          action: 'wtm.attrack.tp_events',
-          payload: [payload],
-        });
-      }
+  #reportPage(page) {
+    if (page.isPrivate || page.isPrivateServer) return;
+    const rootDocumentId = page.documentIds[0];
+    if (this.reportedDocuments.has(rootDocumentId)) return;
+
+    const payload = buildPageLoadObject(page);
+    if (
+      payload.scheme.startsWith('http') &&
+      Object.keys(payload.tps).length > 0
+    ) {
+      this.telemetry({
+        action: 'wtm.attrack.tp_events',
+        payload: [payload],
+      });
     }
+    this.reportedDocuments.add(rootDocumentId);
   }
 
   recordClick(event, context, href, sender) {
@@ -767,6 +763,5 @@ function buildPageLoadObject(page) {
     triggeringTree: {},
     tsv: '',
     tsv_id: false,
-    frames: {},
   };
 }

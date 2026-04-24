@@ -8,7 +8,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "0a137b375cc3881a",
           "path": "18fc53a52a033fe7",
           "placeHolder": false,
@@ -16,7 +15,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456015969,
+          "t": 0,
           "tps": {
             "csp.withgoogle.com": {
               "c": 1,
@@ -111,7 +110,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -122,7 +121,6 @@
           "active": 0,
           "c": 1,
           "counter": 2,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -130,7 +128,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456020518,
+          "t": 0,
           "tps": {
             "bam.nr-data.net": {
               "c": 4,
@@ -237,7 +235,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -248,7 +246,6 @@
           "active": 0,
           "c": 1,
           "counter": 2,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -256,7 +253,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456024402,
+          "t": 0,
           "tps": {
             "ad.doubleclick.net": {
               "c": 1,
@@ -282,18 +279,18 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 12,
-              "content_length": 323,
-              "has_post": 12,
-              "has_qs": 12,
-              "referer_leak_path": 12,
-              "referer_leak_site": 12,
-              "resp_ob": 9,
-              "scheme_https": 12,
-              "status_200": 7,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 250,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 5,
+              "scheme_https": 8,
+              "status_200": 4,
+              "status_204": 1,
               "type_11": 4,
-              "type_19": 8
+              "type_19": 4
             },
             "js-agent.newrelic.com": {
               "c": 1,
@@ -408,7 +405,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -419,7 +416,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "0a137b375cc3881a",
           "path": "18fc53a52a033fe7",
           "placeHolder": false,
@@ -427,8 +423,19 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456027079,
+          "t": 0,
           "tps": {
+            "bam.nr-data.net": {
+              "c": 4,
+              "content_length": 73,
+              "has_post": 4,
+              "has_qs": 4,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 3,
+              "status_204": 1,
+              "type_19": 4
+            },
             "csp.withgoogle.com": {
               "c": 1,
               "content_length": 1,
@@ -494,6 +501,12 @@
               "status_200": 1,
               "type_11": 1
             },
+            "smodus.nike.com": {
+              "c": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_11": 1
+            },
             "www.googleadservices.com": {
               "c": 1,
               "content_length": 1,
@@ -526,7 +539,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -537,7 +550,6 @@
           "active": 0,
           "c": 1,
           "counter": 12,
-          "frames": {},
           "hostname": "51ef15c0a227916a",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -545,7 +557,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456030434,
+          "t": 0,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -609,34 +621,33 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 9,
-              "content_length": 300,
-              "has_post": 9,
-              "has_qs": 9,
-              "referer_leak_path": 9,
-              "referer_leak_site": 9,
-              "resp_ob": 9,
-              "scheme_https": 9,
-              "status_200": 6,
-              "status_204": 3,
-              "type_11": 4,
-              "type_19": 5
+              "c": 4,
+              "content_length": 203,
+              "has_post": 4,
+              "has_qs": 4,
+              "referer_leak_path": 4,
+              "referer_leak_site": 4,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 2,
+              "status_204": 2,
+              "type_11": 4
             },
             "bat.bing.com": {
-              "c": 6,
-              "content_length": 14575,
-              "has_post": 2,
-              "has_qs": 4,
+              "c": 5,
+              "content_length": 14574,
+              "has_post": 1,
+              "has_qs": 3,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 6,
-              "scheme_https": 6,
-              "set_cookie_blocked": 4,
-              "set_cookie_samesite_none": 4,
-              "set_cookie_set": 4,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "set_cookie_blocked": 3,
+              "set_cookie_samesite_none": 3,
+              "set_cookie_set": 3,
               "status_200": 2,
-              "status_204": 4,
-              "type_19": 2,
+              "status_204": 3,
+              "type_19": 1,
               "type_2": 2,
               "type_3": 2
             },
@@ -798,16 +809,16 @@
               "type_2": 2
             },
             "region1.analytics.google.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_post": 2,
-              "has_qs": 3,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_204": 2,
-              "type_11": 2,
+              "type_11": 1,
               "type_3": 1
             },
             "reporting.cdndex.io": {
@@ -891,17 +902,17 @@
             },
             "tr.snapchat.com": {
               "c": 5,
-              "content_length": 286,
+              "content_length": 284,
               "has_post": 2,
               "has_qs": 3,
               "referer_leak_path": 1,
               "referer_leak_site": 1,
-              "resp_ob": 5,
+              "resp_ob": 3,
               "scheme_https": 5,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
-              "status_200": 5,
+              "status_200": 3,
               "type_19": 2,
               "type_2": 1,
               "type_3": 1,
@@ -1006,7 +1017,68 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 1,
+          "hostname": "0a137b375cc3881a",
+          "path": "18fc53a52a033fe7",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
+          "tps": {
+            "bam.nr-data.net": {
+              "c": 5,
+              "content_length": 97,
+              "has_post": 5,
+              "has_qs": 5,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "status_200": 4,
+              "status_204": 1,
+              "type_19": 5
+            },
+            "bat.bing.com": {
+              "c": 1,
+              "content_length": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "set_cookie_blocked": 1,
+              "set_cookie_samesite_none": 1,
+              "set_cookie_set": 1,
+              "status_204": 1,
+              "type_19": 1
+            },
+            "tr.snapchat.com": {
+              "content_length": 2,
+              "resp_ob": 2,
+              "status_200": 2
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1017,7 +1089,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "0a137b375cc3881a",
           "path": "18fc53a52a033fe7",
           "placeHolder": false,
@@ -1025,7 +1096,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456015969,
+          "t": 0,
           "tps": {
             "csp.withgoogle.com": {
               "c": 1,
@@ -1120,7 +1191,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1131,7 +1202,6 @@
           "active": 0,
           "c": 1,
           "counter": 2,
-          "frames": {},
           "hostname": "0f0bb2c75b3049b7",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -1139,7 +1209,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456020518,
+          "t": 0,
           "tps": {
             "bam.nr-data.net": {
               "c": 4,
@@ -1246,7 +1316,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1257,7 +1327,6 @@
           "active": 0,
           "c": 1,
           "counter": 2,
-          "frames": {},
           "hostname": "0f0bb2c75b3049b7",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -1265,7 +1334,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456024402,
+          "t": 0,
           "tps": {
             "ad.doubleclick.net": {
               "c": 1,
@@ -1291,18 +1360,18 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 12,
-              "content_length": 323,
-              "has_post": 12,
-              "has_qs": 12,
-              "referer_leak_path": 12,
-              "referer_leak_site": 12,
-              "resp_ob": 9,
-              "scheme_https": 12,
-              "status_200": 7,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 250,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 5,
+              "scheme_https": 8,
+              "status_200": 4,
+              "status_204": 1,
               "type_11": 4,
-              "type_19": 8
+              "type_19": 4
             },
             "js-agent.newrelic.com": {
               "c": 1,
@@ -1417,7 +1486,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1428,7 +1497,6 @@
           "active": 0,
           "c": 1,
           "counter": 0,
-          "frames": {},
           "hostname": "0a137b375cc3881a",
           "path": "18fc53a52a033fe7",
           "placeHolder": false,
@@ -1436,8 +1504,19 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456027079,
+          "t": 0,
           "tps": {
+            "bam.nr-data.net": {
+              "c": 4,
+              "content_length": 73,
+              "has_post": 4,
+              "has_qs": 4,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 3,
+              "status_204": 1,
+              "type_19": 4
+            },
             "csp.withgoogle.com": {
               "c": 1,
               "content_length": 1,
@@ -1503,6 +1582,12 @@
               "status_200": 1,
               "type_11": 1
             },
+            "smodus.adidas.com": {
+              "c": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_11": 1
+            },
             "www.googleadservices.com": {
               "c": 1,
               "content_length": 1,
@@ -1535,7 +1620,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tp_events",
@@ -1546,7 +1631,6 @@
           "active": 0,
           "c": 1,
           "counter": 12,
-          "frames": {},
           "hostname": "0f0bb2c75b3049b7",
           "path": "35d408fa0755f33b",
           "placeHolder": false,
@@ -1554,7 +1638,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456030434,
+          "t": 0,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -1618,34 +1702,33 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 9,
-              "content_length": 300,
-              "has_post": 9,
-              "has_qs": 9,
-              "referer_leak_path": 9,
-              "referer_leak_site": 9,
-              "resp_ob": 9,
-              "scheme_https": 9,
-              "status_200": 6,
-              "status_204": 3,
-              "type_11": 4,
-              "type_19": 5
+              "c": 4,
+              "content_length": 203,
+              "has_post": 4,
+              "has_qs": 4,
+              "referer_leak_path": 4,
+              "referer_leak_site": 4,
+              "resp_ob": 4,
+              "scheme_https": 4,
+              "status_200": 2,
+              "status_204": 2,
+              "type_11": 4
             },
             "bat.bing.com": {
-              "c": 6,
-              "content_length": 14575,
-              "has_post": 2,
-              "has_qs": 4,
+              "c": 5,
+              "content_length": 14574,
+              "has_post": 1,
+              "has_qs": 3,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 6,
-              "scheme_https": 6,
-              "set_cookie_blocked": 4,
-              "set_cookie_samesite_none": 4,
-              "set_cookie_set": 4,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "set_cookie_blocked": 3,
+              "set_cookie_samesite_none": 3,
+              "set_cookie_set": 3,
               "status_200": 2,
-              "status_204": 4,
-              "type_19": 2,
+              "status_204": 3,
+              "type_19": 1,
               "type_2": 2,
               "type_3": 2
             },
@@ -1807,16 +1890,16 @@
               "type_2": 2
             },
             "region1.analytics.google.com": {
-              "c": 3,
+              "c": 2,
               "content_length": 2,
-              "has_post": 2,
-              "has_qs": 3,
-              "referer_leak_path": 2,
-              "referer_leak_site": 2,
+              "has_post": 1,
+              "has_qs": 2,
+              "referer_leak_path": 1,
+              "referer_leak_site": 1,
               "resp_ob": 2,
-              "scheme_https": 3,
+              "scheme_https": 2,
               "status_204": 2,
-              "type_11": 2,
+              "type_11": 1,
               "type_3": 1
             },
             "reporting.cdndex.io": {
@@ -1900,17 +1983,17 @@
             },
             "tr.snapchat.com": {
               "c": 5,
-              "content_length": 286,
+              "content_length": 284,
               "has_post": 2,
               "has_qs": 3,
               "referer_leak_path": 1,
               "referer_leak_site": 1,
-              "resp_ob": 5,
+              "resp_ob": 3,
               "scheme_https": 5,
               "set_cookie_blocked": 1,
               "set_cookie_samesite_none": 1,
               "set_cookie_set": 1,
-              "status_200": 5,
+              "status_200": 3,
               "type_19": 2,
               "type_2": 1,
               "type_3": 1,
@@ -2015,7 +2098,68 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.tp_events",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "active": 0,
+          "c": 1,
+          "counter": 1,
+          "hostname": "0a137b375cc3881a",
+          "path": "18fc53a52a033fe7",
+          "placeHolder": false,
+          "ra": 0,
+          "redirects": [],
+          "redirectsPlaceHolder": [],
+          "scheme": "https",
+          "t": 0,
+          "tps": {
+            "bam.nr-data.net": {
+              "c": 5,
+              "content_length": 97,
+              "has_post": 5,
+              "has_qs": 5,
+              "resp_ob": 5,
+              "scheme_https": 5,
+              "status_200": 4,
+              "status_204": 1,
+              "type_19": 5
+            },
+            "bat.bing.com": {
+              "c": 1,
+              "content_length": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "resp_ob": 1,
+              "scheme_https": 1,
+              "set_cookie_blocked": 1,
+              "set_cookie_samesite_none": 1,
+              "set_cookie_set": 1,
+              "status_204": 1,
+              "type_19": 1
+            },
+            "tr.snapchat.com": {
+              "content_length": 2,
+              "resp_ob": 2,
+              "status_200": 2
+            }
+          },
+          "triggeringTree": {},
+          "tsv": "",
+          "tsv_id": false
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.tokensv2",
@@ -2026,7 +2170,7 @@
           "safe": false,
           "sites": 3,
           "token": "b277d64158b8186111805e624a01e455",
-          "trackers": 23,
+          "trackers": 25,
           "ts": ""
         }
       ],
@@ -2036,13 +2180,129 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
     "payload": {
       "ctry": "en",
       "data": [
+        {
+          "key": "0cc175b9c0f1b6a831c399e269772661",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "07ec316733039a4168dfb0f9c53c2cba",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "9e3669d19b675bd57058fd4664205d2a",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "85d63f40047d306cfd924cda30b3d89e",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "01b6e20344b68835c5ed1ddedf20d531",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "23fb69a534f26277e54a90c8b5963a26",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "03c7c0ace395d80182db07ae2c30f034",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "5fc184cd2f412359c441b1dec7a62181",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "fe285995e8b9e166655675525da9fcb6",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "718b8bea4a079622baea02fc443f455d",
+              true
+            ],
+            [
+              "99e49245220baea75e66c85ada2d6c9d",
+              true
+            ],
+            [
+              "c4d0ed4849056a0d07c2d31cd246bf92",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "e00fba6fedfb8a49e13346f7099a23fc",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "e91b4873a4e4881e04e81e21a88637fa",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "22384709d743fe3c6fb0a4b35b2e10a6",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "4e70e2371cd49d171eb2db6ed642ccd3",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b8c1a3069167247e3503f0daba6c5723",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "19d6c155008546667a695b09eb57c22d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b06d9954793b98cc08c5ed99d67b04a8",
+          "site": "2239b6dd1f9fef26",
+          "tokens": [
+            [
+              "5158d0341cefa4f2c0cfa85e49e87d5d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
         {
           "key": "1ee2225a0118c6a8ff464cf2926cf352",
           "site": "2239b6dd1f9fef26",
@@ -2153,74 +2413,6 @@
             ]
           ],
           "tracker": "b9a0973d8f431aba",
-          "ts": ""
-        },
-        {
-          "key": "0cc175b9c0f1b6a831c399e269772661",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "07ec316733039a4168dfb0f9c53c2cba",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "9e3669d19b675bd57058fd4664205d2a",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "85d63f40047d306cfd924cda30b3d89e",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "01b6e20344b68835c5ed1ddedf20d531",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "23fb69a534f26277e54a90c8b5963a26",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "03c7c0ace395d80182db07ae2c30f034",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "5fc184cd2f412359c441b1dec7a62181",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "fe285995e8b9e166655675525da9fcb6",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "718b8bea4a079622baea02fc443f455d",
-              true
-            ],
-            [
-              "99e49245220baea75e66c85ada2d6c9d",
-              true
-            ],
-            [
-              "c4d0ed4849056a0d07c2d31cd246bf92",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
           "ts": ""
         },
         {
@@ -2377,10 +2569,6 @@
             ],
             [
               "4d66b7615272e2c1d4286519fed7f70e",
-              true
-            ],
-            [
-              "843d03bdbfa808e9f800c4c0e0275ddb",
               true
             ]
           ],
@@ -3520,54 +3708,6 @@
           "ts": ""
         },
         {
-          "key": "e00fba6fedfb8a49e13346f7099a23fc",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "e91b4873a4e4881e04e81e21a88637fa",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "22384709d743fe3c6fb0a4b35b2e10a6",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "4e70e2371cd49d171eb2db6ed642ccd3",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "b8c1a3069167247e3503f0daba6c5723",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "19d6c155008546667a695b09eb57c22d",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "b06d9954793b98cc08c5ed99d67b04a8",
-          "site": "2239b6dd1f9fef26",
-          "tokens": [
-            [
-              "5158d0341cefa4f2c0cfa85e49e87d5d",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
           "key": "72ab8af56bddab33b269c5964b26620a",
           "site": "2239b6dd1f9fef26",
           "tokens": [
@@ -3734,13 +3874,255 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
     "payload": {
       "ctry": "en",
       "data": [
+        {
+          "key": "0cc175b9c0f1b6a831c399e269772661",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "07ec316733039a4168dfb0f9c53c2cba",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "9e3669d19b675bd57058fd4664205d2a",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "85d63f40047d306cfd924cda30b3d89e",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "01b6e20344b68835c5ed1ddedf20d531",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "23fb69a534f26277e54a90c8b5963a26",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "03c7c0ace395d80182db07ae2c30f034",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "5fc184cd2f412359c441b1dec7a62181",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "fe285995e8b9e166655675525da9fcb6",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "99e49245220baea75e66c85ada2d6c9d",
+              true
+            ],
+            [
+              "c4d0ed4849056a0d07c2d31cd246bf92",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "e00fba6fedfb8a49e13346f7099a23fc",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "e91b4873a4e4881e04e81e21a88637fa",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "22384709d743fe3c6fb0a4b35b2e10a6",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "4e70e2371cd49d171eb2db6ed642ccd3",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b8c1a3069167247e3503f0daba6c5723",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "19d6c155008546667a695b09eb57c22d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b06d9954793b98cc08c5ed99d67b04a8",
+          "site": "1d5920f4b44b27a8",
+          "tokens": [
+            [
+              "5158d0341cefa4f2c0cfa85e49e87d5d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        }
+      ],
+      "day": "2018-10-11",
+      "ts": "",
+      "ver": "0.105"
+    },
+    "ts": "",
+    "type": "wtm.request",
+    "userAgent": "chrome"
+  },
+  {
+    "action": "wtm.attrack.keysv2",
+    "payload": {
+      "ctry": "en",
+      "data": [
+        {
+          "key": "0cc175b9c0f1b6a831c399e269772661",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "07ec316733039a4168dfb0f9c53c2cba",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "9e3669d19b675bd57058fd4664205d2a",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "85d63f40047d306cfd924cda30b3d89e",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "01b6e20344b68835c5ed1ddedf20d531",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "23fb69a534f26277e54a90c8b5963a26",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "03c7c0ace395d80182db07ae2c30f034",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "5fc184cd2f412359c441b1dec7a62181",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "fe285995e8b9e166655675525da9fcb6",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "718b8bea4a079622baea02fc443f455d",
+              true
+            ],
+            [
+              "99e49245220baea75e66c85ada2d6c9d",
+              true
+            ],
+            [
+              "c4d0ed4849056a0d07c2d31cd246bf92",
+              true
+            ]
+          ],
+          "tracker": "1858ee289905a7a0",
+          "ts": ""
+        },
+        {
+          "key": "e00fba6fedfb8a49e13346f7099a23fc",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "e91b4873a4e4881e04e81e21a88637fa",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "22384709d743fe3c6fb0a4b35b2e10a6",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "4e70e2371cd49d171eb2db6ed642ccd3",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b8c1a3069167247e3503f0daba6c5723",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "19d6c155008546667a695b09eb57c22d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
+        {
+          "key": "b06d9954793b98cc08c5ed99d67b04a8",
+          "site": "bf2fbb2b02e02fa7",
+          "tokens": [
+            [
+              "5158d0341cefa4f2c0cfa85e49e87d5d",
+              true
+            ]
+          ],
+          "tracker": "477c8c514f4f61ec",
+          "ts": ""
+        },
         {
           "key": "1ee2225a0118c6a8ff464cf2926cf352",
           "site": "bf2fbb2b02e02fa7",
@@ -3851,74 +4233,6 @@
             ]
           ],
           "tracker": "b9a0973d8f431aba",
-          "ts": ""
-        },
-        {
-          "key": "0cc175b9c0f1b6a831c399e269772661",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "07ec316733039a4168dfb0f9c53c2cba",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "9e3669d19b675bd57058fd4664205d2a",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "85d63f40047d306cfd924cda30b3d89e",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "01b6e20344b68835c5ed1ddedf20d531",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "23fb69a534f26277e54a90c8b5963a26",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "03c7c0ace395d80182db07ae2c30f034",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "5fc184cd2f412359c441b1dec7a62181",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
-          "ts": ""
-        },
-        {
-          "key": "fe285995e8b9e166655675525da9fcb6",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "718b8bea4a079622baea02fc443f455d",
-              true
-            ],
-            [
-              "99e49245220baea75e66c85ada2d6c9d",
-              true
-            ],
-            [
-              "c4d0ed4849056a0d07c2d31cd246bf92",
-              true
-            ]
-          ],
-          "tracker": "1858ee289905a7a0",
           "ts": ""
         },
         {
@@ -4075,10 +4389,6 @@
             ],
             [
               "4d66b7615272e2c1d4286519fed7f70e",
-              true
-            ],
-            [
-              "843d03bdbfa808e9f800c4c0e0275ddb",
               true
             ]
           ],
@@ -5218,54 +5528,6 @@
           "ts": ""
         },
         {
-          "key": "e00fba6fedfb8a49e13346f7099a23fc",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "e91b4873a4e4881e04e81e21a88637fa",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "22384709d743fe3c6fb0a4b35b2e10a6",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "4e70e2371cd49d171eb2db6ed642ccd3",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "b8c1a3069167247e3503f0daba6c5723",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "19d6c155008546667a695b09eb57c22d",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
-          "key": "b06d9954793b98cc08c5ed99d67b04a8",
-          "site": "bf2fbb2b02e02fa7",
-          "tokens": [
-            [
-              "5158d0341cefa4f2c0cfa85e49e87d5d",
-              true
-            ]
-          ],
-          "tracker": "477c8c514f4f61ec",
-          "ts": ""
-        },
-        {
           "key": "72ab8af56bddab33b269c5964b26620a",
           "site": "bf2fbb2b02e02fa7",
           "tokens": [
@@ -5432,7 +5694,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -5458,7 +5720,7 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   },
   {
     "action": "wtm.attrack.keysv2",
@@ -5484,6 +5746,6 @@
     },
     "ts": "",
     "type": "wtm.request",
-    "userAgent": ""
+    "userAgent": "chrome"
   }
 ]

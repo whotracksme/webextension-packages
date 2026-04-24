@@ -94,11 +94,7 @@ const urlReporter = new UrlReporter({
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
   onMessageReady: (msg) => {
-    console.log(
-      '%c[DRY-RUN] request-reporter message ready:',
-      'color: green; font-size: 30px;',
-      msg,
-    );
+    console.log('[tp_events]', JSON.stringify(msg));
   },
   countryProvider: urlReporter.countryProvider,
   trustedClock: communication.trustedClock,
@@ -119,7 +115,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       sendResponse({
         tabs: tabs.map((tab) =>
-          requestReporter.pageStore.getPageForRequest({
+          requestReporter.documentStore.getDocumentForRequest({
             tabId: tab.id,
             frameId: 0,
           }),
