@@ -5,18 +5,18 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 719940,
           "c": 1,
           "counter": 0,
           "frames": {},
           "hostname": "ed84bc069c79dc56",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760326457,
+          "t": 719940,
           "tps": {
             "717de196af402b1a6e14814863cd92bb.safeframe.googlesyndication.com": {
               "c": 2,
@@ -566,6 +566,7 @@
             "euw1.smartadserver.com": {
               "c": 1,
               "has_qs": 1,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "scheme_https": 1,
               "type_3": 1
@@ -590,7 +591,7 @@
               "content_length": 112,
               "has_post": 5,
               "has_qs": 15,
-              "referer_leak_path": 12,
+              "referer_leak_path": 13,
               "referer_leak_site": 13,
               "resp_ob": 20,
               "scheme_https": 21,
@@ -790,12 +791,13 @@
               "type_3": 1
             },
             "ingestion.contentinsights.com": {
-              "c": 1,
+              "c": 2,
               "content_length": 1,
-              "has_qs": 1,
+              "has_qs": 2,
               "resp_ob": 1,
-              "scheme_https": 1,
+              "scheme_https": 2,
               "status_204": 1,
+              "type_10": 1,
               "type_3": 1
             },
             "ingestion.smartocto.com": {
@@ -902,6 +904,13 @@
               "status_200": 1,
               "type_3": 1
             },
+            "nl3.eu.criteo.net": {
+              "c": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_10": 1
+            },
             "ocdn.eu": {
               "c": 45,
               "content_length": 715421,
@@ -920,7 +929,7 @@
               "content_length": 74608,
               "has_post": 1,
               "has_qs": 10,
-              "referer_leak_path": 7,
+              "referer_leak_path": 8,
               "referer_leak_site": 8,
               "resp_ob": 15,
               "scheme_https": 15,
@@ -939,13 +948,15 @@
               "type_7": 1
             },
             "pagead2.googlesyndication.com": {
-              "c": 17,
+              "c": 18,
               "content_length": 185822,
-              "has_qs": 13,
+              "has_post": 1,
+              "has_qs": 14,
               "resp_ob": 15,
-              "scheme_https": 17,
+              "scheme_https": 18,
               "status_200": 9,
               "status_204": 6,
+              "type_10": 1,
               "type_11": 9,
               "type_2": 5,
               "type_3": 3
@@ -1247,6 +1258,7 @@
               "c": 3,
               "content_length": 2,
               "has_qs": 3,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "resp_ob": 2,
               "scheme_https": 3,
@@ -1572,7 +1584,7 @@
               "content_length": 1743961,
               "has_post": 12,
               "has_qs": 20,
-              "referer_leak_path": 5,
+              "referer_leak_path": 7,
               "referer_leak_site": 7,
               "resp_ob": 31,
               "scheme_https": 36,
@@ -1627,18 +1639,18 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 719940,
           "c": 1,
           "counter": 11,
           "frames": {},
           "hostname": "cf28373a52818d8a",
-          "path": "57deab21eef4d8cb",
+          "path": "6666cd76f9695646",
           "placeHolder": false,
           "ra": 0,
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1729760326457,
+          "t": 719940,
           "tps": {
             "717de196af402b1a6e14814863cd92bb.safeframe.googlesyndication.com": {
               "c": 2,
@@ -2194,6 +2206,7 @@
             "euw1.smartadserver.com": {
               "c": 1,
               "has_qs": 1,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "scheme_https": 1,
               "type_3": 1
@@ -2218,7 +2231,7 @@
               "content_length": 112,
               "has_post": 5,
               "has_qs": 15,
-              "referer_leak_path": 12,
+              "referer_leak_path": 13,
               "referer_leak_site": 13,
               "resp_ob": 20,
               "scheme_https": 21,
@@ -2421,12 +2434,13 @@
               "type_3": 1
             },
             "ingestion.contentinsights.com": {
-              "c": 1,
+              "c": 2,
               "content_length": 1,
-              "has_qs": 1,
+              "has_qs": 2,
               "resp_ob": 1,
-              "scheme_https": 1,
+              "scheme_https": 2,
               "status_204": 1,
+              "type_10": 1,
               "type_3": 1
             },
             "ingestion.smartocto.com": {
@@ -2531,6 +2545,13 @@
               "status_200": 1,
               "type_3": 1
             },
+            "nl3.eu.criteo.net": {
+              "c": 1,
+              "has_post": 1,
+              "has_qs": 1,
+              "scheme_https": 1,
+              "type_10": 1
+            },
             "ocdn.eu": {
               "c": 45,
               "content_length": 715421,
@@ -2549,7 +2570,7 @@
               "content_length": 74608,
               "has_post": 1,
               "has_qs": 10,
-              "referer_leak_path": 7,
+              "referer_leak_path": 8,
               "referer_leak_site": 8,
               "resp_ob": 15,
               "scheme_https": 15,
@@ -2568,13 +2589,15 @@
               "type_7": 1
             },
             "pagead2.googlesyndication.com": {
-              "c": 17,
+              "c": 18,
               "content_length": 185822,
-              "has_qs": 13,
+              "has_post": 1,
+              "has_qs": 14,
               "resp_ob": 15,
-              "scheme_https": 17,
+              "scheme_https": 18,
               "status_200": 9,
               "status_204": 6,
+              "type_10": 1,
               "type_11": 9,
               "type_2": 5,
               "type_3": 3
@@ -2878,6 +2901,7 @@
               "c": 3,
               "content_length": 2,
               "has_qs": 3,
+              "referer_leak_path": 1,
               "referer_leak_site": 1,
               "resp_ob": 2,
               "scheme_https": 3,
@@ -3204,7 +3228,7 @@
               "content_length": 1743961,
               "has_post": 12,
               "has_qs": 20,
-              "referer_leak_path": 5,
+              "referer_leak_path": 7,
               "referer_leak_site": 7,
               "resp_ob": 31,
               "scheme_https": 36,

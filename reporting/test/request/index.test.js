@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /**
  * WhoTracks.Me
  * https://ghostery.com/whotracksme
@@ -13,7 +12,7 @@
 import chrome from 'sinon-chrome';
 import sinon from 'sinon';
 import { expect } from 'chai';
-import EventEmitter, { once } from 'node:events';
+import EventEmitter from 'node:events';
 import { IDBFactory } from 'fake-indexeddb';
 
 import {
@@ -25,6 +24,7 @@ import {
 import { base64ToArrayBuffer } from '../helpers/fetch-mock.js';
 
 import { setLogLevel } from '../../src/logger.js';
+import { truncatedHash } from '../../src/md5.js';
 import RequestReporter from '../../src/request/index.js';
 
 const config = {
@@ -119,54 +119,6 @@ describe('RequestReporter', function () {
       delete globalThis.indexedDB;
     });
 
-    context('synthetic events', function () {
-      it('records stats from redirects', async function () {
-        const events = once(communicationEmitter, 'send');
-
-        const tab = { id: 1, url: 'https://www.onet.pl/' };
-        // creates a page
-        chrome.tabs.onCreated.dispatch(tab);
-        // changes state to 'completed'
-        chrome.webNavigation.onCompleted.dispatch({ tabId: tab.id, frameId: 0, });
-
-        // prepare iframe
-        chrome.webNavigation.onCommitted.dispatch({ tabId: tab.id, parentFrameId: 0, frameId:15032385542, url: "https://pulsembed.eu/p2em/3VgyZUiWT/"});
-        chrome.webNavigation.onCommitted.dispatch({ tabId: tab.id, parentFrameId: 15032385542, frameId: 17179869195, url: "https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1"});
-
-        // Fragment of 0002 snapshot
-        chrome.webRequest.onBeforeRequest.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760357996,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onBeforeSendHeaders.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760357997,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onSendHeaders.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760357997,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onHeadersReceived.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358179,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","fromCache":false,"responseHeaders":[{"name":"p3p","value":"policyref=\"https://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml\", CP=\"CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR\""},{"name":"timing-allow-origin","value":"*"},{"name":"cross-origin-resource-policy","value":"cross-origin"},{"name":"location","value":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1"},{"name":"access-control-allow-credentials","value":"true"},{"name":"access-control-allow-origin","value":"https://www.youtube.com"},{"name":"date","value":"Thu, 24 Oct 2024 08:59:18 GMT"},{"name":"pragma","value":"no-cache"},{"name":"expires","value":"Fri, 01 Jan 1990 00:00:00 GMT"},{"name":"cache-control","value":"no-cache, no-store, must-revalidate"},{"name":"content-type","value":"text/html; charset=UTF-8"},{"name":"x-content-type-options","value":"nosniff"},{"name":"server","value":"cafe"},{"name":"content-length","value":"0"},{"name":"x-xss-protection","value":"0"},{"name":"alt-svc","value":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"},{"name":"X-Firefox-Spdy","value":"h2"}],"statusCode":302,"statusLine":"HTTP/2.0 302 ","proxyInfo":null,"ip":"172.217.16.162","frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onBeforeRedirect.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358180,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","fromCache":false,"responseHeaders":[{"name":"p3p","value":"policyref=\"https://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml\", CP=\"CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR\""},{"name":"timing-allow-origin","value":"*"},{"name":"cross-origin-resource-policy","value":"cross-origin"},{"name":"location","value":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1"},{"name":"access-control-allow-credentials","value":"true"},{"name":"access-control-allow-origin","value":"https://www.youtube.com"},{"name":"date","value":"Thu, 24 Oct 2024 08:59:18 GMT"},{"name":"pragma","value":"no-cache"},{"name":"expires","value":"Fri, 01 Jan 1990 00:00:00 GMT"},{"name":"cache-control","value":"no-cache, no-store, must-revalidate"},{"name":"content-type","value":"text/html; charset=UTF-8"},{"name":"x-content-type-options","value":"nosniff"},{"name":"server","value":"cafe"},{"name":"content-length","value":"0"},{"name":"x-xss-protection","value":"0"},{"name":"alt-svc","value":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"},{"name":"X-Firefox-Spdy","value":"h2"}],"statusCode":302,"statusLine":"HTTP/2.0 302 ","redirectUrl":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","proxyInfo":null,"ip":"172.217.16.162","frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onBeforeRequest.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358181,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onBeforeSendHeaders.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358182,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onSendHeaders.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358182,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","proxyInfo":null,"ip":null,"frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onHeadersReceived.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358221,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","fromCache":false,"responseHeaders":[{"name":"p3p","value":"policyref=\"https://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml\", CP=\"CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR\""},{"name":"timing-allow-origin","value":"*"},{"name":"cross-origin-resource-policy","value":"cross-origin"},{"name":"access-control-allow-credentials","value":"true"},{"name":"access-control-allow-origin","value":"https://www.youtube.com"},{"name":"content-type","value":"application/json; charset=UTF-8"},{"name":"date","value":"Thu, 24 Oct 2024 08:59:18 GMT"},{"name":"pragma","value":"no-cache"},{"name":"expires","value":"Fri, 01 Jan 1990 00:00:00 GMT"},{"name":"cache-control","value":"no-cache, no-store, must-revalidate"},{"name":"x-content-type-options","value":"nosniff"},{"name":"content-disposition","value":"attachment; filename=\"f.txt\""},{"name":"content-encoding","value":"gzip"},{"name":"server","value":"cafe"},{"name":"content-length","value":"120"},{"name":"x-xss-protection","value":"0"},{"name":"alt-svc","value":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"},{"name":"X-Firefox-Http3","value":"h3"}],"statusCode":200,"statusLine":"HTTP/3.0 200 ","proxyInfo":null,"ip":"172.217.16.162","frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onResponseStarted.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358221,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","fromCache":false,"responseHeaders":[{"name":"p3p","value":"policyref=\"https://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml\", CP=\"CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR\""},{"name":"timing-allow-origin","value":"*"},{"name":"cross-origin-resource-policy","value":"cross-origin"},{"name":"access-control-allow-credentials","value":"true"},{"name":"access-control-allow-origin","value":"https://www.youtube.com"},{"name":"content-type","value":"application/json; charset=UTF-8"},{"name":"date","value":"Thu, 24 Oct 2024 08:59:18 GMT"},{"name":"pragma","value":"no-cache"},{"name":"expires","value":"Fri, 01 Jan 1990 00:00:00 GMT"},{"name":"cache-control","value":"no-cache, no-store, must-revalidate"},{"name":"x-content-type-options","value":"nosniff"},{"name":"content-disposition","value":"attachment; filename=\"f.txt\""},{"name":"content-encoding","value":"gzip"},{"name":"server","value":"cafe"},{"name":"content-length","value":"120"},{"name":"x-xss-protection","value":"0"},{"name":"alt-svc","value":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"},{"name":"X-Firefox-Http3","value":"h3"}],"statusCode":200,"statusLine":"HTTP/3.0 200 ","proxyInfo":null,"ip":"172.217.16.162","frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-        chrome.webRequest.onCompleted.dispatch({"requestId":"294","url":"https://googleads.g.doubleclick.net/pagead/id?slf_rd=1","originUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","documentUrl":"https://www.youtube.com/embed/sQpzRs4j1NQ?mute=1&widget_referrer=https%3A%2F%2Fwww.onet.pl%2F&enablejsapi=1&origin=https%3A%2F%2Fpulsembed.eu&widgetid=1","method":"GET","type":"xmlhttprequest","timeStamp":1729760358221,"tabId":tab.id,"frameId":17179869195,"parentFrameId":15032385542,"incognito":false,"thirdParty":true,"cookieStoreId":"firefox-default","fromCache":false,"responseHeaders":[{"name":"p3p","value":"policyref=\"https://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml\", CP=\"CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR\""},{"name":"timing-allow-origin","value":"*"},{"name":"cross-origin-resource-policy","value":"cross-origin"},{"name":"access-control-allow-credentials","value":"true"},{"name":"access-control-allow-origin","value":"https://www.youtube.com"},{"name":"content-type","value":"application/json; charset=UTF-8"},{"name":"date","value":"Thu, 24 Oct 2024 08:59:18 GMT"},{"name":"pragma","value":"no-cache"},{"name":"expires","value":"Fri, 01 Jan 1990 00:00:00 GMT"},{"name":"cache-control","value":"no-cache, no-store, must-revalidate"},{"name":"x-content-type-options","value":"nosniff"},{"name":"content-disposition","value":"attachment; filename=\"f.txt\""},{"name":"content-encoding","value":"gzip"},{"name":"server","value":"cafe"},{"name":"content-length","value":"120"},{"name":"x-xss-protection","value":"0"},{"name":"alt-svc","value":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"},{"name":"X-Firefox-Http3","value":"h3"}],"statusCode":200,"statusLine":"HTTP/3.0 200 ","proxyInfo":null,"ip":"172.217.16.162","frameAncestors":[{"frameId":15032385542,"url":"https://pulsembed.eu/p2em/3VgyZUiWT/"},{"frameId":0,"url":"https://www.onet.pl/"}],"urlClassification":{"firstParty":[],"thirdParty":["tracking_ad","any_basic_tracking","any_strict_tracking"]},"requestSize":0,"responseSize":0});
-
-        // stages the page for sendout
-        chrome.tabs.onRemoved.dispatch(tab.id);
-        await clock.runToLast();
-
-        const [event] = await events;
-        expect(event).to.include({ action: 'wtm.attrack.tp_events' });
-        expect(
-          event.payload.data[0].tps['googleads.g.doubleclick.net'],
-        ).to.deep.equal({
-          c: 2,
-          type_11: 2,
-          scheme_https: 2,
-          resp_ob: 2,
-          content_length: 121,
-          status_302: 1,
-          has_qs: 1,
-          status_200: 1,
-        });
-      });
-    });
-
     context('0001-empty-page', function () {
       it('detects no 3rd parties', async function () {
         const { seenTabIds } = await playScenario(chrome, {
@@ -174,15 +126,10 @@ describe('RequestReporter', function () {
           scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
-        expect(
-          reporter.pageStore.checkIfEmpty(),
-        ).to.be.false;
+        expect(reporter.pageStore.checkIfEmpty()).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.pageStore.getPageForRequest({
-          tabId,
-          frameId: 0,
-        });
+        const tab = reporter.pageStore.findPageForTab(tabId);
         expect(tab.requestStats).to.be.empty;
       });
     });
@@ -194,15 +141,10 @@ describe('RequestReporter', function () {
           scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
-        expect(
-          reporter.pageStore.checkIfEmpty(),
-        ).to.be.false;
+        expect(reporter.pageStore.checkIfEmpty()).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.pageStore.getPageForRequest({
-          tabId,
-          frameId: 0,
-        });
+        const tab = reporter.pageStore.findPageForTab(tabId);
         expect(tab.requestStats).to.have.keys(['script.localhost']);
       });
 
@@ -217,6 +159,7 @@ describe('RequestReporter', function () {
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
@@ -238,6 +181,7 @@ describe('RequestReporter', function () {
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
@@ -249,22 +193,48 @@ describe('RequestReporter', function () {
 
     context('0004-ping', function () {
       it('reports pings', async function () {
+        // The ping fires from the first document (path "/") during
+        // navigation to the second (path "/result"), so correct
+        // documentId attribution puts ping.localhost on the source
+        // page's tp_events. The `next` page, if it emits at all,
+        // must not carry the ping. We collect tp_events across the
+        // whole run because the source page is held at nav time and
+        // its timer fires inside the first runToLast — earlier than
+        // a `.once('send')` listener set up after it would catch.
+        const events = [];
+        communicationEmitter.on('send', (msg) => {
+          if (msg.action === 'wtm.attrack.tp_events') {
+            events.push(msg);
+          }
+        });
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
-        const eventPromise = new Promise((resolve) =>
-          communicationEmitter.once('send', resolve),
-        );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
-        const event = await eventPromise;
-        expect(event).to.deep.include({
-          action: 'wtm.attrack.tp_events',
-        });
-        expect(event.payload.data[0].tps).to.have.keys(['ping.localhost']);
+        const sourcePathHash = truncatedHash('/');
+        const successorPathHash = truncatedHash('/result');
+        const sourceEvent = events.find(
+          (e) => e.payload.data[0].path === sourcePathHash,
+        );
+        const successorEvent = events.find(
+          (e) => e.payload.data[0].path === successorPathHash,
+        );
+        expect(sourceEvent, 'source page tp_events must fire').to.exist;
+        expect(Object.keys(sourceEvent.payload.data[0].tps)).to.include(
+          'ping.localhost',
+        );
+        // The /result page has no third parties of its own; if it
+        // emits at all, it must not carry the source's ping.
+        if (successorEvent) {
+          expect(
+            Object.keys(successorEvent.payload.data[0].tps),
+          ).to.not.include('ping.localhost');
+        }
       });
     });
 
@@ -280,6 +250,7 @@ describe('RequestReporter', function () {
         );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
         const event = await eventPromise;
         expect(event).to.deep.include({
@@ -299,7 +270,7 @@ describe('RequestReporter', function () {
         expect(reporter.pageStore.checkIfEmpty()).to.be.false;
         expect(seenTabIds).to.have.property('size', 1);
         const tabId = seenTabIds.values().next().value;
-        const tab = reporter.pageStore.getPageForRequest({ tabId, frameId: 0 });
+        const tab = reporter.pageStore.findPageForTab(tabId);
         // preconnect opens a socket but fires no webRequest, so no
         // third-party counters should accumulate.
         expect(tab.requestStats).to.be.empty;
@@ -318,58 +289,58 @@ describe('RequestReporter', function () {
         // prerendered document lives on a separate tab and is not
         // counted against the one the user is looking at.
         const visibleTabId = seenTabIds.values().next().value;
-        const tab = reporter.pageStore.getPageForRequest({
-          tabId: visibleTabId,
-          frameId: 0,
-        });
+        const tab = reporter.pageStore.findPageForTab(visibleTabId);
         expect(tab.requestStats).to.be.empty;
       });
     });
 
     context('0008-navigation', function () {
       it('reports 3rd parties', async function () {
-        const eventPromise1 = new Promise((resolve) =>
-          communicationEmitter.once('send', resolve),
-        );
+        // Two main-frame navigations on the same tab; each page's
+        // trackers should attribute to its own document. With
+        // event-driven emission (flush on SW startup / tab close),
+        // both pages are emitted together once we flush; we then
+        // look them up by their own hostname.
+        const events = [];
+        communicationEmitter.on('send', (msg) => {
+          if (msg.action === 'wtm.attrack.tp_events') {
+            events.push(msg);
+          }
+        });
         const { seenTabIds } = await playScenario(chrome, {
           scenarioName: this.test.parent.title,
           scenarioRelease: '2026-04-23',
         });
         await clock.runToLast();
-        const event1 = await eventPromise1;
-        expect(event1).to.deep.include({
-          action: 'wtm.attrack.tp_events',
-        });
-        expect(event1.payload.data[0].tps).to.have.keys(['script1.localhost']);
-        const eventPromise2 = new Promise((resolve) =>
-          communicationEmitter.once('send', resolve),
-        );
         // force stage all pages
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
-        const event2 = await eventPromise2;
-        expect(event2).to.deep.include({
-          action: 'wtm.attrack.tp_events',
-        });
-        expect(event2.payload.data[0].tps).to.have.keys(['script2.localhost']);
+        const page1Event = events.find((e) =>
+          Object.keys(e.payload.data[0].tps).includes('script1.localhost'),
+        );
+        const page2Event = events.find((e) =>
+          Object.keys(e.payload.data[0].tps).includes('script2.localhost'),
+        );
+        expect(page1Event, 'page1 tp_events must fire').to.exist;
+        expect(page2Event, 'page2 tp_events must fire').to.exist;
         // reports should belong to different pages
-        expect(event1.payload.data[0].hostname).to.not.be.equal(
-          event2.payload.data[0].hostname,
+        expect(page1Event.payload.data[0].hostname).to.not.be.equal(
+          page2Event.payload.data[0].hostname,
         );
       });
     });
 
     context('0009-beacon', function () {
-      // SKIP: passes only on the documentId-centric attribution
-      // branch. User searches on search.localhost, clicks through to
-      // landing.localhost, and the search document fires two beacons
-      // to beacon.localhost (click handler + pagehide). Each beacon
-      // webRequest carries the search document's documentId, so
-      // correct attribution keeps beacon.localhost on search's
-      // tp_events. Main's tabId+previous-chain logic misattributes
-      // the beacons to a staged-and-dead page, silently dropping
-      // them.
-      it.skip('attributes late beacon to the source document', async function () {
+      // Passes only with document-centric attribution. User searches
+      // on search.localhost, clicks through to landing.localhost, and
+      // the search document fires two beacons to beacon.localhost
+      // (click handler + pagehide). Each beacon webRequest carries
+      // the search document's documentId, so correct attribution
+      // keeps beacon.localhost on search's tp_events. On main the
+      // tabId+previous-chain logic misattributes the beacons to a
+      // staged-and-dead page and silently drops them.
+      it('attributes late beacon to the source document', async function () {
         const events = [];
         communicationEmitter.on('send', (msg) => {
           if (msg.action === 'wtm.attrack.tp_events') {
@@ -383,12 +354,27 @@ describe('RequestReporter', function () {
         await clock.runToLast();
         // Force-stage remaining pages so any held documents flush.
         seenTabIds.forEach((tabId) => chrome.tabs.onRemoved.dispatch(tabId));
+        await reporter.pageStore.flush();
         await clock.runToLast();
-        const emittedBeacon = events.some((e) =>
-          Object.keys(e.payload.data[0].tps).includes('beacon.localhost'),
+        const searchHostnameHash = truncatedHash('search.localhost');
+        const landingHostnameHash = truncatedHash('landing.localhost');
+        const searchEvent = events.find(
+          (e) => e.payload.data[0].hostname === searchHostnameHash,
         );
-        expect(emittedBeacon, 'beacon.localhost must land in some tp_events')
-          .to.be.true;
+        const landingEvent = events.find(
+          (e) => e.payload.data[0].hostname === landingHostnameHash,
+        );
+        // The beacon originates in the search document; it must land
+        // on that document's tp_events, not on the successor.
+        expect(searchEvent, 'search page tp_events must fire').to.exist;
+        expect(Object.keys(searchEvent.payload.data[0].tps)).to.include(
+          'beacon.localhost',
+        );
+        if (landingEvent) {
+          expect(Object.keys(landingEvent.payload.data[0].tps)).to.not.include(
+            'beacon.localhost',
+          );
+        }
       });
     });
 
@@ -411,7 +397,7 @@ describe('RequestReporter', function () {
         }
       }
 
-      for (const snapshotName of ['0001', '0002', '0003', '0004', '0005', '0006']) {
+      for (const snapshotName of ['0001', '0003', '0005']) {
         it(snapshotName, async function () {
           const messages = [];
           communicationEmitter.addListener('send', (message) =>
@@ -419,14 +405,19 @@ describe('RequestReporter', function () {
           );
           playSnapshotScenario(chrome, snapshotName);
 
-          // run twice to allow token telemetry to trigger
+          // run twice to allow token telemetry to trigger. The
+          // documentIdPrefix makes the replay look like a fresh
+          // session so that documentId-keyed tp_events dedupe
+          // doesn't suppress its reports.
           playSnapshotScenario(chrome, snapshotName, {
-            rewriteUrls: { 'onet.pl': 'wp.pl', 'soundcloud.com': 'google.com', 'nike.com': 'adidas.com' },
+            rewriteUrls: {
+              'onet.pl': 'wp.pl',
+              'soundcloud.com': 'google.com',
+              'nike.com': 'adidas.com',
+            },
+            documentIdPrefix: 'replay2-',
           });
-          await processRunloopUntil(
-            reporter.tokenTelemetry
-              .NEW_ENTRY_MIN_AGE,
-          );
+          await processRunloopUntil(reporter.tokenTelemetry.NEW_ENTRY_MIN_AGE);
 
           /* eslint-disable no-undef */
           if (

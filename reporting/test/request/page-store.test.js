@@ -10,7 +10,7 @@
  */
 
 import chrome from 'sinon-chrome';
-import { mock, match } from 'sinon';
+import { mock } from 'sinon';
 import { expect } from 'chai';
 
 import PageStore from '../../src/request/page-store.js';
@@ -25,6 +25,7 @@ describe('PageStore', function () {
     chrome.flush();
     chrome.storage.session.get.yields({});
     chrome.tabs.query.returns([]);
+    chrome.webNavigation.getAllFrames.resolves([]);
   });
 
   after(function () {
@@ -32,123 +33,157 @@ describe('PageStore', function () {
     delete globalThis.chrome;
   });
 
-  it('starts with empty tabs', async function () {
+  it('starts with empty store', async function () {
     const store = new PageStore({});
     await store.init();
     expect(store.checkIfEmpty()).to.be.true;
   });
 
-  context('on chrome.tabs.onCreated', function () {
-    it('creates a page', async function () {
-      const store = new PageStore({});
-      await store.init();
-      const tab = { id: 1 };
-      chrome.tabs.onCreated.dispatch(tab);
-
-      expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
-      ).to.deep.include({
-        id: tab.id,
+  context('documentId attribution', function () {
+    async function commit(store, { tabId, documentId, url }) {
+      chrome.webNavigation.onCommitted.dispatch({
+        tabId,
+        frameId: 0,
+        documentId,
+        url,
       });
-    });
-  });
-
-  context('on chrome.tabs.onUpdated', function () {
-    it('creates a page', async function () {
-      const store = new PageStore({});
-      await store.init();
-      const tab = { id: 1 };
-      chrome.tabs.onUpdated.dispatch(tab.id, {}, tab);
-      expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
-      ).to.deep.include({
-        id: tab.id,
+      chrome.webNavigation.onCompleted.dispatch({
+        tabId,
+        frameId: 0,
+        documentId,
       });
-    });
+    }
 
-    it('updates a page', async function () {
-      const store = new PageStore({});
+    it('resolves a request to the page owning its documentId', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
       await store.init();
-      const tab = { id: 1 };
-      chrome.tabs.onCreated.dispatch(tab);
-      expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
-      ).to.deep.include({
-        id: tab.id,
+      const tabId = 1;
+      const documentId = 'DOC-1';
+      await commit(store, {
+        tabId,
+        documentId,
+        url: 'https://source.test/',
       });
-      expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
-      ).to.have.property('url', undefined);
-      chrome.tabs.onUpdated.dispatch(tab.id, { url: 'about:blank' }, tab);
-      expect(
-        store.getPageForRequest({ tabId: tab.id, frameId: 0 }),
-      ).to.have.property('url', 'about:blank');
-    });
-  });
-
-  context('on chrome.webNavigation.onBeforeNavigate', function () {
-    it('creates a page', async function () {
-      const store = new PageStore({});
-      await store.init();
-      const details = { tabId: 1, frameId: 0, url: 'about:blank' };
-      chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(store.getPageForRequest(details)).to.deep.include({
-        id: details.tabId,
-        url: details.url,
+      const page = store.getPageForRequest({
+        tabId,
+        frameId: 0,
+        documentId,
+        type: 'script',
+        url: 'https://tracker.test/a.js',
       });
+      expect(page).to.include({ url: 'https://source.test/', documentId });
     });
 
-    it('stages the page', async function () {
+    it('keeps the document available so late beacons attribute to the source', async function () {
       const listener = mock();
       const store = new PageStore({ notifyPageStageListeners: listener });
       await store.init();
-      const details = {
-        tabId: 1,
-        frameId: 0,
-        url: 'about:blank',
-        timeStamp: Date.now(),
-      };
-      chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(listener).to.not.have.been.called;
-      const page = store.getPageForRequest(details);
+      const tabId = 1;
+      const sourceDoc = 'DOC_SOURCE';
+      const landingDoc = 'DOC_LANDING';
 
-      // sets PAGE_LOADING_STATE.COMPLETE;
-      chrome.webNavigation.onCompleted.dispatch(details);
-
-      chrome.webNavigation.onBeforeNavigate.dispatch({
-        ...details,
-        timeStamp: details.timeStamp + 300,
+      await commit(store, {
+        tabId,
+        documentId: sourceDoc,
+        url: 'https://source.test/',
       });
-      expect(listener).to.have.been.calledWith(
-        match({
-          id: page.id,
-          url: details.url,
-          created: details.timeStamp,
-        }),
-      );
+      // Navigate to landing — source is NOT emitted, just kept in
+      // storage alongside the new document.
+      await commit(store, {
+        tabId,
+        documentId: landingDoc,
+        url: 'https://landing.test/',
+      });
+      expect(listener).to.not.have.been.called;
+
+      // A late beacon carrying the source document's documentId
+      // resolves to the source page, not to landing.
+      const beaconPage = store.getPageForRequest({
+        tabId,
+        frameId: 0,
+        documentId: sourceDoc,
+        type: 'ping',
+        url: 'https://analytics.test/beacon',
+      });
+      expect(beaconPage).to.not.be.null;
+      expect(beaconPage.documentId).to.equal(sourceDoc);
+      expect(beaconPage.url).to.equal('https://source.test/');
     });
 
-    it('ignore duplicates', async function () {
+    it('bfcache re-commit does not create a second record for the same documentId', async function () {
       const listener = mock();
       const store = new PageStore({ notifyPageStageListeners: listener });
       await store.init();
-      const details = {
+      const tabId = 1;
+      const sourceDoc = 'DOC_SOURCE';
+      const landingDoc = 'DOC_LANDING';
+
+      await commit(store, {
+        tabId,
+        documentId: sourceDoc,
+        url: 'https://source.test/',
+      });
+      await commit(store, {
+        tabId,
+        documentId: landingDoc,
+        url: 'https://landing.test/',
+      });
+      // Back button — source's documentId re-commits.
+      await commit(store, {
+        tabId,
+        documentId: sourceDoc,
+        url: 'https://source.test/',
+      });
+      // The source page was never emitted on the way out, nothing
+      // has been reported yet.
+      expect(listener).to.not.have.been.called;
+      // The store has exactly one page per unique documentId, not
+      // a duplicated record from the re-commit.
+      const resolved = store.getPageForRequest({
+        tabId,
+        frameId: 0,
+        documentId: sourceDoc,
+        type: 'script',
+        url: 'https://t.test/a.js',
+      });
+      expect(resolved.documentId).to.equal(sourceDoc);
+    });
+
+    it('drops requests from a non-active document (prerender)', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
+      await store.init();
+      const page = store.getPageForRequest({
         tabId: 1,
         frameId: 0,
-        url: 'about:blank',
-        timeStamp: Date.now(),
-      };
-      chrome.webNavigation.onBeforeNavigate.dispatch(details);
-      expect(listener).to.not.have.been.called;
-
-      // sets PAGE_LOADING_STATE.COMPLETE;
-      chrome.webNavigation.onCompleted.dispatch(details);
-
-      chrome.webNavigation.onBeforeNavigate.dispatch({
-        ...details,
-        timeStamp: details.timeStamp + 1,
+        documentId: 'DOC_PRERENDER',
+        documentLifecycle: 'prerender',
+        type: 'script',
+        url: 'https://tracker.test/a.js',
       });
-      expect(listener).to.not.have.been.called;
+      expect(page).to.be.null;
+    });
+
+    it('falls back to parentDocumentId for a sub-frame request whose commit has not fired yet', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
+      await store.init();
+      const tabId = 1;
+      const rootDoc = 'DOC_ROOT';
+      await commit(store, {
+        tabId,
+        documentId: rootDoc,
+        url: 'https://parent.test/',
+      });
+      // Sub-frame webRequest fires BEFORE its own onCommitted.
+      const page = store.getPageForRequest({
+        tabId,
+        frameId: 5,
+        documentId: 'DOC_SUB',
+        parentDocumentId: rootDoc,
+        type: 'sub_frame',
+        url: 'https://iframe.test/',
+      });
+      expect(page).to.not.be.null;
+      expect(page.documentId).to.equal(rootDoc);
     });
   });
 });

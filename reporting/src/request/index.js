@@ -39,9 +39,11 @@ import {
   checkValidContext,
 } from './steps/check-context.js';
 import PageStore from './page-store.js';
+import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
+const REPORTED_DOCUMENTS_TTL = 5 * 60 * 1000;
 
 function hasBlockingWebRequest() {
   return chrome.runtime
@@ -86,6 +88,12 @@ export default class RequestReporter {
     this.whitelistedRequestCache = new Set();
     this.pageStore = new PageStore({
       notifyPageStageListeners: this.onPageStaged.bind(this),
+    });
+    // Dedupe tp_events by root documentId so a bfcache-restored page
+    // (same documentId, fresh page record) isn't reported twice.
+    this.reportedDocuments = new ChromeStorageMap({
+      storageKey: 'wtm-request-reporting:reported-documents',
+      ttlInMs: REPORTED_DOCUMENTS_TTL,
     });
 
     this.ready = false;
@@ -251,6 +259,7 @@ export default class RequestReporter {
       DAY_CHANGE_INTERVAL,
     );
 
+    await this.reportedDocuments.isReady;
     await this.pageStore.init();
 
     this.pageLogger = new PageLogger(this.config.placeHolder);
@@ -719,6 +728,9 @@ export default class RequestReporter {
 
   onPageStaged(page) {
     if (page.state === 'complete' && !page.isPrivate && !page.isPrivateServer) {
+      if (this.reportedDocuments.has(page.documentId)) {
+        return;
+      }
       const payload = buildPageLoadObject(page);
       if (
         payload.scheme.startsWith('http') &&
@@ -728,6 +740,7 @@ export default class RequestReporter {
           action: 'wtm.attrack.tp_events',
           payload: [payload],
         });
+        this.reportedDocuments.set(page.documentId, 1);
       }
     }
   }
