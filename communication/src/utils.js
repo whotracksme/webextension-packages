@@ -13,20 +13,21 @@
  * Use case: when running object through JSON.stringify, it
  * should not be distinguishable in which order the object keys
  * where added.
- *
- * Note: The current implement only operates on the first level.
- * In our context, that should be suffient, since
- * anonymous-communication will not add nested structures.
- * The only nested structure is the payload, which means the
- * message creator will be responsible for the ordering.
- *
- * Should that become a burden, we could extend this function
- * to recursively sort the object keys.
  */
 export function sortObjectKeys(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys);
+  }
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
   const sortByKeys = (x, y) => {
     if (x[0] === y[0]) return 0;
     return x[0] < y[0] ? -1 : 1;
   };
-  return Object.fromEntries(Object.entries(obj).sort(sortByKeys));
+  return Object.fromEntries(
+    Object.entries(obj)
+      .sort(sortByKeys)
+      .map(([k, v]) => [k, sortObjectKeys(v)]),
+  );
 }

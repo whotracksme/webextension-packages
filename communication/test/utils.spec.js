@@ -41,6 +41,80 @@ describe('#sortObjectKeys', function () {
     );
   });
 
+  describe('should handle primitive values', function () {
+    for (const x of [
+      true,
+      false,
+      undefined,
+      null,
+      0,
+      1,
+      1.23,
+      '',
+      'foo',
+      // not primitive, but include:
+      [],
+      {},
+    ]) {
+      it(`- <<${x}>>`, function () {
+        const { x: xAfter } = sortObjectKeys({ x });
+        expect(xAfter).to.eql(x);
+      });
+
+      it(`- [${x}]`, function () {
+        const { x: xAfter } = sortObjectKeys({ x: [x] });
+        expect(xAfter).to.eql([x]);
+      });
+    }
+  });
+
+  it('should sort keys in nested structures', function () {
+    const obj1 = {
+      payload: {
+        paused: false,
+        mode: 'default',
+      },
+    };
+    const obj2 = {
+      payload: {
+        mode: 'default',
+        paused: false,
+      },
+    };
+
+    const obj1Json = JSON.stringify(sortObjectKeys(obj1));
+    const obj2Json = JSON.stringify(sortObjectKeys(obj2));
+    expect(obj1Json).to.eql(obj2Json);
+  });
+
+  it('should sort numeric-string keys in numeric order', function () {
+    const obj = {
+      payload: {
+        r: {
+          '11': { foo: 42, bar: null },
+          '10': { foo: 42, bar: null },
+          '2': { foo: 42, bar: null },
+          '1': { foo: 42, bar: null },
+          '0': { foo: 42, bar: null },
+        },
+      },
+    };
+    const objJson = JSON.stringify(sortObjectKeys(obj));
+
+    const expectedJson = JSON.stringify({
+      payload: {
+        r: {
+          '0': { bar: null, foo: 42 },
+          '1': { bar: null, foo: 42 },
+          '2': { bar: null, foo: 42 },
+          '10': { bar: null, foo: 42 },
+          '11': { bar: null, foo: 42 },
+        },
+      },
+    });
+    expect(objJson).to.eql(expectedJson);
+  });
+
   it('should support object with "toString" property', function () {
     // Note: used to throw (found by QuickCheck)
     const obj1 = {
