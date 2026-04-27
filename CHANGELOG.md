@@ -1,3 +1,24 @@
+# v8.0.2 (Mon Apr 27 2026)
+
+#### 🐛 Bug Fix
+
+- Guarantee deterministic key orders in messages with nested payloads [#200](https://github.com/whotracksme/webextension-packages/pull/200) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Refresh request-pipeline fixtures to 2026-04-23 Chromium recordings [#198](https://github.com/whotracksme/webextension-packages/pull/198) ([@chrmod](https://github.com/chrmod))
+
+#### 📝 Documentation
+
+- Fixed comment (session storage, not local storage) [#199](https://github.com/whotracksme/webextension-packages/pull/199) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v8.0.1 (Tue Apr 21 2026)
 
 #### 🐛 Bug Fix
