@@ -110,7 +110,13 @@ function sanitizePart(str) {
 // Phase 2: text is fixed, but not yet truncated.
 function sanitizePart__fixedButNotYetTruncated__(str) {
   if (str.length >= MAX_TEXT_LENGTH) {
-    const truncated = str.slice(0, MAX_TEXT_LENGTH - MASKED.length);
+    let splitAt = MAX_TEXT_LENGTH - MASKED.length;
+    if (splitsSurrogatePair(str, splitAt)) {
+      // avoid splitting between a unicode pair, since it will result in broken text
+      splitAt -= 1;
+    }
+
+    const truncated = str.slice(0, splitAt);
     logger.debug('Truncating long text segment:', str, '->', truncated);
     const sanitized = sanitizePart__fixedText__(truncated);
     return sanitized.endsWith(MASKED) ? sanitized : sanitized + MASKED;
