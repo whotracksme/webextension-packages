@@ -83,6 +83,12 @@ function sanitizePart(str) {
           str,
         );
         decodedStr = undefined;
+      } else if (hasInvalidSurrogates(decodedStr)) {
+        logger.warn(
+          'Ignoring edge case where the decoded string contains invalid surrogates',
+          str,
+        );
+        decodedStr = undefined;
       }
     } catch {
       // ignore (not well formed)
@@ -200,6 +206,10 @@ function maskHashes(str) {
 
   for (let size = str.length; size >= MIN_SIZE_TO_BE_MASKED; size -= 1) {
     for (let start = str.length - size; start >= 0; start -= 1) {
+      if (splitsSurrogatePair(str, start)) {
+        // would result in broken encodings
+        continue;
+      }
       const substring = str.slice(start, start + size);
       if (shouldBeMasked(substring)) {
         let prefix = '';
@@ -310,6 +320,45 @@ function skipHashDetection(str) {
   }
 
   return false;
+}
+
+function isHighSurrogate(code) {
+  return (code & 0xfc00) === 0xd800;
+}
+
+function isLowSurrogate(code) {
+  return (code & 0xfc00) === 0xdc00;
+}
+
+function hasInvalidSurrogates(str) {
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (isHighSurrogate(code)) {
+      if (!isLowSurrogate(str.charCodeAt(i + 1))) {
+        // high surrogate must be followed by a low surrogate
+        return true;
+      }
+      i++; // skip the low surrogate (already validated)
+    } else if (isLowSurrogate(code)) {
+      // low surrogate without a preceding high surrogate
+      return true;
+    }
+  }
+  return false;
+}
+
+// If we split an UTF-16 string in the middle of a surrogate pair,
+// it results in broken text. This function detects it.
+function splitsSurrogatePair(str, pos) {
+  if (pos <= 0 || pos >= str.length) {
+    // spliting at the start or end can never break
+    return false;
+  }
+
+  return (
+    isHighSurrogate(str.charCodeAt(pos - 1)) &&
+    isLowSurrogate(str.charCodeAt(pos))
+  );
 }
 
 // visible for testing

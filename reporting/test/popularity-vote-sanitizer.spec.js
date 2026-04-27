@@ -542,6 +542,14 @@ describe('#sanitizePathSegment', function () {
     }
   });
 
+  describe('should not crash on arbitrary URL path segments', function () {
+    for (const segment of ['%F0%90%80%80%F0%90%80%82%F0%90%A0%81IbFe']) {
+      it(`- <<${segment}>>`, function () {
+        sanitizePathSegment(segment); // should not throw
+      });
+    }
+  });
+
   describe('[property based testing]', function () {
     it('should only remove, but never add characters', function () {
       fc.assert(
