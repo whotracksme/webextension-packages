@@ -140,6 +140,17 @@ function playEvents(chrome, events, options = {}) {
             }
           }
         }
+        // Replaying with a documentIdPrefix lets the test simulate a
+        // fresh browsing session: identical events, but documentIds
+        // the reporter has never seen, so documentId-keyed dedupe
+        // doesn't suppress the replay.
+        if (options.documentIdPrefix) {
+          for (const prop of ['documentId', 'parentDocumentId']) {
+            if (event[prop]) {
+              event[prop] = options.documentIdPrefix + event[prop];
+            }
+          }
+        }
         return event;
       });
       if (events.api === 'tabs' && event.event === 'onCreated') {
