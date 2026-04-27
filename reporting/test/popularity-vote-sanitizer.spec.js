@@ -550,26 +550,56 @@ describe('#sanitizePathSegment', function () {
     }
   });
 
+  describe('should safely truncate long strings', function () {
+    // %F0%9F%90%80 decodes to U+1F400, which JavaScript stores as the
+    // surrogate pair '🐀' (two UTF-16 code units). By growing
+    // the prefix one char at a time, we eventually reach a length at
+    // which the internal truncation at MAX_TEXT_LENGTH - MASKED.length
+    // lands between the high and low surrogate of that pair. The
+    // truncated text then carries a lone surrogate, which
+    // `encodeURIComponent` rejects with "URI malformed" once the
+    // backport step runs.
+    it('should not throw when a surrogate pair straddles the truncation boundary', function () {
+      for (let i = 0; i < 300; i++) {
+        sanitizePathSegment('a'.repeat(i) + '%F0%9F%90%80aaa');
+      }
+    });
+  });
+
   describe('[property based testing]', function () {
+    function checkSanitizedPathSegment(pathSegment) {
+      const sanitized = sanitizePathSegment(pathSegment);
+      if (!sanitized.includes('#??#')) {
+        return sanitized === pathSegment;
+      }
+      if (sanitized.length > pathSegment.length) {
+        return false;
+      }
+      const nonMasked = sanitized.replaceAll('#??#', '');
+      return textCanBeDerivedByRemovingChars({
+        fullText: pathSegment,
+        reducedTo: nonMasked,
+      });
+    }
+
     it('should only remove, but never add characters', function () {
       fc.assert(
         fc.property(fc.webUrl(), (url) => {
           const { pathname } = new URL(url);
           for (const pathSegment of pathname.split('/').filter((x) => x)) {
-            const sanitized = sanitizePathSegment(pathSegment);
-            if (!sanitized.includes('#??#')) {
-              return sanitized === pathSegment;
-            }
-            if (sanitized.length > pathSegment.length) {
-              return false;
-            }
-            const nonMasked = sanitized.replaceAll('#??#', '');
-            return textCanBeDerivedByRemovingChars({
-              fullText: pathSegment,
-              reducedTo: nonMasked,
-            });
+            return checkSanitizedPathSegment(pathSegment);
           }
         }),
+      );
+    });
+
+    it('should handle arbitrary, long strings', function () {
+      fc.assert(
+        fc.property(
+          fc.string({ unit: 'binary', minLength: 1, maxLength: 2000 }),
+          checkSanitizedPathSegment,
+        ),
+        { numRuns: 5 },
       );
     });
   });
