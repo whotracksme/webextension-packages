@@ -212,7 +212,10 @@ function maskHashes(str) {
 
   for (let size = str.length; size >= MIN_SIZE_TO_BE_MASKED; size -= 1) {
     for (let start = str.length - size; start >= 0; start -= 1) {
-      if (splitsSurrogatePair(str, start)) {
+      if (
+        splitsSurrogatePair(str, start) ||
+        splitsSurrogatePair(str, start + size)
+      ) {
         // would result in broken encodings
         continue;
       }
