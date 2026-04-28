@@ -543,7 +543,15 @@ describe('#sanitizePathSegment', function () {
   });
 
   describe('should not crash on arbitrary URL path segments', function () {
-    for (const segment of ['%F0%90%80%80%F0%90%80%82%F0%90%A0%81IbFe']) {
+    for (const segment of [
+      '%F0%90%80%80%F0%90%80%82%F0%90%A0%81IbFe',
+      // Two adjacent percent-encoded surrogate pairs feeding maskHashes.
+      // Without an end-boundary check, maskHashes may select a substring
+      // whose end falls between a high and low surrogate, and the lone
+      // low surrogate then survives into encodeURIComponent.
+      'b---344%F0%9F%90%80%F0%9F%90%818880-88e',
+      '01-%F0%9F%90%80-687%F0%9F%90%80ca%F0%9F%90%80-%F0%9F%90%80b-0245',
+    ]) {
       it(`- <<${segment}>>`, function () {
         sanitizePathSegment(segment); // should not throw
       });
@@ -600,6 +608,34 @@ describe('#sanitizePathSegment', function () {
           checkSanitizedPathSegment,
         ),
         { numRuns: 5 },
+      );
+    });
+
+    // Many real URLs contain percent-encoded astral characters (emoji,
+    // historic scripts, etc.), which decode into UTF-16 surrogate pairs.
+    // This generator concentrates on that mix of percent encodings,
+    // ASCII letters and digits, and dashes — the conditions under which
+    // the masking pipeline previously produced lone surrogates.
+    it('should handle inputs rich in percent-encoded surrogate pairs', function () {
+      const surrogatePairEncodings = fc.constantFrom(
+        '%F0%9F%90%80', // 🐀 U+1F400
+        '%F0%9F%90%81', // 🐁 U+1F401
+        '%F0%90%80%80', // U+10000
+        '%F0%90%A0%81', // U+10801
+      );
+      const fragment = fc.oneof(
+        surrogatePairEncodings,
+        fc.constantFrom('a', 'b', 'c', 'd', 'e', 'f', '-'),
+        fc.integer({ min: 0, max: 9 }).map(String),
+      );
+      fc.assert(
+        fc.property(
+          fc
+            .array(fragment, { minLength: 1, maxLength: 50 })
+            .map((xs) => xs.join('')),
+          checkSanitizedPathSegment,
+        ),
+        { numRuns: 200 },
       );
     });
   });
