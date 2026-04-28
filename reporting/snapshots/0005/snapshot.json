@@ -5,7 +5,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -16,7 +16,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456092505,
+          "t": 479940,
           "tps": {
             "encrypted-tbn0.gstatic.com": {
               "c": 8,
@@ -81,14 +81,14 @@
               "type_11": 1
             },
             "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 2,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_204": 1,
-              "type_10": 1,
+              "c": 3,
+              "content_length": 3,
+              "has_post": 2,
+              "has_qs": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_204": 3,
+              "type_10": 2,
               "type_3": 1
             },
             "www.gstatic.com": {
@@ -138,7 +138,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -149,19 +149,20 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456106627,
+          "t": 479940,
           "tps": {
             "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
               "type_11": 4
             },
             "c.go-mpulse.net": {
@@ -229,16 +230,6 @@
               "scheme_https": 1,
               "status_200": 1,
               "type_2": 1
-            },
-            "www.googleadservices.com": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 1,
-              "status_204": 2,
-              "type_10": 1
             }
           },
           "triggeringTree": {},
@@ -260,7 +251,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -271,7 +262,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456117381,
+          "t": 479940,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -341,17 +332,17 @@
               "type_11": 3
             },
             "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
+              "c": 6,
+              "content_length": 14575,
+              "has_post": 2,
+              "has_qs": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
+              "resp_ob": 6,
+              "scheme_https": 6,
               "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
+              "status_204": 4,
+              "type_10": 2,
               "type_2": 2,
               "type_3": 2
             },
@@ -701,7 +692,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -712,7 +703,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456127382,
+          "t": 479940,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -770,30 +761,31 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
               "type_11": 4
             },
             "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
+              "c": 6,
+              "content_length": 14575,
+              "has_post": 2,
+              "has_qs": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
+              "resp_ob": 6,
+              "scheme_https": 6,
               "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
+              "status_204": 4,
+              "type_10": 2,
               "type_2": 2,
               "type_3": 2
             },
@@ -947,6 +939,18 @@
               "status_200": 3,
               "type_11": 1,
               "type_2": 2
+            },
+            "region1.analytics.google.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_post": 2,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_204": 2,
+              "type_11": 2
             },
             "reporting.cdndex.io": {
               "c": 1,
@@ -1150,7 +1154,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -1161,7 +1165,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456092505,
+          "t": 479940,
           "tps": {
             "encrypted-tbn0.gstatic.com": {
               "c": 8,
@@ -1234,14 +1238,14 @@
               "type_1": 1
             },
             "www.googleadservices.com": {
-              "c": 2,
-              "content_length": 1,
-              "has_post": 1,
-              "has_qs": 2,
-              "resp_ob": 1,
-              "scheme_https": 2,
-              "status_204": 1,
-              "type_10": 1,
+              "c": 3,
+              "content_length": 3,
+              "has_post": 2,
+              "has_qs": 3,
+              "resp_ob": 3,
+              "scheme_https": 3,
+              "status_204": 3,
+              "type_10": 2,
               "type_3": 1
             },
             "www.gstatic.com": {
@@ -1283,7 +1287,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -1294,19 +1298,20 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456106627,
+          "t": 479940,
           "tps": {
             "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
               "type_11": 4
             },
             "c.go-mpulse.net": {
@@ -1374,16 +1379,6 @@
               "scheme_https": 1,
               "status_200": 1,
               "type_2": 1
-            },
-            "www.googleadservices.com": {
-              "c": 1,
-              "content_length": 2,
-              "has_post": 1,
-              "has_qs": 1,
-              "resp_ob": 2,
-              "scheme_https": 1,
-              "status_204": 2,
-              "type_10": 1
             }
           },
           "triggeringTree": {},
@@ -1405,7 +1400,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -1416,7 +1411,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456117381,
+          "t": 479940,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -1486,17 +1481,17 @@
               "type_11": 3
             },
             "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
+              "c": 6,
+              "content_length": 14575,
+              "has_post": 2,
+              "has_qs": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
+              "resp_ob": 6,
+              "scheme_https": 6,
               "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
+              "status_204": 4,
+              "type_10": 2,
               "type_2": 2,
               "type_3": 2
             },
@@ -1846,7 +1841,7 @@
       "ctry": "en",
       "data": [
         {
-          "active": 0,
+          "active": 479940,
           "c": 1,
           "counter": 0,
           "frames": {},
@@ -1857,7 +1852,7 @@
           "redirects": [],
           "redirectsPlaceHolder": [],
           "scheme": "https",
-          "t": -1732456127382,
+          "t": 479940,
           "tps": {
             "4171764.fls.doubleclick.net": {
               "c": 3,
@@ -1915,30 +1910,31 @@
               "type_2": 1
             },
             "bam.nr-data.net": {
-              "c": 4,
-              "content_length": 203,
-              "has_post": 4,
-              "has_qs": 4,
-              "referer_leak_path": 4,
-              "referer_leak_site": 4,
-              "resp_ob": 4,
-              "scheme_https": 4,
-              "status_200": 2,
-              "status_204": 2,
+              "c": 8,
+              "content_length": 276,
+              "has_post": 8,
+              "has_qs": 8,
+              "referer_leak_path": 8,
+              "referer_leak_site": 8,
+              "resp_ob": 8,
+              "scheme_https": 8,
+              "status_200": 5,
+              "status_204": 3,
+              "type_10": 4,
               "type_11": 4
             },
             "bat.bing.com": {
-              "c": 5,
-              "content_length": 14574,
-              "has_post": 1,
-              "has_qs": 3,
+              "c": 6,
+              "content_length": 14575,
+              "has_post": 2,
+              "has_qs": 4,
               "referer_leak_path": 2,
               "referer_leak_site": 2,
-              "resp_ob": 5,
-              "scheme_https": 5,
+              "resp_ob": 6,
+              "scheme_https": 6,
               "status_200": 2,
-              "status_204": 3,
-              "type_10": 1,
+              "status_204": 4,
+              "type_10": 2,
               "type_2": 2,
               "type_3": 2
             },
@@ -2092,6 +2088,18 @@
               "status_200": 3,
               "type_11": 1,
               "type_2": 2
+            },
+            "region1.analytics.google.com": {
+              "c": 2,
+              "content_length": 2,
+              "has_post": 2,
+              "has_qs": 2,
+              "referer_leak_path": 2,
+              "referer_leak_site": 2,
+              "resp_ob": 2,
+              "scheme_https": 2,
+              "status_204": 2,
+              "type_11": 2
             },
             "reporting.cdndex.io": {
               "c": 1,
@@ -2673,6 +2681,10 @@
             ],
             [
               "b019d16305f0eca0cb84d5797c474770",
+              true
+            ],
+            [
+              "843d03bdbfa808e9f800c4c0e0275ddb",
               true
             ]
           ],
@@ -4959,6 +4971,10 @@
             ],
             [
               "b019d16305f0eca0cb84d5797c474770",
+              true
+            ],
+            [
+              "843d03bdbfa808e9f800c4c0e0275ddb",
               true
             ]
           ],

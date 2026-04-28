@@ -120,6 +120,20 @@ describe('request/index', function () {
 
   function simulatePageLoad(pageSpec) {
     chrome.tabs.onCreated.dispatch(pageSpec.tab);
+
+    const seen = new Set();
+    for (const req of pageSpec.onBeforeRequest) {
+      if (seen.has(req.documentId)) continue;
+      seen.add(req.documentId);
+      chrome.webNavigation.onCommitted.dispatch({
+        tabId: req.tabId,
+        frameId: req.frameId,
+        documentId: req.documentId,
+        parentDocumentId: req.parentDocumentId,
+        url: req.url,
+      });
+    }
+
     return {
       onBeforeRequest: pageSpec.onBeforeRequest.map(function (reqData) {
         const response = attrack.onBeforeRequest(reqData);
@@ -264,15 +278,26 @@ describe('request/index', function () {
       attrack.config.tokenDomainCountThreshold = 0; // block first time
     });
 
-    it('removes all occurances of uid in the request', function () {
+    function commitTab() {
       chrome.tabs.onCreated.dispatch({
         id: 34,
         url: 'http://cliqztest.com/',
       });
+      chrome.webNavigation.onCommitted.dispatch({
+        tabId: 34,
+        frameId: 0,
+        documentId: 'doc-34-0',
+        url: 'http://cliqztest.com/',
+      });
+    }
+
+    it('removes all occurances of uid in the request', function () {
+      commitTab();
       const response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
+        documentId: 'doc-34-0',
         method: 'GET',
         type: 'xmlhttprequest',
         url: `http://tracker.com/track;uid=${uid}?uid2=${uid}&encuid=${encodeURIComponent(
@@ -288,14 +313,12 @@ describe('request/index', function () {
     });
 
     it('removes also after subsequent redirect with same uid', function () {
-      chrome.tabs.onCreated.dispatch({
-        id: 34,
-        url: 'http://cliqztest.com/',
-      });
+      commitTab();
       let response = attrack.onBeforeRequest({
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
+        documentId: 'doc-34-0',
         method: 'GET',
         type: 'xmlhttprequest',
         url: `http://tracker.com/track;uid=${uid}?uid2=${uid}&encuid=${encodeURIComponent(
@@ -314,6 +337,7 @@ describe('request/index', function () {
         tabId: 34,
         frameId: 0,
         parentFrameId: -1,
+        documentId: 'doc-34-0',
         method: 'GET',
         type: 'xmlhttprequest',
         url: `http://tracker.com/track;uid=cliqz.com/tracking&uid2=cliqz.com/tracking&uid=${uid}?uid2=${uid}&encuid=${encodeURIComponent(
