@@ -76,7 +76,6 @@ export default class RequestReporter {
     }
     this.dryRunMode = dryRunMode;
     this.VERSION = VERSION;
-    this.LOG_KEY = 'attrack';
     this.debug = false;
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
@@ -158,14 +157,6 @@ export default class RequestReporter {
 
   isQSEnabled() {
     return this.config.qsEnabled;
-  }
-
-  isFingerprintingEnabled() {
-    return this.config.fingerprintEnabled;
-  }
-
-  isReferrerEnabled() {
-    return this.config.referrerEnabled;
   }
 
   telemetry(message) {
@@ -322,10 +313,7 @@ export default class RequestReporter {
     if (checkValidContext(state) === false) {
       return response.toWebRequestResponse();
     }
-    // oAuthDetector.checkMainFrames
-    if (this.oAuthDetector.checkMainFrames(state) === false) {
-      return response.toWebRequestResponse();
-    }
+    this.oAuthDetector.checkMainFrames(state);
     // checkIsMainDocument
     if (!state.isMainFrame === false) {
       return response.toWebRequestResponse();
