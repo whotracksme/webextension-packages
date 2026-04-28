@@ -118,6 +118,7 @@ export default class PageStore {
   }
 
   checkIfEmpty() {
+    // this operation can potentially be expensive
     return this.#pages.countNonExpiredKeys() === 0;
   }
 
@@ -134,7 +135,8 @@ export default class PageStore {
   async flush() {
     const live = await this.#collectLiveDocumentIds();
     const now = Date.now();
-    for (const page of [...this.#pages.values()]) {
+    this.#lastFlush = now;
+    for (const page of this.#pages.values()) {
       if (page.documentIds.some((d) => live.has(d))) {
         if (page.stageAfter !== null) {
           page.stageAfter = null;
@@ -152,17 +154,17 @@ export default class PageStore {
   async #collectLiveDocumentIds() {
     const live = new Set();
     for (const tab of await chrome.tabs.query({})) {
-      let frames;
       try {
-        frames = await chrome.webNavigation.getAllFrames({ tabId: tab.id });
+        const frames = await chrome.webNavigation.getAllFrames({
+          tabId: tab.id,
+        });
+        for (const frame of frames) {
+          if (frame.documentId) live.add(frame.documentId);
+        }
       } catch (e) {
         // Tab can disappear between tabs.query and getAllFrames.
         // Skip it — its docs will look gone, which is fine.
         logger.debug('PageStore: getAllFrames failed for tab', tab.id, e);
-        continue;
-      }
-      for (const frame of frames || []) {
-        if (frame.documentId) live.add(frame.documentId);
       }
     }
     return live;
@@ -239,7 +241,8 @@ export default class PageStore {
         this.#pages.set(page.documentId, page);
       }
     }
-    this.#lastFlush = Date.now();
+    // Tab close is a definitive end-of-life signal; flush eagerly
+    // (no throttle) so the page emits before the SW can suspend.
     this.flush().catch((e) =>
       logger.debug('PageStore: flush after tab gone failed', e),
     );
@@ -301,9 +304,7 @@ export default class PageStore {
       page.state = PAGE_LOADING_STATE.COMPLETE;
       this.#pages.set(documentId, page);
     }
-    const now = Date.now();
-    if (now - this.#lastFlush < FLUSH_THROTTLE_MS) return;
-    this.#lastFlush = now;
+    if (Date.now() - this.#lastFlush < FLUSH_THROTTLE_MS) return;
     this.flush().catch((e) => logger.debug('PageStore: flush failed', e));
   };
 
