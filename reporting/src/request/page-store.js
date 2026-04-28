@@ -172,9 +172,7 @@ export default class PageStore {
 
   #stagePage(page) {
     for (const docId of page.documentIds) {
-      if (this.#documentIndex.get(docId) === page) {
-        this.#documentIndex.delete(docId);
-      }
+      this.#documentIndex.delete(docId);
     }
     this.#pages.delete(page.documentId);
     const snapshot = structuredClone(page);
