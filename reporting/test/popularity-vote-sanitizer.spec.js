@@ -543,7 +543,11 @@ describe('#sanitizePathSegment', function () {
   });
 
   describe('should not crash on arbitrary URL path segments', function () {
-    for (const segment of ['%F0%90%80%80%F0%90%80%82%F0%90%A0%81IbFe']) {
+    for (const segment of [
+      '%F0%90%80%80%F0%90%80%82%F0%90%A0%81IbFe',
+      'b---344%F0%9F%90%80%F0%9F%90%818880-88e',
+      '01-%F0%9F%90%80-687%F0%9F%90%80ca%F0%9F%90%80-%F0%9F%90%80b-0245',
+    ]) {
       it(`- <<${segment}>>`, function () {
         sanitizePathSegment(segment); // should not throw
       });
