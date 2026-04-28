@@ -1,3 +1,22 @@
+# v9.0.0 (Tue Apr 28 2026)
+
+#### 💥 Breaking Change
+
+- Request reporter: documentId based attribution [#197](https://github.com/whotracksme/webextension-packages/pull/197) ([@chrmod](https://github.com/chrmod))
+
+#### 🐛 Bug Fix
+
+- Cover another unicode edge case [#201](https://github.com/whotracksme/webextension-packages/pull/201) ([@philipp-classen](https://github.com/philipp-classen))
+- Handle another rate situation where we could end with broken text: [#201](https://github.com/whotracksme/webextension-packages/pull/201) ([@philipp-classen](https://github.com/philipp-classen))
+- Better support for unicode characters. The current fix is not exhaustive, [#201](https://github.com/whotracksme/webextension-packages/pull/201) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v8.0.2 (Mon Apr 27 2026)
 
 #### 🐛 Bug Fix
