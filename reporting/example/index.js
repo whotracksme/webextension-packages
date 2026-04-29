@@ -92,6 +92,7 @@ const urlReporter = new UrlReporter({
 });
 
 const collectedReporterMessages = [];
+let forceFlushInFlight = null;
 
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
@@ -143,47 +144,48 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           collectedReporterMessages.length = 0;
           sendResponse({ ok: true });
         } else if (request.op === 'forceFlushPages') {
-          const realNow = Date.now;
-          let offsetMs = 0;
-          Date.now = () => realNow() + offsetMs;
-          try {
-            // First flush sets each non-live page's stageAfter = now + BFCACHE_TTL.
-            offsetMs = 11 * 60 * 1000;
-            await requestReporter.pageStore.flush();
-            // Second flush must run after that stageAfter to actually stage.
-            offsetMs = 30 * 60 * 1000;
-            await requestReporter.pageStore.flush();
-          } finally {
-            Date.now = realNow;
+          // Serialize concurrent invocations: the bridge re-sends the same
+          // op every 500ms while waiting for a response, so without a guard
+          // two invocations can clobber each other's `Date.now` patch.
+          if (!forceFlushInFlight) {
+            forceFlushInFlight = (async () => {
+              const realNow = Date.now;
+              let offsetMs = 11 * 60 * 1000;
+              Date.now = () => realNow() + offsetMs;
+              try {
+                // First flush sets each non-live page's stageAfter to now + BFCACHE_TTL.
+                await requestReporter.pageStore.flush();
+                // Second flush must run after that stageAfter to actually stage.
+                offsetMs = 30 * 60 * 1000;
+                await requestReporter.pageStore.flush();
+              } finally {
+                Date.now = realNow;
+                forceFlushInFlight = null;
+              }
+            })();
           }
+          await forceFlushInFlight;
           sendResponse({ ok: true });
         } else if (request.op === 'getPages') {
           const tabs = await chrome.tabs.query({});
           const pages = await Promise.all(
             tabs.map(async (tab) => {
-              let frames = [];
+              let documentId;
               try {
-                frames = await chrome.webNavigation.getAllFrames({
+                const frames = await chrome.webNavigation.getAllFrames({
                   tabId: tab.id,
                 });
+                documentId = frames?.find((f) => f.frameId === 0)?.documentId;
               } catch (e) {
-                /* ignore */
+                // tab may have closed between query and getAllFrames
               }
-              const main = frames?.find((f) => f.frameId === 0);
-              const page = main?.documentId
-                ? requestReporter.pageStore.getPageForRequest({
-                    documentId: main.documentId,
-                  })
+              const page = documentId
+                ? requestReporter.pageStore.getPageForRequest({ documentId })
                 : null;
-              const debug = {
+              if (!page) return { tabId: tab.id, tabUrl: tab.url, page: null };
+              return {
                 tabId: tab.id,
                 tabUrl: tab.url,
-                mainDocumentId: main?.documentId || null,
-                framesCount: frames?.length ?? 0,
-              };
-              if (!page) return { ...debug, page: null };
-              return {
-                ...debug,
                 page: {
                   id: page.id,
                   url: page.url,
@@ -214,4 +216,3 @@ const readyPromise = (async () => {
 
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;
-globalThis.readyPromise = readyPromise;

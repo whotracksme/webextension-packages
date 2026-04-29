@@ -48,42 +48,22 @@ async function callExtension(op, args) {
   return result.response;
 }
 
-function lap(label) {
-  const now = Date.now();
-  const dt = lap.last ? now - lap.last : 0;
-  console.log(`[lap] +${dt}ms ${label}`);
-  lap.last = now;
-}
-lap.reset = () => {
-  lap.last = Date.now();
-};
-
 describe('request reporter — tracking attribution', () => {
   before(async () => {
-    lap.reset();
-    lap('start before');
     await browser.url(NEUTRAL_URL);
-    lap('navigated to neutral');
     await callExtension('waitReady');
-    lap('waitReady returned');
   });
 
   beforeEach(async () => {
-    lap.reset();
     await browser.url(NEUTRAL_URL);
-    lap('beforeEach: navigated to neutral');
     await callExtension('resetReporterMessages');
-    lap('beforeEach: reset done');
   });
 
   it('attributes a 1st-party page load to its tab', async () => {
-    lap.reset();
     await browser.url(FIXTURE_URL);
-    lap('test1: navigated to fixture');
     await browser.pause(1500);
 
     const { pages } = await callExtension('getPages');
-    lap('test1: getPages returned');
     const sitePage = pages
       .map((p) => p.page)
       .find((p) => p && p.url && p.url.includes('site.test'));
@@ -96,23 +76,16 @@ describe('request reporter — tracking attribution', () => {
   });
 
   it('emits a tp_events message when the page is staged', async () => {
-    lap.reset();
     await browser.url(FIXTURE_URL);
-    lap('test2: navigated to fixture');
     await browser.pause(2500);
 
     // Navigate away so the fixture's documentId leaves the live set,
     // then force-flush the page store to bypass the BFCACHE TTL.
     await browser.url(NEUTRAL_URL);
-    lap('test2: navigated to neutral');
-    await browser.pause(500);
     await callExtension('forceFlushPages');
-    lap('test2: forceFlush returned');
-    await browser.pause(500);
 
     const { pages } = await callExtension('getPages');
     const { messages } = await callExtension('getReporterMessages');
-    lap('test2: getReporterMessages returned');
     const tpEvents = messages.filter(
       (m) => m && m.action === 'wtm.attrack.tp_events',
     );

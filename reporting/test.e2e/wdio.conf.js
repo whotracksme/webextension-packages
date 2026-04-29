@@ -116,27 +116,11 @@ const baseConfig = {
     // script loads and starts responding to postMessage.
     await browserObj.setTimeout({ script: 60_000 });
     if (browser === 'safari') {
-      browserObj.extensionId = await safariInstallExtension(
-        browserObj,
-        exampleDir,
-      );
-      return;
-    }
-    const result = await browserObj.webExtensionInstall({
-      extensionData: { type: 'path', path: exampleDir },
-    });
-    browserObj.extensionId = result.extension;
-  },
-
-  after: async (_, __, browserObj) => {
-    if (browser === 'safari') return; // session teardown removes it
-    if (!browserObj.extensionId) return;
-    try {
-      await browserObj.webExtensionUninstall({
-        extension: browserObj.extensionId,
+      await safariInstallExtension(browserObj, exampleDir);
+    } else {
+      await browserObj.webExtensionInstall({
+        extensionData: { type: 'path', path: exampleDir },
       });
-    } catch {
-      /* noop */
     }
   },
 
