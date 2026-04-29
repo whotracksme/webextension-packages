@@ -1,3 +1,15 @@
+# v9.0.1 (Wed Apr 29 2026)
+
+#### 🐛 Bug Fix
+
+- Update request reporting protocol version [#205](https://github.com/whotracksme/webextension-packages/pull/205) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v9.0.0 (Tue Apr 28 2026)
 
 #### 💥 Breaking Change
