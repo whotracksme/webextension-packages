@@ -97,8 +97,7 @@ export default class PageStore {
     chrome.tabs.onActivated.addListener(this.#onTabActivated);
     chrome.webNavigation.onCommitted.addListener(this.#onNavigationCommitted);
     chrome.webNavigation.onCompleted.addListener(this.#onNavigationCompleted);
-    // Not available on Firefox Android.
-    chrome.windows?.onFocusChanged?.addListener(this.#onWindowFocusChanged);
+    chrome.windows.onFocusChanged.addListener(this.#onWindowFocusChanged);
   }
 
   unload() {
@@ -114,7 +113,7 @@ export default class PageStore {
     chrome.webNavigation.onCompleted.removeListener(
       this.#onNavigationCompleted,
     );
-    chrome.windows?.onFocusChanged?.removeListener(this.#onWindowFocusChanged);
+    chrome.windows.onFocusChanged.removeListener(this.#onWindowFocusChanged);
   }
 
   checkIfEmpty() {

@@ -45,12 +45,6 @@ const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 const REPORTED_DOCUMENTS_TTL = 5 * 60 * 1000;
 
-function hasBlockingWebRequest() {
-  return chrome.runtime
-    .getManifest()
-    .permissions.includes('webRequestBlocking');
-}
-
 export default class RequestReporter {
   #userAgent;
 
@@ -105,9 +99,6 @@ export default class RequestReporter {
       'requestHeaders',
       'responseHeaders',
     ];
-    if (hasBlockingWebRequest()) {
-      safeOptions.push('blocking');
-    }
     const safeSpecInfoFor = (optionsName) => {
       const options = chrome.webRequest[optionsName];
       if (!options) {
@@ -203,7 +194,6 @@ export default class RequestReporter {
           this.#userAgent = {
             'Chrome': 'chrome',
             'Chromium': 'chrome',
-            'Firefox': 'firefox',
             'Microsoft Edge': 'edge',
             'Opera': 'opera',
             'Safari': 'safari',
