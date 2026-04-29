@@ -91,9 +91,13 @@ const urlReporter = new UrlReporter({
   communication,
 });
 
+const collectedReporterMessages = [];
+let forceFlushInFlight = null;
+
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
   onMessageReady: (msg) => {
+    collectedReporterMessages.push(msg);
     console.log(
       '%c[DRY-RUN] request-reporter message ready:',
       'color: green; font-size: 30px;',
@@ -128,10 +132,84 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
 
     return true;
+  } else if (request.action === 'e2e') {
+    (async () => {
+      try {
+        if (request.op === 'waitReady') {
+          await readyPromise;
+          sendResponse({ ready: true });
+        } else if (request.op === 'getReporterMessages') {
+          sendResponse({ messages: collectedReporterMessages.slice() });
+        } else if (request.op === 'resetReporterMessages') {
+          collectedReporterMessages.length = 0;
+          sendResponse({ ok: true });
+        } else if (request.op === 'forceFlushPages') {
+          // Serialize concurrent invocations: the bridge re-sends the same
+          // op every 500ms while waiting for a response, so without a guard
+          // two invocations can clobber each other's `Date.now` patch.
+          if (!forceFlushInFlight) {
+            forceFlushInFlight = (async () => {
+              const realNow = Date.now;
+              let offsetMs = 11 * 60 * 1000;
+              Date.now = () => realNow() + offsetMs;
+              try {
+                // First flush sets each non-live page's stageAfter to now + BFCACHE_TTL.
+                await requestReporter.pageStore.flush();
+                // Second flush must run after that stageAfter to actually stage.
+                offsetMs = 30 * 60 * 1000;
+                await requestReporter.pageStore.flush();
+              } finally {
+                Date.now = realNow;
+                forceFlushInFlight = null;
+              }
+            })();
+          }
+          await forceFlushInFlight;
+          sendResponse({ ok: true });
+        } else if (request.op === 'getPages') {
+          const tabs = await chrome.tabs.query({});
+          const pages = await Promise.all(
+            tabs.map(async (tab) => {
+              let documentId;
+              try {
+                const frames = await chrome.webNavigation.getAllFrames({
+                  tabId: tab.id,
+                });
+                documentId = frames?.find((f) => f.frameId === 0)?.documentId;
+              } catch (e) {
+                // tab may have closed between query and getAllFrames
+              }
+              const page = documentId
+                ? requestReporter.pageStore.getPageForRequest({ documentId })
+                : null;
+              if (!page) return { tabId: tab.id, tabUrl: tab.url, page: null };
+              return {
+                tabId: tab.id,
+                tabUrl: tab.url,
+                page: {
+                  id: page.id,
+                  url: page.url,
+                  isPrivate: page.isPrivate,
+                  documentIds: Array.from(page.documentIds || []),
+                  requestStats: page.requestStats,
+                },
+              };
+            }),
+          );
+          sendResponse({ pages });
+        } else {
+          sendResponse({ error: `unknown op: ${request.op}` });
+        }
+      } catch (err) {
+        sendResponse({ error: err.message });
+      }
+    })();
+
+    return true;
   }
 });
 
-(async () => {
+const readyPromise = (async () => {
   await urlReporter.init();
   await requestReporter.init();
 })();
