@@ -91,9 +91,12 @@ const urlReporter = new UrlReporter({
   communication,
 });
 
+const collectedReporterMessages = [];
+
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
   onMessageReady: (msg) => {
+    collectedReporterMessages.push(msg);
     console.log(
       '%c[DRY-RUN] request-reporter message ready:',
       'color: green; font-size: 30px;',
@@ -125,6 +128,44 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           }),
         ),
       });
+    })();
+
+    return true;
+  } else if (request.action === 'e2e') {
+    (async () => {
+      try {
+        if (request.op === 'getReporterMessages') {
+          sendResponse({ messages: collectedReporterMessages.slice() });
+        } else if (request.op === 'resetReporterMessages') {
+          collectedReporterMessages.length = 0;
+          sendResponse({ ok: true });
+        } else if (request.op === 'getPages') {
+          const tabs = await chrome.tabs.query({});
+          sendResponse({
+            pages: tabs.map((tab) => {
+              const page = requestReporter.pageStore.getPageForRequest({
+                tabId: tab.id,
+                frameId: 0,
+              });
+              if (!page) return { tabId: tab.id, page: null };
+              return {
+                tabId: tab.id,
+                page: {
+                  id: page.id,
+                  url: page.url,
+                  isPrivate: page.isPrivate,
+                  documentIds: Array.from(page.documentIds || []),
+                  requestStats: page.requestStats,
+                },
+              };
+            }),
+          });
+        } else {
+          sendResponse({ error: `unknown op: ${request.op}` });
+        }
+      } catch (err) {
+        sendResponse({ error: err.message });
+      }
     })();
 
     return true;
