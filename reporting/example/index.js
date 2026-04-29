@@ -134,22 +134,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'e2e') {
     (async () => {
       try {
-        if (request.op === 'getReporterMessages') {
+        if (request.op === 'waitReady') {
+          await readyPromise;
+          sendResponse({ ready: true });
+        } else if (request.op === 'getReporterMessages') {
           sendResponse({ messages: collectedReporterMessages.slice() });
         } else if (request.op === 'resetReporterMessages') {
           collectedReporterMessages.length = 0;
           sendResponse({ ok: true });
+        } else if (request.op === 'forceFlushPages') {
+          const realNow = Date.now;
+          let offsetMs = 0;
+          Date.now = () => realNow() + offsetMs;
+          try {
+            // First flush sets each non-live page's stageAfter = now + BFCACHE_TTL.
+            offsetMs = 11 * 60 * 1000;
+            await requestReporter.pageStore.flush();
+            // Second flush must run after that stageAfter to actually stage.
+            offsetMs = 30 * 60 * 1000;
+            await requestReporter.pageStore.flush();
+          } finally {
+            Date.now = realNow;
+          }
+          sendResponse({ ok: true });
         } else if (request.op === 'getPages') {
           const tabs = await chrome.tabs.query({});
-          sendResponse({
-            pages: tabs.map((tab) => {
-              const page = requestReporter.pageStore.getPageForRequest({
+          const pages = await Promise.all(
+            tabs.map(async (tab) => {
+              let frames = [];
+              try {
+                frames = await chrome.webNavigation.getAllFrames({
+                  tabId: tab.id,
+                });
+              } catch (e) {
+                /* ignore */
+              }
+              const main = frames?.find((f) => f.frameId === 0);
+              const page = main?.documentId
+                ? requestReporter.pageStore.getPageForRequest({
+                    documentId: main.documentId,
+                  })
+                : null;
+              const debug = {
                 tabId: tab.id,
-                frameId: 0,
-              });
-              if (!page) return { tabId: tab.id, page: null };
+                tabUrl: tab.url,
+                mainDocumentId: main?.documentId || null,
+                framesCount: frames?.length ?? 0,
+              };
+              if (!page) return { ...debug, page: null };
               return {
-                tabId: tab.id,
+                ...debug,
                 page: {
                   id: page.id,
                   url: page.url,
@@ -159,7 +193,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 },
               };
             }),
-          });
+          );
+          sendResponse({ pages });
         } else {
           sendResponse({ error: `unknown op: ${request.op}` });
         }
@@ -172,10 +207,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-(async () => {
+const readyPromise = (async () => {
   await urlReporter.init();
   await requestReporter.init();
 })();
 
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;
+globalThis.readyPromise = readyPromise;

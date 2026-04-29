@@ -1,69 +1,51 @@
 # Request reporter e2e tests
 
-End-to-end tests that load the example extension into a real browser and exercise the request reporter against a self-hosted fixture site that simulates tracking.
+Loads the example extension into a real browser and runs it against a self-hosted fixture site that simulates tracking. Local-only, not for CI.
 
-These tests are intended to run **locally only** (not in CI).
-
-## One-time setup
-
-### 1. /etc/hosts entries
-
-The fixture server uses three hostnames that all resolve to `127.0.0.1`. Add them to `/etc/hosts`:
+## Setup
 
 ```
-127.0.0.1   site.test
-127.0.0.1   tracker.test
-127.0.0.1   analytics.test
+npm run build
 ```
 
-`site.test` plays the role of a first-party page; `tracker.test` and `analytics.test` are the third parties it loads resources from.
-
-### 2. Build the example extension
-
-The runner loads the bundled example extension. Build it once before running tests, and rebuild whenever you change `reporting/src` or `reporting/example`:
+For Safari only, add to `/etc/hosts`:
 
 ```
-npm --workspace=reporting run build
+127.0.0.1   site.test tracker.test analytics.test
 ```
 
-### 3. Browser-specific setup
-
-- **Chrome**: nothing extra; the default config uses Chrome via WebDriver BiDi.
-- **Safari** (optional): enable the driver and allow unsigned extensions:
-  ```
-  safaridriver --enable
-  ```
-  Then in Safari → Develop → enable "Allow Unsigned Extensions".
+(Chrome resolves these in-process via `--host-resolver-rules`.)
 
 ## Running
 
 ```
-# default: Chrome
-npm --workspace=reporting run test.e2e
-
-# Safari
-BROWSER=safari npm --workspace=reporting run test.e2e
+npm run test.e2e                  # Chrome Canary (default)
+HEADLESS=1 npm run test.e2e       # Chrome Canary, no visible window
+BROWSER=safari npm run test.e2e   # Safari
 ```
 
-## Layout
+`CHROME_CHANNEL=beta` or a specific version overrides the default. Stable Chrome's chromedriver doesn't expose the BiDi `webExtension.install` command, so the default is Canary. `HEADLESS=1` only applies to Chrome.
+
+## Safari one-time setup
 
 ```
-test.e2e/
-  server.js          # fixture HTTP server, routes by Host header
-  wdio.conf.js       # single wdio config; browser selected via BROWSER env
-  fixtures/
-    site.test/       # 1st-party site
-    tracker.test/    # 3rd-party tracker assets
-    analytics.test/  # 3rd-party analytics endpoint
-  specs/             # mocha specs
+safaridriver --enable
 ```
 
-The fixture server listens on `127.0.0.1:3300` (override with `FIXTURE_PORT`) and serves different content per `Host` header.
+Enable Safari → Develop → "Allow Unsigned Web Extensions".
 
-## How specs talk to the extension
+Each Safari WebDriver session installs the extension fresh and unsigned, so Safari prompts *"The extension would like to access site.test"* on every run. **You must:**
 
-`example/content.js` includes a `window.postMessage` bridge that forwards `{source:'wtm-e2e', op, args}` to the background service worker. `example/index.js` exposes a debug API:
+1. Tick the **"Remember for other websites"** checkbox (Safari may default it to off).
+2. Click **Always Allow**.
 
-- `getReporterMessages` — collected dry-run messages
-- `resetReporterMessages` — clear the collected list
+If "Remember for other websites" is unchecked, only `site.test` is granted — the extension won't see the requests to `tracker.test` / `analytics.test` and `tp_events` will be empty. AppleScript-based auto-dismissal isn't viable: any external click on a WebDriver-controlled Safari window trips Safari's *"This Safari window is remotely controlled"* interruption dialog and aborts the session, and `safaridriver` exposes no programmatic permission API.
+
+## Bridge
+
+`example/content.js` posts messages from the page to the service worker. The SW exposes:
+
+- `waitReady` — wait for `requestReporter.init()`
+- `getReporterMessages` / `resetReporterMessages` — read/clear collected dry-run messages (e.g. `wtm.attrack.tp_events`)
 - `getPages` — current pageStore state per tab
+- `forceFlushPages` — bypass the BFCACHE TTL to deterministically stage pages whose docs are no longer live
