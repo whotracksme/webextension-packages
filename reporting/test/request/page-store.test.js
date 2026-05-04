@@ -185,6 +185,102 @@ describe('PageStore', function () {
       expect(page).to.not.be.null;
       expect(page.documentId).to.equal(rootDoc);
     });
+
+    // Isolated-world content scripts inherit the page's documentId,
+    // so attribution would otherwise treat their network calls as
+    // page traffic. Chromium-family browsers (Chrome, Brave, Edge,
+    // Opera, Vivaldi, Arc) all use `chrome-extension://`; Safari
+    // uses `safari-web-extension://`. Any future `*-extension://`
+    // scheme is matched too.
+    [
+      {
+        browser: 'chrome',
+        initiator: 'chrome-extension://mlomiejdfkolichcflejclcbmpeaniij',
+      },
+      {
+        browser: 'safari',
+        initiator:
+          'safari-web-extension://A1B2C3D4-1234-5678-9ABC-DEF012345678',
+      },
+    ].forEach(({ browser, initiator }) => {
+      it(`drops requests initiated by an extension content script (${browser})`, async function () {
+        const store = new PageStore({ notifyPageStageListeners: () => {} });
+        await store.init();
+        const tabId = 1;
+        const documentId = 'DOC_PAGE';
+        await commit(store, {
+          tabId,
+          documentId,
+          url: 'https://www.ghostery.com/',
+        });
+        const page = store.getPageForRequest({
+          tabId,
+          frameId: 0,
+          documentId,
+          type: 'xmlhttprequest',
+          url: 'https://aitopia.ai/api',
+          initiator,
+        });
+        expect(page).to.be.null;
+      });
+    });
+
+    it('attributes a sub-resource fetched by a data: iframe to the embedding page', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
+      await store.init();
+      const tabId = 1;
+      const rootDoc = 'DOC_ROOT';
+      const iframeDoc = 'DOC_IFRAME';
+      await commit(store, {
+        tabId,
+        documentId: rootDoc,
+        url: 'https://www.ghostery.com/',
+      });
+      // data: iframe commits — it has a real documentId and its
+      // parentDocumentId points to the embedding page.
+      chrome.webNavigation.onCommitted.dispatch({
+        tabId,
+        frameId: 7,
+        documentId: iframeDoc,
+        parentDocumentId: rootDoc,
+        url: 'data:text/html,<script src="https://tracker.test/a.js"></script>',
+      });
+      // The script the iframe fetches has the iframe's documentId
+      // and an opaque-origin initiator ("null"). It must still
+      // attribute to the embedding page.
+      const page = store.getPageForRequest({
+        tabId,
+        frameId: 7,
+        documentId: iframeDoc,
+        type: 'script',
+        url: 'https://tracker.test/a.js',
+        initiator: 'null',
+      });
+      expect(page).to.not.be.null;
+      expect(page.documentId).to.equal(rootDoc);
+    });
+
+    it('still attributes requests where initiator is the page itself', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
+      await store.init();
+      const tabId = 1;
+      const documentId = 'DOC_PAGE';
+      await commit(store, {
+        tabId,
+        documentId,
+        url: 'https://www.ghostery.com/',
+      });
+      const page = store.getPageForRequest({
+        tabId,
+        frameId: 0,
+        documentId,
+        type: 'script',
+        url: 'https://tracker.test/a.js',
+        initiator: 'https://www.ghostery.com',
+      });
+      expect(page).to.not.be.null;
+      expect(page.documentId).to.equal(documentId);
+    });
   });
 
   context('flushing', function () {
