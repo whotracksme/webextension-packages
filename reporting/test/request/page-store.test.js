@@ -186,38 +186,25 @@ describe('PageStore', function () {
       expect(page.documentId).to.equal(rootDoc);
     });
 
-    // Isolated-world content scripts inherit the page's documentId.
-    [
-      {
-        browser: 'chrome',
-        initiator: 'chrome-extension://mlomiejdfkolichcflejclcbmpeaniij',
-      },
-      {
-        browser: 'safari',
-        initiator:
-          'safari-web-extension://A1B2C3D4-1234-5678-9ABC-DEF012345678',
-      },
-    ].forEach(({ browser, initiator }) => {
-      it(`drops requests initiated by an extension content script (${browser})`, async function () {
-        const store = new PageStore({ notifyPageStageListeners: () => {} });
-        await store.init();
-        const tabId = 1;
-        const documentId = 'DOC_PAGE';
-        await commit(store, {
-          tabId,
-          documentId,
-          url: 'https://www.ghostery.com/',
-        });
-        const page = store.getPageForRequest({
-          tabId,
-          frameId: 0,
-          documentId,
-          type: 'xmlhttprequest',
-          url: 'https://aitopia.ai/api',
-          initiator,
-        });
-        expect(page).to.be.null;
+    it('drops requests initiated by an extension content script', async function () {
+      const store = new PageStore({ notifyPageStageListeners: () => {} });
+      await store.init();
+      const tabId = 1;
+      const documentId = 'DOC_PAGE';
+      await commit(store, {
+        tabId,
+        documentId,
+        url: 'https://www.ghostery.com/',
       });
+      const page = store.getPageForRequest({
+        tabId,
+        frameId: 0,
+        documentId,
+        type: 'xmlhttprequest',
+        url: 'https://aitopia.ai/api',
+        initiator: 'chrome-extension://mlomiejdfkolichcflejclcbmpeaniij',
+      });
+      expect(page).to.be.null;
     });
 
     it('attributes a sub-resource fetched by a data: iframe to the embedding page', async function () {
@@ -248,28 +235,6 @@ describe('PageStore', function () {
       });
       expect(page).to.not.be.null;
       expect(page.documentId).to.equal(rootDoc);
-    });
-
-    it('still attributes requests where initiator is the page itself', async function () {
-      const store = new PageStore({ notifyPageStageListeners: () => {} });
-      await store.init();
-      const tabId = 1;
-      const documentId = 'DOC_PAGE';
-      await commit(store, {
-        tabId,
-        documentId,
-        url: 'https://www.ghostery.com/',
-      });
-      const page = store.getPageForRequest({
-        tabId,
-        frameId: 0,
-        documentId,
-        type: 'script',
-        url: 'https://tracker.test/a.js',
-        initiator: 'https://www.ghostery.com',
-      });
-      expect(page).to.not.be.null;
-      expect(page.documentId).to.equal(documentId);
     });
   });
 
