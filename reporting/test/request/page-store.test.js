@@ -186,12 +186,7 @@ describe('PageStore', function () {
       expect(page.documentId).to.equal(rootDoc);
     });
 
-    // Isolated-world content scripts inherit the page's documentId,
-    // so attribution would otherwise treat their network calls as
-    // page traffic. Chromium-family browsers (Chrome, Brave, Edge,
-    // Opera, Vivaldi, Arc) all use `chrome-extension://`; Safari
-    // uses `safari-web-extension://`. Any future `*-extension://`
-    // scheme is matched too.
+    // Isolated-world content scripts inherit the page's documentId.
     [
       {
         browser: 'chrome',
@@ -236,8 +231,6 @@ describe('PageStore', function () {
         documentId: rootDoc,
         url: 'https://www.ghostery.com/',
       });
-      // data: iframe commits — it has a real documentId and its
-      // parentDocumentId points to the embedding page.
       chrome.webNavigation.onCommitted.dispatch({
         tabId,
         frameId: 7,
@@ -245,9 +238,6 @@ describe('PageStore', function () {
         parentDocumentId: rootDoc,
         url: 'data:text/html,<script src="https://tracker.test/a.js"></script>',
       });
-      // The script the iframe fetches has the iframe's documentId
-      // and an opaque-origin initiator ("null"). It must still
-      // attribute to the embedding page.
       const page = store.getPageForRequest({
         tabId,
         frameId: 7,

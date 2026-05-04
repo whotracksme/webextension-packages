@@ -27,8 +27,6 @@ const PAGE_LOADING_STATE = {
 
 function isExtensionUrl(url) {
   if (typeof url !== 'string') return false;
-  // Bound the scan so a pathological long input can't scan the whole
-  // string. Schemes are short; longest known is `safari-web-extension`.
   const head = url.length > 30 ? url.slice(0, 30) : url;
   const i = head.indexOf('://');
   return i > 0 && url.endsWith('-extension', i);
@@ -323,10 +321,8 @@ export default class PageStore {
   }) {
     // Prerender docs were never seen by the user.
     if (documentLifecycle === 'prerender') return null;
-    // Other extensions' isolated-world content scripts inherit the
-    // page's documentId; without this filter their traffic would
-    // attribute to the page. data:/null iframes still resolve via
-    // parentDocumentId below.
+    // Isolated-world content scripts of other extensions inherit the
+    // page's documentId.
     if (isExtensionUrl(initiator)) return null;
     if (documentId) {
       const direct = this.#documentIndex.get(documentId);
