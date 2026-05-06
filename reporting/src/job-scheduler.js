@@ -847,18 +847,10 @@ export default class JobScheduler {
 
   async _writeJobsToDisk() {
     this._clearAutoFlushTimer();
-
-    // [Experiment] Potential workaround for a Safari bug:
-    // * we see indicators that Safari corrupts the data when there
-    //   are concurrent write operation to chrome.storage.local
-    // * as a mitigation, serialize the writes now
-    this._writeToDiskExecutor ||= new SeqExecutor();
-    return this._writeToDiskExecutor.run(async () =>
-      this.storage.set(this.storageKey, {
-        dbVersion: DB_VERSION,
-        jobQueues: this.jobQueues,
-      }),
-    );
+    return this.storage.set(this.storageKey, {
+      dbVersion: DB_VERSION,
+      jobQueues: this.jobQueues,
+    });
   }
 
   /**
