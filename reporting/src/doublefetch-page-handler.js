@@ -272,6 +272,20 @@ export default class DoublefetchPageHandler {
     const logWarn = logger.warn.bind(logger.warn, `[doublefetch=${url}]`);
 
     try {
+      // shared error handling when testing alternative URLs (e.g. canonical URLs)
+      const markAsPrivateOrRethrowToRetry = async (failedUrl, e) => {
+        if (e.isPermanentError) {
+          logWarn(
+            'Alternative URL failed permanently, so mark it as private:',
+            failedUrl,
+            e,
+          );
+          await this._tryMarkAsPrivate(failedUrl);
+        } else {
+          throw e;
+        }
+      };
+
       const checkUrl = async (urlToTest, { isCanonicalUrl }) => {
         if (await this.newPageApprover.mightBeMarkedAsPrivate(urlToTest)) {
           return { ok: false, details: 'marked as private in bloom filter' };
@@ -306,17 +320,7 @@ export default class DoublefetchPageHandler {
                 return result;
               }
             } catch (e) {
-              if (e.isPermanentError) {
-                logWarn(
-                  'Failed to process (corrected) canonical URL',
-                  canonicalUrl2,
-                  '(falling back to original URL now)',
-                  e,
-                );
-                await this._tryMarkAsPrivate(canonicalUrl2);
-              } else {
-                throw e;
-              }
+              await markAsPrivateOrRethrowToRetry(canonicalUrl2, e);
             }
           }
         }
@@ -352,17 +356,7 @@ export default class DoublefetchPageHandler {
             safePage = result.safePage;
           }
         } catch (e) {
-          if (e.isPermanentError) {
-            logWarn(
-              'Failed to process canonical URL',
-              canonicalUrl,
-              '(falling back to original URL now)',
-              e,
-            );
-            await this._tryMarkAsPrivate(canonicalUrl);
-          } else {
-            throw e;
-          }
+          await markAsPrivateOrRethrowToRetry(canonicalUrl, e);
         }
       }
 
