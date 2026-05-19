@@ -43,7 +43,7 @@ import './request/steps/oauth-detector.spec.js';
 
 // Request
 import './request/qs-whitelist2.spec.js';
-import './request/hash/index.spec.js';
+import './request/token-detector.spec.js';
 import './request/database.spec.js';
 import './request/index.spec.js';
 
