@@ -54,7 +54,6 @@ export async function analyzePageStructure(doc) {
           requestedIndex ||
           tags.includes('all') ||
           tags.includes('index') ||
-          tags.includes('index') ||
           tags.includes('max-image-preview:large') ||
           tags.includes('max-image-preview:standard') ||
           tags.includes('max-video-preview:-1');
@@ -93,16 +92,82 @@ export async function analyzePageStructure(doc) {
     return og;
   }
 
+  function sanitizeJsonLdField(text) {
+    if (typeof text === 'string') {
+      const text_ = text.trim();
+      if (text_.length <= 2048) {
+        return text_;
+      }
+    }
+    return null;
+  }
+
+  // parse JSON-LD (https://json-ld.org/)
+  function parseJsonLd(doc) {
+    const jsonld = [];
+    for (const elem of doc.querySelectorAll(
+      'script[type="application/ld+json"]',
+    )) {
+      let parsedJson;
+      try {
+        parsedJson = JSON.parse(elem.textContent);
+
+        // 1) some websites put the content in a '@graph' array, for instance:
+        // {
+        //   "@context": "https://schema.org",
+        //   "@graph": [
+        //     {<0>},
+        //     {<1>},
+        //   ]
+        // }
+        // ==> lift "@graph" to the top-level
+        if (
+          typeof parsedJson['@context'] === 'string' &&
+          Array.isArray(parsedJson['@graph']) &&
+          Object.keys(parsedJson).length === 2
+        ) {
+          for (const elem of parsedJson['@graph']) {
+            elem['@context'] ||= parsedJson['@context'];
+          }
+          parsedJson = parsedJson['@graph'];
+        }
+
+        // 2) some websites use arrays, some split it across multiple scripts
+        // ==> everything becomes an array
+        parsedJson = Array.isArray(parsedJson) ? parsedJson : [parsedJson];
+      } catch (e) {
+        continue; // ignore broken JSON
+      }
+      for (const json of parsedJson) {
+        const entry = {};
+        for (const key of [
+          '@context',
+          '@type',
+          '@id',
+          'url',
+          'name',
+          'headline',
+          'duration',
+          'dateCreated',
+          'dateModified',
+          'datePublished',
+          'uploadDate',
+        ]) {
+          const value = sanitizeJsonLdField(json[key]);
+          if (value) {
+            entry[key] = value;
+          }
+        }
+        jsonld.push(entry);
+      }
+    }
+    return jsonld;
+  }
+
   doc = doc || document;
 
   try {
     const { noindex, requestedIndex } = parseMetaRobotTags(doc);
-    if (noindex) {
-      return {
-        noindex: true,
-      };
-    }
-
     const title = getTitle(doc);
     const url = doc.URL;
 
@@ -113,6 +178,7 @@ export async function analyzePageStructure(doc) {
     const contentType = doc.contentType || null;
     const language = parseHtmlLangAttribute(doc);
     const og = parseOpenGraphMetaTags(doc);
+    const jsonld = parseJsonLd(doc);
 
     return {
       title,
@@ -122,8 +188,9 @@ export async function analyzePageStructure(doc) {
         language,
         contentType,
         og,
+        jsonld,
       },
-      noindex: false,
+      noindex,
       requestedIndex,
     };
   } catch (e) {

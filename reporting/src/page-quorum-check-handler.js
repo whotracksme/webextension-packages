@@ -11,10 +11,18 @@
 
 import logger from './logger';
 import { BadJobError } from './errors';
-import random from './random';
+import { random32Bit } from './random';
 
 function createPageMessage(safePage, ctry) {
-  const { url, title, ref = null, redirects = null, search, lang } = safePage;
+  const {
+    url,
+    title,
+    ref = null,
+    redirects = null,
+    jsonld,
+    search,
+    lang,
+  } = safePage;
   const { activity } = safePage.aggregator;
 
   const payload = {
@@ -35,14 +43,23 @@ function createPageMessage(safePage, ctry) {
     };
   }
 
+  // For now, only attach when present. The alternative would be to "null"
+  // it like "ref" and "redirects". But the semantic might be misleading,
+  // since a lack of "jsonld" does not imply that the page did not have
+  // JSON-LD meta data. Since we are conservative in detecting it, it is
+  // expected to see only limited coverage at this point.
+  if (jsonld) {
+    payload.jsonld = jsonld;
+  }
+
   // consider page messages as duplicates if "payload.url" is identical
   const deduplicateBy = 'url';
 
   const body = {
     action: 'wtm.page',
     payload,
-    ver: 3, // Note: no need to keep this number in sync among messages
-    'anti-duplicates': Math.floor(random() * 10000000),
+    ver: 4, // Note: no need to keep this number in sync among messages
+    'anti-duplicates': random32Bit(),
   };
   return { body, deduplicateBy };
 }
