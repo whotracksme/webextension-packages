@@ -1454,24 +1454,30 @@ export default class Pages {
       return;
     }
     const { _previous_webNavigation_onCommitted, ...entry } = oldEntry;
-    this.openTabs.set(tabId, {
+    const newEntry = {
       ...entry,
       pageLoadMethod: 'history-navigation',
       status: 'after-history-state-update',
       lastUpdatedAt: Date.now(),
-      pageId: ++this._pageIdGenerator,
-    });
+    };
 
-    if (_previous_webNavigation_onCommitted?.url === url) {
+    const isRedundant = _previous_webNavigation_onCommitted?.url === url;
+    if (isRedundant) {
       logger.debug(
         'Skipping page event for redundant history navigation to',
         url,
         'in tab',
         tabId,
       );
-    } else {
-      this._onWebNavigation(tabId, url, entry, { isHistoryNavigation: true });
+      this.openTabs.set(tabId, newEntry);
+      return;
     }
+
+    // looks like a genuine navigation, so be conservative and
+    // assume that the content of the page changed
+    newEntry.pageId = ++this._pageIdGenerator;
+    this.openTabs.set(tabId, newEntry);
+    this._onWebNavigation(tabId, url, entry, { isHistoryNavigation: true });
   }
 
   _onWebNavigation(tabId, url, entry, { isHistoryNavigation }) {
