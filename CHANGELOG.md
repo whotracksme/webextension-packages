@@ -1,3 +1,16 @@
+# v9.0.2 (Wed Jun 03 2026)
+
+#### 🐛 Bug Fix
+
+- The old implemtention was overly aggressive in detecting page modifications. [#210](https://github.com/whotracksme/webextension-packages/pull/210) ([@philipp-classen](https://github.com/philipp-classen))
+- Revert "Follow-up: experiment with sequentializing writes to work around a potential (#187)" [#208](https://github.com/whotracksme/webextension-packages/pull/208) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v9.0.1 (Wed Apr 29 2026)
 
 #### 🐛 Bug Fix
