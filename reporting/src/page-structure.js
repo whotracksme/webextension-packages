@@ -17,6 +17,37 @@ export async function analyzePageStructure(doc) {
     if (doc.title) {
       return doc.title;
     }
+
+    // Workaround for parsers like Linkedom, which require <title> tags
+    // to be within <html><head> (though they are optional in HTML5):
+    // ```
+    // <!doctype html>
+    // <html>
+    //   <head>
+    //     <title>...</title>
+    //   </head>
+    //   <body>...</body>
+    // </html>
+    // ```
+    //
+    // But these parsers fail on valid examples like that:
+    // ```
+    // <!doctype html>
+    // <title>...</title>
+    // ```
+    //
+    // The workaround introduces the risk of false-positive matches
+    // (e.g. within <body>). Since the parsers are expected to create
+    // the implicit <html> and <head>, the following guard will not
+    // result in "null" on browsers like Firefox or Chrome, only
+    // in parsers like Linkedom.
+    if (doc.querySelector('html > head > title') === null) {
+      const title = doc.querySelector('title')?.textContent?.trim();
+      if (title) {
+        return title;
+      }
+    }
+
     const elem = doc.querySelector('html > head > meta[name="title"]');
     if (elem) {
       return elem.getAttribute('content') || '';
