@@ -1,3 +1,20 @@
+# v10.0.0 (Wed Jun 03 2026)
+
+#### 💥 Breaking Change
+
+- page: improved double-fetch and add limited support for JSON-LD. [#209](https://github.com/whotracksme/webextension-packages/pull/209) ([@philipp-classen](https://github.com/philipp-classen))
+- (refactor) extract shared error handling code [#209](https://github.com/whotracksme/webextension-packages/pull/209) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- Workaround for Linkedom to detect the title in the <title> element [#211](https://github.com/whotracksme/webextension-packages/pull/211) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v9.0.2 (Wed Jun 03 2026)
 
 #### 🐛 Bug Fix
