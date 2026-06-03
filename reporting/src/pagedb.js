@@ -441,10 +441,15 @@ export default class PageDB {
       return reject('incomplete information: page not fully loaded');
     }
 
-    // check static heuristics
-    if (page.preDoublefetch.noindex) {
+    // "noindex" pages can be immediately dropped unless we detected history
+    //  navigations, because the meta information might be stale.
+    if (
+      page.preDoublefetch.noindex &&
+      page.pageLoadMethod !== 'history-navigation'
+    ) {
       return rejectForever('marked as noindex');
     }
+
     if (page.search && page.search.depth === 0) {
       return rejectForever('ignore search engine result pages');
     }

@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { requireParam, lazyInitAsync } from './utils';
+import { requireParam, requireInt, lazyInitAsync } from './utils';
 import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
@@ -44,6 +44,50 @@ function isSubSequence({ sequence, subsequence }) {
     j++;
   }
   return i === subsequence.length;
+}
+
+export function toTrustedUrl(url, { baseUrl, log, logWarn }) {
+  if (!url) {
+    return null;
+  }
+
+  if (!baseUrl.startsWith('https://')) {
+    logWarn('baseUrl must be an absolute URL (and https only):', baseUrl);
+    return null;
+  }
+  if (!url.startsWith('https://') && !url.startsWith('/')) {
+    // note: relative URL without a leading '/' are technically possible,
+    // but uncommon enough that we can ignore. If we handle them, it is
+    // opening more possibilities of false-positives.
+    log('URL must either absolute or relative with a leading /', url);
+    return null;
+  }
+
+  let from;
+  try {
+    from = new URL(baseUrl);
+  } catch (e) {
+    logWarn('Invalid baseUrl (possible but unexpected):', baseUrl);
+    return null;
+  }
+
+  let to;
+  try {
+    to = new URL(url, baseUrl);
+  } catch (e) {
+    log('Ignore invalid url:', url);
+    return null;
+  }
+
+  if (from.origin !== to.origin) {
+    log('origin mismatch found:', baseUrl, '->', url);
+    return null;
+  }
+
+  // Normalization (https://example.test/foo#123 => https://example.test/foo).
+  // We are looking for the most simple version of the URL
+  to.hash = '';
+  return to.toString();
 }
 
 /**
@@ -132,6 +176,107 @@ export function titlesMatchAfterDoublefetch({
   }
 
   return false;
+}
+
+// Conservative list of "@type" fields that related only to the current website.
+// In other words, types that are purely navigational should not be listed.
+// Same with types that related to other entities like the organization or
+// information about the author.
+//
+// Note: Schema.org is not forced, but it is the most common vocabulary by far.
+// Thus a good starting point to extend coverage, is its documentation:
+// https://schema.org/docs/full.html
+const URL_RELATED_JSONLD_TYPES = new Set([
+  // Schema.org
+  'article', // covers a relatively common typo (should be "Article")
+  'Article',
+  'BackgroundNewsArticle',
+  'NewsArticle',
+  'BlogPosting',
+  'PodcastEpisode',
+  'ReportageNewsArticle',
+  'ScholarlyArticle',
+  'TechArticle',
+  'VideoObject',
+  'WebPage',
+]);
+
+export function findAlternativeUrlInJsonLD(jsonld) {
+  const { '@type': type, '@id': url } = jsonld;
+  if (!url || !type || !url.startsWith('https://')) return null;
+  return URL_RELATED_JSONLD_TYPES.has(type) ? url : null;
+}
+
+export function aggregateMetaDataInJsonLD(jsonldArray) {
+  const matches = [];
+
+  for (const jsonld of jsonldArray) {
+    const { '@type': type, '@context': context } = jsonld;
+    if (context !== 'http://schema.org' && context !== 'https://schema.org') {
+      continue;
+    }
+    if (!URL_RELATED_JSONLD_TYPES.has(type)) {
+      continue;
+    }
+
+    const content = {};
+    for (const key of [
+      'dateCreated',
+      'dateModified',
+      'datePublished',
+      'uploadDate',
+      'duration',
+    ]) {
+      if (jsonld[key]) {
+        content[key] = jsonld[key];
+      }
+    }
+    if (Object.keys(content).length > 0) {
+      content.type = type;
+    }
+    matches.push(content);
+  }
+  if (matches.length === 0) {
+    return {};
+  }
+
+  // The first always wins, but we can try to merge information
+  // from other entries as long as they are not conflicting.
+  // It is rare, a use case are entries that are duplicated, but
+  // the second entry has extra fields.
+  let result = matches.shift();
+  for (const other of matches) {
+    if (
+      Object.entries(result).every(
+        ([key, value]) => (other[key] || value) === value,
+      )
+    ) {
+      for (const [key, value] of Object.entries(other)) {
+        result[key] ||= value;
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Heuristic to reject text that is clearly not a timestamp.
+ * It does not have to be extremely precise.
+ */
+export function looksLikeSafeTimestamp(str) {
+  if (typeof str !== 'string') return false;
+  if (str.length < 4 || str.length > 40) return false;
+  return !isNaN(new Date(str));
+}
+
+export function looksLikeSafeDuration(str) {
+  if (typeof str !== 'string') return false;
+  if (str.length > 20) return false;
+
+  // ISO 8601 durations (https://en.wikipedia.org/wiki/ISO_8601#Durations)
+  return /^P(?!$)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?$/.test(
+    str,
+  );
 }
 
 /**
@@ -264,12 +409,16 @@ export default class DoublefetchPageHandler {
     if (!preDoublefetch) {
       throw new BadJobError('preDoublefetch missing');
     }
-    const canonicalUrl = preDoublefetch?.meta?.canonicalUrl;
-    const canonicalUrlDiffers = canonicalUrl && canonicalUrl !== url;
 
     const pageFetcher = this.pageFetcherProvider();
     const log = logger.debug.bind(logger.debug, `[doublefetch=${url}]`);
     const logWarn = logger.warn.bind(logger.warn, `[doublefetch=${url}]`);
+    const withBaseUrl = (baseUrl) => ({ baseUrl, log, logWarn });
+    const canonicalUrl = toTrustedUrl(
+      preDoublefetch?.meta?.canonicalUrl,
+      withBaseUrl(url),
+    );
+    const canonicalUrlDiffers = canonicalUrl && canonicalUrl !== url;
 
     try {
       // shared error handling when testing alternative URLs (e.g. canonical URLs)
@@ -286,7 +435,16 @@ export default class DoublefetchPageHandler {
         }
       };
 
-      const checkUrl = async (urlToTest, { isCanonicalUrl }) => {
+      const checkUrl = async (urlToTest, { isCanonicalUrl, level = 0 }) => {
+        if (requireInt(level) >= 3) {
+          // By design, there should be at most two recursion steps:
+          // - level: 0 (initial call) [may recurse]
+          // - level: 1 (test discovered candidates) [only new JSON-LD candidates may recurse]
+          // - level: 2 (reachable by deep JSON-LD candidate) [may NOT recurse]
+          // - level: 3 (unreachable and indicates a bug)
+          throw new Error('exceeded maximum recursion level');
+        }
+
         if (await this.newPageApprover.mightBeMarkedAsPrivate(urlToTest)) {
           return { ok: false, details: 'marked as private in bloom filter' };
         }
@@ -297,31 +455,49 @@ export default class DoublefetchPageHandler {
           return { ok: false, details: rejectReason };
         }
 
-        const canonicalUrl2 = pageStructure?.meta?.canonicalUrl;
-        if (canonicalUrl2) {
-          if (!isCanonicalUrl && urlToTest === canonicalUrl2) {
+        // Also consider alternative URLs that we just discovered.
+        // If we found a canonical URL, we want to try it immediately,
+        // even before the actual URL that we want to test (urlToTest).
+        //
+        // Note: There are more canidates (e.g. JSON-LD), but these
+        // will be delayed and only tested with the actual URL fails.
+        const canonicalUrlCandidate = toTrustedUrl(
+          pageStructure.meta?.canonicalUrl,
+          withBaseUrl(urlToTest),
+        );
+        if (canonicalUrlCandidate) {
+          if (!isCanonicalUrl && urlToTest === canonicalUrlCandidate) {
             log(
               'Found a matching canonical URL in doublefetch result for URL:',
               urlToTest,
             );
             isCanonicalUrl = true;
-          } else if (urlToTest === url && canonicalUrl2 !== canonicalUrl) {
+          } else if (
+            urlToTest === url &&
+            canonicalUrlCandidate !== canonicalUrl
+          ) {
+            // We detected a potential canonical URL, but since it does not
+            // match our original URL, we cannot confirm yet. If it does not
+            // work, ignore it and continue.
             log(
               'Updated canonical URL from',
               canonicalUrl,
-              'to',
-              canonicalUrl2,
+              'to the candidate',
+              canonicalUrlCandidate,
             );
             try {
-              const result = await checkUrl(canonicalUrl2, {
+              const result = await checkUrl(canonicalUrlCandidate, {
                 isCanonicalUrl: true,
+                level: level + 1,
               });
               if (result.ok) {
+                log('Confirmed candidate:', canonicalUrlCandidate);
                 return result;
               }
             } catch (e) {
-              await markAsPrivateOrRethrowToRetry(canonicalUrl2, e);
+              await markAsPrivateOrRethrowToRetry(canonicalUrlCandidate, e);
             }
+            log('Candidate did not work:', canonicalUrlCandidate);
           }
         }
 
@@ -332,6 +508,44 @@ export default class DoublefetchPageHandler {
           log,
         });
         if (!accept) {
+          // Now that the actual URL failed, try other alternative URLs.
+          // JSON-LD may include candidates, but they are less trustworthy.
+          const mayUseJsonLD = !isCanonicalUrl || level <= 1;
+          if (mayUseJsonLD && pageStructure?.meta?.jsonld?.length > 0) {
+            for (const jsonld of pageStructure.meta.jsonld) {
+              const bestMatch = findAlternativeUrlInJsonLD(jsonld);
+              const jsonldCandidateUrl = toTrustedUrl(
+                bestMatch,
+                withBaseUrl(urlToTest),
+              );
+              if (
+                jsonldCandidateUrl &&
+                jsonldCandidateUrl !== canonicalUrl &&
+                jsonldCandidateUrl !== urlToTest
+              ) {
+                log(
+                  'Structure did not match, but try a candidate from JSON-LD instead:',
+                  jsonldCandidateUrl,
+                );
+                try {
+                  const result = await checkUrl(jsonldCandidateUrl, {
+                    isCanonicalUrl: true,
+                    level: level + 1,
+                  });
+                  if (result.ok) {
+                    log('Confirmed candidate:', jsonldCandidateUrl);
+                    return result;
+                  }
+                } catch (e) {
+                  await markAsPrivateOrRethrowToRetry(jsonldCandidateUrl, e);
+                }
+                log('JSON-LD candidate did not work:', jsonldCandidateUrl);
+                break; // stop after checking one candidate
+              }
+            }
+          }
+
+          // No luck with the alternative URLs either. Give up.
           return { ok: false, details };
         }
 
@@ -339,6 +553,7 @@ export default class DoublefetchPageHandler {
           page,
           doublefetchUrl: urlToTest,
           isCanonicalUrl,
+          doublefetchPageStructure: pageStructure,
           log,
           logWarn,
         });
@@ -348,9 +563,14 @@ export default class DoublefetchPageHandler {
         return { ok: true, safePage };
       };
 
+      // Test URLs in this order:
+      // 1. Canonical URL (if it exists and differs from the original URL)
+      // 2. Original URL
+      // 3. Discovered alternative URLs (will trigger recursive calls)
       let safePage;
       if (canonicalUrlDiffers) {
         try {
+          // step 1: canonical URL
           const result = await checkUrl(canonicalUrl, { isCanonicalUrl: true });
           if (result.ok) {
             safePage = result.safePage;
@@ -361,6 +581,7 @@ export default class DoublefetchPageHandler {
       }
 
       if (!safePage) {
+        // step 2: original URL
         const isCanonicalUrl = url === canonicalUrl;
         const result = await checkUrl(url, { isCanonicalUrl });
         if (result.ok) {
@@ -397,9 +618,9 @@ export default class DoublefetchPageHandler {
     const accept = () => ({ accept: true });
     const discard = (reason) => ({ accept: false, details: reason });
 
-    if (before.noindex !== false) {
+    if (before.noindex !== false && page.pageLoadMethod === 'full-page-load') {
       logger.warn(
-        'noindex pages should have been filtered out already:',
+        'noindex pages should have been filtered out already (it was a full-page-load):',
         before,
       );
       return discard('noindex must be false (before)');
@@ -442,32 +663,61 @@ export default class DoublefetchPageHandler {
       }
     }
 
-    if (
-      !titlesMatchAfterDoublefetch({
-        before: page.title,
-        after: after.title,
-      })
-    ) {
+    // Now, confirm the title, or more precise the "page title".
+    // There are three types of titles:
+    // 1) "page title": the title from the tab API (should be what the user saw)
+    // 2) "DOM title": the title in the "page-structure" (before doublefetch)
+    // 3) "doublefetch title(s)": again, extract by "page-structure", but not from
+    //    the real document, but from the parsed HTML *after* a doublefetch request.
+    //
+    // Candidates for the "doublefetch title":
+    // There is always the main title (typically <title>...</title>), but
+    // we can safely try fallback like "og:title" (Open Graph Meta Tags).
+    const doublefetchTitles = [after.title];
+    if (after?.meta?.og?.title && after.meta.og.title !== after.title) {
+      doublefetchTitles.push(after.meta.og.title);
+    }
+
+    const confirmTitle = (before) =>
+      doublefetchTitles.some((after) =>
+        titlesMatchAfterDoublefetch({ before, after }),
+      );
+
+    // Always confirm the "page title" (it will be part of the message)
+    if (!confirmTitle(page.title)) {
       return discard(
-        `titles do not match the page title: <<${page.title}>> ==> <<${after.title}>>`,
+        `no match for the 'page title' (tab API): <<${
+          page.title
+        }>> ==> ${JSON.stringify(doublefetchTitles)}`,
       );
     }
+
+    // When a page gets loaded, the "page title" and "DOM title" should generally match.
+    // But for single-page applications, it is possible that the "DOM title" gets outdated,
+    // because the content may not be fully updated during the history navigations.
+    // This is why this step needs to be optional (to avoid false-negatives).
     if (
       page.pageLoadMethod !== 'history-navigation' &&
-      !titlesMatchAfterDoublefetch({
-        before: before.title,
-        after: after.title,
-      })
+      !confirmTitle(before.title)
     ) {
       return discard(
-        `titles do not match the meta title: <<${before.title}>> ==> <<${after.title}>>`,
+        `no match for the 'DOM title' (extracted via 'page-structure'): <<${
+          before.title
+        }>> ==> ${JSON.stringify(doublefetchTitles)}`,
       );
     }
 
     return accept();
   }
 
-  _sanitizePage({ page, doublefetchUrl, isCanonicalUrl, log, logWarn }) {
+  _sanitizePage({
+    page,
+    doublefetchUrl,
+    isCanonicalUrl,
+    doublefetchPageStructure,
+    log,
+    logWarn,
+  }) {
     const safePage = {
       url: doublefetchUrl,
       title: page.title,
@@ -561,6 +811,34 @@ export default class DoublefetchPageHandler {
     if (page.ref) {
       safePage.ref = maskUrl(page.ref);
     }
+
+    if (doublefetchPageStructure.meta?.jsonld?.length > 0) {
+      const { type, ...safeFields } = aggregateMetaDataInJsonLD(
+        doublefetchPageStructure.meta.jsonld,
+      );
+      if (type) {
+        safePage.jsonld = { type };
+
+        // timestamps
+        for (const key of [
+          'dateCreated',
+          'dateModified',
+          'datePublished',
+          'uploadDate',
+        ]) {
+          const timestamp = safeFields[key];
+          if (looksLikeSafeTimestamp(timestamp)) {
+            safePage.jsonld[key] = timestamp;
+          }
+        }
+
+        // durations (currently only the field "duration")
+        if (looksLikeSafeDuration(safeFields.duration)) {
+          safePage.jsonld.duration = safeFields.duration;
+        }
+      }
+    }
+
     return safePage;
   }
 

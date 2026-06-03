@@ -20,6 +20,11 @@ import {
 import DoublefetchPageHandler, {
   titlesMatchAfterDoublefetch,
   sanitizeActivity,
+  toTrustedUrl,
+  findAlternativeUrlInJsonLD,
+  aggregateMetaDataInJsonLD,
+  looksLikeSafeTimestamp,
+  looksLikeSafeDuration,
 } from '../src/doublefetch-page-handler.js';
 
 class JobSchedulerMock {
@@ -205,6 +210,107 @@ describe('DoublefetchPageHandler', function () {
         canonicalUrl: null,
       });
     });
+
+    it('should check not only the title in <title>, but also og:title (Open Graph Protocol title)', async function () {
+      const page = {
+        aggregator: {
+          firstSeenAt: 1778263491203,
+          lastSeenAt: 1778263491206,
+          lastWrittenAt: 1778263562547,
+          activity: 0.0645025,
+        },
+        url: 'https://www.twitch.tv/sieglinde',
+        status: 'complete',
+        pageLoadMethod: 'history-navigation',
+        title: 'Sieglinde - Twitch',
+        preDoublefetch: {
+          meta: {
+            canonicalUrl: 'https://www.twitch.tv/sieglinde',
+            contentType: 'text/html',
+            jsonld: [
+              {
+                '@context': 'http://schema.org',
+                '@type': 'VideoObject',
+                name: 'Sieglinde - Twitch',
+                uploadDate: '2026-06-02T06:06:04Z',
+              },
+            ],
+            language: 'en-US',
+            og: {
+              image:
+                'https://static-cdn.jtvnw.net/jtv_user_pictures/ab1ba65f-22a9-45a4-9455-50807c03e8d1-profile_image-300x300.png',
+              title: 'Sieglinde - Twitch',
+              url: 'https://www.twitch.tv/sieglinde',
+              video:
+                'https://player.twitch.tv/?channel=sieglinde&player=facebook&autoplay=true&parent=meta.tag',
+            },
+          },
+          noindex: false,
+          requestedIndex: true,
+          title: 'sieglinde - Twitch',
+          url: 'https://www.twitch.tv/sieglinde',
+          lastUpdatedAt: 1778263491202,
+        },
+        lastUpdatedAt: 1778263491204,
+        lang: 'en',
+      };
+
+      // The original page title (tab API) was "Sieglinde - Twitch".
+      //
+      // Note that the DOM <title> changed after doublefetch from "sieglinde - Twitch"
+      // to "Twitch". "Twitch" alone would be not enough, but the Open Graph title (og:title)
+      // is "Sieglinde - Twitch", which still allows us to confirm the page title.
+      pageFetcherMock.reconfig({
+        'https://www.twitch.tv/sieglinde': {
+          title: 'Twitch',
+          meta: {
+            canonicalUrl: 'https://www.twitch.tv/sieglinde',
+            language: null,
+            contentType: null,
+            og: {
+              title: 'Sieglinde - Twitch',
+              url: 'https://www.twitch.tv/sieglinde',
+              image:
+                'https://static-cdn.jtvnw.net/jtv_user_pictures/ab1ba65f-22a9-45a4-9455-50807c03e8d1-profile_image-300x300.png',
+              video:
+                'https://player.twitch.tv/?channel=sieglinde&player=facebook&autoplay=true&parent=meta.tag',
+            },
+            jsonld: [
+              {
+                '@context': 'http://schema.org',
+                '@type': 'VideoObject',
+                name: 'Sieglinde - Twitch',
+                uploadDate: '2026-05-07T06:06:04Z',
+              },
+            ],
+          },
+          noindex: false,
+          requestedIndex: true,
+        },
+      });
+
+      const { ok, safePage } = await uut.runJob(page);
+
+      expect(ok).to.be.true;
+      pageFetcherMock.expectAllFetchedOnce();
+      relaxedSafePageEqual(safePage, {
+        url: 'https://www.twitch.tv/sieglinde',
+        title: 'Sieglinde - Twitch',
+        requestedIndex: true,
+        lang: {
+          html: 'en-US',
+          detect: 'en',
+        },
+        aggregator: {
+          activity: '0.0645',
+        },
+        canonicalUrl: 'https://www.twitch.tv/sieglinde',
+        jsonld: {
+          type: 'VideoObject',
+          uploadDate: '2026-05-07T06:06:04Z',
+        },
+      });
+    });
   });
 
   describe('when given a website with canonical URL', function () {
@@ -295,7 +401,7 @@ describe('DoublefetchPageHandler', function () {
     });
   });
 
-  describe('when a page indexed by search engine, has a canonical URL, and signals it wants to be shared', function () {
+  describe('when a page indexed by a search engine, has a canonical URL, and signals it wants to be shared', function () {
     it('should allow a safe Wikipedia page like https://de.wikipedia.org/wiki/J%C3%BCrgen_Klopp', async function () {
       const page = {
         aggregator: {
@@ -856,5 +962,192 @@ describe('#sanitizeActivity', function () {
         }),
       );
     });
+  });
+});
+
+describe('#toTrustedUrl', function () {
+  function withBaseUrl(baseUrl) {
+    const noop = () => {};
+    return { baseUrl, log: noop, logWarn: noop };
+  }
+
+  for (const { url, baseUrl, expected } of [
+    {
+      url: 'https://abc.test/foo',
+      baseUrl: 'https://abc.test/foo',
+      expected: 'https://abc.test/foo',
+    },
+    {
+      url: 'https://abc.test/keepme',
+      baseUrl: 'https://abc.test/ignore',
+      expected: 'https://abc.test/keepme',
+    },
+    {
+      url: 'https://abc.test/foo',
+      baseUrl: 'https://example.other/',
+      expected: null,
+    },
+    {
+      url: '/foo', // relative
+      baseUrl: 'https://abc.test/',
+      expected: 'https://abc.test/foo',
+    },
+    {
+      url: 'foo', // relative (non-leading '/')
+      baseUrl: 'https://abc.test/',
+      expected: null,
+    },
+    {
+      url: '{{ .og_url }}', // invalid
+      baseUrl: 'https://abc.test/',
+      expected: null,
+    },
+  ]) {
+    it(`url=${url} + baseUrl=${baseUrl} ==> ${expected}`, function () {
+      expect(toTrustedUrl(url, withBaseUrl(baseUrl))).to.eql(expected);
+    });
+  }
+});
+
+describe('#findAlternativeUrlInJsonLD', function () {
+  it('should detect use the "@id" for "VideoObject" types', function () {
+    expect(
+      findAlternativeUrlInJsonLD({
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        '@id': 'https://www.youtube.com/watch?v=dNoTvg0t52c',
+        name: 'EPICA - Storm The Sorrow (Official video - HD remastered)',
+        uploadDate: '2012-04-24T04:55:09-07:00',
+      }),
+    ).to.eql('https://www.youtube.com/watch?v=dNoTvg0t52c');
+  });
+});
+
+describe('#aggregateMetaDataInJsonLD', function () {
+  it('should merge a duplicate entry that has extra fields', function () {
+    const entry1 = {
+      '@context': 'https://schema.org',
+      '@type': 'VideoObject',
+      '@id': 'https://www.youtube.com/watch?v=W-fFHeTX70Q',
+      name: 'The Best of Beethoven',
+      uploadDate: '2012-11-13T03:05:47-08:00',
+    };
+    const entry2 = {
+      ...entry1,
+      duration: 'PT5858S',
+    };
+
+    const expected = {
+      type: 'VideoObject',
+      uploadDate: '2012-11-13T03:05:47-08:00',
+      duration: 'PT5858S',
+    };
+
+    // the order does not matter
+    expect(aggregateMetaDataInJsonLD([entry1, entry2])).to.eql(expected);
+    expect(aggregateMetaDataInJsonLD([entry2, entry1])).to.eql(expected);
+
+    // ... we can also repeat it multiple times
+    expect(aggregateMetaDataInJsonLD([entry1, entry1, entry2])).to.eql(
+      expected,
+    );
+    expect(aggregateMetaDataInJsonLD([entry1, entry2, entry1])).to.eql(
+      expected,
+    );
+  });
+});
+
+describe('#looksLikeSafeTimestamp', function () {
+  function shouldAccept(str) {
+    if (!looksLikeSafeTimestamp(str)) {
+      expect.fail(`Expected to be accepted, but was rejected: <<${str}>>`);
+    }
+  }
+
+  function shouldReject(str) {
+    if (looksLikeSafeTimestamp(str)) {
+      expect.fail(`Expected to be rejected, but was accepted: <<${str}>>`);
+    }
+  }
+
+  it('should accept typical timestamps', function () {
+    shouldAccept('2024-01-15T12:34:56Z');
+    shouldAccept('2012-04-24T04:55:09-07:00');
+    shouldAccept('2026-02-01T08:55:42+00:00');
+    shouldAccept('2024-01-15');
+    shouldAccept('2021-10-07 05:14:11');
+  });
+
+  it('should reject uncommon formats', function () {
+    shouldReject('2026-03-31 15:37:45America/Sao_Paulo');
+  });
+
+  it('should reject non-strings', function () {
+    shouldReject(null);
+    shouldReject(undefined);
+    shouldReject(123);
+    shouldReject({});
+  });
+
+  it('should reject strings that are too short or too long', function () {
+    shouldReject('');
+    shouldReject('0');
+    shouldReject('1/1');
+    shouldReject('x'.repeat(128));
+  });
+
+  it('should reject strings that are clearly not timestamps', function () {
+    shouldReject('hello world');
+    shouldReject('not a date at all');
+  });
+});
+
+describe('#looksLikeSafeDuration', function () {
+  function shouldAccept(str) {
+    if (!looksLikeSafeDuration(str)) {
+      expect.fail(`Expected to be accepted, but was rejected: <<${str}>>`);
+    }
+  }
+
+  function shouldReject(str) {
+    if (looksLikeSafeDuration(str)) {
+      expect.fail(`Expected to be rejected, but was accepted: <<${str}>>`);
+    }
+  }
+
+  it('should accept typical ISO 8601 durations', function () {
+    shouldAccept('PT1H');
+    shouldAccept('PT15M');
+    shouldAccept('PT1H30M');
+    shouldAccept('PT1H30M45S');
+    shouldAccept('P1D');
+    shouldAccept('P1Y2M3DT4H5M6S');
+  });
+
+  it('should reject malformed durations', function () {
+    shouldReject('P');
+    shouldReject('PT');
+    shouldReject('1H');
+    shouldReject('P1H');
+    shouldReject('P1YT');
+    shouldReject('PT1X');
+  });
+
+  it('should reject values that are no durations', function () {
+    shouldReject('');
+    shouldReject('Duration');
+    shouldReject('Dauer');
+    shouldReject('Kesto');
+  });
+
+  it('should reject non-strings', function () {
+    shouldReject(null);
+    shouldReject(undefined);
+    shouldReject(123);
+    shouldReject({});
+  });
+
+  it('should reject strings that are too long', function () {
+    shouldReject('P' + '1Y'.repeat(20));
   });
 });
