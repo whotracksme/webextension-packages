@@ -1,3 +1,15 @@
+# v10.1.0 (Mon Jun 08 2026)
+
+#### 🚀 Enhancement
+
+- Add Qwant to the list of search engines [#212](https://github.com/whotracksme/webextension-packages/pull/212) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v10.0.0 (Wed Jun 03 2026)
 
 #### 💥 Breaking Change
