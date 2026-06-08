@@ -119,6 +119,12 @@ const URL_PATTERNS = [
       /^https:[/][/]www[.]ecosia[.]org[/]search[?](?:method=index&)?q=[^&]+/,
     prefix: 'search?q=',
   },
+  {
+    category: 'search-qw',
+    regexp:
+      /^https:[/][/]www[.]qwant[.]com[/].*[?&]((q=[^&]+&([^&]+&)*t=web)|(t=web&([^&]+&)*q=[^&]+))/,
+    prefix: '?q=',
+  },
 ];
 
 export default class UrlAnalyzer {
