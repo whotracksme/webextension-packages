@@ -246,6 +246,30 @@ describe('#UrlAnalyzer', function () {
               doublefetchUrl: 'https://html.duckduckgo.com/html?q=eiffel+tower',
             },
           },
+          'search-ec': {
+            'https://www.ecosia.org/search?method=index&q=eiffel+tower': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://www.ecosia.org/search?q=eiffel+tower',
+            },
+          },
+          'search-qw': {
+            'https://www.qwant.com/?l=de%2F&q=eiffel+tower&t=web': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://www.qwant.com/?q=eiffel+tower',
+            },
+            'https://www.qwant.com/?l=fr&sr=fr%2F&r=FR&q=eiffel+tower&t=web': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://www.qwant.com/?q=eiffel+tower',
+            },
+            'https://www.qwant.com/?t=web&l=fr&sr=fr%2F&r=FR&q=eiffel+tower': {
+              query: 'eiffel tower',
+              doublefetchUrl: 'https://www.qwant.com/?q=eiffel+tower',
+            },
+            'https://www.qwant.com/?q=m%C3%BCnchen&client=opensearch&t=web': {
+              query: 'münchen',
+              doublefetchUrl: 'https://www.qwant.com/?q=m%C3%BCnchen',
+            },
+          },
         })) {
           describe(`and examples for category: ${expectedType}`, function () {
             for (const [
@@ -289,6 +313,11 @@ describe('#UrlAnalyzer', function () {
             'https://duckduckgo.com/?t=ffab&q=eiffel+tower&iax=videos&ia=videos',
             'https://duckduckgo.com/?t=ffab&q=eiffel+tower&iar=news&ia=news',
             'https://duckduckgo.com/?t=ffab&q=eiffel+tower&ia=news&iaxm=about',
+            'https://www.ecosia.org/images?q=eiffel%20tower',
+            'https://www.ecosia.org/ai-chat?q=eiffel+tower',
+            'https://www.qwant.com/?l=fr&sr=fr%2F&r=FR&t=images&q=eiffel+tower',
+            'https://www.qwant.com/?l=fr&sr=fr%2F&r=FR&t=videos&q=eiffel+tower',
+            'https://www.qwant.com/?l=fr&sr=fr%2F&r=FR&t=news&q=eiffel+tower',
           ]) {
             it(`should not match ${url}`, function () {
               const { isSupported, category, query } =
