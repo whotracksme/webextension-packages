@@ -311,6 +311,352 @@ describe('DoublefetchPageHandler', function () {
         },
       });
     });
+
+    describe('[youtube]', function () {
+      it('should work on the main youtube.com site (full reload)', async function () {
+        const page = {
+          aggregator: {
+            firstSeenAt: 1778516689605,
+            lastSeenAt: 1778516689609,
+            lastWrittenAt: 1778516782817,
+            activity: 0.08244583333333333,
+          },
+          url: 'https://www.youtube.com/',
+          status: 'complete',
+          pageLoadMethod: 'full-page-load',
+          title: 'YouTube',
+          preDoublefetch: {
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/',
+              contentType: 'text/html',
+              language: 'en',
+              og: {
+                image: 'https://www.youtube.com/img/desktop/yt_1200.png',
+                title: 'YouTube',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+            title: 'YouTube',
+            url: 'https://www.youtube.com/',
+            lastUpdatedAt: 1778516689604,
+          },
+          lastUpdatedAt: 1778516689606,
+          lang: 'en',
+        };
+
+        pageFetcherMock.reconfig({
+          'https://www.youtube.com/': {
+            title: 'YouTube',
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/',
+              language: 'en',
+              contentType: null,
+              og: {
+                title: 'YouTube',
+                image: 'https://www.youtube.com/img/desktop/yt_1200.png',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+          },
+        });
+
+        const { ok, safePage } = await uut.runJob(page);
+
+        expect(ok).to.be.true;
+        pageFetcherMock.expectAllFetchedOnce();
+        relaxedSafePageEqual(safePage, {
+          url: 'https://www.youtube.com/',
+          title: 'YouTube',
+          requestedIndex: false,
+          lang: {
+            html: 'en',
+            detect: 'en',
+          },
+          aggregator: {
+            activity: '0.0760',
+          },
+          canonicalUrl: 'https://www.youtube.com/',
+        });
+      });
+
+      it('should work when navigating to a YouTube video (history navigation)', async function () {
+        const page = {
+          aggregator: {
+            firstSeenAt: 1778516803897,
+            lastSeenAt: 1778516804977,
+            lastWrittenAt: 1778516818620,
+            activity: 0.0163625,
+          },
+          url: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+          status: 'complete',
+          pageLoadMethod: 'history-navigation',
+          title:
+            'Block Ads on Safari, iOS 18: Easy Ghostery Add-On Installation Guide 2025 - YouTube',
+          ref: 'https://www.youtube.com/results?search_query=ghostery',
+          preDoublefetch: {
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/',
+              contentType: 'text/html',
+              language: 'en',
+              og: {
+                image: 'https://www.youtube.com/img/desktop/yt_1200.png',
+                title: 'YouTube',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+            title: 'ghostery - YouTube',
+            url: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+            lastUpdatedAt: 1778516803897,
+          },
+          lastUpdatedAt: 1778516804977,
+          lang: 'en',
+        };
+
+        pageFetcherMock.reconfig({
+          'https://www.youtube.com/': {
+            title: 'YouTube',
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/',
+              language: 'en',
+              contentType: null,
+              og: {
+                title: 'YouTube',
+                image: 'https://www.youtube.com/img/desktop/yt_1200.png',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+          },
+          'https://www.youtube.com/watch?v=5zIPXqRytRg': {
+            title:
+              'Block Ads on Safari, iOS 18: Easy Ghostery Add-On Installation Guide 2025 - YouTube',
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+              language: 'en',
+              contentType: null,
+              og: {
+                title:
+                  'Block Ads on Safari, iOS 18: Easy Ghostery Add-On Installation Guide 2025',
+                url: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+                image:
+                  'https://i.ytimg.com/vi/5zIPXqRytRg/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBEgXihyMA8=&rs=AOn4CLDOJbZPzcZ18B_lHkYO_aFbuNGeAA',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+          },
+        });
+
+        const { ok, safePage } = await uut.runJob(page);
+
+        expect(ok).to.be.true;
+        pageFetcherMock.expectAllFetchedOnce();
+        relaxedSafePageEqual(safePage, {
+          url: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+          title:
+            'Block Ads on Safari, iOS 18: Easy Ghostery Add-On Installation Guide 2025 - YouTube',
+          requestedIndex: false,
+          lang: {
+            html: 'en',
+            detect: 'en',
+          },
+          aggregator: {
+            activity: '0.0149',
+          },
+          canonicalUrl: 'https://www.youtube.com/watch?v=5zIPXqRytRg',
+          ref: 'https://www.youtube.com/results?search_query=ghostery',
+        });
+      });
+
+      it('should work when navigating playlists', async function () {
+        const page = {
+          aggregator: {
+            firstSeenAt: 1781012426720,
+            lastSeenAt: 1781012428391,
+            lastWrittenAt: 1781012437446,
+            activity: 0.0131025,
+          },
+          url: 'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8&start_radio=1',
+          status: 'complete',
+          pageLoadMethod: 'history-navigation',
+          title:
+            'EPICA - Cry for the Moon (Live At The Symphonic Synergy) - YouTube',
+          ref: 'https://www.youtube.com/watch?v=1PXKYeAueUI&list=RD1PXKYeAueUI&start_radio=1',
+          preDoublefetch: {
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/watch?v=1PXKYeAueUI',
+              contentType: 'text/html',
+              jsonld: [
+                {
+                  '@context': 'https://schema.org',
+                  '@id': 'https://www.youtube.com/watch?v=1PXKYeAueUI',
+                  '@type': 'VideoObject',
+                  duration: 'PT366S',
+                  name: 'EPICA - Unleashed (Live At The Symphonic Synergy)',
+                  uploadDate: '2025-07-31T09:00:02-07:00',
+                },
+              ],
+              language: 'en',
+              og: {
+                image: 'https://www.youtube.com/img/desktop/yt_1200.png',
+                title: 'YouTube',
+              },
+            },
+            noindex: false,
+            requestedIndex: false,
+            title:
+              'EPICA - Unleashed (Live At The Symphonic Synergy) - YouTube',
+            url: 'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8&start_radio=1',
+            lastUpdatedAt: 1781012426720,
+          },
+          lastUpdatedAt: 1781012428390,
+          lang: 'en',
+        };
+
+        pageFetcherMock.reconfig({
+          // 1) original canonical URL (Note: this is a stale one)
+          'https://www.youtube.com/watch?v=1PXKYeAueUI': {
+            title:
+              'EPICA - Unleashed (Live At The Symphonic Synergy) - YouTube',
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/watch?v=1PXKYeAueUI',
+              language: 'en',
+              contentType: null,
+              og: {
+                title: 'EPICA - Unleashed (Live At The Symphonic Synergy)',
+                url: 'https://www.youtube.com/watch?v=1PXKYeAueUI',
+                image: 'https://i.ytimg.com/vi/1PXKYeAueUI/maxresdefault.jpg',
+              },
+              jsonld: [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'VideoObject',
+                  '@id': 'https://www.youtube.com/watch?v=1PXKYeAueUI',
+                  name: 'EPICA - Unleashed (Live At The Symphonic Synergy)',
+                  uploadDate: '2025-07-31T09:00:02-07:00',
+                },
+              ],
+            },
+            noindex: false,
+            requestedIndex: false,
+          },
+
+          // 2) original URL
+          'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8&start_radio=1':
+            {
+              title:
+                'EPICA - Cry for the Moon (Live At The Symphonic Synergy) - YouTube',
+              meta: {
+                canonicalUrl:
+                  'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8',
+                language: 'en',
+                contentType: null,
+                og: {
+                  title:
+                    'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                  url: 'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8',
+                  image: 'https://i.ytimg.com/vi/9nFlPviWyf8/maxresdefault.jpg',
+                },
+                jsonld: [
+                  {
+                    '@context': 'https://schema.org',
+                    '@type': 'VideoObject',
+                    '@id': 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+                    name: 'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                    uploadDate: '2025-08-26T08:00:27-07:00',
+                  },
+                ],
+              },
+              noindex: true,
+              requestedIndex: false,
+            },
+
+          // 3) canonical URL found on the HTML of the double-fetched original URL (step 2)
+          'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8': {
+            title:
+              'EPICA - Cry for the Moon (Live At The Symphonic Synergy) - YouTube',
+            meta: {
+              canonicalUrl:
+                'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8',
+              language: 'en',
+              contentType: null,
+              og: {
+                title:
+                  'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                url: 'https://www.youtube.com/watch?v=9nFlPviWyf8&list=RD9nFlPviWyf8',
+                image: 'https://i.ytimg.com/vi/9nFlPviWyf8/maxresdefault.jpg',
+              },
+              jsonld: [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'VideoObject',
+                  '@id': 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+                  name: 'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                  uploadDate: '2025-08-26T08:00:27-07:00',
+                },
+              ],
+            },
+            noindex: true,
+            requestedIndex: false,
+          },
+
+          // 4) JSON-LD URL found on the HML of the double-fetched canonical URL of the original page (from step 3)
+          'https://www.youtube.com/watch?v=9nFlPviWyf8': {
+            title:
+              'EPICA - Cry for the Moon (Live At The Symphonic Synergy) - YouTube',
+            meta: {
+              canonicalUrl: 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+              language: 'en',
+              contentType: null,
+              og: {
+                title:
+                  'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                url: 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+                image: 'https://i.ytimg.com/vi/9nFlPviWyf8/maxresdefault.jpg',
+              },
+              jsonld: [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'VideoObject',
+                  '@id': 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+                  name: 'EPICA - Cry for the Moon (Live At The Symphonic Synergy)',
+                  uploadDate: '2025-08-26T08:00:27-07:00',
+                },
+              ],
+            },
+            noindex: false,
+            requestedIndex: false,
+          },
+        });
+
+        const { ok, safePage } = await uut.runJob(page);
+
+        expect(ok).to.be.true;
+        pageFetcherMock.expectAllFetchedOnce();
+        relaxedSafePageEqual(safePage, {
+          url: 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+          title:
+            'EPICA - Cry for the Moon (Live At The Symphonic Synergy) - YouTube',
+          requestedIndex: false,
+          lang: {
+            html: 'en',
+            detect: 'en',
+          },
+          aggregator: {
+            activity: '0.0131',
+          },
+          canonicalUrl: 'https://www.youtube.com/watch?v=9nFlPviWyf8',
+          ref: 'https://www.youtube.com/ (PROTECTED)',
+          jsonld: {
+            type: 'VideoObject',
+            uploadDate: '2025-08-26T08:00:27-07:00',
+          },
+        });
+      });
+    });
   });
 
   describe('when given a website with canonical URL', function () {
