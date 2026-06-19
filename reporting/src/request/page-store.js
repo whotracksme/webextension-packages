@@ -10,6 +10,7 @@
  */
 
 import logger from '../logger.js';
+import { parse } from '../utils/url.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
 
 const PAGE_TTL = 1000 * 60 * 60; // 1 hour
@@ -34,7 +35,7 @@ function makePageActive(page, active) {
   }
 }
 
-function createPage({ tabId, documentId, url, isPrivate, active }) {
+function createPage({ tabId, documentId, url, adblocker, isPrivate, active }) {
   return {
     id: tabId,
     documentId,
@@ -55,6 +56,7 @@ function createPage({ tabId, documentId, url, isPrivate, active }) {
     requestStats: {},
     annotations: {},
     counter: 0,
+    adblocker,
   };
 }
 
@@ -68,8 +70,10 @@ export default class PageStore {
   // inherits the current tab's flags.
   #tabContext;
   #lastFlush = 0;
+  // analog to urlReporter (optional pause integration)
+  #pauseState;
 
-  constructor({ notifyPageStageListeners }) {
+  constructor({ notifyPageStageListeners, pauseState }) {
     this.#pages = new ChromeStorageMap({
       storageKey: 'wtm-request-reporting:page-store:pages',
       ttlInMs: PAGE_TTL,
@@ -77,6 +81,16 @@ export default class PageStore {
     this.#documentIndex = new Map();
     this.#tabContext = new Map();
     this.#notifyPageStageListeners = notifyPageStageListeners;
+    this.#pauseState = pauseState;
+  }
+
+  #adblockerStateFor(url) {
+    if (!this.#pauseState) return undefined;
+    const { hostname } = parse(url);
+    return {
+      paused: this.#pauseState.isHostnamePaused(hostname),
+      mode: this.#pauseState.getFilteringMode(),
+    };
   }
 
   async init() {
@@ -287,7 +301,8 @@ export default class PageStore {
     let page = this.#pages.get(documentId);
     if (!page) {
       const ctx = this.#tabContext.get(tabId) || {};
-      page = createPage({ tabId, documentId, url, ...ctx });
+      const adblocker = this.#adblockerStateFor(url);
+      page = createPage({ tabId, documentId, url, adblocker, ...ctx });
     }
     page.url = url;
     page.stageAfter = null;

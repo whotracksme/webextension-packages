@@ -13,7 +13,7 @@ import logger from '../logger.js';
 
 const RETRY_TIMEOUT = 30 * 1000;
 
-export const VERSION = '0.106';
+export const VERSION = '0.107';
 
 export const COOKIE_MODE = {
   THIRD_PARTY: 'thirdparty',

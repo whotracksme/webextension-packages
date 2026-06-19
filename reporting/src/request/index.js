@@ -65,6 +65,7 @@ export default class RequestReporter {
       },
       isRequestAllowed = () => false,
       dryRunMode = false,
+      pauseState, // see Reporting#constructor (../reporting.js)
     },
   ) {
     this.settings = settings;
@@ -88,6 +89,7 @@ export default class RequestReporter {
     this.whitelistedRequestCache = new Set();
     this.pageStore = new PageStore({
       notifyPageStageListeners: this.onPageStaged.bind(this),
+      pauseState,
     });
     // Dedupe tp_events by root documentId so a SW restart that
     // re-flushes a not-yet-persisted #pages.delete can't emit the
@@ -765,7 +767,7 @@ function truncatePath(path) {
 function buildPageLoadObject(page) {
   const urlParts = parse(page.url);
   const tps = { ...page.requestStats };
-  return {
+  const obj = {
     hostname: truncatedHash(urlParts.hostname),
     path: truncatedHash(truncatePath(urlParts.path)),
     scheme: urlParts.scheme,
@@ -783,4 +785,8 @@ function buildPageLoadObject(page) {
     tsv_id: false,
     frames: {},
   };
+  if (page.adblocker) {
+    obj.adblocker = page.adblocker;
+  }
+  return obj;
 }
