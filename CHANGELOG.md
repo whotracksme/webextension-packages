@@ -1,3 +1,19 @@
+# v11.0.0 (Tue Jun 23 2026)
+
+#### 💥 Breaking Change
+
+- Analogous to wtm.popularity, attach information on the adblocker state to tp_events: [#214](https://github.com/whotracksme/webextension-packages/pull/214) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 📝 Documentation
+
+- Add some missing tests for the changed double-fetch logic [#213](https://github.com/whotracksme/webextension-packages/pull/213) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v10.1.0 (Mon Jun 08 2026)
 
 #### 🚀 Enhancement
