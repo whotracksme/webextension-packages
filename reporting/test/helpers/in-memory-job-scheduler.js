@@ -36,7 +36,7 @@ export async function runClockUntilJobQueueIsEmpty(
   async function advanceTo(ts) {
     const diff = ts - Date.now();
     if (diff > 0) {
-      await clock.tickAsync(diff);
+      await clock.tickAsync(Math.ceil(diff));
     }
   }
 
