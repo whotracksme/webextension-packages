@@ -133,6 +133,44 @@ const WELL_KNOWN_HOSTNAME_IS_PRIVATE_NETWORK = {
   'www.patreon.com': false,
 };
 
+// Domain suffixes that do not resolve in the public DNS, are
+// reserved/used for private networks, or are infrastructure-only.
+// Hostnames ending in one of these should be treated as internal
+// and never shared publicly.
+const NON_PUBLIC_DOMAIN_SUFFIXES = [
+  // RFC 6762 (Multicast DNS)
+  '.local',
+
+  // ICANN reserved for private use (2024)
+  '.internal',
+
+  // Not formally reserved, but common private-use TLDs
+  // (RFC 6762 Appendix G; .corp/.home/.mail frozen by ICANN)
+  '.intranet',
+  '.private',
+  '.corp',
+  '.home',
+  '.lan',
+  '.mail',
+
+  // RFC 6761 (Special-Use Domain Names)
+  '.localhost',
+  '.invalid',
+  '.test',
+
+  // RFC 3172 (infrastructure-only namespace, never user-facing content)
+  // Covers:
+  // - .home.arpa (RFC 8375 Homenet)
+  // - .in-addr.arpa / .ip6.arpa (reverse DNS for IPv4 / IPv6)
+  '.arpa',
+
+  // RFC 7686 (Tor)
+  '.onion',
+
+  // RFC 9476 (non-DNS naming systems)
+  '.alt',
+];
+
 // Simple function to detect IP addresses that are non-public.
 // Local to the machine or link-only (belonging to a local network).
 //
@@ -197,17 +235,26 @@ export class DnsResolver {
       return isPrivate;
     }
 
+    if (
+      NON_PUBLIC_DOMAIN_SUFFIXES.some((suffix) => hostname.endsWith(suffix))
+    ) {
+      return true;
+    }
+
     // For the long tail, fall back to checking the IP address. Since we lack a
     // DNS resolution API, we use mappings built from observing network requests.
-    //
+    const entry = this.dns.get(hostname);
+    if (entry) {
+      return isLocalIP(entry.ip);
+    }
+
     // Note: Since this is a heuristic, there remains the question on how to deal
     // with hostnames that we have not seen before. That case should be rare
     // enough, since we work with hostnames that originate from visited websites.
     // Yet if no such mapping exists, we have to guess. Assuming a hostname is
     // private by default would be overly conservative; instead, we default to
     // public unless proven otherwise.
-    const entry = this.dns.get(hostname);
-    return entry?.ip && isLocalIP(entry.ip);
+    return false;
   }
 
   cacheDnsResolution({ url, hostname, ip, now = Date.now() }) {
