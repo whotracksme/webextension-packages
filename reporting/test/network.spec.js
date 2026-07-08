@@ -11,7 +11,7 @@
 
 import { expect } from 'chai';
 
-import { isLocalIP } from '../src/network.js';
+import { isLocalIP, DnsResolver } from '../src/network.js';
 
 describe('#isLocalIP', function () {
   describe('it should recognize local IPv6 addresses', async function () {
@@ -68,5 +68,61 @@ describe('#isLocalIP', function () {
         expect(isLocalIP(ip)).to.be.false;
       });
     }
+  });
+});
+
+describe('DnsResolver', function () {
+  let uut;
+
+  beforeEach(function () {
+    uut = new DnsResolver();
+  });
+
+  describe('#isPrivateHostname', function () {
+    describe('must be always detected as private', function () {
+      for (const hostname of [
+        '127.0.0.1',
+        'localhost',
+        'homeassistant.local',
+        'raspberrypi.local',
+        'abc.internal',
+        'permanently-removed.invalid',
+        'www.nytimesn7cgmftshazwhfgzm37qxb44r64ytbb2dj3x62d2lljsciiyd.onion',
+        'foo.test',
+        'abc.def.corp',
+        'my.foo.lan',
+      ]) {
+        it(`- ${hostname}`, function () {
+          expect(uut.isPrivateHostname(hostname)).to.be.true;
+        });
+      }
+    });
+
+    describe('must be always detected as public', function () {
+      for (const hostname of [
+        'en.wikipedia.org',
+        'www.google.com',
+        'www.youtube.com',
+      ]) {
+        it(`- ${hostname}`, function () {
+          expect(uut.isPrivateHostname(hostname)).to.be.false;
+        });
+      }
+    });
+  });
+
+  describe('#isPrivateURL', function () {
+    it('should classify URLs with non-public suffixes as private', function () {
+      expect(uut.isPrivateURL('https://printer.local/status')).to.be.true;
+      expect(uut.isPrivateURL('http://db.internal:8080/')).to.be.true;
+    });
+
+    it('should not classify ordinary public URLs as private', function () {
+      expect(uut.isPrivateURL('https://en.wikipedia.org/')).to.be.false;
+    });
+
+    it('should classify unparseable URLs as private', function () {
+      expect(uut.isPrivateURL('not-a-url')).to.be.true;
+    });
   });
 });
