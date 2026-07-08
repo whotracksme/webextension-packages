@@ -1,3 +1,19 @@
+# v11.0.1 (Wed Jul 08 2026)
+
+#### 🐛 Bug Fix
+
+- Improve detection of non-sharable domains [#216](https://github.com/whotracksme/webextension-packages/pull/216) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- (tests only) Fix for rare "Exceeded maximum steps (steps=1000)" [#215](https://github.com/whotracksme/webextension-packages/pull/215) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v11.0.0 (Tue Jun 23 2026)
 
 #### 💥 Breaking Change
