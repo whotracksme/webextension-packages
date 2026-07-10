@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import { HashProb } from './hash-detector-v2/index';
+import { HashProb } from './hash-detector-v2/index.js';
 
 const classifier = new HashProb();
 

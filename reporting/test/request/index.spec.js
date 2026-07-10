@@ -340,7 +340,7 @@ describe('request/index', function () {
         documentId: 'doc-34-0',
         method: 'GET',
         type: 'xmlhttprequest',
-        url: `http://tracker.com/track;uid=cliqz.com/tracking&uid2=cliqz.com/tracking&uid=${uid}?uid2=${uid}&encuid=${encodeURIComponent(
+        url: `http://tracker.com/track;uid=cliqz.com/tracking?uid2=cliqz.com/tracking&uid=${uid}?uid2=${uid}&encuid=${encodeURIComponent(
           uid,
         )}`,
         requestHeaders: mockRequestHeaders,
