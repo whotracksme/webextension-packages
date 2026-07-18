@@ -316,37 +316,6 @@ async function tryCloseOffscreenDocument() {
 
 const OFFSCREEN_DOCUMENT_PREFIX = 'offscreen/doublefetch';
 const OFFSCREEN_DOCUMENT_INDEX_HTML = `${OFFSCREEN_DOCUMENT_PREFIX}/index.html`;
-const OFFSCREEN_DOCUMENT_FIXES_JS = `${OFFSCREEN_DOCUMENT_PREFIX}/offscreen-fix.js`;
-
-async function tryRegisterOffscreenFixes(domain) {
-  if (!chrome?.scripting?.registerContentScripts) {
-    logger.warn('Skipping offscreen-fixes (chrome.scripting API unavailable)');
-    return () => {};
-  }
-
-  logger.debug('Installing offscreen fixes for domain:', domain);
-  const id = 'offscreen-fix';
-  await chrome.scripting.registerContentScripts([
-    {
-      id,
-      matches: [`https://*.${domain}/*`, `https://${domain}/*`],
-      js: [OFFSCREEN_DOCUMENT_FIXES_JS],
-      runAt: 'document_start',
-      allFrames: true,
-      world: 'MAIN',
-    },
-  ]);
-
-  return () => {
-    logger.debug('Removing offscreen fixes for domain:', domain);
-    chrome.scripting.unregisterContentScripts({ ids: [id] }).catch((e) => {
-      logger.error(
-        'cleanup failed: unable to remove offscreen fixes content script:',
-        e,
-      );
-    });
-  };
-}
 
 async function withOffscreenDocumentReady(url, headers, asyncCallback) {
   const cleanups = [];
@@ -370,9 +339,6 @@ async function withOffscreenDocumentReady(url, headers, asyncCallback) {
 
     const undoDNRChange = await addDNRSessionRule(rule);
     cleanups.push(undoDNRChange);
-
-    const undoOffscreenFixes = await tryRegisterOffscreenFixes(domain);
-    cleanups.push(undoOffscreenFixes);
 
     const undoHeaderOverride = await headerOverride({
       headers,
