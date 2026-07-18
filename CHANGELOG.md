@@ -1,3 +1,15 @@
+# v11.0.2 (Sat Jul 18 2026)
+
+#### 🐛 Bug Fix
+
+- Fix: undo offscreen window size attributes [#217](https://github.com/whotracksme/webextension-packages/pull/217) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v11.0.1 (Wed Jul 08 2026)
 
 #### 🐛 Bug Fix
