@@ -18,6 +18,7 @@ import PopularityEstimator from '../src/popularity-estimator.js';
 import { randomSafeIntBetween } from '../src/random.js';
 import { createInMemoryJobScheduler } from './helpers/in-memory-job-scheduler.js';
 import InMemoryDatabase from './helpers/in-memory-database.js';
+import { arbitraryUrlWithDomain } from './helpers/fast-check-utils.js';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -91,18 +92,19 @@ describe('#PopularityEstimator', function () {
 
     jobScheduler = createInMemoryJobScheduler();
     jobScheduler.addObserver('jobRegistered', (job) => {
-      expect(job.type).to.eql('popularity-estimator:prepare-voting:v1');
-      expect(job.args).to.have.all.keys(
-        'urlProjection',
-        'countType',
-        'intervalType',
-        'sample',
-      );
-      expect(job.args.sample).to.have.all.keys('value', 'count');
-      expect(job.args.sample.value).to.be.a('string');
-      expect(job.args.sample.count).to.be.a('number').greaterThan(0);
-
+      // Nasty pitfall: it would be nice to run assertions here, but they
+      // will not be visible in the console when the user runs them.
+      // Instead, they must be validated later (Hint: use ensureValidJob).
       _jobsRegistered.push(job);
+
+      // We can still try since there is no downside, but it will only
+      // have an effect if console.error is visible. So, it is a best-efforts
+      // attempt to get better logging.
+      try {
+        ensureValidJob(job);
+      } catch (e) {
+        console.error('Corrupted job detected:', e);
+      }
     });
 
     uut = newPopularityEstimator();
@@ -177,6 +179,23 @@ describe('#PopularityEstimator', function () {
     navigateTo('dummy-location-to-force-rotation.test');
   }
 
+  function ensureValidJob(job) {
+    expect(job.type).to.eql('popularity-estimator:prepare-voting:v2');
+    expect(job.args).to.have.all.keys(
+      'urlProjection',
+      'countType',
+      'intervalType',
+      'sample',
+    );
+    expect(job.args.sample).to.have.all.keys('value', 'count', 'activity');
+    expect(job.args.sample.value).to.be.a('string');
+    expect(job.args.sample.count).to.be.a('number').greaterThan(0);
+    expect(job.args.sample.activity)
+      .to.satisfy(Number.isInteger)
+      .and.at.least(0);
+    return job;
+  }
+
   async function expectNoPreparedVotes() {
     await clock.runToLastAsync();
     expect(jobsRegistered).to.eql([]);
@@ -185,6 +204,7 @@ describe('#PopularityEstimator', function () {
   async function expectPreparedVotes(condition = {}) {
     await clock.runToLastAsync();
     expect(jobsRegistered).to.be.not.empty;
+    jobsRegistered.forEach(ensureValidJob);
 
     const { matchesDomain } = condition;
     if (matchesDomain) {
@@ -305,7 +325,7 @@ describe('#PopularityEstimator', function () {
       return fc
         .array(
           fc.record({
-            url: fc.webUrl(),
+            url: arbitraryUrlWithDomain,
             numVisits: fc.integer({
               min: minVisitsPerBatch,
               max: maxVisitsPerBatch,
@@ -401,6 +421,7 @@ describe('#PopularityEstimator', function () {
                 };
 
                 expect(jobsRegistered).to.be.not.empty;
+                jobsRegistered.forEach(ensureValidJob);
                 mustExist('intervalType', '1d');
                 mustExist('intervalType', '1w');
                 mustExist('intervalType', '4w');
@@ -606,7 +627,7 @@ describe('#PopularityEstimator', function () {
 
                   if (jobsRegistered.length > 0) {
                     while (jobsRegistered.length > 0) {
-                      const job = jobsRegistered.shift();
+                      const job = ensureValidJob(jobsRegistered.shift());
                       const { countType, intervalType, urlProjection, sample } =
                         job.args;
 
@@ -704,6 +725,212 @@ describe('#PopularityEstimator', function () {
             .afterEach(tearDown),
           { numRuns: 3, endOnFailure: true },
         );
+      });
+
+      describe('"activity" field: total visits are more important than number of users', function () {
+        // Scenario:
+        // Most "normal" users favor a site, which generates relatively few visits ...
+        const MANY_USERS_FEW_VISITS = {
+          url: 'https://streaming.test/watch',
+          domain: 'streaming.test',
+          timePerVisit: 10 * MINUTE,
+        };
+        // ... but another, small group ("power users") favors a site that generates a lot of visits
+        const FEW_USERS_MANY_VISITS = {
+          url: 'https://many-clicks.test/',
+          domain: 'many-clicks.test',
+          timePerVisit: 10 * SECOND,
+        };
+
+        // A group of "numClients" clients, where each of them makes
+        // "numVisits" visits (both given as ranges). Every visit goes either to
+        // the site of the normal users ("true") or to the site of the power
+        // users ("false").
+        function arbitraryClients({
+          numClients,
+          numVisits,
+          chanceOfNormalVisit,
+        }) {
+          const weight = Math.round(1000 * chanceOfNormalVisit);
+          const oneVisit = fc.oneof(
+            { weight, arbitrary: fc.constant(true) },
+            { weight: 1000 - weight, arbitrary: fc.constant(false) },
+          );
+          const oneClient = fc.array(oneVisit, numVisits);
+          return fc.array(oneClient, numClients);
+        }
+
+        async function simulateClient(visits) {
+          initMocks();
+          await uut.init();
+          await ensureAllRotationsStarted();
+
+          for (const isNormalUser of visits) {
+            const site = isNormalUser
+              ? MANY_USERS_FEW_VISITS
+              : FEW_USERS_MANY_VISITS;
+            navigateTo(site.url);
+            clock.tick(site.timePerVisit);
+          }
+
+          await endTestByForcingRotation();
+          await clock.runToLastAsync();
+          return [...jobsRegistered];
+        }
+
+        // Computes two rankings:
+        // - "byVotes": every vote counts once (approximates users per site)
+        // - "byActivity": votes are weighted by the activity of the client
+        //   that sent them (approximates visits per site)
+        function rankSites(jobs, intervalType) {
+          const byVotes = new Map();
+          const byActivity = new Map();
+          const matches = ({ args }) =>
+            args.intervalType === intervalType &&
+            args.urlProjection === 'domain';
+
+          for (const { args } of jobs.map(ensureValidJob).filter(matches)) {
+            const { value, count, activity } = args.sample;
+            byVotes.set(value, (byVotes.get(value) || 0) + count);
+            byActivity.set(
+              value,
+              (byActivity.get(value) || 0) + count * activity,
+            );
+          }
+          const winner = (scorePerSite) =>
+            [...scorePerSite].sort((x, y) => y[1] - x[1])[0]?.[0];
+          return {
+            byVotes: winner(byVotes),
+            byActivity: winner(byActivity),
+            details: JSON.stringify({
+              byVotes: [...byVotes],
+              byActivity: [...byActivity],
+            }),
+          };
+        }
+
+        async function expectPowerUsersWinByActivityAndNormalUsersByVotes({
+          normalClients,
+          powerClients,
+          intervalType,
+        }) {
+          const jobs = [];
+          for (const visits of [...normalClients, ...powerClients]) {
+            jobs.push(...(await simulateClient(visits)));
+          }
+
+          const { byVotes, byActivity, details } = rankSites(
+            jobs,
+            intervalType,
+          );
+          expect(byVotes, details).to.eql(MANY_USERS_FEW_VISITS.domain);
+          expect(byActivity, details).to.eql(FEW_USERS_MANY_VISITS.domain);
+        }
+
+        // 0 means that clients are always pure "normal users" or "power users".
+        // But the noise here simulates scenarios where users also sometimes visit
+        // the other websites (switching the roles).
+        const ROLE_NOISE = [0, 0.02, 0.05];
+
+        // The power users have to stay the smaller group (or they would already
+        // win by counting votes), while their visits have to outnumber the ones
+        // of the normal group (or there would be nothing for the activity to
+        // reveal). Both hold for any combination of the ranges below.
+        const NUM_NORMAL_CLIENTS = { minLength: 9, maxLength: 10 };
+        const NUM_POWER_CLIENTS = { minLength: 3, maxLength: 4 };
+
+        for (const {
+          intervalType,
+          numNormalVisits,
+          numPowerVisits,
+          numRuns,
+        } of [
+          {
+            intervalType: '1d',
+            numNormalVisits: { minLength: 5, maxLength: 8 },
+            numPowerVisits: { minLength: 100, maxLength: 150 },
+            numRuns: 3,
+          },
+          {
+            // Note that for higher intervals, local sampling introduces more variance.
+            // Thus, we need more samples to mitigate the resulting randomness.
+            intervalType: '4w',
+            numNormalVisits: { minLength: 300, maxLength: 350 },
+            numPowerVisits: { minLength: 4000, maxLength: 5000 },
+            numRuns: 2,
+          },
+        ]) {
+          it(`should rank by visits, which the votes alone cannot (${intervalType})`, async function () {
+            this.timeout(60 * SECOND);
+
+            await fc.assert(
+              fc
+                .asyncProperty(
+                  fc.oneof(
+                    ...ROLE_NOISE.map((roleNoise) =>
+                      fc.record({
+                        normalClients: arbitraryClients({
+                          numClients: NUM_NORMAL_CLIENTS,
+                          numVisits: numNormalVisits,
+                          chanceOfNormalVisit: 1 - roleNoise,
+                        }),
+                        powerClients: arbitraryClients({
+                          numClients: NUM_POWER_CLIENTS,
+                          numVisits: numPowerVisits,
+                          chanceOfNormalVisit: roleNoise,
+                        }),
+                      }),
+                    ),
+                  ),
+                  (population) =>
+                    expectPowerUsersWinByActivityAndNormalUsersByVotes({
+                      ...population,
+                      intervalType,
+                    }),
+                )
+                .beforeEach(initMocks)
+                .afterEach(tearDown),
+              { numRuns, endOnFailure: true },
+            );
+          });
+        }
+
+        it('should correct "activity" for the local sampling', async function () {
+          this.timeout(60 * SECOND);
+
+          const numClients = 10;
+          const numVisits = 1300;
+          const totalVisits = numClients * numVisits;
+
+          // A client that only visits the site of the power users. Since those
+          // visits are short, it stays inside one period - even for "1d".
+          const powerUserVisits = Array(numVisits).fill(false);
+          expect(numVisits * FEW_USERS_MANY_VISITS.timePerVisit).to.be.lessThan(
+            1 * DAY,
+          );
+
+          // Staying inside one period means a client votes at most once per
+          // interval. Thus, each job can be added as it comes.
+          const totalActivity = { '1d': 0, '1w': 0, '4w': 0 };
+          for (let i = 0; i < numClients; i += 1) {
+            const jobs = await simulateClient(powerUserVisits);
+            for (const { args } of jobs) {
+              if (args.urlProjection === 'domain') {
+                totalActivity[args.intervalType] += args.sample.activity;
+              }
+            }
+          }
+
+          expect(totalActivity['1d'], '1d').to.eql(totalVisits);
+          expect(totalActivity['1w'], '1w').to.be.closeTo(
+            totalVisits,
+            0.1 * totalVisits,
+          );
+          expect(totalActivity['4w'], '4w').to.be.closeTo(
+            totalVisits,
+            0.3 * totalVisits,
+          );
+        });
       });
     });
   });

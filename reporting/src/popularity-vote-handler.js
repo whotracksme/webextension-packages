@@ -10,7 +10,7 @@
  */
 
 import logger from './logger';
-import { random32Bit } from './random';
+import { randomBetween, random32Bit } from './random';
 import { requireParam, requireString } from './utils';
 import { BadJobError } from './errors';
 
@@ -53,7 +53,7 @@ export default class PopularityVoteHandler {
     this.pauseState = pauseState; // optional
 
     jobScheduler.registerHandler(
-      'popularity-estimator:prepare-voting:v1',
+      'popularity-estimator:prepare-voting:v2',
       async (job) => {
         const { urlProjection, countType, intervalType, sample } = job.args;
         const validate = (actual, allowed) => {
@@ -72,7 +72,13 @@ export default class PopularityVoteHandler {
         // Validate the vote. First structurally ...
         const unmaskedVote = sample?.value;
         const numVotes = sample?.count;
-        if (typeof unmaskedVote !== 'string' || !Number.isInteger(numVotes)) {
+        const activity = sample?.activity;
+        if (
+          typeof unmaskedVote !== 'string' ||
+          !Number.isInteger(numVotes) ||
+          !Number.isInteger(activity) ||
+          activity < 0
+        ) {
           throwBadJobError('Corrupted vote sample in job', job);
         }
 
@@ -84,22 +90,46 @@ export default class PopularityVoteHandler {
           );
         }
 
-        const vote = await this.prepareVote(
+        const preparedVote = await this.prepareVote(
           urlProjection,
           countType,
           intervalType,
           unmaskedVote,
         );
-        logger.info('Vote ready:', `${numVotes}x for`, vote);
+        logger.info(
+          'Vote ready:',
+          `${numVotes}x for`,
+          preparedVote,
+          `with activity=${activity} (before noise)`,
+        );
 
-        const sendVoteJob = {
-          type: 'popularity-estimator:send-vote:v1',
-          args: { vote },
-          config: {
-            readyIn: { min: 2 * SECOND, max: 20 * MINUTE },
-          },
-        };
-        return Array(numVotes).fill(sendVoteJob);
+        const messages = [];
+        for (let i = 0; i < numVotes; i += 1) {
+          messages.push({
+            type: 'popularity-estimator:send-vote:v2',
+            args: {
+              payload: {
+                ...preparedVote,
+
+                // We can apply some noise as long as it keeps the mean.
+                // Since we are using a uniform distribution for the noise,
+                // it works if "(A + B) / 2 = 1" holds.
+                //
+                // Notes:
+                // - Why 75%? - There are diminishing returns for higher values,
+                //   but we would need much more samples.
+                // - How important is the noise? - Perhaps not so much, but
+                //   the noise makes it a bit harder to link votes from the
+                //   same client in the same round.
+                activity: (randomBetween(0.25, 1.75) * activity).toString(),
+              },
+            },
+            config: {
+              readyIn: { min: 2 * SECOND, max: 20 * MINUTE },
+            },
+          });
+        }
+        return messages;
       },
       {
         priority: -100, // preparing the vote can be delayed
@@ -109,10 +139,10 @@ export default class PopularityVoteHandler {
     );
 
     jobScheduler.registerHandler(
-      'popularity-estimator:send-vote:v1',
+      'popularity-estimator:send-vote:v2',
       async (job) => {
-        const { vote } = job.args;
-        if (!vote) {
+        const { payload } = job.args;
+        if (!payload) {
           throwBadJobError('Vote missing in job', job);
         }
 
@@ -122,11 +152,11 @@ export default class PopularityVoteHandler {
         // filtering them out would introduce bias.
         await this.communication.send({
           action: 'wtm.popularity',
-          payload: vote,
-          ver: 3, // Note: no need to keep this number in sync among messages
+          payload,
+          ver: 4, // Note: no need to keep this number in sync among messages
           'anti-duplicates': random32Bit(),
         });
-        logger.info('Voted successfully for:', vote);
+        logger.info('Voted successfully for:', payload);
       },
       {
         priority: 100, // prioritize sending the final message out
