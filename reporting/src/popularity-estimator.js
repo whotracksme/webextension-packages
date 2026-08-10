@@ -56,6 +56,13 @@ export function chooseNumSamplesPerInterval(intervalType) {
   }
 }
 
+// To avoid storing a full history, clients can already do local sampling.
+const LOCAL_SAMPLING_BY_INTERVAL = {
+  '1d': 1, // no local sampling
+  '1w': 10, // count every 10th visit
+  '4w': 100,
+};
+
 export function isLegalVoteCount({ numVotes, intervalType }) {
   requireInt(numVotes);
   return numVotes >= 0 && numVotes <= chooseNumSamplesPerInterval(intervalType);
@@ -231,11 +238,9 @@ export default class PopularityEstimator {
           }
 
           const hostnamePath = hostname + pathname;
-          for (const [interval, samplingSize] of [
-            ['1d', 1],
-            ['1w', 10],
-            ['4w', 100],
-          ]) {
+          for (const [interval, samplingSize] of Object.entries(
+            LOCAL_SAMPLING_BY_INTERVAL,
+          )) {
             if (randomSafeIntBetween(1, samplingSize) === 1) {
               this._popularityBy.domain.visits[interval].count(domain);
               this._popularityBy.hostname.visits[interval].count(hostname);
@@ -513,9 +518,13 @@ export default class PopularityEstimator {
             (async () => {
               // 1) draw samples from the now expired period
               const numSamples = chooseNumSamplesPerInterval(intervalType);
-              const groupedSamples = await persistedCounter.sample(numSamples, {
-                group: true, // helps to avoid unnecessary, duplicated quorum calls
-              });
+              const { samples: groupedSamples, populationSize } =
+                await persistedCounter.sample(numSamples, {
+                  group: true, // helps to avoid unnecessary, duplicated quorum calls
+                });
+              const activity = requireInt(
+                populationSize * LOCAL_SAMPLING_BY_INTERVAL[intervalType],
+              );
 
               // 2) reset counters (destructive action to enter the new period)
               await persistedCounter.clear();
@@ -523,7 +532,7 @@ export default class PopularityEstimator {
               // 3) prepare jobs (but delay registration until all operations
               //    succeeded, which indicates that the system is healthy)
               return groupedSamples.map(([value, count]) => ({
-                type: 'popularity-estimator:prepare-voting:v1',
+                type: 'popularity-estimator:prepare-voting:v2',
                 args: {
                   urlProjection,
                   countType,
@@ -531,6 +540,7 @@ export default class PopularityEstimator {
                   sample: {
                     value,
                     count,
+                    activity,
                   },
                 },
                 config: {

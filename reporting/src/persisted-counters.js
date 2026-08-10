@@ -78,9 +78,14 @@ export default class PersistedCounters {
   /**
    * Draws random samples.
    *
+   * Output: {
+   *   samples: [...],        (e.g. ['foo', 'foo', 'bar'])
+   *   populationSize: <int>  (the sum of all counts, not the number of distinct keys)
+   * }
+   *
    * Options:
    * - "group": Aggregates identical samples together
-   *    Example: ['foo', 'foo', 'bar'] ==> [['foo', 2], ['bar', 1]]
+   *    Example: `samples: ['foo', 'foo', 'bar'] ==> [['foo', 2], ['bar', 1]]`
    */
   async sample(numSamples = 1, { group = false } = {}) {
     // Flush pending counters, so the database becomes the only source of truth.
@@ -89,48 +94,47 @@ export default class PersistedCounters {
     await this.flush();
 
     let samples = [];
-    if (numSamples > 0) {
-      await this.db.transaction({ readonly: true }, async (tx) => {
-        // Initial pass to learn how many counts we had in total
-        let cursor = await tx.scan();
-        let totalSum = 0;
-        while (cursor) {
-          totalSum += cursor.value;
+    let populationSize = 0;
+
+    await this.db.transaction({ readonly: true }, async (tx) => {
+      // Initial pass to learn how many counts we had in total
+      let cursor = await tx.scan();
+      while (cursor) {
+        populationSize += cursor.value;
+        cursor = await cursor.next();
+      }
+      if (populationSize > 0) {
+        // Draw the position of the random samples
+        const picks = [];
+        for (let i = 0; i < numSamples; i += 1) {
+          picks.push(randomSafeIntBetween(0, populationSize - 1));
+        }
+
+        // Second pass to identify the chosen samples
+        cursor = await tx.scan();
+        let currentSum = 0;
+        while (cursor && samples.length < numSamples) {
+          currentSum += cursor.value;
+          for (let i = 0; i < picks.length; i += 1) {
+            if (currentSum > picks[i]) {
+              samples.push(cursor.key);
+              picks[i] = Number.MAX_VALUE;
+            }
+          }
           cursor = await cursor.next();
         }
-        if (totalSum > 0) {
-          // Draw the position of the random samples
-          const picks = [];
-          for (let i = 0; i < numSamples; i += 1) {
-            picks.push(randomSafeIntBetween(0, totalSum - 1));
-          }
-
-          // Second pass to identify the chosen samples
-          cursor = await tx.scan();
-          let currentSum = 0;
-          while (cursor && samples.length < numSamples) {
-            currentSum += cursor.value;
-            for (let i = 0; i < picks.length; i += 1) {
-              if (currentSum > picks[i]) {
-                samples.push(cursor.key);
-                picks[i] = Number.MAX_VALUE;
-              }
-            }
-            cursor = await cursor.next();
-          }
-        }
-      });
-
-      if (group) {
-        // Group identical values together (['foo', 'foo'] => [['foo', 2]]).
-        // By design, identical values are always next to each other.
-        samples = groupConsecutive(samples);
       }
+    });
+
+    if (group) {
+      // Group identical values together (['foo', 'foo'] => [['foo', 2]]).
+      // By design, identical values are always next to each other.
+      samples = groupConsecutive(samples);
     }
 
     // Do a final shuffle to randomize the order; otherwise, the implicit
     // order of the database may leak through.
-    return shuffleInPlace(samples);
+    return { samples: shuffleInPlace(samples), populationSize };
   }
 
   /*

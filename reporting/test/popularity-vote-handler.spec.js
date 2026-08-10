@@ -23,6 +23,7 @@ import {
   createInMemoryJobScheduler,
   runClockUntilJobQueueIsEmpty,
 } from './helpers/in-memory-job-scheduler.js';
+import { arbitraryUrlWithDomain } from './helpers/fast-check-utils.js';
 
 const SECOND = 1000;
 
@@ -180,9 +181,25 @@ describe('#PopularityVoteHandler', function () {
       let actualPayloads = messagesSent.map(({ message }) => {
         const { action, payload, ver } = message;
         expect(action).to.eql('wtm.popularity');
-        expect(ver).to.eql(3);
-        return payload;
+        expect(ver).to.eql(4);
+
+        // "payload.activity" is an edge case, because random noise will be applied.
+        // The best that we can do is a sanity check here, and then ignoring the field.
+        const { activity, ...rest } = payload;
+        const activityBeforeNoise = prepareVotingJob.args.sample.activity;
+
+        // We could make the test stricter, but the conservative estimation here
+        // will hold even if the scaling factor changes in the production code.
+        expect(activity).to.be.a('string');
+        expect(Number(activity)).to.be.within(0, 2 * activityBeforeNoise);
+
+        return { ...rest, activity: '<ignore>' };
       });
+      expectedPayloads = expectedPayloads.map((payload) => ({
+        ...payload,
+        activity: '<ignore>',
+      }));
+
       if (ignoreMasking) {
         actualPayloads = actualPayloads.map((payload) => ({
           ...payload,
@@ -193,6 +210,7 @@ describe('#PopularityVoteHandler', function () {
           vote: '<ignore>',
         }));
       }
+
       try {
         expect(actualPayloads).to.have.deep.members(expectedPayloads);
       } catch (e) {
@@ -219,7 +237,7 @@ describe('#PopularityVoteHandler', function () {
             const intervalType = '1d';
 
             const prepareVotingJob = {
-              type: 'popularity-estimator:prepare-voting:v1',
+              type: 'popularity-estimator:prepare-voting:v2',
               args: {
                 urlProjection,
                 countType,
@@ -227,6 +245,7 @@ describe('#PopularityVoteHandler', function () {
                 sample: {
                   value: 'example.com',
                   count,
+                  activity: 42,
                 },
               },
             };
@@ -263,7 +282,7 @@ describe('#PopularityVoteHandler', function () {
             const intervalType = '1d';
 
             const prepareVotingJob = {
-              type: 'popularity-estimator:prepare-voting:v1',
+              type: 'popularity-estimator:prepare-voting:v2',
               args: {
                 urlProjection,
                 countType,
@@ -271,6 +290,7 @@ describe('#PopularityVoteHandler', function () {
                 sample: {
                   value: 'example.com',
                   count,
+                  activity: 42,
                 },
               },
             };
@@ -304,7 +324,7 @@ describe('#PopularityVoteHandler', function () {
         await fc.assert(
           fc
             .asyncProperty(
-              fc.webUrl(),
+              arbitraryUrlWithDomain,
               fc.constantFrom('domain', 'hostname', 'hostnamePath'),
               fc.constantFrom('1d', '1w', '4w'),
               fc.integer({ min: 1, max: 3 }),
@@ -313,7 +333,7 @@ describe('#PopularityVoteHandler', function () {
                 const countType = 'visits';
 
                 const prepareVotingJob = {
-                  type: 'popularity-estimator:prepare-voting:v1',
+                  type: 'popularity-estimator:prepare-voting:v2',
                   args: {
                     urlProjection,
                     countType,
@@ -321,6 +341,7 @@ describe('#PopularityVoteHandler', function () {
                     sample: {
                       value: vote,
                       count,
+                      activity: 42,
                     },
                   },
                 };
@@ -359,7 +380,7 @@ describe('#PopularityVoteHandler', function () {
         await fc.assert(
           fc
             .asyncProperty(
-              fc.webUrl(),
+              arbitraryUrlWithDomain,
               fc.constantFrom('domain', 'hostname'),
               fc.constantFrom('1d', '1w', '4w'),
               async (url, urlProjection, intervalType) => {
@@ -384,7 +405,7 @@ describe('#PopularityVoteHandler', function () {
                 countryProvider._ctry = 'de';
 
                 const prepareVotingJob = {
-                  type: 'popularity-estimator:prepare-voting:v1',
+                  type: 'popularity-estimator:prepare-voting:v2',
                   args: {
                     urlProjection,
                     countType,
@@ -392,6 +413,7 @@ describe('#PopularityVoteHandler', function () {
                     sample: {
                       value: unmaskedVote,
                       count: 1,
+                      activity: 42,
                     },
                   },
                 };
@@ -414,6 +436,103 @@ describe('#PopularityVoteHandler', function () {
             .afterEach(tearDown),
           { numRuns: 10 },
         );
+      });
+
+      /**
+       * Sends "numJobs" identical vote jobs through the scheduler and returns
+       * the "activity" values of all messages that ended up being sent.
+       */
+      async function collectNoisyActivities(prepareVotingJob, numJobs) {
+        // If we register too many jobs at once, the jobScheduler will start
+        // dropping them. So why not flush after each job? Unfortunately, that
+        // slows down the test setup too much.
+        const flushJobs = 32; // even with 3 votes, it is 3 * 32 < 100
+
+        await jobScheduler.init();
+        try {
+          for (let i = 0; i < numJobs; i += 1) {
+            await jobScheduler.registerJob(prepareVotingJob);
+            if ((i + 1) % flushJobs === 0) {
+              await runClockUntilJobQueueIsEmpty(jobScheduler, clock);
+            }
+          }
+          await runClockUntilJobQueueIsEmpty(jobScheduler, clock);
+          return communication._messagesSent.map(({ message }) =>
+            Number(message.payload.activity),
+          );
+        } finally {
+          jobScheduler.unload();
+        }
+      }
+
+      it('should preserve the mean of "activity" when applying noise', async function () {
+        this.timeout(60 * SECOND);
+
+        await fc.assert(
+          fc
+            .asyncProperty(
+              fc.integer({ min: 1, max: 10000 }),
+              async (activity) => {
+                quorumChecker._everythingReachesQuorum();
+
+                // trade-off: do not set too high, or the test will be too slow.
+                // But also it must be high enough, so it is not flakey.
+                const numJobs = 80;
+                const votesPerJob = 3; // the most that a client may send
+
+                const activities = await collectNoisyActivities(
+                  {
+                    type: 'popularity-estimator:prepare-voting:v2',
+                    args: {
+                      urlProjection: 'domain',
+                      countType: 'visits',
+                      intervalType: '1d',
+                      sample: {
+                        value: 'example.com',
+                        count: votesPerJob,
+                        activity,
+                      },
+                    },
+                  },
+                  numJobs,
+                );
+                expect(activities).to.have.lengthOf(numJobs * votesPerJob);
+
+                const mean =
+                  activities.reduce((x, y) => x + y, 0) / activities.length;
+                expect(mean).to.be.closeTo(activity, 0.1 * activity);
+
+                return true;
+              },
+            )
+            .beforeEach(initMocks)
+            .afterEach(tearDown),
+          { numRuns: 2, endOnFailure: true },
+        );
+      });
+
+      it('should apply the noise to each message individually', async function () {
+        // Otherwise, votes of the same client would remain trivially linkable.
+        // Note that one job is enough: it is the noise within a single job that
+        // could be lost (e.g. by drawing it once instead of once per message).
+        quorumChecker._everythingReachesQuorum();
+        const activities = await collectNoisyActivities(
+          {
+            type: 'popularity-estimator:prepare-voting:v2',
+            args: {
+              urlProjection: 'domain',
+              countType: 'visits',
+              intervalType: '1d',
+              sample: { value: 'example.com', count: 3, activity: 42 },
+            },
+          },
+          1,
+        );
+
+        // Note: there is a theoretical potential for getting the
+        // identical random numbers, but practically it is so
+        // unlikely that we can ignore it here.
+        expect(new Set(activities).size).to.eql(3);
       });
     });
   });

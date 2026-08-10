@@ -9,6 +9,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import * as fc from 'fast-check';
+import * as tldts from 'tldts-experimental';
+
+/**
+ * Not every URL that fast-check generates can exist in the real world.
+ * For instance, "https://a.pg" looks fine, but "a.pg" is itself a public
+ * suffix (the rule in the public suffix list is "*.pg"), so it cannot be
+ * registered.
+ */
+export const arbitraryUrlWithDomain = fc
+  .webUrl()
+  .filter((url) => tldts.getDomain(url) !== null);
+
 /**
  * fast-check will find edge cases for keys like "__proto__".
  * Yet in most use cases, the keys will be simple enough to work

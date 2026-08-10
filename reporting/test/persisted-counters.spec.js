@@ -35,12 +35,15 @@ describe('#PersistedCounters', function () {
 
   describe('#sample', function () {
     it('should return an empty array if nothing has been counted yet', async function () {
-      expect(await uut.sample()).to.eql([]);
+      expect(await uut.sample()).to.eql({ samples: [], populationSize: 0 });
     });
 
     it('should pick only element', async function () {
       uut.count('foo');
-      expect(await uut.sample()).to.eql(['foo']);
+      expect(await uut.sample()).to.eql({
+        samples: ['foo'],
+        populationSize: 1,
+      });
     });
 
     it('should pick elements based on their counts', async function () {
@@ -50,7 +53,7 @@ describe('#PersistedCounters', function () {
 
       let foo = 0;
       let bar = 0;
-      const samples = await uut.sample(1000);
+      const { samples } = await uut.sample(1000);
       for (const sample of samples) {
         if (sample === 'foo') {
           foo += 1;
@@ -78,12 +81,16 @@ describe('#PersistedCounters', function () {
               fc.nat(100),
               async (keys, numSamples) => {
                 keys.forEach((key) => uut.count(key));
-                const result = await uut.sample(numSamples);
+                const { samples, populationSize } = await uut.sample(
+                  numSamples,
+                );
+                expect(populationSize).to.eql(keys.length);
+
                 if (keys.length === 0) {
-                  expect(result).to.eql([]);
+                  expect(samples).to.eql([]);
                 } else {
-                  expect(result).to.have.lengthOf(numSamples);
-                  for (const key of result) {
+                  expect(samples).to.have.lengthOf(numSamples);
+                  for (const key of samples) {
                     expect(keys).to.include(key);
                   }
                 }
@@ -104,13 +111,18 @@ describe('#PersistedCounters', function () {
               fc.nat(100),
               async (keys, numSamples) => {
                 keys.forEach((key) => uut.count(key));
-                const result = await uut.sample(numSamples, { group: true });
+                const { samples, populationSize } = await uut.sample(
+                  numSamples,
+                  { group: true },
+                );
+                expect(populationSize).to.eql(keys.length);
+
                 if (keys.length === 0) {
-                  expect(result).to.eql([]);
+                  expect(samples).to.eql([]);
                 } else {
                   let sum = 0;
                   const keysSeen = new Set();
-                  for (const [key, count] of result) {
+                  for (const [key, count] of samples) {
                     expect(keys).to.include(key);
                     expect(count).to.be.a('number').greaterThan(0);
                     sum += count;
