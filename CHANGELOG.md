@@ -1,3 +1,15 @@
+# v11.1.0 (Mon Aug 10 2026)
+
+#### 🚀 Enhancement
+
+- wtm.popularity with activity [#219](https://github.com/whotracksme/webextension-packages/pull/219) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v11.0.2 (Sat Jul 18 2026)
 
 #### 🐛 Bug Fix
