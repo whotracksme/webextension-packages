@@ -1,3 +1,16 @@
+# v11.1.1 (Tue Aug 11 2026)
+
+#### 🐛 Bug Fix
+
+- Fix Logger#setLevel [#218](https://github.com/whotracksme/webextension-packages/pull/218) ([@philipp-classen](https://github.com/philipp-classen))
+- job-scheduler: fix update of the flush timer [#221](https://github.com/whotracksme/webextension-packages/pull/221) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v11.1.0 (Mon Aug 10 2026)
 
 #### 🚀 Enhancement
