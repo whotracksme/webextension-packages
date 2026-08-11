@@ -52,7 +52,7 @@ export class Logger {
   }
 
   setLevel(level) {
-    this.setLevel = level;
+    this.logLevel = level;
   }
 
   isEnabledFor(level) {
