@@ -830,7 +830,7 @@ export default class JobScheduler {
 
   _markAsDirty() {
     if (this._autoFlushTimer === null) {
-      this._pendingFlush = setTimeout(() => {
+      this._autoFlushTimer = setTimeout(() => {
         this._writeJobsToDisk().catch((e) => {
           logger.error('Failed to write jobs', e);
         });
