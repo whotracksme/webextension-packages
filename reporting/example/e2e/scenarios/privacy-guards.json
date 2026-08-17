@@ -1,0 +1,26 @@
+{
+  "name": "privacy-guards",
+  "description": "Negative scenario. A page on a private host with a non-standard port must be dropped by sanitizeUrl, and denying quorum must suppress page messages entirely.",
+  "steps": [
+    { "reset": {} },
+    { "closeTabs": {} },
+    {
+      "navigate": {
+        "url": "http://127.0.0.1:7878/pages/private-fixture.html?token=wtm-e2e-secret-token"
+      }
+    },
+    { "flush": { "maxRounds": 8 } },
+    { "setQuorum": { "mode": "never" } },
+    { "navigate": { "url": "https://en.wikipedia.org/wiki/Hamburg" } },
+    { "flush": { "maxRounds": 8 } }
+  ],
+  "expect": {
+    "mustNotAppear": [
+      "wtm-e2e-private-marker",
+      "wtm-e2e-secret-token",
+      "127.0.0.1",
+      "private-fixture"
+    ],
+    "forbiddenActions": ["wtm.page"]
+  }
+}

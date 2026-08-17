@@ -9,7 +9,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 import './setup.js';
+// Must stay above the src/ import: Logger binds console.* in its constructor.
+import { attachConsoleSink } from './e2e/console-capture.js';
 import { UrlReporter, RequestReporter, setLogLevel } from '../src/index.js';
+import { createStorage, createTrustedClock } from './storage.js';
+import E2EBridge, {
+  createCommands,
+  pipeJobEventsToHub,
+} from './e2e/control.js';
 
 (chrome.action || chrome.browserAction).onClicked.addListener(() => {
   chrome.tabs.create({
@@ -20,54 +27,43 @@ import { UrlReporter, RequestReporter, setLogLevel } from '../src/index.js';
 
 setLogLevel('debug');
 
-function createStorage() {
-  const storage = {
-    storage: {},
-    async get(key) {
-      return this.storage[key];
-    },
-    async set(key, value) {
-      this.storage[key] = value;
-    },
-    async remove(key) {
-      delete this.storage[key];
-    },
-    async clear() {
-      this.storage = {};
-    },
-    async keys() {
-      return Object.keys(this.storage);
-    },
-    open() {},
-    close() {},
-  };
-  return storage;
-}
+const bridge = new E2EBridge({ hubUrl: 'ws://127.0.0.1:7878/ws' });
+attachConsoleSink((level, text) => bridge.captureConsole(level, text));
+
+const trustedClock = createTrustedClock();
+
+// Stubbed: an end-to-end run exercises message construction, not quorum itself.
+const quorumControl = {
+  mode: 'always',
+  setMode(mode) {
+    if (!['always', 'never'].includes(mode)) {
+      throw new Error(`unsupported quorum mode: ${mode}`);
+    }
+    this.mode = mode;
+  },
+  describe() {
+    return { mode: this.mode, real: false };
+  },
+  verdict() {
+    return this.mode === 'always';
+  },
+};
 
 const communication = {
   send(msg) {
-    console.log(
-      '%c[DRY-RUN] send message:',
-      'color: blue; font-size: 30px;',
-      msg,
-    );
+    bridge.captureMessage('url-reporter', msg);
+    console.log('[DRY-RUN] send message:', msg);
   },
-  // TODO: use actual anonymous-communication to access quorum
   sendInstant(msg) {
+    const result = quorumControl.verdict();
+    bridge.captureMessage('quorum', msg, { stubbedResult: result });
     console.warn('[Communication instant]', msg);
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ result: true }),
+      json: () => Promise.resolve({ result }),
     });
   },
-  trustedClock: {
-    getTimeAsYYYYMMDD() {
-      return '';
-    },
-    getTimeAsYYYYMMDDHH() {
-      return '';
-    },
-  },
+  trustedClock,
 };
 
 const config = {
@@ -84,26 +80,38 @@ const config = {
   },
 };
 
+function connectDatabase(namespace) {
+  return createStorage(namespace);
+}
+
 const urlReporter = new UrlReporter({
   config: config.url,
-  storage: createStorage(),
-  connectDatabase: createStorage,
+  storage: connectDatabase('urlreporter'),
+  connectDatabase,
   communication,
 });
 
 const requestReporter = new RequestReporter(config.request, {
   dryRunMode: true,
   onMessageReady: (msg) => {
-    console.log(
-      '%c[DRY-RUN] request-reporter message ready:',
-      'color: green; font-size: 30px;',
-      msg,
-    );
+    bridge.captureMessage('request-reporter', msg);
+    console.log('[DRY-RUN] request-reporter message ready:', msg);
   },
   countryProvider: urlReporter.countryProvider,
-  trustedClock: communication.trustedClock,
+  trustedClock,
   getBrowserInfo: () => ({ name: 'xx' }),
 });
+
+pipeJobEventsToHub(urlReporter.jobScheduler, bridge);
+bridge.registerCommands(
+  createCommands({
+    urlReporter,
+    requestReporter,
+    quorumControl,
+    bridge,
+  }),
+);
+bridge.connect();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'mousedown') {
@@ -138,3 +146,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 globalThis.urlReporter = urlReporter;
 globalThis.requestReporter = requestReporter;
+globalThis.e2eBridge = bridge;

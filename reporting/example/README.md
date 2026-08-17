@@ -3,6 +3,10 @@
 Scripted extension runner with log capture. For the interactive
 `web-ext run` loop, see the package-level `../README.md`.
 
+> For end-to-end runs against search engines, use `e2e/` instead — this
+> runner drives Chrome over WebDriver/CDP, which search engines detect.
+> See `e2e/README.md`.
+
 ## Usage
 
 ```
