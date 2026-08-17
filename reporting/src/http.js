@@ -567,6 +567,19 @@ const LOCK = new SeqExecutor();
  *     can be used in later requests. Still, the chain of requests always
  *     starts from a clean state. In other words, the temporary context is
  *     fully isolated and will be discarded once all steps have completed.
+ *     Headers can reference the context through placeholders (with "||"
+ *     as fallback operator): "{{cookie:x}}" ("Set-Cookie" response
+ *     headers), "{{cookie0:x}}" ("Cookie" request headers),
+ *     "{{param:x}}" (URL params), "{{compat:x}}" (compatibility
+ *     properties, see below).
+ * - compatibility (optional):
+ *     Site-specific configuration for pages that would otherwise break
+ *     (see Patterns#getCompatibility). "properties" whitelists browser
+ *     cookies that may be copied from the cookie jar: a "{{compat:x}}"
+ *     placeholder reads the cookie declared by the property "x".
+ *     Cookies are looked up once, before the chain of requests starts.
+ *     "default" defines baseline request parameters; both explicit
+ *     parameters and step parameters override them (key by key).
  * - onError (optional):
  *     A fallback configuration for error recovery.
  * - emptyHtml (default: false):
@@ -580,7 +593,13 @@ export async function anonymousHttpGet(originalUrl, params = {}) {
 }
 
 async function anonymousHttpGet_(originalUrl, params = {}) {
-  const { steps = [], emptyHtml = false, onError, ...sharedParams } = params;
+  const { compatibility = null, ...explicitParams } = params;
+  const {
+    steps = [],
+    emptyHtml = false,
+    onError,
+    ...sharedParams
+  } = { ...compatibility?.default, ...explicitParams };
   if (emptyHtml) {
     logger.debug('Returning empty HTML for URL:', originalUrl);
     return EMPTY_RESCUE_HTML;
@@ -588,7 +607,18 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
 
   try {
     if (steps.length === 0) {
-      return await singleHttpGetStep(originalUrl, sharedParams);
+      let localParams = sharedParams;
+      if (sharedParams.headers) {
+        const compat = await resolveCompatibilityProperties(
+          originalUrl,
+          compatibility,
+        );
+        localParams = {
+          ...sharedParams,
+          headers: replacePlaceholders(sharedParams.headers, { compat }),
+        };
+      }
+      return await singleHttpGetStep(originalUrl, localParams);
     }
     if (!chrome?.webRequest?.onHeadersReceived) {
       throw new MultiStepDoublefetchNotSupportedError();
@@ -601,7 +631,9 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
     // The context that can be queried with the placeholder syntax (e.g.
     // "foo={{cookie:bar}}"). The context is built from the requests from
     // earlier steps. For instance, a use case is to bypass consent dialogs
-    // by modifying cookies.
+    // by modifying cookies. One exception is "compat", which is not built
+    // from requests, but copied from the browser cookie jar before the
+    // chain starts.
     const observer = {
       // to be overwritten later to mark dependencies for the next step:
       // e.g. "ctx.cookie.set('foo', '42')" will trigger onChange('cookie', 'foo', '42')
@@ -611,6 +643,10 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
       {
         cookie: new Map(), // default ('set-cookies' in response)
         cookie0: new Map(), // fallback ('cookies' in request)
+        compat: await resolveCompatibilityProperties(
+          originalUrl,
+          compatibility,
+        ),
         param: new Map(), // URL params
       },
       observer,
@@ -635,7 +671,7 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
         }
 
         try {
-          const graph = buildDependencyGraph(nextStep);
+          const graph = buildDependencyGraph(nextStep, ctx);
           if (graph.allReady) {
             resolve();
             return;
@@ -812,6 +848,7 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
       const rescueParams = {
         ...sharedParams,
         ...onError,
+        compatibility,
       };
       logger.info(
         'Entering rescue path for URL:',
@@ -825,76 +862,136 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
   }
 }
 
+const PLACEHOLDER_NAMESPACES = new Set([
+  'cookie',
+  'cookie0',
+  'compat',
+  'param',
+]);
+
+function resolvePlaceholder(ctx, placeholder, fullExpression = placeholder) {
+  const sep = placeholder.indexOf(':');
+  const namespace = placeholder.slice(0, sep);
+  if (sep < 0 || !PLACEHOLDER_NAMESPACES.has(namespace)) {
+    throw new Error(
+      `Unsupported expression: stopped at <<${placeholder}>> (full expression: ${fullExpression})`,
+    );
+  }
+  return ctx[namespace]?.get(placeholder.slice(sep + 1));
+}
+
 // Resolves placeholder expressions ("{{ }}"} with values provided by the
-// the context. See unit test for examples.
+// the context. Headers with expressions that cannot be resolved will be
+// dropped. See unit test for examples.
 //
 // Note: exported for tests only
 export function replacePlaceholders(headers, ctx) {
-  return Object.fromEntries(
-    Object.entries(headers).map(([key, value]) => {
-      const parts = [];
-      let pos = 0;
-      while (pos < value.length) {
-        const start = value.indexOf('{{', pos);
-        if (start < 0) {
-          parts.push(value.slice(pos));
+  const resolvedHeaders = {};
+  for (const [key, value] of Object.entries(headers)) {
+    const parts = [];
+    let unresolved = false;
+    let pos = 0;
+    while (pos < value.length) {
+      const start = value.indexOf('{{', pos);
+      if (start < 0) {
+        parts.push(value.slice(pos));
+        break;
+      }
+      parts.push(value.slice(pos, start));
+      pos = start + 2;
+      const end = value.indexOf('}}', pos);
+      if (end < 0) {
+        throw new Error(`Corrupted placeholder expression: ${value}`);
+      }
+
+      const fullExpression = value.slice(pos, end);
+      let resolved;
+      for (const expr of fullExpression.split('||')) {
+        resolved = resolvePlaceholder(ctx, expr, fullExpression);
+        if (resolved) {
           break;
         }
-        parts.push(value.slice(pos, start));
-        pos = start + 2;
-        const end = value.indexOf('}}', pos);
-        if (end < 0) {
-          throw new Error(`Corrupted placeholder expression: ${value}`);
-        }
-
-        const fullExpression = value.slice(pos, end);
-        let resolved;
-        for (const expr of fullExpression.split('||')) {
-          if (expr.startsWith('cookie:')) {
-            const key = expr.slice('cookie:'.length);
-            resolved = ctx.cookie.get(key);
-          } else if (expr.startsWith('cookie0:')) {
-            const key = expr.slice('cookie0:'.length);
-            resolved = ctx.cookie0.get(key);
-          } else if (expr.startsWith('param:')) {
-            const key = expr.slice('param:'.length);
-            resolved = ctx.param.get(key);
-          } else {
-            throw new Error(
-              `Unsupported expression: stopped at <<${expr}>> (full expression: ${fullExpression})`,
-            );
-          }
-          if (resolved) {
-            break;
-          }
-        }
-        parts.push(resolved || '');
-        pos = end + 2;
       }
-      const newValue = parts.join('');
-      return [key, newValue];
-    }),
-  );
+      if (!resolved) {
+        logger.debug(
+          'Dropping header',
+          key,
+          'because the expression could not be resolved:',
+          fullExpression,
+        );
+        unresolved = true;
+        break;
+      }
+      parts.push(resolved);
+      pos = end + 2;
+    }
+    if (!unresolved) {
+      resolvedHeaders[key] = parts.join('');
+    }
+  }
+  return resolvedHeaders;
 }
 
 // Note: exported for tests only
 export function findPlaceholders(text) {
-  const found = [];
-  let pos = 0;
-  for (;;) {
-    const startPos = text.indexOf('{{', pos);
-    if (startPos === -1) break;
-    const endPos = text.indexOf('}}', startPos + 2);
-    if (endPos === -1) break;
-
-    found.push(text.slice(startPos + 2, endPos));
-    pos = endPos + 2;
-  }
-  return found;
+  return [...text.matchAll(/\{\{(.*?)\}\}/g)].map(
+    ([, expression]) => expression,
+  );
 }
 
 // Note: exported for tests only
-export function buildDependencyGraph(nextStep) {
+export async function lookupCompatibilityCookie(url, name) {
+  if (!chrome?.cookies?.getAll) {
+    logger.warn(
+      'chrome.cookies API is not available. Unable to look up cookie',
+      name,
+      'for URL:',
+      url,
+    );
+    return undefined;
+  }
+
+  let stores = [];
+  try {
+    stores = await chrome.cookies.getAllCookieStores();
+  } catch (e) {
+    logger.warn('Unable to list cookie stores:', e);
+  }
+
+  const queries =
+    stores.length > 0
+      ? stores.map(({ id }) => ({ url, name, storeId: id }))
+      : [{ url, name }];
+  for (const query of queries) {
+    try {
+      const match = (await chrome.cookies.getAll(query)).find(
+        ({ value }) => value,
+      );
+      if (match) {
+        return match.value;
+      }
+    } catch (e) {
+      logger.warn('Unable to read cookies:', query, e);
+    }
+  }
+  return undefined;
+}
+
+async function resolveCompatibilityProperties(url, compatibility) {
+  const compat = new Map();
+  for (const [name, { cookie }] of Object.entries(
+    compatibility?.properties || {},
+  )) {
+    const value = await lookupCompatibilityCookie(url, cookie);
+    if (value) {
+      compat.set(name, value);
+    }
+  }
+  return compat;
+}
+
+// Note: exported for tests only
+export function buildDependencyGraph(nextStep, ctx = null) {
   const graph = {
     allReady: true,
     onChange: null,
@@ -922,9 +1019,23 @@ export function buildDependencyGraph(nextStep) {
 
       for (const template of allTemplates) {
         for (const expression of findPlaceholders(template)) {
+          const placeholders = expression.split('||');
+          const alreadyResolvable =
+            ctx &&
+            placeholders.some((placeholder) =>
+              resolvePlaceholder(ctx, placeholder, expression),
+            );
+          if (alreadyResolvable) {
+            continue;
+          }
+
+          // "compat" is never filled by observing requests, so waiting will not help
+          if (placeholders.every((p) => p.startsWith('compat:'))) {
+            continue;
+          }
           pendingExpressions.add(expression);
 
-          for (const placeholder of expression.split('||')) {
+          for (const placeholder of placeholders) {
             const unlocks =
               expressionResolvedByPlaceholder.get(placeholder) || [];
             if (!unlocks.includes(expression)) {

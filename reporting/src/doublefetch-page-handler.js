@@ -312,7 +312,8 @@ export function sanitizeActivity(activity) {
 }
 
 class CachedPageFetcher {
-  constructor() {
+  constructor({ patterns = null } = {}) {
+    this.patterns = patterns;
     this.urlToAsyncPageStructure = new Map();
   }
 
@@ -340,6 +341,7 @@ class CachedPageFetcher {
         treat429AsPermanentError: true,
         downloadLimit: this.downloadLimit,
         allowedContentTypes: ALLOW_HTML_AND_TEXT,
+        compatibility: this.patterns?.getCompatibility(url),
       });
     } catch (e) {
       if (e.isPermanentError) {
@@ -368,9 +370,10 @@ export default class DoublefetchPageHandler {
     jobScheduler,
     sanitizer,
     newPageApprover,
+    patterns = null,
 
     // by default, use a separate fetcher cache per job
-    pageFetcherProvider = () => new CachedPageFetcher(),
+    pageFetcherProvider = () => new CachedPageFetcher({ patterns }),
   }) {
     this.sanitizer = requireParam(sanitizer);
     this.newPageApprover = requireParam(newPageApprover);

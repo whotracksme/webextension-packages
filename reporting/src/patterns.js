@@ -9,6 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import * as tldts from 'tldts-experimental';
+
 import logger from './logger';
 import { sanitizeUrl } from './sanitizer';
 import { removeQueryParams } from './url-cleaner';
@@ -340,7 +342,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 7;
+const PATTERN_DSL_VERSION = 8;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but
@@ -372,6 +374,30 @@ const RULES_NOT_LOADED_YET = {};
  * because they were not well-formed.
  */
 const RULES_REJECTED__CORRUPTED = {};
+
+// Maps a doublefetch configuration from the DSL vocabulary to the
+// parameters expected by "anonymousHttpGet" (see http.js).
+function convertDoublefetchConfig(
+  { followRedirects, headers, steps, emptyHtml, onError },
+  target = {},
+) {
+  if (followRedirects) {
+    target.redirect = 'follow';
+  }
+  if (headers) {
+    target.headers = headers;
+  }
+  if (steps) {
+    target.steps = steps;
+  }
+  if (typeof emptyHtml === 'boolean') {
+    target.emptyHtml = emptyHtml;
+  }
+  if (onError) {
+    target.onError = convertDoublefetchConfig(onError);
+  }
+  return target;
+}
 
 /**
  * Represents the currently active rules.
@@ -417,31 +443,54 @@ export default class Patterns {
     if (!this._rules[msgType]) {
       return null;
     }
-    const convert = (
-      { followRedirects, headers, steps, emptyHtml, onError },
-      target = {},
-    ) => {
-      if (followRedirects) {
-        target.redirect = 'follow';
-      }
-      if (headers) {
-        target.headers = headers;
-      }
-      if (steps) {
-        target.steps = steps;
-      }
-      if (typeof emptyHtml === 'boolean') {
-        target.emptyHtml = emptyHtml;
-      }
-      if (onError) {
-        target.onError = convert(onError);
-      }
-      return target;
-    };
 
     // Start with the mandatory "url" field and fill the remaining,
     // optional fields from the configuration from patterns.
-    return convert(this._rules[msgType].doublefetch || {}, { url });
+    const request = convertDoublefetchConfig(
+      this._rules[msgType].doublefetch || {},
+      { url },
+    );
+    const compatibility = this.getCompatibility(url);
+    if (compatibility) {
+      request.compatibility = compatibility;
+    }
+    return request;
+  }
+
+  /**
+   * Looks up the site-specific compatibility entry (the "_compatibility"
+   * section of the patterns) for the given URL. Entries are keyed by the
+   * registrable domain of the site (e.g. "example.com" also matches
+   * "https://www.example.com/foo").
+   *
+   * An entry provides auxiliary information for pages that would
+   * otherwise break when fetched anonymously:
+   * - properties:
+   *     A whitelist of browser cookies that "{{compat:<name>}}"
+   *     placeholders may copy from the cookie jar (see anonymousHttpGet).
+   * - default:
+   *     Baseline request parameters for fetches to the site, which
+   *     more specific configuration overrides (key by key).
+   */
+  getCompatibility(url) {
+    const allEntries = this._rules._compatibility;
+    if (!allEntries) {
+      return null;
+    }
+    const { hostname } = new URL(url);
+    const { domain } = tldts.parse(hostname, {
+      extractHostname: false,
+      mixedInputs: false,
+      validateHostname: false,
+    });
+    const entry = allEntries[domain || hostname];
+    if (!entry) {
+      return null;
+    }
+    return {
+      properties: entry.properties || {},
+      default: convertDoublefetchConfig(entry.default || {}),
+    };
   }
 
   _sanitizeRules(rules) {
@@ -456,6 +505,19 @@ export default class Patterns {
           PATTERN_DSL_VERSION,
         );
         return RULES_REJECTED__ENGINE_TOO_OLD;
+      }
+      if (rules._compatibility !== undefined) {
+        requireObject(rules._compatibility);
+        for (const entry of Object.values(rules._compatibility)) {
+          requireObject(entry);
+          for (const property of Object.values(entry.properties || {})) {
+            requireObject(property);
+            requireString(property.cookie);
+          }
+          if (entry.default !== undefined) {
+            requireObject(entry.default);
+          }
+        }
       }
       return rules;
     } catch (e) {

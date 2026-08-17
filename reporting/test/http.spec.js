@@ -10,11 +10,13 @@
  */
 
 import { expect } from 'chai';
+import chrome from 'sinon-chrome';
 
 import {
   replacePlaceholders,
   findPlaceholders,
   buildDependencyGraph,
+  lookupCompatibilityCookie,
 } from '../src/http.js';
 
 describe('#replacePlaceholders', function () {
@@ -82,13 +84,25 @@ describe('#replacePlaceholders', function () {
       ).to.eql({ key: 'foo=y' });
     });
 
-    it('falling back to empty if none arguments are present', function () {
+    it('dropping the header if none of the arguments are present', function () {
       expect(
         replacePlaceholders(
           { key: 'foo={{cookie:MISSING||cookie:ALSO_MISSING}}' },
           cookie_x_to_y,
         ),
-      ).to.eql({ key: 'foo=' });
+      ).to.eql({});
+    });
+
+    it('dropping only headers with unresolved expressions', function () {
+      expect(
+        replacePlaceholders(
+          {
+            good: 'foo={{cookie:x}}',
+            bad: 'foo={{cookie:MISSING}}',
+          },
+          cookie_x_to_y,
+        ),
+      ).to.eql({ good: 'foo=y' });
     });
 
     it('left-argument should win', function () {
@@ -113,6 +127,27 @@ describe('#replacePlaceholders', function () {
       expect(
         replacePlaceholders({ key: 'foo={{cookie:left||cookie:right}}' }, ctx),
       ).to.eql({ key: 'foo=right' });
+    });
+  });
+
+  describe('should support compatibility properties with "compat"', function () {
+    it('resolving from the compat context', function () {
+      const ctx = {
+        compat: new Map([['x', 'y']]),
+      };
+      expect(replacePlaceholders({ key: 'foo={{compat:x}}' }, ctx)).to.eql({
+        key: 'foo=y',
+      });
+    });
+
+    it('falling back across namespaces', function () {
+      const ctx = {
+        cookie: new Map(),
+        compat: new Map([['x', 'y']]),
+      };
+      expect(
+        replacePlaceholders({ key: 'foo={{cookie:x||compat:x}}' }, ctx),
+      ).to.eql({ key: 'foo=y' });
     });
   });
 });
@@ -241,5 +276,127 @@ describe('#buildDependencyGraph', function () {
     graph.onChange('cookie', 'Y2', 'dummy value');
     expect(onReadyCalled).to.eql(1);
     expect(graph.allReady).to.eql(true);
+  });
+
+  describe('with a prefilled context', function () {
+    it('should be immediately ready if the context resolves all placeholders', function () {
+      const graph = buildDependencyGraph(
+        {
+          headers: {
+            Cookie: 'x={{cookie:FOO}}',
+          },
+        },
+        { cookie: new Map([['FOO', 'value']]) },
+      );
+      expect(graph.allReady).to.eql(true);
+    });
+
+    it('should not treat blank values as resolved', function () {
+      const graph = buildDependencyGraph(
+        {
+          headers: {
+            Cookie: 'x={{cookie:FOO}}',
+          },
+        },
+        { cookie: new Map([['FOO', '']]) },
+      );
+      expect(graph.allReady).to.eql(false);
+    });
+
+    it('should wait only for placeholders that the context cannot resolve', function () {
+      const graph = buildDependencyGraph(
+        {
+          headers: {
+            Cookie: 'a={{cookie:A}};b={{compat:B}}',
+          },
+        },
+        {
+          cookie: new Map(),
+          compat: new Map([['B', 'session value']]),
+        },
+      );
+      expect(graph.allReady).to.eql(false);
+
+      let onReadyCalled = 0;
+      graph.onReady = () => {
+        onReadyCalled += 1;
+      };
+
+      graph.onChange('cookie', 'A', 'dummy value');
+      expect(onReadyCalled).to.eql(1);
+      expect(graph.allReady).to.eql(true);
+    });
+
+    it('should not wait for "compat" placeholders that the context cannot resolve', function () {
+      const graph = buildDependencyGraph(
+        {
+          headers: {
+            Cookie: 'x={{compat:MISSING}}',
+          },
+        },
+        { compat: new Map() },
+      );
+      expect(graph.allReady).to.eql(true);
+    });
+
+    it('should still wait for observable alternatives of unresolved "compat" placeholders', function () {
+      const graph = buildDependencyGraph(
+        {
+          headers: {
+            Cookie: 'x={{cookie:A||compat:MISSING}}',
+          },
+        },
+        { cookie: new Map(), compat: new Map() },
+      );
+      expect(graph.allReady).to.eql(false);
+
+      graph.onChange('cookie', 'A', 'dummy value');
+      expect(graph.allReady).to.eql(true);
+    });
+  });
+});
+
+describe('#lookupCompatibilityCookie', function () {
+  const url = 'https://example.test/';
+  const name = 'consent';
+
+  afterEach(function () {
+    chrome.cookies.getAllCookieStores.reset();
+    chrome.cookies.getAll.reset();
+  });
+
+  it('should return the first match across all cookie stores', async function () {
+    chrome.cookies.getAllCookieStores.resolves([{ id: '0' }, { id: '1' }]);
+    chrome.cookies.getAll.withArgs({ url, name, storeId: '0' }).resolves([]);
+    chrome.cookies.getAll
+      .withArgs({ url, name, storeId: '1' })
+      .resolves([{ name, value: '1' }]);
+
+    expect(await lookupCompatibilityCookie(url, name)).to.eql('1');
+  });
+
+  it('should ignore cookies with blank values', async function () {
+    chrome.cookies.getAllCookieStores.resolves([{ id: '0' }]);
+    chrome.cookies.getAll
+      .withArgs({ url, name, storeId: '0' })
+      .resolves([{ name, value: '' }]);
+
+    expect(await lookupCompatibilityCookie(url, name)).to.be.undefined;
+  });
+
+  it('should fall back to the default store if stores cannot be listed', async function () {
+    chrome.cookies.getAllCookieStores.rejects(new Error('unavailable'));
+    chrome.cookies.getAll
+      .withArgs({ url, name })
+      .resolves([{ name, value: '1' }]);
+
+    expect(await lookupCompatibilityCookie(url, name)).to.eql('1');
+  });
+
+  it('should return undefined if cookies cannot be read', async function () {
+    chrome.cookies.getAllCookieStores.resolves([{ id: '0' }]);
+    chrome.cookies.getAll.rejects(new Error('unavailable'));
+
+    expect(await lookupCompatibilityCookie(url, name)).to.be.undefined;
   });
 });

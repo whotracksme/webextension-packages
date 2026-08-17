@@ -1072,4 +1072,95 @@ describe('Patterns', function () {
       });
     });
   });
+
+  describe('#getCompatibility', function () {
+    const entry = {
+      properties: {
+        consent: { cookie: 'euconsent-v2' },
+      },
+      default: {
+        followRedirects: true,
+        headers: { Cookie: 'euconsent-v2={{compat:consent}}' },
+      },
+    };
+    const convertedEntry = {
+      properties: {
+        consent: { cookie: 'euconsent-v2' },
+      },
+      default: {
+        redirect: 'follow',
+        headers: { Cookie: 'euconsent-v2={{compat:consent}}' },
+      },
+    };
+
+    function setup(rules) {
+      const uut = new Patterns();
+      uut.updatePatterns(rules);
+      return uut;
+    }
+
+    it('should return null if no compatibility section exists', function () {
+      const uut = setup({});
+      expect(uut.getCompatibility('https://example.com/')).to.eql(null);
+    });
+
+    it('should return null if no entry matches the site', function () {
+      const uut = setup({ _compatibility: { 'example.com': entry } });
+      expect(uut.getCompatibility('https://other.test/')).to.eql(null);
+    });
+
+    it('should match by the registrable domain', function () {
+      const uut = setup({ _compatibility: { 'example.com': entry } });
+      expect(uut.getCompatibility('https://example.com/foo')).to.eql(
+        convertedEntry,
+      );
+      expect(uut.getCompatibility('https://www.example.com/foo?q=1')).to.eql(
+        convertedEntry,
+      );
+    });
+
+    it('should support entries without defaults', function () {
+      const uut = setup({
+        _compatibility: {
+          'example.com': { properties: { consent: { cookie: 'x' } } },
+        },
+      });
+      expect(uut.getCompatibility('https://example.com/')).to.eql({
+        properties: { consent: { cookie: 'x' } },
+        default: {},
+      });
+    });
+
+    it('should reject corrupted compatibility sections', function () {
+      const uut = setup({
+        _compatibility: { 'example.com': { properties: { consent: {} } } },
+      });
+      expect(uut.getCompatibility('https://example.com/')).to.eql(null);
+    });
+
+    it('should be attached to doublefetch requests', function () {
+      const msgType = 'some-message-type';
+      const uut = setup({
+        [msgType]: {
+          doublefetch: { followRedirects: true },
+          input: {},
+          output: {},
+        },
+        _compatibility: { 'example.com': entry },
+      });
+      expect(
+        uut.createDoublefetchRequest(msgType, 'https://example.com/foo'),
+      ).to.eql({
+        url: 'https://example.com/foo',
+        redirect: 'follow',
+        compatibility: convertedEntry,
+      });
+      expect(
+        uut.createDoublefetchRequest(msgType, 'https://other.test/foo'),
+      ).to.eql({
+        url: 'https://other.test/foo',
+        redirect: 'follow',
+      });
+    });
+  });
 });

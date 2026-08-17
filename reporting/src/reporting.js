@@ -138,6 +138,7 @@ export default class Reporting {
       jobScheduler: this.jobScheduler,
       sanitizer: this.sanitizer,
       newPageApprover: this.newPageApprover,
+      patterns: this.patterns,
     });
     this.quorumChecker = new QuorumChecker({
       config,
