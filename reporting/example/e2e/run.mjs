@@ -48,7 +48,8 @@ function resolveScenario(nameOrPath) {
 async function hub(method, route, body) {
   const response = await fetch(`${values.hub}${route}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers:
+      method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();

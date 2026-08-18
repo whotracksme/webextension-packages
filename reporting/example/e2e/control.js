@@ -242,6 +242,9 @@ export function createCommands({
     if (!url) {
       throw new Error('navigate requires a "url"');
     }
+    if (!/^https?:\/\//.test(url)) {
+      throw new Error('navigate only accepts http(s) URLs');
+    }
     const targetTabId = await resolveTabId({ tabId, newTab });
     await chrome.tabs.update(targetTabId, { url, active: true });
     let reason = 'not-awaited';

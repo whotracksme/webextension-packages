@@ -101,7 +101,7 @@ npm --workspace=reporting run e2e -- smoke --json
 
 ```
 curl -s 127.0.0.1:7878/health
-curl -s 127.0.0.1:7878/cmd -d '{"name":"flush"}'
+curl -s 127.0.0.1:7878/cmd -H 'content-type: application/json' -d '{"name":"flush"}'
 curl -s '127.0.0.1:7878/messages?action=wtm.page'
 curl -s '127.0.0.1:7878/events?since=0'
 curl -s '127.0.0.1:7878/logs?tail=50'

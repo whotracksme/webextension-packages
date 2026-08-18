@@ -27,6 +27,15 @@ const e2eDir = path.dirname(fileURLToPath(import.meta.url));
 const outDir = values['out-dir'] || path.join(e2eDir, 'out');
 const port = Number(values.port);
 
+// Only the loopback authority is a valid Host. A DNS-rebinding page reaches the
+// hub under its own hostname (Host: evil.com), so this rejects it, while the CLI
+// and extension (which target 127.0.0.1/localhost) pass.
+const ALLOWED_HOSTS = new Set([
+  `127.0.0.1:${port}`,
+  `localhost:${port}`,
+  `[::1]:${port}`,
+]);
+
 fs.mkdirSync(outDir, { recursive: true });
 
 const MESSAGES_LOG = path.join(outDir, 'messages.jsonl');
@@ -138,6 +147,21 @@ function runCommand(name, args, timeoutInMs) {
 }
 
 const server = http.createServer(async (req, res) => {
+  if (!ALLOWED_HOSTS.has(req.headers.host)) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'forbidden host' }));
+    return;
+  }
+  // A non-simple content type forces a CORS preflight, which fails here (no
+  // CORS headers are served) — so webpages cannot trigger POST side effects.
+  if (
+    req.method === 'POST' &&
+    !(req.headers['content-type'] || '').startsWith('application/json')
+  ) {
+    res.writeHead(415, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'expected application/json' }));
+    return;
+  }
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
   try {
     const body = req.method === 'POST' ? await readJsonBody(req) : {};
@@ -155,10 +179,21 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+const MAX_BODY_BYTES = 1024 * 1024;
+
 function readJsonBody(req) {
   return new Promise((resolve) => {
     const chunks = [];
-    req.on('data', (c) => chunks.push(c));
+    let size = 0;
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > MAX_BODY_BYTES) {
+        req.destroy();
+        resolve({ _parseError: 'body too large' });
+        return;
+      }
+      chunks.push(c);
+    });
     req.on('end', () => {
       const raw = Buffer.concat(chunks).toString('utf8');
       if (!raw) {
@@ -261,13 +296,22 @@ function servePage(name) {
   const pagesDir = path.join(e2eDir, 'pages');
   const safe = path.normalize(name).replace(/^(\.\.[/\\])+/, '');
   const file = path.join(pagesDir, safe);
-  if (!file.startsWith(pagesDir) || !fs.existsSync(file)) {
+  if (!file.startsWith(pagesDir + path.sep) || !fs.existsSync(file)) {
     return [404, { error: `no page: ${safe}` }];
   }
   return [200, fs.readFileSync(file), { 'Content-Type': 'text/html' }];
 }
 
-const wss = new WebSocketServer({ server, path: '/ws' });
+// Browsers always send Origin on a WS handshake; allow only the extension's
+// chrome-extension:// origin. The Node mock client sends none (allowed); a
+// website sends its http(s) origin (rejected), so it cannot hijack the channel.
+const wss = new WebSocketServer({
+  server,
+  path: '/ws',
+  maxPayload: 1024 * 1024,
+  verifyClient: ({ origin }) =>
+    !origin || origin.startsWith('chrome-extension://'),
+});
 
 wss.on('connection', (ws) => {
   if (socket && socket.readyState === socket.OPEN) {
