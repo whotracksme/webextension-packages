@@ -1,0 +1,15 @@
+{
+  "name": "smoke",
+  "description": "Hub/extension connectivity plus one public page all the way to a wtm.page message.",
+  "steps": [
+    { "reset": {} },
+    { "closeTabs": {} },
+    { "navigate": { "url": "https://en.wikipedia.org/wiki/Berlin" } },
+    { "flush": { "maxRounds": 12 } }
+  ],
+  "expect": {
+    "messages": {
+      "wtm.page": [{ "url": "~wikipedia.org/wiki/Berlin" }]
+    }
+  }
+}

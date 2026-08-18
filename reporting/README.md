@@ -19,6 +19,19 @@ npm --workspace=reporting run start.firefox
 For a scripted runner with log capture and an HTTP control surface,
 see `example/README.md`.
 
+## End-to-end runs
+
+`example/e2e/` drives page & search reporting in a real, un-automated Chrome
+and captures the outgoing messages for verification:
+
+```
+npm --workspace=reporting run e2e.launch   # once: opens the WTM-E2E profile
+npm --workspace=reporting run e2e.hub      # terminal 1
+npm --workspace=reporting run e2e -- smoke # terminal 2
+```
+
+See `example/e2e/README.md`.
+
 ## Tests
 
 See `test/README.md` for the two test suites (node-mocha + karma),
