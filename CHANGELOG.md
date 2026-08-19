@@ -1,3 +1,20 @@
+# v12.0.0 (Wed Aug 19 2026)
+
+#### 💥 Breaking Change
+
+- Improve wtm.page coverage [#225](https://github.com/whotracksme/webextension-packages/pull/225) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Add end-to-end harness [#223](https://github.com/whotracksme/webextension-packages/pull/223) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v11.1.1 (Tue Aug 11 2026)
 
 #### 🐛 Bug Fix
