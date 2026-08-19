@@ -269,6 +269,8 @@ export default class PageStore {
     parentDocumentId,
     url,
   }) => {
+    // Guards against pages keyed by undefined on platforms without documentId.
+    if (!documentId) return;
     if (frameId !== 0) {
       if (this.#documentIndex.has(documentId)) return;
       const owner =

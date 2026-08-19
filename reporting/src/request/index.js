@@ -40,6 +40,7 @@ import {
 } from './steps/check-context.js';
 import PageStore from './page-store.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
+import { isRequestReportingSupported } from './support.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
@@ -61,6 +62,11 @@ export default class RequestReporter {
       dryRunMode = false,
     },
   ) {
+    if (!isRequestReportingSupported()) {
+      throw new Error(
+        'RequestReporter requires documentId support in webRequest and webNavigation (Chromium >= 106, Safari >= 18.4, or Firefox >= 153)',
+      );
+    }
     this.settings = settings;
     this.onMessageReady = onMessageReady;
     this.trustedClock = trustedClock;
