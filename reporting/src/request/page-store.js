@@ -284,6 +284,7 @@ export default class PageStore {
     parentDocumentId,
     url,
   }) => {
+    if (!documentId) return;
     if (frameId !== 0) {
       if (this.#documentIndex.has(documentId)) return;
       const owner =

@@ -10,4 +10,5 @@
  */
 export { default as UrlReporter } from './reporting';
 export { default as RequestReporter } from './request/index';
+export { isRequestReportingSupported } from './request/support';
 export { setLogLevel, describeLoggers } from './logger';
