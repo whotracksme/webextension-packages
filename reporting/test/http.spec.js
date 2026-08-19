@@ -117,6 +117,32 @@ describe('#replacePlaceholders', function () {
   });
 });
 
+describe('#replacePlaceholders with borrowed cookies', function () {
+  const ctx = {
+    cookie: new Map(),
+    safecookie: new Map([['aws-waf-token', 'the-token']]),
+  };
+  const resolve = (template) => replacePlaceholders({ C: template }, ctx).C;
+
+  it('should resolve a borrowed cookie', function () {
+    expect(resolve('t={{safecookie:aws-waf-token}}')).to.eql('t=the-token');
+  });
+
+  it('should be empty if the cookie was not borrowed', function () {
+    expect(resolve('{{safecookie:cf_clearance}}')).to.eql('');
+  });
+
+  it('should take part in "||" alternatives', function () {
+    expect(resolve('{{cookie:absent||safecookie:aws-waf-token}}')).to.eql(
+      'the-token',
+    );
+  });
+
+  it('should still reject an unsupported placeholder type', function () {
+    expect(() => resolve('{{cookies:x}}')).to.throw(/Unsupported expression/);
+  });
+});
+
 describe('#findPlaceholders', function () {
   it('should work with empty strings', function () {
     expect(findPlaceholders('')).to.eql([]);
@@ -152,6 +178,93 @@ describe('#findPlaceholders', function () {
 
   describe('should support short-circuit evaluation with "||"', function () {
     expect(findPlaceholders('abc={{foo||bar}}')).to.eql(['foo||bar']);
+  });
+});
+
+describe('#buildDependencyGraph with a prefilled context', function () {
+  const borrowed = { safecookie: new Map([['aws-waf-token', 'the-token']]) };
+  const nextStep = { headers: { Cookie: 't={{safecookie:aws-waf-token}}' } };
+
+  it('should not wait for a borrowed cookie', function () {
+    expect(buildDependencyGraph(nextStep, borrowed).allReady).to.eql(true);
+  });
+
+  it('should not wait for a value that an earlier step captured', function () {
+    const ctx = { cookie: new Map([['FOO', 'captured by an earlier step']]) };
+    expect(
+      buildDependencyGraph({ headers: { Cookie: '{{cookie:FOO}}' } }, ctx)
+        .allReady,
+    ).to.eql(true);
+  });
+
+  it('should not wait for a borrowed cookie that is absent', function () {
+    // it is fixed before the first request, so it will never arrive
+    expect(
+      buildDependencyGraph(nextStep, { safecookie: new Map() }).allReady,
+    ).to.eql(true);
+  });
+
+  it('should still wait if another source could provide it', function () {
+    const graph = buildDependencyGraph(
+      { headers: { Cookie: 'x={{safecookie:absent||cookie:FOO}}' } },
+      { safecookie: new Map() },
+    );
+    expect(graph.allReady).to.eql(false);
+
+    graph.onChange('cookie', 'FOO', 'arrived with the response');
+    expect(graph.allReady).to.eql(true);
+  });
+
+  it('should still wait for the parts that are missing', function () {
+    const graph = buildDependencyGraph(
+      {
+        headers: {
+          Cookie: 't={{safecookie:aws-waf-token}};S={{param:from-response}}',
+        },
+      },
+      borrowed,
+    );
+    expect(graph.allReady).to.eql(false);
+
+    let onReadyCalled = 0;
+    graph.onReady = () => {
+      onReadyCalled += 1;
+    };
+    graph.onChange('param', 'from-response', 'dummy value');
+    expect(onReadyCalled).to.eql(1);
+    expect(graph.allReady).to.eql(true);
+  });
+});
+
+describe('#buildDependencyGraph with "requires"', function () {
+  const noCookies = { safecookie: new Map() };
+
+  it('should wait for a required value that no header uses', function () {
+    const graph = buildDependencyGraph(
+      { requires: ['{{param:from-response}}'], headers: { Cookie: 'x=1' } },
+      noCookies,
+    );
+    expect(graph.allReady).to.eql(false);
+
+    graph.onChange('param', 'from-response', 'arrived with the second request');
+    expect(graph.allReady).to.eql(true);
+  });
+
+  it('should wait even if the step has no headers at all', function () {
+    expect(
+      buildDependencyGraph({ requires: ['{{param:never-seen}}'] }, noCookies)
+        .allReady,
+    ).to.eql(false);
+  });
+
+  it('should not wait for a required borrowed cookie that is absent', function () {
+    // it can never arrive, so the step runs and fails on its own check
+    expect(
+      buildDependencyGraph(
+        { requires: ['{{safecookie:cf_clearance}}'] },
+        noCookies,
+      ).allReady,
+    ).to.eql(true);
   });
 });
 

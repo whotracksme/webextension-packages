@@ -17,6 +17,7 @@ import { fastHash } from './utils';
 import random from './random';
 import { timezoneAgnosticDailyExpireAt } from './cooldowns';
 import { anonymousHttpGet } from './http';
+import { findSafeCookies } from './doublefetch-unbreak';
 import { lookupBuiltinTransform } from './patterns';
 import { BadPatternError } from './errors';
 
@@ -138,6 +139,7 @@ export default class SearchExtractor {
       const { url, ...params } = doublefetchRequest;
       const html = await anonymousHttpGet(url, {
         ...params,
+        safecookie: await findSafeCookies(url, params),
         treat429AsPermanentError: true,
       });
       doc = await parseHtml(html);
