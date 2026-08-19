@@ -14,6 +14,7 @@ import { requireParam, requireInt, lazyInitAsync } from './utils';
 import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
+import { findSafeCookies } from './doublefetch-unbreak';
 import parseHtml from './html-parser';
 import { analyzePageStructure } from './page-structure';
 import { sanitizeUrl } from './sanitizer';
@@ -311,6 +312,19 @@ export function sanitizeActivity(activity) {
   return noisyActivity.toFixed(4);
 }
 
+// Compatibility layer to deal with known website breakage.
+//
+// TODO: This should come from patterns. For now, start with a hard-coded list.
+function unbreakConfig(url) {
+  const { hostname } = new URL(url);
+  if (hostname === 'imdb.com' || hostname.endsWith('.imdb.com')) {
+    return {
+      headers: { Cookie: 'aws-waf-token={{safecookie:aws-waf-token}}' },
+    };
+  }
+  return null;
+}
+
 class CachedPageFetcher {
   constructor() {
     this.urlToAsyncPageStructure = new Map();
@@ -332,6 +346,15 @@ class CachedPageFetcher {
       return from.origin === to.origin && from.pathname === to.pathname;
     };
 
+    let unbreak = unbreakConfig(url);
+    if (unbreak) {
+      logger.debug('[double-fetch] fixes found:', url, '->', unbreak);
+      unbreak = {
+        ...unbreak,
+        safecookie: await findSafeCookies(url, unbreak),
+      };
+    }
+
     let html;
     try {
       html = await anonymousHttpGet(url, {
@@ -340,6 +363,7 @@ class CachedPageFetcher {
         treat429AsPermanentError: true,
         downloadLimit: this.downloadLimit,
         allowedContentTypes: ALLOW_HTML_AND_TEXT,
+        ...unbreak,
       });
     } catch (e) {
       if (e.isPermanentError) {

@@ -1028,6 +1028,16 @@ describe('Patterns', function () {
         });
       });
 
+      it('the render configuration of a dynamic step', function () {
+        shouldForward({
+          steps: [{ dynamic: true, waitFor: ['#results'], delay: 1000 }],
+        });
+      });
+
+      it('timeout', function () {
+        shouldForward({ timeout: 20000 });
+      });
+
       it('emptyHtml', function () {
         shouldForward({ emptyHtml: true });
         shouldForward({ emptyHtml: false });

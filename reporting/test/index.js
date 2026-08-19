@@ -10,6 +10,7 @@ import './patterns-updater.spec.js';
 import './job-scheduler.spec.js';
 import './country-provider.spec.js';
 import './persisted-hashes.spec.js';
+import './doublefetch-unbreak.spec.js';
 import './url-analyzer.spec.js';
 import './alive-check.spec.js';
 import './alive-message-generator.spec.js';
