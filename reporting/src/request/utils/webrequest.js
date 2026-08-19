@@ -126,7 +126,8 @@ export class WebRequestContext {
     context.isMainFrame = context.type === 'main_frame';
 
     if (!context.tabUrl) {
-      context.tabUrl = context.initiator || context.originUrl;
+      context.tabUrl =
+        context.originUrl || context.initiator || context.documentUrl;
     }
 
     return new WebRequestContext(context);
@@ -147,6 +148,17 @@ export class WebRequestContext {
   incrementStat(statName, c) {
     const stats = (this.page.requestStats[this.truncatedDomain] ||= {});
     stats[statName] = (stats[statName] || 0) + (c || 1);
+  }
+
+  /**
+   * Optionally, a CNAME record can be requested from DNS for `this.url`. If
+   * available, it will be communicated by calling this method. We then set two
+   * new attributes on the WebRequestContext object so that users of the
+   * pipeline can access this information.
+   */
+  setCNAME(cname) {
+    this.cnameUrl = this.url.replace(this.urlParts.hostname, cname);
+    this.cnameUrlParts = parse(this.cnameUrl);
   }
 
   getRequestHeader(name) {
