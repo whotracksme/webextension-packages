@@ -46,12 +46,6 @@ const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
 const REPORTED_DOCUMENTS_TTL = 5 * 60 * 1000;
 
-function hasBlockingWebRequest() {
-  return chrome.runtime
-    .getManifest()
-    .permissions.includes('webRequestBlocking');
-}
-
 export default class RequestReporter {
   #userAgent;
 
@@ -89,7 +83,6 @@ export default class RequestReporter {
     }
     this.dryRunMode = dryRunMode;
     this.VERSION = VERSION;
-    this.LOG_KEY = 'attrack';
     this.debug = false;
     this.recentlyModified = new TempSet();
     this.whitelistedRequestCache = new Set();
@@ -113,9 +106,6 @@ export default class RequestReporter {
       'requestHeaders',
       'responseHeaders',
     ];
-    if (hasBlockingWebRequest()) {
-      safeOptions.push('blocking');
-    }
     const safeSpecInfoFor = (optionsName) => {
       const options = chrome.webRequest[optionsName];
       if (!options) {
@@ -177,14 +167,6 @@ export default class RequestReporter {
     return this.config.qsEnabled;
   }
 
-  isFingerprintingEnabled() {
-    return this.config.fingerprintEnabled;
-  }
-
-  isReferrerEnabled() {
-    return this.config.referrerEnabled;
-  }
-
   telemetry(message) {
     message.type = 'wtm.request';
     message.userAgent = this.userAgent;
@@ -211,7 +193,6 @@ export default class RequestReporter {
           this.#userAgent = {
             'Chrome': 'chrome',
             'Chromium': 'chrome',
-            'Firefox': 'firefox',
             'Microsoft Edge': 'edge',
             'Opera': 'opera',
             'Safari': 'safari',
@@ -340,10 +321,7 @@ export default class RequestReporter {
     if (checkValidContext(state) === false) {
       return response.toWebRequestResponse();
     }
-    // oAuthDetector.checkMainFrames
-    if (this.oAuthDetector.checkMainFrames(state) === false) {
-      return response.toWebRequestResponse();
-    }
+    this.oAuthDetector.checkMainFrames(state);
     // checkIsMainDocument
     if (!state.isMainFrame === false) {
       return response.toWebRequestResponse();

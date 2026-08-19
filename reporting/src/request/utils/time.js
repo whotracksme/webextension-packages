@@ -11,30 +11,16 @@
 
 /* eslint prefer-template: 'off' */
 
-// this is the sanitised timestamp retrieved from humanweb.
-let hwTs = null;
-
 /** Get datetime string of the current hour in the format YYYYMMDDHH
  */
 export function getTime() {
   const date = new Date();
-  const ts = hwTs;
-  let _ts;
-  let h = null;
-  if (!ts) {
-    let d = null;
-    let m = null;
-    let y = null;
-    d = (date.getDate() < 10 ? '0' : '') + date.getDate();
-    m = (date.getMonth() < 9 ? '0' : '') + parseInt(date.getMonth() + 1, 10);
-    h = (date.getUTCHours() < 10 ? '0' : '') + date.getUTCHours();
-    y = date.getFullYear();
-    _ts = y + '' + m + '' + d + '' + h;
-  } else {
-    h = (date.getUTCHours() < 10 ? '0' : '') + date.getUTCHours();
-    _ts = ts + '' + h;
-  }
-  return _ts;
+  const d = (date.getDate() < 10 ? '0' : '') + date.getDate();
+  const m =
+    (date.getMonth() < 9 ? '0' : '') + parseInt(date.getMonth() + 1, 10);
+  const h = (date.getUTCHours() < 10 ? '0' : '') + date.getUTCHours();
+  const y = date.getFullYear();
+  return y + '' + m + '' + d + '' + h;
 }
 
 export function newUTCDate() {

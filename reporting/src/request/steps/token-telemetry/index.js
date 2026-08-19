@@ -168,8 +168,6 @@ export default class TokenTelemetry {
 
     const keyTokens = state.urlParts.extractKeyValues().params;
     if (keyTokens.length > 0) {
-      // const truncatedDomain = truncateDomain(state.urlParts.host, this.config.tpDomainDepth);
-      // const domain = md5(truncatedDomain).substr(0, 16);
       const firstParty = truncatedHash(state.tabUrlParts.generalDomain);
       const generalDomain = truncatedHash(state.urlParts.generalDomain);
 
