@@ -126,7 +126,7 @@ export class WebRequestContext {
     context.isMainFrame = context.type === 'main_frame';
 
     if (!context.tabUrl) {
-      context.tabUrl = context.initiator;
+      context.tabUrl = context.initiator || context.originUrl;
     }
 
     return new WebRequestContext(context);

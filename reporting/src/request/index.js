@@ -9,6 +9,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import Bowser from 'bowser';
+
 /* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
 import Config from './config.js';
@@ -38,7 +40,7 @@ import {
 } from './steps/check-context.js';
 import PageStore from './page-store.js';
 import ChromeStorageMap from './utils/chrome-storage-map.js';
-import { getBrowserName, isRequestReportingSupported } from './support.js';
+import { isRequestReportingSupported } from './support.js';
 
 const DAY_CHANGE_INTERVAL = 20 * 1000;
 const RECENTLY_MODIFIED_TTL = 30 * 1000;
@@ -190,7 +192,26 @@ export default class RequestReporter {
   }
 
   get userAgent() {
-    this.#userAgent ??= getBrowserName();
+    if (this.#userAgent === undefined) {
+      try {
+        const userAgent = globalThis.navigator?.userAgent;
+        if (userAgent) {
+          const { browser } = Bowser.parse(userAgent);
+          this.#userAgent = {
+            'Chrome': 'chrome',
+            'Chromium': 'chrome',
+            'Firefox': 'firefox',
+            'Microsoft Edge': 'edge',
+            'Opera': 'opera',
+            'Safari': 'safari',
+            'Yandex Browser': 'yandex',
+          }[browser?.name];
+        }
+      } catch (e) {
+        logger.warn('Failed to determine userAgent', e);
+      }
+      this.#userAgent ||= '';
+    }
     return this.#userAgent;
   }
 

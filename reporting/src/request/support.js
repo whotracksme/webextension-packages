@@ -9,55 +9,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-const DOCUMENT_ID_MIN_VERSIONS = {
-  chromium: 106,
-  firefox: 153,
-  safari: 18.4,
-};
-
-export function getBrowserName(userAgent = globalThis.navigator?.userAgent) {
-  if (!userAgent) {
-    return '';
-  }
-  if (/Edg(?:A|iOS)?\//.test(userAgent)) {
-    return 'edge';
-  }
-  if (/OPR\/|Opera\//.test(userAgent)) {
-    return 'opera';
-  }
-  if (/YaBrowser\//.test(userAgent)) {
-    return 'yandex';
-  }
-  if (/Chrom(?:e|ium)\//.test(userAgent)) {
-    return 'chrome';
-  }
-  if (/Firefox\//.test(userAgent)) {
-    return 'firefox';
-  }
-  if (/Version\/[\d.]+.*Safari/.test(userAgent)) {
-    return 'safari';
-  }
-  return '';
-}
+// Chromium forks (Edge, Opera, Yandex) keep the Chrome/<major> token.
+const DOCUMENT_ID_MIN_VERSIONS = [
+  [/Chrom(?:e|ium)\/(\d+)/, 106],
+  [/Firefox\/(\d+)/, 153],
+  [/Version\/(\d+(?:\.\d+)?).*Safari/, 18.4],
+];
 
 export function isRequestReportingSupported(
   userAgent = globalThis.navigator?.userAgent,
 ) {
-  if (!userAgent) {
-    return false;
-  }
-  // All Chromium forks (Edge, Opera, Yandex) keep the Chrome/<major> token.
-  const chromium = userAgent.match(/Chrom(?:e|ium)\/(\d+)/);
-  if (chromium) {
-    return Number(chromium[1]) >= DOCUMENT_ID_MIN_VERSIONS.chromium;
-  }
-  const firefox = userAgent.match(/Firefox\/(\d+)/);
-  if (firefox) {
-    return Number(firefox[1]) >= DOCUMENT_ID_MIN_VERSIONS.firefox;
-  }
-  const safari = userAgent.match(/Version\/(\d+(?:\.\d+)?).*Safari/);
-  if (safari) {
-    return parseFloat(safari[1]) >= DOCUMENT_ID_MIN_VERSIONS.safari;
+  for (const [pattern, minVersion] of DOCUMENT_ID_MIN_VERSIONS) {
+    const match = userAgent?.match(pattern);
+    if (match) {
+      return parseFloat(match[1]) >= minVersion;
+    }
   }
   return false;
 }
