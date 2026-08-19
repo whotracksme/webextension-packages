@@ -15,6 +15,31 @@ const DOCUMENT_ID_MIN_VERSIONS = {
   safari: 18.4,
 };
 
+export function getBrowserName(userAgent = globalThis.navigator?.userAgent) {
+  if (!userAgent) {
+    return '';
+  }
+  if (/Edg(?:A|iOS)?\//.test(userAgent)) {
+    return 'edge';
+  }
+  if (/OPR\/|Opera\//.test(userAgent)) {
+    return 'opera';
+  }
+  if (/YaBrowser\//.test(userAgent)) {
+    return 'yandex';
+  }
+  if (/Chrom(?:e|ium)\//.test(userAgent)) {
+    return 'chrome';
+  }
+  if (/Firefox\//.test(userAgent)) {
+    return 'firefox';
+  }
+  if (/Version\/[\d.]+.*Safari/.test(userAgent)) {
+    return 'safari';
+  }
+  return '';
+}
+
 export function isRequestReportingSupported(
   userAgent = globalThis.navigator?.userAgent,
 ) {

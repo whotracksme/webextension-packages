@@ -11,7 +11,10 @@
 
 import { expect } from 'chai';
 
-import { isRequestReportingSupported } from '../../src/request/support.js';
+import {
+  getBrowserName,
+  isRequestReportingSupported,
+} from '../../src/request/support.js';
 
 const UAS = {
   chrome105:
@@ -84,5 +87,31 @@ describe('isRequestReportingSupported', function () {
   it('rejects a missing user agent', function () {
     expect(isRequestReportingSupported(null)).to.be.false;
     expect(isRequestReportingSupported('')).to.be.false;
+  });
+});
+
+describe('getBrowserName', function () {
+  const labels = {
+    chrome106: 'chrome',
+    chromium120: 'chrome',
+    edge126: 'edge',
+    opera106: 'opera',
+    yandex24: 'yandex',
+    safari18_4: 'safari',
+    safariIOS18_4: 'safari',
+    firefox153: 'firefox',
+    firefoxAndroid153: 'firefox',
+    firefoxIOS: '',
+    node: '',
+  };
+
+  for (const [name, label] of Object.entries(labels)) {
+    it(`labels ${name} as "${label}"`, function () {
+      expect(getBrowserName(UAS[name])).to.equal(label);
+    });
+  }
+
+  it('labels a missing user agent as ""', function () {
+    expect(getBrowserName(null)).to.equal('');
   });
 });
