@@ -12,6 +12,7 @@
 import md5, { truncatedHash } from '../../../md5.js';
 import KeyPipeline, { getSiteTokensMap } from './key-pipeline.js';
 import TokenPipeline from './token-pipeline.js';
+import { shouldCheckToken } from '../../token-detector.js';
 
 const DEFAULT_CONFIG = {
   // token batchs, max 720 messages/hour
@@ -54,15 +55,7 @@ const DEFAULT_CONFIG = {
  * persistence, or load old data.
  */
 export default class TokenTelemetry {
-  constructor(
-    telemetry,
-    qsWhitelist,
-    config,
-    database,
-    shouldCheckToken,
-    options,
-    trustedClock,
-  ) {
+  constructor(telemetry, qsWhitelist, config, database, options, trustedClock) {
     const opts = { ...DEFAULT_CONFIG, ...options };
     Object.keys(DEFAULT_CONFIG).forEach((confKey) => {
       this[confKey] = opts[confKey];
@@ -71,7 +64,6 @@ export default class TokenTelemetry {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
     this.trustedClock = trustedClock;
-    this.shouldCheckToken = shouldCheckToken;
     this.batch = [];
     this.tokens = new TokenPipeline({
       name: 'tokens',
@@ -177,7 +169,7 @@ export default class TokenTelemetry {
       const isTracker = this.qsWhitelist.isTrackerDomain(generalDomain);
 
       keyTokens.forEach(([k, v]) => {
-        if (!this.shouldCheckToken(v)) {
+        if (!shouldCheckToken(v)) {
           return;
         }
         const token = md5(v);
