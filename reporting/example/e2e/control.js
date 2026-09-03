@@ -382,6 +382,32 @@ export function createCommands({
       return quorumControl.describe();
     },
 
+    // Replaces the served patterns for this session. They are persisted and
+    // the next poll is pushed out by a full interval, so neither a worker
+    // restart nor the updater brings the served ones back meanwhile. Applied
+    // only once the reporter is active: init() awaits the startup fetch of
+    // the served patterns, which would otherwise land on top of these.
+    async setPatterns({ rules, timeoutInMs = 30000 }) {
+      if (!rules || typeof rules !== 'object') {
+        throw new Error('setPatterns requires "rules" (an object)');
+      }
+      const startedAt = Date.now();
+      while (!urlReporter.isActive) {
+        if (Date.now() - startedAt > timeoutInMs) {
+          throw new Error('reporter did not become active');
+        }
+        await sleep(100);
+      }
+      patterns.updatePatterns(rules);
+      const { patternsUpdater } = urlReporter;
+      patternsUpdater._persistedState.patterns = JSON.stringify(rules);
+      patternsUpdater._persistedState.failedAttemptsInARow = 0;
+      patternsUpdater._persistedState.skipAttemptsUntil =
+        Date.now() + patternsUpdater.defaultUpdateInterval.max;
+      await patternsUpdater._savePersistedState();
+      return { categories: Object.keys(patterns.getRulesSnapshot() || {}) };
+    },
+
     // Restarts rather than unload()+init(): Pages#init is one-shot.
     async reset() {
       await chrome.storage.local.clear();

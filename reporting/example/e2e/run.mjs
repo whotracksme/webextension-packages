@@ -20,6 +20,7 @@ const { values, positionals } = parseArgs({
     hub: { type: 'string', default: 'http://127.0.0.1:7878' },
     json: { type: 'boolean', default: false },
     'keep-messages': { type: 'boolean', default: false },
+    patterns: { type: 'string' },
   },
 });
 
@@ -97,6 +98,40 @@ const startSeq = (await hub('GET', '/health')).body.seq;
 
 const STEP_OPTIONS = ['timeout', 'continueOnError'];
 
+// A local patterns file replaces the served one for the run. A reset restarts
+// the worker with empty storage, so it has to be applied again afterwards.
+const patternsOverride = values.patterns
+  ? JSON.parse(fs.readFileSync(values.patterns, 'utf8'))
+  : null;
+
+async function applyPatternsOverride() {
+  if (!patternsOverride) {
+    return;
+  }
+  const { categories } = await command('setPatterns', {
+    rules: patternsOverride,
+  });
+  console.error(`  patterns: ${values.patterns} (${categories.join(', ')})`);
+}
+
+// The worker reconnects before init() has finished; a navigation that lands
+// in that window is dropped, so a restart is only done once it is active.
+async function waitUntilActive(timeoutInMs = 30000) {
+  const startedAt = Date.now();
+  for (;;) {
+    const state = await command('state');
+    if (state.isActive) {
+      return;
+    }
+    if (Date.now() - startedAt > timeoutInMs) {
+      throw new Error('reporter did not become active after the restart');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}
+
+await applyPatternsOverride();
+
 const trace = [];
 for (const [index, step] of (scenario.steps || []).entries()) {
   const entry = Object.entries(step).find(
@@ -116,6 +151,10 @@ for (const [index, step] of (scenario.steps || []).entries()) {
     const took = Date.now() - startedAt;
     process.stderr.write(`ok (${took}ms)\n`);
     trace.push({ step: name, args, result, tookInMs: took });
+    if (name === 'reset' || name === 'reload') {
+      await waitUntilActive();
+      await applyPatternsOverride();
+    }
   } catch (e) {
     process.stderr.write(`FAILED\n`);
     console.error(`\n  ${e.message}\n`);

@@ -87,6 +87,7 @@ npm --workspace=reporting run e2e -- smoke --json
 | | `--json` | off | Full capture + step trace instead of the summary |
 | | `--keep-messages` | off | Do not clear captures first — accumulate across runs |
 | | `--hub <url>` | `http://127.0.0.1:7878` | Where the hub is |
+| | `--patterns <file>` | off | Replace the served patterns with a local file for this run (re-applied after every `reset`) |
 | `e2e.hub` | `--port <n>` | `7878` | See the caveat below |
 | | `--out-dir <path>` | `example/e2e/out` | Where captures are written |
 | | `--quiet` | off | Suppress per-message logging |
@@ -134,6 +135,7 @@ Everything is appended to `out/messages.jsonl`, `out/events.jsonl` and
 | `reset` | Clear storage and **restart the worker** — a true fresh install (see note) |
 | `reload` | Restart the worker without clearing storage; picks up a rebuilt bundle |
 | `setQuorum {mode}` | `always` or `never` |
+| `setPatterns {rules}` | Replace the served patterns for this session (persisted; the next poll is pushed out by a full interval) |
 | `closeTabs {urlContains?}` | Tidy between scenarios |
 | `ping` | Liveness check |
 
