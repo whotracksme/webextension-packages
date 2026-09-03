@@ -216,10 +216,6 @@ export default class QSWhitelist2 {
     return this.bloomFilter.testSingle(`t${token}`);
   }
 
-  isUnsafeKey() {
-    return false;
-  }
-
   addSafeKey(domain, key) {
     if (!this.localSafeKey[domain]) {
       this.localSafeKey[domain] = {};
