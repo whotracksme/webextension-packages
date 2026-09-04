@@ -10,7 +10,12 @@
  */
 
 import logger from './logger';
-import { requireParam, requireInt, lazyInitAsync } from './utils';
+import {
+  requireParam,
+  requireInt,
+  lazyInitAsync,
+  isSubSequence,
+} from './utils';
 import { randomBetween } from './random';
 import { BadJobError } from './errors';
 import { anonymousHttpGet } from './http';
@@ -27,25 +32,6 @@ const ALLOW_HTML_AND_TEXT = [
   'text/plain',
   'application/xhtml+xml', // legacy format
 ];
-
-/**
- * Checks if one string (subsequence) can be derived from another string (sequence)
- * by only removing characters. This means that the subsequence appears in the
- * sequence in the same relative order but not necessarily consecutively.
- *
- * Example: "anana" is a subsequence of "banana", but "ab" is not.
- */
-function isSubSequence({ sequence, subsequence }) {
-  let i = 0;
-  let j = 0;
-  while (i < subsequence.length && j < sequence.length) {
-    if (subsequence[i] === sequence[j]) {
-      i++;
-    }
-    j++;
-  }
-  return i === subsequence.length;
-}
 
 export function toTrustedUrl(url, { baseUrl, log, logWarn }) {
   if (!url) {

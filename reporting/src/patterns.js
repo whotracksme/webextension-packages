@@ -320,6 +320,143 @@ const TRANSFORMS = new Map(
       requireString(text);
       return text.trim();
     },
+
+    /**
+     * Removes the first match of a regular expression. The length cannot
+     * increase, because characters can only be removed, never added.
+     *
+     * Example ["removeFirstMatch", "AB+"]:
+     * - "xABBBy ABz" -> "xy ABz"
+     *
+     * @since: 9
+     */
+    removeFirstMatch: (text, pattern) => {
+      requireString(text);
+      requireString(pattern);
+      if (text.length === 0) {
+        return '';
+      }
+      try {
+        return text.replace(new RegExp(pattern), '');
+      } catch (e) {
+        return '';
+      }
+    },
+
+    /**
+     * Removes every match of a regular expression. The length cannot
+     * increase, because characters can only be removed, never added.
+     *
+     * Example ["removeAllMatches", "AB+"]:
+     * - "xABBBy ABz" -> "xy z"
+     *
+     * @since: 9
+     */
+    removeAllMatches: (text, pattern) => {
+      requireString(text);
+      requireString(pattern);
+      if (text.length === 0) {
+        return '';
+      }
+      try {
+        return text.replaceAll(new RegExp(pattern, 'g'), '');
+      } catch (e) {
+        return '';
+      }
+    },
+
+    /**
+     * Keeps only the first match of a regular expression (or an empty
+     * string if there is no match). The length cannot increase, because
+     * characters can only be removed, never added.
+     *
+     * Example ["selectFirstMatch", "AB+"]:
+     * - "xABBBy ABz" -> "ABBB"
+     *
+     * @since: 9
+     */
+    selectFirstMatch: (text, pattern) => {
+      requireString(text);
+      requireString(pattern);
+      if (text.length === 0) {
+        return '';
+      }
+      try {
+        const m = new RegExp(pattern).exec(text);
+        return m ? m[0] : '';
+      } catch (e) {
+        return '';
+      }
+    },
+
+    /**
+     * Keeps only the matches of a regular expression, concatenated in
+     * order (everything else is removed). The length cannot increase,
+     * because characters can only be removed, never added.
+     *
+     * Example ["selectAllMatches", "AB+"]:
+     * - "xABBBy ABz" -> "ABBBAB"
+     *
+     * @since: 9
+     */
+    selectAllMatches: (text, pattern) => {
+      requireString(text);
+      requireString(pattern);
+      if (text.length === 0) {
+        return '';
+      }
+      try {
+        const regexp = new RegExp(pattern, 'g');
+
+        // Pathological patterns will always be slow, but we can defend against
+        // one class: if the pattern can match empty and we can prove it,
+        // we can switch to a more memory-efficient implementation, avoiding
+        // massive arrays of empty strings.
+        //
+        // The test('') heuristic is incomplete, but it catches common cases
+        // that could be introduced by accident (e.g. "[^a-zA-Z0-9]*").
+        const canMatchEmpty = regexp.test('');
+        if (canMatchEmpty) {
+          // "exec" is safer for empty-matching patterns. It avoids the worst case
+          // of creating massive arrays of empty strings.
+          let matches = [];
+          let m;
+          regexp.lastIndex = 0;
+          while ((m = regexp.exec(text)) !== null) {
+            if (m[0]) {
+              matches.push(m[0]);
+            } else {
+              regexp.lastIndex += 1;
+            }
+          }
+          return matches.join('');
+        }
+
+        // "match" is slightly faster for non-empty-matching patterns
+        const matches = text.match(regexp);
+        return matches ? matches.join('') : '';
+      } catch (e) {
+        return '';
+      }
+    },
+
+    /**
+     * @since: 9
+     */
+    maxLength: (text, size) => {
+      requireString(text);
+      requireInt(size);
+      return text.length <= size ? text : null;
+    },
+
+    /**
+     * @since: 9
+     */
+    minLength: (text, size) => {
+      requireString(text);
+      requireInt(size);
+      return text.length >= size ? text : null;
+    },
   }),
 );
 
@@ -340,7 +477,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 8;
+const PATTERN_DSL_VERSION = 9;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but

@@ -346,6 +346,25 @@ export function includesMiddleChar(str, char) {
 }
 
 /**
+ * Checks if one string (subsequence) can be derived from another string (sequence)
+ * by only removing characters. This means that the subsequence appears in the
+ * sequence in the same relative order but not necessarily consecutively.
+ *
+ * Example: "anana" is a subsequence of "banana", but "ab" is not.
+ */
+export function isSubSequence({ sequence, subsequence }) {
+  let i = 0;
+  let j = 0;
+  while (i < subsequence.length && j < sequence.length) {
+    if (subsequence[i] === sequence[j]) {
+      i++;
+    }
+    j++;
+  }
+  return i === subsequence.length;
+}
+
+/**
  * Drop-in replacement for JSON.parse if you need to handle untrusted data.
  *
  * Warning: this implementation will not be able to magically solve all
