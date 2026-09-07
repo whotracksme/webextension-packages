@@ -1,3 +1,25 @@
+# v12.1.0 (Mon Sep 07 2026)
+
+#### 🚀 Enhancement
+
+- New builtins [#228](https://github.com/whotracksme/webextension-packages/pull/228) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🐛 Bug Fix
+
+- fixed: processing of transformation steps should stop on null/undefined [#229](https://github.com/whotracksme/webextension-packages/pull/229) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Let e2e runs override the served patterns [#227](https://github.com/whotracksme/webextension-packages/pull/227) ([@chrmod](https://github.com/chrmod))
+- Gate request reporting on documentId support [#203](https://github.com/whotracksme/webextension-packages/pull/203) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 2
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.0.0 (Wed Aug 19 2026)
 
 #### 💥 Breaking Change
