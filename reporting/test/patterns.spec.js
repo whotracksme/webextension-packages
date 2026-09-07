@@ -13,6 +13,7 @@ import { expect } from 'chai';
 import fc from 'fast-check';
 
 import Patterns, { lookupBuiltinTransform } from '../src/patterns.js';
+import { isSubSequence } from '../src/utils.js';
 
 describe('Test builtin primitives', function () {
   describe('#queryParam', function () {
@@ -913,6 +914,234 @@ describe('Test builtin primitives', function () {
           }),
         );
       });
+    });
+  });
+
+  describe('#removeFirstMatch', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('removeFirstMatch');
+    });
+
+    describe('core functionality', function () {
+      it('["xABBBy ABz", "AB+"] -> "xy ABz"', function () {
+        expect(uut('xABBBy ABz', 'AB+')).to.eql('xy ABz');
+      });
+
+      it('should return the text unchanged if there is no match', function () {
+        expect(uut('some text', 'XYZ')).to.eql('some text');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, string] (more parameters are ignored)', function () {
+        expect(() => uut()).to.throw();
+        expect(() => uut('too few args')).to.throw();
+        expect(() => uut({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on arbitrary text and patterns', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            expect(uut(text, pattern)).to.be.a('string');
+          }),
+        );
+      });
+
+      it('should only remove characters from the text (the result never grows)', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            const subsequence = uut(text, pattern);
+            expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#removeAllMatches', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('removeAllMatches');
+    });
+
+    describe('core functionality', function () {
+      it('["xABBBy ABz", "AB+"] -> "xy z"', function () {
+        expect(uut('xABBBy ABz', 'AB+')).to.eql('xy z');
+      });
+
+      it('should return the text unchanged if there is no match', function () {
+        expect(uut('some text', 'XYZ')).to.eql('some text');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, string] (more parameters are ignored)', function () {
+        expect(() => uut()).to.throw();
+        expect(() => uut('too few args')).to.throw();
+        expect(() => uut({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on arbitrary text and patterns', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            expect(uut(text, pattern)).to.be.a('string');
+          }),
+        );
+      });
+
+      it('should only remove characters from the text (the result never grows)', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            const subsequence = uut(text, pattern);
+            expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#selectFirstMatch', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('selectFirstMatch');
+    });
+
+    describe('core functionality', function () {
+      it('["xABBBy ABz", "AB+"] -> "ABBB"', function () {
+        expect(uut('xABBBy ABz', 'AB+')).to.eql('ABBB');
+      });
+
+      it('should return an empty string if there is no match', function () {
+        expect(uut('some text', 'XYZ')).to.eql('');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, string] (more parameters are ignored)', function () {
+        expect(() => uut()).to.throw();
+        expect(() => uut('too few args')).to.throw();
+        expect(() => uut({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on arbitrary text and patterns', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            expect(uut(text, pattern)).to.be.a('string');
+          }),
+        );
+      });
+
+      it('should only remove characters from the text (the result never grows)', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            const subsequence = uut(text, pattern);
+            expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#selectAllMatches', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('selectAllMatches');
+    });
+
+    describe('core functionality', function () {
+      it('["xABBBy ABz", "AB+"] -> "ABBBAB"', function () {
+        expect(uut('xABBBy ABz', 'AB+')).to.eql('ABBBAB');
+      });
+
+      it('should return an empty string if there is no match', function () {
+        expect(uut('some text', 'XYZ')).to.eql('');
+      });
+
+      it('should support patterns that can match the empty string', function () {
+        expect(uut('baaacaa', 'a*')).to.eql('aaaaa');
+      });
+
+      it('should behave like a naive match(...).join("") implementation', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            let expected = '';
+            try {
+              expected = (text.match(new RegExp(pattern, 'g')) || []).join('');
+            } catch (e) {
+              // invalid regular expression: expect the value to be cleared
+            }
+            expect(uut(text, pattern)).to.eql(expected);
+          }),
+        );
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, string] (more parameters are ignored)', function () {
+        expect(() => uut()).to.throw();
+        expect(() => uut('too few args')).to.throw();
+        expect(() => uut({ wrong: 'types' }, 42)).to.throw();
+      });
+
+      it('should not fail on arbitrary text and patterns', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            expect(uut(text, pattern)).to.be.a('string');
+          }),
+        );
+      });
+
+      it('should only remove characters from the text (the result never grows)', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+            const subsequence = uut(text, pattern);
+            expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#maxLength', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('maxLength');
+    });
+
+    it('should keep text up to the given size, but null out longer text', function () {
+      expect(uut('foo', 3)).to.eql('foo');
+      expect(uut('foo!', 3)).to.be.null;
+      expect(uut('', 0)).to.eql('');
+    });
+
+    it('should fail if input is not [string, integer]', function () {
+      expect(() => uut()).to.throw();
+      expect(() => uut('foo', 'not an int')).to.throw();
+    });
+  });
+
+  describe('#minLength', function () {
+    let uut;
+
+    beforeEach(function () {
+      uut = lookupBuiltinTransform('minLength');
+    });
+
+    it('should keep text of at least the given size, but null out shorter text', function () {
+      expect(uut('foo', 3)).to.eql('foo');
+      expect(uut('fo', 3)).to.be.null;
+      expect(uut('', 0)).to.eql('');
+    });
+
+    it('should fail if input is not [string, integer]', function () {
+      expect(() => uut()).to.throw();
+      expect(() => uut('foo', 'not an int')).to.throw();
     });
   });
 });
