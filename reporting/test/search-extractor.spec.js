@@ -10,7 +10,7 @@
  */
 
 import { expect } from 'chai';
-import SearchExtractor from '../src/search-extractor.js';
+import SearchExtractor, { runTransforms } from '../src/search-extractor.js';
 import {
   allSupportedParsers,
   mockDocumentWith,
@@ -664,5 +664,23 @@ ${total} tests run: ${passed} passed, ${failed} failed (${ratio}% passed)
         });
       }
     });
+  });
+});
+
+describe('#runTransforms', function () {
+  it('should apply all steps if none of them returns null', function () {
+    expect(runTransforms('  foo•bar ', [['split', '•', 0], ['trim']])).to.eql(
+      'foo',
+    );
+  });
+
+  it('should stop the chain without an error when a step returns null', function () {
+    expect(runTransforms('no separator here', [['split', '•', 0], ['trim']])).to
+      .be.null;
+  });
+
+  it('should return null for missing values', function () {
+    expect(runTransforms(null, [['trim']])).to.be.null;
+    expect(runTransforms(undefined, [['trim']])).to.be.null;
   });
 });

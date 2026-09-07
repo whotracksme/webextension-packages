@@ -54,7 +54,8 @@ function runSelector(item, selector, attr, baseURI) {
   return null;
 }
 
-function runTransforms(value, transformSteps = []) {
+// Note: exported for tests only
+export function runTransforms(value, transformSteps = []) {
   if (!Array.isArray(transformSteps)) {
     throw new BadPatternError(
       'Transform definitions must be an array (of arrays).',
@@ -73,8 +74,11 @@ function runTransforms(value, transformSteps = []) {
     const [name, ...args] = step;
     const transform = lookupBuiltinTransform(name);
     tmpValue = transform(tmpValue, ...args);
+    if (tmpValue === undefined || tmpValue === null) {
+      return null;
+    }
   }
-  return tmpValue ?? null;
+  return tmpValue;
 }
 
 function findFirstMatch(rootItem, selectorDef, baseURI) {
