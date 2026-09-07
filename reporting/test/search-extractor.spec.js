@@ -16,6 +16,7 @@ import {
   mockDocumentWith,
 } from './helpers/dom-parsers.js';
 import { lookupBuiltinTransform } from '../src/patterns.js';
+import { pbMessage, pbString, toBase64Url } from './helpers/protobuf.js';
 
 const EMPTY_HTML_PAGE = `
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -473,6 +474,143 @@ describe('#SearchExtractor', function () {
             },
           ],
           mustNotContain: [{ action: 'redundant-test-action' }],
+        });
+      });
+
+      // Runs one "test-action" rule against a body fragment.
+      function runExample({ html, input, fields, payload }) {
+        runScenario({
+          url: 'http://example.test/x?q=some-query',
+          query: 'some-query',
+          category: 'example-test',
+          html,
+          patterns: {
+            'example-test': { input, output: { 'test-action': { fields } } },
+          },
+          mustContain: payload ? [{ action: 'test-action', payload }] : [],
+        });
+      }
+
+      describe('split blocks', function () {
+        it('should extract the fields from every piece of the element text', function () {
+          runExample({
+            html: '<ul><li>a,b</li><li>c</li></ul>',
+            input: {
+              li: {
+                split: {
+                  on: ',',
+                  fields: {
+                    k: {},
+                    v: { transform: [['filterExact', ['a', 'c']]] },
+                  },
+                },
+              },
+            },
+            fields: [{ key: 'r', source: 'li', requiredKeys: ['k'] }],
+            payload: {
+              r: {
+                0: { k: 'a', v: 'a' },
+                1: { k: 'b', v: null },
+                2: { k: 'c', v: 'c' },
+              },
+            },
+          });
+        });
+
+        it('should read the pieces from an attribute', function () {
+          runExample({
+            html: '<ul><li data-k="a,b"></li></ul>',
+            input: {
+              li: { split: { on: ',', attr: 'data-k', fields: { k: {} } } },
+            },
+            fields: [{ key: 'r', source: 'li' }],
+            payload: { r: { 0: { k: 'a' }, 1: { k: 'b' } } },
+          });
+        });
+
+        it('should fail with a permanent error without a marker', function () {
+          expect(() =>
+            runExample({
+              html: '<ul><li>a,b</li></ul>',
+              input: { li: { split: { fields: { k: {} } } } },
+              fields: [{ key: 'r', source: 'li' }],
+            }),
+          )
+            .to.throw()
+            .with.property('isPermanentError');
+        });
+      });
+
+      describe('extracting encoded messages from script tags', function () {
+        // Blobs follow a small synthetic schema:
+        //   Entry  { string link = 1; Target target = 2; }
+        //   Target { string url = 3; }
+        const blob = (ref, target) =>
+          toBase64Url(
+            pbString(1, `/open?ref=${ref}&s=2`) +
+              (target ? pbMessage(2, pbString(3, target)) : ''),
+          );
+        const readBlob = [
+          ['split', '"', 0],
+          ['decodeJSString'],
+          ['queryParam', 'blob'],
+          ['base64'],
+        ];
+        const input = {
+          script: {
+            split: {
+              on: '/lookup',
+              fields: {
+                key: {
+                  transform: [
+                    ...readBlob,
+                    ['protobuf', '1'],
+                    ['queryParam', 'ref'],
+                  ],
+                },
+                value: {
+                  transform: [...readBlob, ['protobuf', '2.3'], ['requireURL']],
+                },
+              },
+            },
+          },
+        };
+        const fields = [
+          { key: 'q' },
+          { key: 'qurl' },
+          { key: 'table', source: 'script', optional: true },
+        ];
+        const q = 'some-query';
+        const qurl = 'http://example.test/x?q=some-query';
+
+        it('should build one row per encoded message and drop incomplete ones', function () {
+          const [b1, b2, b3] = [
+            blob('k1', 'https://example.test/one'),
+            blob('k2', 'https://example.test/two'),
+            blob('k3'),
+          ];
+          runExample({
+            html: `<script>var a="/lookup?blob=${b1}";var b="/lookup?v=2\\u0026blob=${b2}";var c="/lookup?blob=${b3}";</script><script>var x=1;</script>`,
+            input,
+            fields,
+            payload: {
+              q,
+              qurl,
+              table: {
+                0: { key: 'k1', value: 'https://example.test/one' },
+                1: { key: 'k2', value: 'https://example.test/two' },
+              },
+            },
+          });
+        });
+
+        it('should still emit the message if the page carries no encoded messages', function () {
+          runExample({
+            html: '<script>var x=1;</script>',
+            input,
+            fields,
+            payload: { q, qurl, table: {} },
+          });
         });
       });
 

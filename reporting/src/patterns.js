@@ -98,6 +98,82 @@ import {
  *
  * After adding a new transformation, increase the API version (see PATTERN_DSL_VERSION).
  */
+// Upper bound for the binary payloads handled by "base64" and "protobuf"
+// (an attacker controls the input; see the DoS notes above).
+const MAX_BINARY_LENGTH = 64 * 1024;
+
+const UTF8_DECODER = new TextDecoder('utf-8', { fatal: true });
+
+// Reads one base-128 varint. Five bytes cover any tag or length that fits
+// in a message of MAX_BINARY_LENGTH; anything longer fails closed.
+function readVarint(bytes, start) {
+  let value = 0;
+  let pos = start;
+  for (let i = 0; i < 5; i += 1) {
+    if (pos >= bytes.length) {
+      return null;
+    }
+    const byte = bytes[pos];
+    pos += 1;
+    value += (byte & 0x7f) * 2 ** (7 * i);
+    if ((byte & 0x80) === 0) {
+      return { value, pos };
+    }
+  }
+  return null;
+}
+
+// The payload of the first length-delimited field with the given number,
+// or null. Fields of other wire types are skipped; groups and truncated
+// messages fail closed. "pos" grows in every iteration, so the loop is
+// bounded by the message length.
+function findLengthDelimitedField(bytes, wantedField) {
+  let pos = 0;
+  while (pos < bytes.length) {
+    const tag = readVarint(bytes, pos);
+    if (!tag) {
+      return null;
+    }
+    const field = Math.floor(tag.value / 8);
+    const wireType = tag.value % 8;
+    pos = tag.pos;
+    if (wireType === 0) {
+      while (pos < bytes.length && (bytes[pos] & 0x80) !== 0) {
+        pos += 1;
+      }
+      pos += 1;
+    } else if (wireType === 1) {
+      pos += 8;
+    } else if (wireType === 2) {
+      const len = readVarint(bytes, pos);
+      if (!len || len.pos + len.value > bytes.length) {
+        return null;
+      }
+      if (field === wantedField) {
+        return bytes.subarray(len.pos, len.pos + len.value);
+      }
+      pos = len.pos + len.value;
+    } else if (wireType === 5) {
+      pos += 4;
+    } else {
+      return null;
+    }
+  }
+  return null;
+}
+
+const JS_LETTER_ESCAPES = new Map(
+  Object.entries({
+    n: '\n',
+    t: '\t',
+    r: '\r',
+    b: '\b',
+    f: '\f',
+    v: '\v',
+    0: '\0',
+  }),
+);
+
 const TRANSFORMS = new Map(
   Object.entries({
     /**
@@ -457,6 +533,116 @@ const TRANSFORMS = new Map(
       requireInt(size);
       return text.length >= size ? text : null;
     },
+
+    /**
+     * Resolves the escape sequences of a JavaScript string literal, which
+     * is how text inside inline <script> tags is typically encoded:
+     * "\uXXXX", "\xXX", the letter escapes ("\n", "\t", ...), and
+     * "\<char>" for any other character (e.g. "\"" or "\/").
+     *
+     * Not supported (left untouched): "\u{...}" code points and line
+     * continuations. A trailing lone backslash is left untouched as well.
+     *
+     * Example ["decodeJSString"]:
+     * - "a<b" -> "a<b"
+     * - "?v=2&blob=abc" -> "?v=2&blob=abc"
+     *
+     * @since: 10
+     */
+    decodeJSString: (text) => {
+      requireString(text);
+      return text.replace(
+        /\\(?:u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|(.))/g,
+        (match, unicode, hex, char) => {
+          if (char !== undefined) {
+            return JS_LETTER_ESCAPES.get(char) ?? char;
+          }
+          return String.fromCharCode(parseInt(unicode ?? hex, 16));
+        },
+      );
+    },
+
+    /**
+     * Decodes base64 text, in either the standard or the URL-safe alphabet,
+     * with or without padding. Returns a binary string (one character per
+     * byte, as "atob" does), which is not text: it is meant to feed
+     * "protobuf". Returns null if the text is not base64 or exceeds
+     * MAX_BINARY_LENGTH.
+     *
+     * Example ["base64"]:
+     * - "aGVsbG8=" -> "hello"
+     * - "aGVsbG8" -> "hello"
+     * - "not base64 text" -> null
+     *
+     * @since: 10
+     */
+    base64: (text) => {
+      requireString(text);
+      if (text.length > MAX_BINARY_LENGTH) {
+        return null;
+      }
+      const standard = text.replaceAll('-', '+').replaceAll('_', '/');
+      const padded = standard.padEnd(Math.ceil(standard.length / 4) * 4, '=');
+      try {
+        return atob(padded);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    /**
+     * Extracts a string from a binary protobuf message, the twin of "json":
+     * the path is a dot-separated list of field numbers, each leading into
+     * a length-delimited field, and the bytes at the end are decoded as
+     * UTF-8. The first occurrence of a field wins. Anything else (a missing
+     * or non-string field, a group, a truncated message, or a payload that
+     * is not UTF-8) results in null.
+     *
+     * The message is a binary string as returned by "base64"; a string
+     * with characters above \xff, or longer than MAX_BINARY_LENGTH,
+     * results in null.
+     *
+     * Example ["protobuf", "2.3"]:
+     * - "\x12\x07\x1a\x05hello" -> "hello"
+     * - "\x0a\x02hi" -> null
+     *
+     * @since: 10
+     */
+    protobuf: (binary, path) => {
+      requireString(binary);
+      requireString(path);
+      const fieldPath = path.split('.').map((segment) => {
+        if (!/^[1-9][0-9]*$/.test(segment)) {
+          throw new Error(
+            `Bad protobuf path: <${path}> (expected dot-separated field numbers)`,
+          );
+        }
+        return Number(segment);
+      });
+      if (binary.length > MAX_BINARY_LENGTH) {
+        return null;
+      }
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        const code = binary.charCodeAt(i);
+        if (code > 0xff) {
+          return null;
+        }
+        bytes[i] = code;
+      }
+      let payload = bytes;
+      for (const field of fieldPath) {
+        payload = findLengthDelimitedField(payload, field);
+        if (!payload) {
+          return null;
+        }
+      }
+      try {
+        return UTF8_DECODER.decode(payload);
+      } catch (e) {
+        return null;
+      }
+    },
   }),
 );
 
@@ -477,7 +663,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 9;
+const PATTERN_DSL_VERSION = 10;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but

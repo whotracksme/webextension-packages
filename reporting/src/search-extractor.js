@@ -224,8 +224,30 @@ export default class SearchExtractor {
             }
           }
         }
+      } else if (selectorDef.split) {
+        // Like "all", but the rows are the pieces of each matched element's
+        // text, cut at a marker, and each field's chain runs on the piece.
+        const { on, attr = 'textContent', fields = {} } = selectorDef.split;
+        if (typeof on !== 'string' || on === '') {
+          throw new BadPatternError(
+            'Bad split block (expected a non-empty "on")',
+          );
+        }
+        for (const key of Object.keys(fields)) {
+          found[selector][key] = [];
+        }
+        for (const rootItem of doc.querySelectorAll(selector) || []) {
+          const text = runSelector(rootItem, null, attr, baseURI);
+          for (const piece of text === null ? [] : text.split(on)) {
+            for (const [key, def] of Object.entries(fields)) {
+              found[selector][key].push(runTransforms(piece, def.transform));
+            }
+          }
+        }
       } else {
-        throw new BadPatternError('Bad selector (expected "first" or "all")');
+        throw new BadPatternError(
+          'Bad selector (expected "first", "all" or "split")',
+        );
       }
     }
 
@@ -279,10 +301,12 @@ export default class SearchExtractor {
               continue nextaction; // eslint-disable-line no-labels
             }
             payload[key] = found[source][key] ?? null;
-          } else if (input[source].all) {
+          } else if (input[source].all || input[source].split) {
             // case 2: merge the fields from an array of previously extracted values
             const results = [];
-            const innerKeys = Object.keys(input[source].all);
+            const innerKeys = Object.keys(
+              input[source].all || input[source].split.fields || {},
+            );
             for (const innerKey of innerKeys) {
               found[source][innerKey].forEach((value, idx) => {
                 results[idx] = results[idx] || {};
