@@ -1,3 +1,15 @@
+# v12.1.1 (Mon Sep 14 2026)
+
+#### 🐛 Bug Fix
+
+- Export the URL sanitizer for Node consumers [#230](https://github.com/whotracksme/webextension-packages/pull/230) ([@chrmod](https://github.com/chrmod))
+
+#### Authors: 1
+
+- Krzysztof Modras ([@chrmod](https://github.com/chrmod))
+
+---
+
 # v12.1.0 (Mon Sep 07 2026)
 
 #### 🚀 Enhancement
