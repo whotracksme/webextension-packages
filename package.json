@@ -2,6 +2,10 @@
   "name": "@whotracksme/reporting",
   "version": "12.1.0",
   "type": "module",
+  "exports": {
+    "./sanitizer": "./reporting/src/sanitizer.js",
+    "./*": "./*"
+  },
   "description": "",
   "scripts": {
     "lint": "eslint reporting/ communication/",
