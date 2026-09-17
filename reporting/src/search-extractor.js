@@ -85,9 +85,10 @@ function findFirstMatch(rootItem, selectorDef, baseURI) {
   // special case: allows to define multiple rules (first matching rule wins)
   if (selectorDef.firstMatch) {
     for (const { select, attr, transform = [] } of selectorDef.firstMatch) {
-      const match = runSelector(rootItem, select, attr, baseURI) ?? null;
-      if (match !== null) {
-        return runTransforms(match, transform);
+      const match = runSelector(rootItem, select, attr, baseURI);
+      const value = runTransforms(match, transform);
+      if (value !== null) {
+        return value;
       }
     }
     return null;
