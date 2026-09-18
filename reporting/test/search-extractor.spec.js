@@ -236,6 +236,62 @@ describe('#SearchExtractor', function () {
         });
       });
 
+      it('should fall through in "firstMatch" if the transforms reject a match', function () {
+        runScenario({
+          url: 'http://example.test/x?q=some-query',
+          query: 'some-query',
+          category: 'example-test',
+          html: `
+<!DOCTYPE html>
+<html>
+  <body>
+    <a id="link" href="https://example.test/some/path">link</a>
+  </body>
+</html>`,
+          patterns: {
+            'example-test': {
+              input: {
+                'html body': {
+                  first: {
+                    u: {
+                      firstMatch: [
+                        {
+                          // selector matches, but the transforms reject it
+                          select: 'a#link',
+                          attr: 'href',
+                          transform: [
+                            ['selectFirstMatch', 'will-not-match'],
+                            ['minLength', 1],
+                          ],
+                        },
+                        {
+                          select: 'a#link',
+                          attr: 'href',
+                          transform: [['maskU']],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              output: {
+                'test-action': {
+                  fields: [{ key: 'u', source: 'html body' }],
+                },
+              },
+            },
+          },
+          mustContain: [
+            {
+              action: 'test-action',
+              payload: {
+                u: 'https://example.test/some/path',
+              },
+            },
+          ],
+        });
+      });
+
       it('should not double-encode links', function () {
         // Note: this URL has an encoded Umlaut. Depending on the DOMParser and
         // the mechanism to extract the URL (elem.href vs elem.getAttribute('href'),

@@ -477,7 +477,7 @@ export function lookupBuiltinTransform(name) {
  * to disable clients that do not meet the minimum requirements of the
  * current patterns.
  */
-const PATTERN_DSL_VERSION = 9;
+const PATTERN_DSL_VERSION = 10;
 
 /**
  * "Magic" empty rule set, which exists only if patterns were loaded, but
