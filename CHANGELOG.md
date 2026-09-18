@@ -1,3 +1,15 @@
+# v12.1.2 (Fri Sep 18 2026)
+
+#### 🐛 Bug Fix
+
+- "firstMatch" needs to wait for transforms to succeed before accepting [#231](https://github.com/whotracksme/webextension-packages/pull/231) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.1 (Mon Sep 14 2026)
 
 #### 🐛 Bug Fix
