@@ -1,3 +1,15 @@
+# v12.1.3 (Wed Sep 23 2026)
+
+#### 🐛 Bug Fix
+
+- fix video search detection [#232](https://github.com/whotracksme/webextension-packages/pull/232) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.2 (Fri Sep 18 2026)
 
 #### 🐛 Bug Fix
