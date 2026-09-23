@@ -325,7 +325,7 @@ describe('request/index', function () {
           uid,
         )}`,
         requestHeaders: mockRequestHeaders,
-        originUrl: 'http://cliqztest.com',
+        initiator: 'http://cliqztest.com',
         tabUrl: 'http://cliqztest.com',
         isPrivate: false,
       });
@@ -344,7 +344,7 @@ describe('request/index', function () {
           uid,
         )}`,
         requestHeaders: mockRequestHeaders,
-        originUrl: 'http://cliqztest.com',
+        initiator: 'http://cliqztest.com',
         tabUrl: 'http://cliqztest.com',
         isPrivate: false,
       });
