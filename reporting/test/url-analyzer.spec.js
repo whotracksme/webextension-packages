@@ -86,18 +86,24 @@ describe('#UrlAnalyzer', function () {
             'https://www.google.com/search?sca_esv=332c1457e26e21ac&q=cat&udm=7&fbs=AEQNm0A6bwEop21ehxKWq5cj-cHa02QUie7apaStVTrDAEoT1CkRGSL-1wA3X2bR5dRYtRFmaZPN2OTOpML6Nzk89AWekIwYOcUmK2FR_flIZE9vn1EXAsBBBo_DOK7IqycIPr8oX9r_c2Y_H6YSW9sBv2zzlY5ifH_0oIYtOJi92VlQNOEZ0mbOIl6RYJLN-zdoMIA2J145wwYej0xWX2q5hfw8qzQw7g&sa=X&ved=2ahUKEwjPk4Dr2e-JAxWBgf0HHfEsNsYQtKgLegQIGhAB&biw=882&bih=1002&dpr=0.9':
               {
                 query: 'cat',
-                doublefetchUrl: 'https://www.google.com/search?udm=7&q=cat',
+                doublefetchUrl: 'https://www.google.com/search?udm=vids&q=cat',
               },
             'https://www.google.de/search?sca_esv=332c1457e26e21ac&q=katze&udm=7&fbs=AEQNm0A6bwEop21ehxKWq5cj-cHa02QUie7apaStVTrDAEoT1CkRGSL-1wA3X2bR5dRYtRGv3dh0WX48pQ0OijG3Ir_Ily36WNjIM66TUeQQm6v5pCxPr2gtqfjkC7ffv6Tr7pov6Kj4r20q4qdHCSHuZ8l9l_oCqEwoxOcaGtTQ9oNU0Tr95ug&sa=X&ved=2ahUKEwjDvfjh3u-JAxVY3AIHHUZkIcUQtKgLegQIIhAB&biw=958&bih=898&dpr=1':
               {
                 query: 'katze',
-                doublefetchUrl: 'https://www.google.de/search?udm=7&q=katze',
+                doublefetchUrl: 'https://www.google.de/search?udm=vids&q=katze',
               },
             'https://www.google.co.uk/search?sca_esv=332c1457e26e21ac&q=British+Shorthair&udm=7&fbs=AEQNm0A6bwEop21ehxKWq5cj-cHa02QUie7apaStVTrDAEoT1CkRGSL-1wA3X2bR5dRYtRGv3dh0WX48pQ0OijG3Ir_I75oFM8mN67hQ5D8L2f_4aId2Ld_vPyIeJPxAzy5CcO-5UtDBOirlUmpUozWrwxQJT3cKh-XbNOVVNXNxn1wGeq30DpZD8xJuzexvjnEe-Ql_N82o&sa=X&ved=2ahUKEwi5hIO_2u-JAxVm3AIHHXc1E7UQtKgLegQIEBAB':
               {
                 query: 'British Shorthair',
                 doublefetchUrl:
-                  'https://www.google.co.uk/search?udm=7&q=British+Shorthair',
+                  'https://www.google.co.uk/search?udm=vids&q=British+Shorthair',
+              },
+            'https://www.google.com/search?q=katze&sca_esv=ab3964043a1b023d&udm=vids&biw=1916&bih=1063&ei=ILOyau-_Jq-Dxc8PufzXoQQ&ved=2ahUKEwjvz5Lu04KXAxWvQfEDHTn-NUQQ4dUDegQIBRAM&uact=5&oq=katze&gs_lp=EhZnd3Mtd2l6LW1vZGVsZXNzLXZpZGVvIgVrYXR6ZTINEAAYgAQYigUYQxixAzINEAAYgAQYigUYQxixAzIIEAAYgAQYsQMyCBAAGIAEGLEDMgUQABiABDIIEAAYgAQYsQMyCBAAGIAEGLEDMggQABiABBixAzIIEAAYgAQYsQMyCBAAGIAEGLEDSN4OUPIHWKoLcAJ4AJABAJgBL6AB2wGqAQE1uAEDyAEA-AEBmAIHoAL9AcICDhAAGIAEGIoFGLEDGIMBwgILEAAYgAQYsQMYgwHCAgoQABiABBiKBRhDwgIGEAAYBxgemAMAiAYBkgcBN6AH7RayBwE1uAfzAcIHAzItN8gHGYAIAQ&sclient=gws-wiz-modeless-video':
+              {
+                query: 'katze',
+                doublefetchUrl:
+                  'https://www.google.com/search?udm=vids&q=katze',
               },
           },
           'search-go': {

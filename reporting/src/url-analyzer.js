@@ -31,8 +31,8 @@ const URL_PATTERNS = [
   {
     category: 'search-gov',
     regexp:
-      /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*udm=7)|(udm=7&([^&]+&)*q=[^&]+))/,
-    prefix: 'search?udm=7&q=',
+      /^https:[/][/][^/]*[.]google[.].*?[#?&;]((q=[^&]+&([^&]+&)*udm=(vids|7))|(udm=(vids|7)&([^&]+&)*q=[^&]+))/,
+    prefix: 'search?udm=vids&q=',
   },
   {
     category: 'search-go',
