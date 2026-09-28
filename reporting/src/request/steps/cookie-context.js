@@ -108,7 +108,7 @@ export default class CookieContext {
     const sourceHost = state.tabUrlParts.hostname;
     const requestHost = state.urlParts.hostname;
     const key = `${sourceHost}:${requestHost}`;
-    if (this.config.cookieTrustReferers && this.trustedThirdParties.has(key)) {
+    if (this.trustedThirdParties.has(key)) {
       const trustCounter = this.trustedThirdParties.get(key);
       trustCounter.c += 1;
       trustCounter.ts = Date.now();
@@ -120,15 +120,11 @@ export default class CookieContext {
   }
 
   checkVisitCache(state) {
-    // check if the response has been received yet
     const stage = state.statusCode !== undefined ? 'set_cookie' : 'cookie';
     const tabId = state.tabId;
-    const diff =
-      Date.now() - (this.visitCache.get(`${tabId}:${state.hostGD}`) || 0);
-    if (
-      diff < TIME_ACTIVE &&
-      this.visitCache.get(`${tabId}:${state.sourceGD}`)
-    ) {
+    const hostGD = state.urlParts.generalDomain;
+    const lastVisit = this.visitCache.get(`${tabId}:${hostGD}`) || 0;
+    if (Date.now() - lastVisit < TIME_ACTIVE) {
       state.incrementStat(`${stage}_allow_visitcache`);
       return false;
     }

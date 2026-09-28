@@ -31,7 +31,6 @@ export default class TokenExaminer {
       storageKey: 'wtm-request-reporting:token-examiner:request-key-value',
     });
     this._syncTimer = null;
-    this._lastPrune = null;
   }
 
   async init() {
@@ -121,7 +120,6 @@ export default class TokenExaminer {
             this.qsWhitelist.addSafeKey(
               tracker,
               this.hashTokens ? key : md5(key),
-              this.config.safekeyValuesThreshold,
             );
           }
           return hash;
@@ -129,7 +127,7 @@ export default class TokenExaminer {
 
       // push updated cache
       this.requestKeyValue.set(tracker, newTrackerMap);
-      this._scheduleSync(today !== this._lastPrune);
+      this._scheduleSync();
       return true;
     }
     return true;
@@ -171,7 +169,6 @@ export default class TokenExaminer {
           this.qsWhitelist.addSafeKey(
             tracker,
             this.hashTokens ? key : md5(key),
-            Object.keys(tokenSet).length,
           );
           this.removeRequestKeyValueEntry(tracker, key);
         }
