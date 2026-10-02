@@ -544,8 +544,7 @@ export default class PopularityEstimator {
                   },
                 },
                 config: {
-                  min: 0,
-                  max: 2 * MINUTE,
+                  readyIn: { min: 0, max: 2 * MINUTE },
                 },
               }));
             })(),
