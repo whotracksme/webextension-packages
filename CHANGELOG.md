@@ -1,3 +1,15 @@
+# v12.1.4 (Fri Oct 02 2026)
+
+#### 🐛 Bug Fix
+
+- fix(popularity-estimator): delay vote preparation with readyIn [#234](https://github.com/whotracksme/webextension-packages/pull/234) ([@smalluban](https://github.com/smalluban))
+
+#### Authors: 1
+
+- Dominik Lubański ([@smalluban](https://github.com/smalluban))
+
+---
+
 # v12.1.3 (Wed Sep 23 2026)
 
 #### 🐛 Bug Fix
