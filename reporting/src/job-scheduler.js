@@ -34,6 +34,17 @@ const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 const MONTH = 30 * DAY;
 
+const KB = 1024;
+const MB = 1024 * KB;
+
+const textEncoder = new TextEncoder();
+
+// Approximates how many bytes a job entry takes in storage.local
+// (Chrome measures the quota on the JSON serialization of the values).
+function estimateSize(jobEntry) {
+  return textEncoder.encode(JSON.stringify(jobEntry)).length;
+}
+
 class JobTester {
   constructor(now = Date.now()) {
     this.now = now;
@@ -127,8 +138,10 @@ class JobTester {
  *   (these cooldowns will not be persisted, so they should be short lived).
  * - The job scheduler starts with a delay to have a higher chance of running
  *   in the background and not compete with a page load.
- * - Jobs have TTLs and each queue can have size limits. By dropping jobs,
- *   the scheduler can provide stronger guarantees about resource usage.
+ * - Jobs have TTLs and each queue limits the number of jobs and their total
+ *   size. When a queue is full, its oldest jobs are dropped to make room for
+ *   new ones (FIFO). By dropping jobs, the scheduler can provide stronger
+ *   guarantees about resource usage.
  *
  * Priorities:
  * - Each job type has an optional static priority. Jobs queue with higher
@@ -159,6 +172,7 @@ export default class JobScheduler {
     'jobFailed',
     'jobExpired',
     'jobRejected',
+    'jobEvicted',
     'syncedToDisk',
   ];
 
@@ -175,12 +189,21 @@ export default class JobScheduler {
     this.maxTTL = 6 * MONTH;
     this.globalJobLimit = 10000;
 
+    // All jobs are persisted under a single key in storage.local, which
+    // shares its quota (10 MB in Chrome) with the rest of the extension.
+    // Once the quota is exceeded, all writes of the extension start to fail.
+    //
+    // Note: the size limits of all job types should add up to less than
+    // this limit; otherwise, the busiest queues can starve the others.
+    this.globalSizeLimit = 3 * MB;
+
     this.defaultConfig = {
       priority: 0, // higher values will be executed before
 
       // quotas:
       ttlInMs: this.defaultTTL,
       maxJobsTotal: 1000,
+      maxBytesTotal: 256 * KB,
 
       // throttling:
       cooldownInMs: 0,
@@ -195,6 +218,9 @@ export default class JobScheduler {
     // stored and loaded from local storage. Ideally, use only simple data
     // types (plain objects, arrays, strings and numbers).
     this.jobQueues = {}; // type -> [jobEntry] where jobEntry == { job, _meta }
+
+    // jobEntry -> estimated size in bytes (not persisted)
+    this._jobSizes = new WeakMap();
 
     this.lastCheck = 0; // Unix epoch
     this.nextCheckTimer = null;
@@ -384,7 +410,7 @@ export default class JobScheduler {
       },
     };
 
-    const { ok, reason } = this._checkJobLimits(type, now);
+    const { ok, reason } = this._checkJobLimits(jobEntry, now);
     if (!ok) {
       this.notifyObservers('jobRejected', jobEntry, reason);
       return;
@@ -399,46 +425,37 @@ export default class JobScheduler {
     }
   }
 
-  _checkJobLimits(jobType, now = Date.now()) {
+  _checkJobLimits(jobEntry, now = Date.now()) {
     const reject = (reason) => ({ ok: false, reason });
     const ok = () => ({ ok: true });
 
-    const localLimit = this.handlerConfigs[jobType]?.maxJobsTotal;
-    if (localLimit && this.getTotalJobsOfType(jobType) >= localLimit) {
-      // Before giving up, make a best-effort attempt to expire local jobs.
-      // Not guaranteed to find something, since it will only look at the
-      // start of the queue; yet it is likely that expired jobs are
-      // in front.
-      const {
-        ready = [],
-        waiting = [],
-        retryable = [],
-      } = this.jobQueues[jobType];
-
-      const jobTester = new JobTester(now);
-      if (
-        this._tryExpireJobsInQueue(waiting, jobTester).numExpired === 0 &&
-        this._tryExpireJobsInQueue(ready, jobTester).numExpired === 0 &&
-        this._tryExpireJobsInQueue(retryable, jobTester).numExpired === 0
-      ) {
-        const deletedJob = retryable.shift();
-        if (deletedJob) {
-          logger.warn('Dropping oldest failed job to free space for new job:', {
-            deletedJob,
-          });
-          this._markAsDirty();
-          return ok(); // early exit since we now freed room for one job
-        } else {
-          return reject('local job limit reached');
-        }
+    const { type } = jobEntry.job;
+    const size = this._sizeOf(jobEntry);
+    const config = this.handlerConfigs[type];
+    if (config) {
+      const { maxJobsTotal, maxBytesTotal } = config;
+      if (maxBytesTotal && size > maxBytesTotal) {
+        return reject('job exceeds the size limit of its type');
       }
+
+      // Make room for the new job by dropping the oldest ones (FIFO).
+      // Dropping old jobs is preferred over rejecting new ones: if a queue
+      // cannot be drained (e.g. because its jobs keep failing), old jobs
+      // would otherwise block the queue until they expire.
+      this._evictJobs(
+        type,
+        ({ count, bytes }) =>
+          (!maxJobsTotal || count < maxJobsTotal) &&
+          (!maxBytesTotal || bytes + size <= maxBytesTotal),
+        now,
+      );
     }
 
     // Currently, there are no attempts to clean up other queues.
     // That is intentional.
     //
-    // The rationale is that the global job limit should be conservative
-    // enough that a single queue cannot fill it. But when getting
+    // The rationale is that the global limits should be conservative
+    // enough that a single queue cannot fill them. But when getting
     // near the global limits, it is likely that there are already
     // so many jobs in the system that slowing down by rejecting
     // jobs looks like a good idea anyways; it might drop more jobs
@@ -446,8 +463,91 @@ export default class JobScheduler {
     if (this.getTotalJobs() >= this.globalJobLimit) {
       return reject('global job limit reached');
     }
+    if (this.getTotalSize() + size > this.globalSizeLimit) {
+      return reject('global size limit reached');
+    }
 
     return ok();
+  }
+
+  /**
+   * Drops jobs of the given type until "fits({ count, bytes })" holds.
+   * Expired jobs are dropped first. After that, it continues with the oldest
+   * jobs (FIFO): first jobs waiting for a retry, then ready jobs and finally
+   * waiting jobs. Running jobs are never dropped.
+   */
+  _evictJobs(type, fits, now = Date.now()) {
+    const queues = this.jobQueues[type];
+    if (!queues || fits(this._usageOfType(type))) {
+      return;
+    }
+
+    const jobTester = new JobTester(now);
+    for (const state of ['retryable', 'ready']) {
+      if (queues[state]) {
+        this._tryExpireJobsInQueue(queues[state], jobTester);
+      }
+    }
+    if (queues.waiting) {
+      this._sortWaitingQueue(type, jobTester, { removeExpiredJobs: true });
+    }
+
+    let { count, bytes } = this._usageOfType(type);
+    let numEvicted = 0;
+    for (const state of ['retryable', 'ready', 'waiting']) {
+      const queue = queues[state] || [];
+      while (queue.length > 0 && !fits({ count, bytes })) {
+        const jobEntry = queue.shift();
+        count -= 1;
+        bytes -= this._sizeOf(jobEntry);
+        numEvicted += 1;
+        this.notifyObservers('jobEvicted', jobEntry);
+      }
+    }
+    if (numEvicted > 0) {
+      logger.warn(
+        'Dropped the',
+        numEvicted,
+        'oldest jobs of type',
+        type,
+        'to stay within the limits',
+      );
+      this._markAsDirty();
+    }
+  }
+
+  /**
+   * Drops jobs until all queues are within their limits. Jobs restored from
+   * disk may exceed them, since they could have been persisted under other
+   * limits (e.g. by older versions, which had no size limits).
+   */
+  _enforceLimits(now = Date.now()) {
+    for (const [type, { maxJobsTotal, maxBytesTotal }] of Object.entries(
+      this.handlerConfigs,
+    )) {
+      this._evictJobs(
+        type,
+        ({ count, bytes }) =>
+          (!maxJobsTotal || count <= maxJobsTotal) &&
+          (!maxBytesTotal || bytes <= maxBytesTotal),
+        now,
+      );
+    }
+
+    // If it is still too big (e.g. because of jobs without handlers),
+    // shrink the biggest queues first.
+    let excess = this.getTotalSize() - this.globalSizeLimit;
+    const typesBySize = Object.keys(this.jobQueues)
+      .map((type) => [type, this.getTotalSizeOfType(type)])
+      .sort((x, y) => y[1] - x[1]);
+    for (const [type, bytesBefore] of typesBySize) {
+      if (excess <= 0) {
+        break;
+      }
+      const target = Math.max(bytesBefore - excess, 0);
+      this._evictJobs(type, ({ bytes }) => bytes <= target, now);
+      excess -= bytesBefore - this.getTotalSizeOfType(type);
+    }
   }
 
   _pushToQueue({ jobEntry, state, now = Date.now() }) {
@@ -812,6 +912,7 @@ export default class JobScheduler {
         }
       }
       this.jobQueues = persistedState.jobQueues;
+      this._enforceLimits(now);
 
       logger.info(
         'Successfully restored jobQueue:',
@@ -847,10 +948,20 @@ export default class JobScheduler {
 
   async _writeJobsToDisk() {
     this._clearAutoFlushTimer();
-    return this.storage.set(this.storageKey, {
-      dbVersion: DB_VERSION,
-      jobQueues: this.jobQueues,
-    });
+    const state = { dbVersion: DB_VERSION, jobQueues: this.jobQueues };
+    try {
+      await this.storage.set(this.storageKey, state);
+    } catch (e) {
+      // If the quota is already exceeded (e.g. by jobs from older versions),
+      // the write can be rejected even if the new value is smaller than the
+      // one it replaces. Removing the old value first frees up the space.
+      logger.warn(
+        'Failed to write jobs. Retrying after removing the persisted jobs...',
+        e,
+      );
+      await this.storage.remove(this.storageKey);
+      await this.storage.set(this.storageKey, state);
+    }
   }
 
   /**
@@ -982,6 +1093,43 @@ export default class JobScheduler {
     return count;
   }
 
+  getTotalSizeOfType(type) {
+    let bytes = 0;
+    const queue = this.jobQueues[type];
+    if (queue) {
+      for (const state of JobScheduler.STATES) {
+        for (const jobEntry of queue[state] || []) {
+          bytes += this._sizeOf(jobEntry);
+        }
+      }
+    }
+    return bytes;
+  }
+
+  getTotalSize() {
+    let bytes = 0;
+    for (const type of Object.keys(this.jobQueues)) {
+      bytes += this.getTotalSizeOfType(type);
+    }
+    return bytes;
+  }
+
+  _usageOfType(type) {
+    return {
+      count: this.getTotalJobsOfType(type),
+      bytes: this.getTotalSizeOfType(type),
+    };
+  }
+
+  _sizeOf(jobEntry) {
+    let size = this._jobSizes.get(jobEntry);
+    if (size === undefined) {
+      size = estimateSize(jobEntry);
+      this._jobSizes.set(jobEntry, size);
+    }
+    return size;
+  }
+
   getTotalJobsWaitingForRetry() {
     let count = 0;
     for (const queue of Object.values(this.jobQueues)) {
@@ -1069,6 +1217,7 @@ export default class JobScheduler {
     expectInt('priority');
     expectInt('ttlInMs', nonNegative);
     expectInt('maxJobsTotal', nonNegative);
+    expectInt('maxBytesTotal', nonNegative);
     expectInt('cooldownInMs', nonNegative);
     expectInt('maxAutoRetriesAfterError', nonNegative);
 
@@ -1094,6 +1243,17 @@ export default class JobScheduler {
         numJobsInTotal,
         globalJobLimit: this.globalJobLimit,
       });
+    }
+
+    const totalSize = this.getTotalSize();
+    if (totalSize > this.globalSizeLimit) {
+      check.warn(
+        'total size of the jobs in the queue exceeds the global limit',
+        {
+          totalSize,
+          globalSizeLimit: this.globalSizeLimit,
+        },
+      );
     }
 
     for (const [type, queue] of Object.entries(this.jobQueues)) {

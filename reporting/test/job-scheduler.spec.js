@@ -26,6 +26,8 @@ const DAY = 24 * HOUR;
 const MONTH = 30 * DAY;
 const YEAR = 365 * DAY;
 
+const KB = 1024;
+
 function mockStorage(storageKey) {
   return {
     async get(key) {
@@ -35,6 +37,37 @@ function mockStorage(storageKey) {
     async set(key, obj) {
       expect(key).to.eql(storageKey);
       this._content = obj;
+    },
+    async remove(key) {
+      expect(key).to.eql(storageKey);
+      this._content = undefined;
+    },
+  };
+}
+
+// Simulates a storage that rejects all writes once the quota is exceeded,
+// even if the new value is smaller than the one it replaces.
+function mockStorageWithQuota(storageKey, quota = Infinity) {
+  return {
+    quota,
+    usage() {
+      return this._content?.length ?? 0;
+    },
+    async get(key) {
+      expect(key).to.eql(storageKey);
+      return this._content && JSON.parse(this._content);
+    },
+    async set(key, obj) {
+      expect(key).to.eql(storageKey);
+      const json = JSON.stringify(obj);
+      if (this.usage() + json.length > this.quota) {
+        throw new Error('[testing] Exceeded storage quota');
+      }
+      this._content = json;
+    },
+    async remove(key) {
+      expect(key).to.eql(storageKey);
+      this._content = undefined;
     },
   };
 }
@@ -244,15 +277,16 @@ describe('#JobScheduler', function () {
       await uut.init();
     });
 
-    it('local job limit', async function () {
-      let jobRejectedEvents = 0;
-      uut.addObserver('jobRejected', () => {
-        jobRejectedEvents += 1;
+    it('local job limit (by dropping the oldest jobs)', async function () {
+      const evictedJobs = [];
+      uut.addObserver('jobEvicted', ({ job }) => {
+        evictedJobs.push(job.args.id);
       });
 
       const maxJobs = 4;
       const throttled = 'throttled';
       const nonThrottled = 'non-throttled';
+      const mkJob = (type, id) => ({ type, args: { id } });
       expect(uut.globalJobLimit).to.be.at.least(2 * maxJobs + 1);
 
       uut.registerHandler(throttled, () => {}, {
@@ -262,31 +296,116 @@ describe('#JobScheduler', function () {
 
       await uut.init();
       for (let i = 0; i < maxJobs; i += 1) {
-        await uut.registerJob(someJob(throttled));
-        expect(jobRejectedEvents).to.eql(0);
+        await uut.registerJob(mkJob(throttled, i));
         expect(uut.stats.jobRegistered).to.eql(i + 1);
-        expect(uut.stats.jobRejected).to.eql(0);
         expect(uut.getTotalJobs()).to.eql(i + 1);
       }
+      expect(evictedJobs).to.be.empty;
 
-      // now the limit is reached and jobs will be rejected
-      await uut.registerJob(someJob(throttled));
-      expect(jobRejectedEvents).to.eql(1);
-      expect(uut.stats.jobRegistered).to.eql(maxJobs);
-      expect(uut.stats.jobRejected).to.eql(1);
-      expect(uut.getTotalJobs()).to.eql(maxJobs);
+      // now the limit is reached and the oldest jobs make room for new ones
+      await uut.registerJob(mkJob(throttled, maxJobs));
+      await uut.registerJob(mkJob(throttled, maxJobs + 1));
+      expect(evictedJobs).to.eql([0, 1]);
+      expect(uut.stats.jobRegistered).to.eql(maxJobs + 2);
+      expect(uut.stats.jobRejected).to.eql(0);
+      expect(uut.stats.jobEvicted).to.eql(2);
       expect(uut.getTotalJobsOfType(throttled)).to.eql(maxJobs);
       expect(uut.getTotalJobsOfType(nonThrottled)).to.eql(0);
 
-      // but must still allow to register other jobs
-      jobRejectedEvents = 0;
+      // but must not affect other jobs
       for (let i = 0; i < maxJobs + 1; i += 1) {
-        await uut.registerJob(someJob(nonThrottled));
+        await uut.registerJob(mkJob(nonThrottled, i));
       }
-      expect(jobRejectedEvents).to.eql(0);
+      expect(evictedJobs).to.have.lengthOf(2);
+      expect(uut.stats.jobRejected).to.eql(0);
+      expect(uut.getTotalJobsOfType(throttled)).to.eql(maxJobs);
       expect(uut.getTotalJobsOfType(nonThrottled)).to.eql(maxJobs + 1);
 
       await uut.init();
+    });
+
+    it('local size limit (by dropping the oldest jobs)', async function () {
+      const evictedJobs = [];
+      uut.addObserver('jobEvicted', ({ job }) => {
+        evictedJobs.push(job.args.id);
+      });
+
+      const type = 'testjob';
+      const maxBytesTotal = 1 * KB;
+      const mkJob = (id) => ({ type, args: { id, payload: 'x'.repeat(200) } });
+      uut.registerHandler(type, () => {}, { maxBytesTotal });
+
+      await uut.init();
+      const numJobs = 20;
+      for (let i = 0; i < numJobs; i += 1) {
+        await uut.registerJob(mkJob(i));
+        expect(uut.getTotalSizeOfType(type)).to.be.at.most(maxBytesTotal);
+      }
+
+      const numKept = uut.getTotalJobsOfType(type);
+      expect(numKept).to.be.at.least(1);
+      expect(uut.stats.jobRejected).to.eql(0);
+      expect(evictedJobs).to.eql([...Array(numJobs - numKept).keys()]);
+    });
+
+    it('should reject jobs that alone exceed the size limit of their type', async function () {
+      const type = 'testjob';
+      uut.registerHandler(type, () => {}, { maxBytesTotal: 1 * KB });
+
+      await uut.init();
+      await uut.registerJob({ type, args: { id: 1 } });
+      await uut.registerJob({ type, args: { payload: 'x'.repeat(2 * KB) } });
+      expect(uut.stats.jobRejected).to.eql(1);
+      expect(uut.stats.jobEvicted).to.eql(0);
+      expect(uut.getTotalJobsOfType(type)).to.eql(1);
+    });
+
+    it('should drop failed jobs before older jobs that have not run yet', async function () {
+      const evictedJobs = [];
+      uut.addObserver('jobEvicted', ({ job }) => {
+        evictedJobs.push(job.args.id);
+      });
+
+      const type = 'testjob';
+      uut.registerHandler(
+        type,
+        async (job) => {
+          if (job.args.id === 1) {
+            throw someRecoverableError();
+          }
+        },
+        { maxJobsTotal: 3 },
+      );
+
+      await uut.init();
+      await uut.registerJob({
+        type,
+        args: { id: 0 },
+        config: { readyIn: { min: DAY } },
+      });
+      await uut.registerJob({ type, args: { id: 1 } });
+      await uut.processPendingJobs();
+      expect(uut.getTotalJobsWaitingForRetry()).to.eql(1);
+
+      await uut.registerJob({ type, args: { id: 2 } });
+      await uut.registerJob({ type, args: { id: 3 } });
+      expect(evictedJobs).to.eql([1]);
+      expect(uut.getTotalJobsOfType(type)).to.eql(3);
+    });
+
+    it('global size limit', async function () {
+      uut.registerHandler('type1', () => {});
+      uut.registerHandler('type2', () => {});
+      uut.globalSizeLimit = 2 * KB; // to speed up the test
+
+      await uut.init();
+      for (let i = 0; i < 20; i += 1) {
+        const type = i % 2 ? 'type1' : 'type2';
+        await uut.registerJob({ type, args: { payload: 'x'.repeat(200) } });
+        expect(uut.getTotalSize()).to.be.at.most(uut.globalSizeLimit);
+      }
+      expect(uut.stats.jobRejected).to.be.above(0);
+      expect(uut.stats.jobEvicted).to.eql(0);
     });
   });
 
@@ -620,6 +739,66 @@ describe('#JobScheduler', function () {
       await uut.registerJob(mkJob());
       await clock.tickAsync(1 * MINUTE);
       expect(uut._describeJobs().queueLength).to.eql(3);
+    });
+
+    describe('if the persisted jobs exceed the limits', function () {
+      const type = 'testjob';
+      const numJobs = 100;
+      const maxBytesTotal = 10 * KB;
+
+      // Persists jobs like older versions, which had no size limits.
+      async function persistTooManyJobs() {
+        uut.registerHandler(type, () => {}, { maxBytesTotal: 0 });
+        await uut.init();
+        for (let i = 0; i < numJobs; i += 1) {
+          const job = { type, args: { id: i, payload: 'x'.repeat(1 * KB) } };
+          await uut.registerJob(job, { autoTrigger: false });
+        }
+        await uut.sync();
+        expect(uut.getTotalSizeOfType(type)).to.be.above(maxBytesTotal);
+      }
+
+      async function restartWithSizeLimit() {
+        await simulateRestart();
+        uut.registerHandler(type, () => {}, { maxBytesTotal });
+        await uut.init();
+        await uut.sync();
+      }
+
+      function expectOnlyNewestJobs(jobEntries) {
+        const ids = jobEntries.map(({ job }) => job.args.id);
+        expect(ids).to.not.be.empty;
+        expect(ids).to.eql(
+          [...Array(ids.length).keys()].map((i) => numJobs - ids.length + i),
+        );
+      }
+
+      it('should drop the oldest jobs', async function () {
+        await persistTooManyJobs();
+        await restartWithSizeLimit();
+
+        expect(uut.getTotalSizeOfType(type)).to.be.at.most(maxBytesTotal);
+        expect(uut.stats.jobEvicted).to.eql(
+          numJobs - uut.getTotalJobsOfType(type),
+        );
+        expectOnlyNewestJobs(uut._describeJobs().queues.all);
+        await passesSelfChecks();
+      });
+
+      it('should recover even if the storage quota is exceeded', async function () {
+        storage = mockStorageWithQuota(storageKey);
+        uut = newJobScheduler();
+        await persistTooManyJobs();
+
+        // from now on, all writes fail until the jobs shrink
+        storage.quota = 50 * KB;
+        expect(storage.usage()).to.be.above(storage.quota);
+
+        await restartWithSizeLimit();
+        expect(storage.usage()).to.be.at.most(maxBytesTotal + 1 * KB);
+        const { jobQueues } = await storage.get(storageKey);
+        expectOnlyNewestJobs(jobQueues[type].waiting);
+      });
     });
   });
 
