@@ -432,6 +432,7 @@ export function pipeJobEventsToHub(jobScheduler, bridge) {
     'jobFailed',
     'jobExpired',
     'jobRejected',
+    'jobEvicted',
   ];
   for (const event of events) {
     jobScheduler.addObserver(

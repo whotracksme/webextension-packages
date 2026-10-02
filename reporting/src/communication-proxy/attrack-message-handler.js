@@ -48,6 +48,7 @@ export default class AttrackMessageHandler {
       {
         priority: -1000,
         maxJobsTotal: 200,
+        maxBytesTotal: 1024 * 1024, // wtm.attrack.keysv2 messages can reach 32 KB
         cooldownInMs: 2 * SECOND,
         maxAutoRetriesAfterError: 2,
         ttlInMs: 5 * DAY,
