@@ -193,6 +193,7 @@ describe('#PopularityEstimator', function () {
     expect(job.args.sample.activity)
       .to.satisfy(Number.isInteger)
       .and.at.least(0);
+    expect(job.config).to.have.all.keys('readyIn');
     return job;
   }
 
