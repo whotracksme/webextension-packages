@@ -9,6 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
+import * as happyDOM from 'happy-dom-without-node';
 import * as linkedomCached from 'linkedom/cached';
 import * as linkedomUncached from 'linkedom';
 
@@ -20,6 +21,17 @@ import * as linkedomUncached from 'linkedom';
  * should write code in such a way that works well in all environments.
  */
 export const mockDocumentWith = {
+  // https://github.com/capricorn86/happy-dom-without-node/
+  happyDOM(html) {
+    const { window } = new happyDOM.Window();
+    const { document } = window;
+    document.write(html);
+
+    const noop = () => {};
+    window.close = window.close || noop;
+    return { window, document };
+  },
+
   // https://github.com/WebReflection/linkedom
   linkedomCached(html) {
     const { window, document } = linkedomCached.parseHTML(html);
