@@ -14,6 +14,15 @@ import fc from 'fast-check';
 
 import Patterns, { lookupBuiltinTransform } from '../src/patterns.js';
 import { isSubSequence } from '../src/utils.js';
+import {
+  pbFixed32,
+  pbFixed64,
+  pbMessage,
+  pbString,
+  pbVarint,
+  toBase64Url,
+  toBinary,
+} from './helpers/protobuf.js';
 
 describe('Test builtin primitives', function () {
   describe('#queryParam', function () {
@@ -1142,6 +1151,185 @@ describe('Test builtin primitives', function () {
     it('should fail if input is not [string, integer]', function () {
       expect(() => uut()).to.throw();
       expect(() => uut('foo', 'not an int')).to.throw();
+    });
+  });
+
+  describe('#decodeJSString', function () {
+    let decodeJSString;
+
+    beforeEach(function () {
+      decodeJSString = lookupBuiltinTransform('decodeJSString');
+    });
+
+    describe('core functionality', function () {
+      it('should decode \\uXXXX, \\xXX and letter escapes', function () {
+        expect(decodeJSString('a\\u003cb\\x3ec\\nd')).to.eql('a<b>c\nd');
+        expect(decodeJSString('\\ud83d\\ude00')).to.eql('😀');
+      });
+
+      it('should unescape any other escaped character', function () {
+        expect(decodeJSString('\\"\\\'\\\\\\/')).to.eql('"\'\\/');
+      });
+
+      it('should leave text without escapes and a trailing backslash untouched', function () {
+        expect(decodeJSString('?v=2&blob=abc')).to.eql('?v=2&blob=abc');
+        expect(decodeJSString('abc\\')).to.eql('abc\\');
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string] (more parameters are ignored)', function () {
+        expect(() => decodeJSString()).to.throw();
+        expect(() => decodeJSString({ wrong: 'types' })).to.throw();
+      });
+
+      it('should never fail and invert the escaping done by JSON.stringify', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (text) => {
+            expect(decodeJSString(text)).to.be.a('string');
+            expect(decodeJSString(JSON.stringify(text).slice(1, -1))).to.eql(
+              text,
+            );
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#base64', function () {
+    let base64;
+
+    beforeEach(function () {
+      base64 = lookupBuiltinTransform('base64');
+    });
+
+    describe('core functionality', function () {
+      it('should decode both alphabets, with or without padding', function () {
+        expect(base64('aGVsbG8=')).to.eql('hello');
+        expect(base64('aGVsbG8')).to.eql('hello');
+        // the bytes 0xff 0xef are "/+8=" in the standard alphabet
+        expect(base64('/+8=')).to.eql('\xff\xef');
+        expect(base64('_-8')).to.eql('\xff\xef');
+        expect(base64('')).to.eql('');
+      });
+
+      it('should return null for text that is not base64 or too long', function () {
+        expect(base64('a!b')).to.be.null;
+        expect(base64('not base64 text')).to.be.null;
+        expect(base64('aGVsb')).to.be.null;
+        expect(base64('A'.repeat(64 * 1024 + 4))).to.be.null;
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string] (more parameters are ignored)', function () {
+        expect(() => base64()).to.throw();
+        expect(() => base64({ wrong: 'types' })).to.throw();
+      });
+
+      it('should invert btoa in both alphabets, with and without padding', function () {
+        fc.assert(
+          fc.property(fc.uint8Array(), (bytes) => {
+            const binary = toBinary(bytes);
+            expect(base64(btoa(binary))).to.eql(binary);
+            expect(base64(toBase64Url(binary))).to.eql(binary);
+          }),
+        );
+      });
+
+      it('should not fail on well-formed but arbitrary text', function () {
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+            const result = base64(untrustedText);
+            expect(result === null || typeof result === 'string').to.be.true;
+          }),
+        );
+      });
+    });
+  });
+
+  describe('#protobuf', function () {
+    let protobuf;
+
+    beforeEach(function () {
+      protobuf = lookupBuiltinTransform('protobuf');
+    });
+
+    // Fixtures follow a small synthetic schema:
+    //   Entry  { string id = 1; Target target = 2; }
+    //   Target { string url = 3; uint32 rank = 4; }
+    const entry =
+      pbString(1, 'k1') +
+      pbMessage(2, pbString(3, 'https://example.test/a'), pbVarint(4, 7));
+
+    describe('core functionality', function () {
+      it('should extract the string at a field path', function () {
+        expect(protobuf('\x0a\x02hi', '1')).to.eql('hi');
+        expect(protobuf('\x12\x07\x1a\x05hello', '2.3')).to.eql('hello');
+        expect(protobuf(entry, '1')).to.eql('k1');
+        expect(protobuf(entry, '2.3')).to.eql('https://example.test/a');
+      });
+
+      it('should follow deep paths through fields with multi-byte tags', function () {
+        // field numbers above 15 need a two-byte tag
+        const message = pbMessage(
+          2,
+          pbVarint(200, 1),
+          pbMessage(300, pbString(6, 'deep')),
+        );
+        expect(protobuf(message, '2.300.6')).to.eql('deep');
+        expect(protobuf(message, '2.301.6')).to.be.null;
+      });
+
+      it('should skip other wire types and take the first occurrence of a field', function () {
+        const message =
+          pbVarint(5, 300) +
+          pbFixed64(6) +
+          pbFixed32(7) +
+          pbString(1, 'first') +
+          pbString(1, 'second');
+        expect(protobuf(message, '1')).to.eql('first');
+      });
+
+      it('should return null if the path does not lead to a string', function () {
+        expect(protobuf(entry, '9')).to.be.null;
+        expect(protobuf(entry, '2.9')).to.be.null;
+        expect(protobuf(entry, '2.4')).to.be.null;
+        expect(protobuf('\x0a\x01\xff', '1')).to.be.null;
+      });
+
+      it('should return null on malformed, non-binary or oversized input', function () {
+        expect(protobuf('\x0a\x05hi', '1')).to.be.null;
+        expect(protobuf('\x0a', '1')).to.be.null;
+        expect(protobuf('\x0b\x0c' + pbString(1, 'k1'), '1')).to.be.null;
+        expect(protobuf('\x0a\x02hĀ', '1')).to.be.null;
+        expect(protobuf('\x00'.repeat(64 * 1024 + 1), '1')).to.be.null;
+      });
+    });
+
+    describe('robustness on untrusted data', function () {
+      it('should fail if input is not [string, <dotted field numbers>]', function () {
+        expect(() => protobuf()).to.throw();
+        expect(() => protobuf('\x0a\x02hi')).to.throw();
+        expect(() => protobuf({ wrong: 'types' }, 42)).to.throw();
+        for (const path of ['', 'a', '1.', '0', '-1']) {
+          expect(() => protobuf(entry, path)).to.throw();
+        }
+      });
+
+      it('should not fail on arbitrary binary input or text', function () {
+        const isStringOrNull = (x) => x === null || typeof x === 'string';
+        fc.assert(
+          fc.property(fc.uint8Array(), (bytes) => {
+            expect(isStringOrNull(protobuf(toBinary(bytes), '2.3'))).to.be.true;
+          }),
+        );
+        fc.assert(
+          fc.property(fc.fullUnicodeString(), (text) => {
+            expect(isStringOrNull(protobuf(text, '1'))).to.be.true;
+          }),
+        );
+      });
     });
   });
 });

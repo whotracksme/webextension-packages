@@ -16,7 +16,8 @@
     "e2e.launch": "node example/e2e/launch.mjs",
     "e2e": "node example/e2e/run.mjs",
     "test": "karma start --single-run --browsers ChromeHeadless karma.conf.cjs",
-    "test.karma.request": "KARMA_TEST_ENTRY=test/request.js karma start --single-run --browsers ChromeHeadless karma.conf.cjs"
+    "test.karma.request": "KARMA_TEST_ENTRY=test/request.js karma start --single-run --browsers ChromeHeadless karma.conf.cjs",
+    "test.karma.dsl": "KARMA_TEST_ENTRY=test/dsl.js karma start --single-run --browsers ChromeHeadless karma.conf.cjs"
   },
   "author": "Ghostery GmbH",
   "license": "MPL-2.0",
