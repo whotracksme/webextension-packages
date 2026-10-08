@@ -4,10 +4,9 @@ const nodePolyfills = require('rollup-plugin-polyfill-node');
 
 module.exports = {
   plugins: [nodePolyfills(), nodeResolve(), sourcemaps()],
-  external: ['chai', 'sinon'],
+  external: ['sinon'],
   output: {
     globals: {
-      chai: 'chai',
       sinon: 'sinon',
     },
     format: 'iife',

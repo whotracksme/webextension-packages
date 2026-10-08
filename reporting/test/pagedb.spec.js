@@ -13,6 +13,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import * as fc from 'fast-check';
 
+import { fullUnicodeString } from './helpers/fast-check-utils.js';
+
 import PageDB, { toPersistedKey, parsePersistedKey } from '../src/pagedb.js';
 import InMemoryDatabase from './helpers/in-memory-database.js';
 import { InMemoryNewPageApprover } from './helpers/pagedb-mocks.js';
@@ -26,7 +28,7 @@ const YEAR = 365 * DAY;
 describe('#toPersistedKey and #parsePersistedKey', function () {
   it('should be invertable', function () {
     fc.assert(
-      fc.property(fc.fullUnicodeString(), fc.integer(), (url, createdAt) => {
+      fc.property(fullUnicodeString(), fc.integer(), (url, createdAt) => {
         const result = parsePersistedKey(toPersistedKey(url, createdAt));
         expect(result.url).to.eql(url);
         expect(result.createdAt).to.eql(createdAt);

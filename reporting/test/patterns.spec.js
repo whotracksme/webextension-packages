@@ -12,6 +12,8 @@
 import { expect } from 'chai';
 import fc from 'fast-check';
 
+import { fullUnicodeString, hexaString } from './helpers/fast-check-utils.js';
+
 import Patterns, { lookupBuiltinTransform } from '../src/patterns.js';
 import { isSubSequence } from '../src/utils.js';
 
@@ -54,7 +56,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             // should not throw
             queryParam(untrustedText, 'someTrustedParam');
           }),
@@ -201,8 +203,8 @@ describe('Test builtin primitives', function () {
         fc.assert(
           fc.property(
             fc.webUrl({ withQueryParameters: true, withFragments: true }),
-            fc.array(fc.tuple(fc.hexaString(), fc.hexaString())),
-            fc.array(fc.hexaString()),
+            fc.array(fc.tuple(hexaString(), hexaString())),
+            fc.array(hexaString()),
             (url, paramsToAdd, paramsToRemove) => {
               const tmp1 = new URL(url);
               tmp1.search = new URLSearchParams(paramsToAdd);
@@ -288,7 +290,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             const result = removeParams(untrustedText, ['someTrustedParam']);
             if (result !== null) {
               expect(result).to.be.a('string');
@@ -344,7 +346,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             const result = requireURL(untrustedText);
             if (result !== null) {
               expect(result).to.eql(untrustedText);
@@ -401,7 +403,7 @@ describe('Test builtin primitives', function () {
 
       it('should drop all non-matching untrustedTexts', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             expect(filterExact(untrustedText, [])).to.eql(null);
             expect(
               filterExact(untrustedText, [untrustedText + 'force_mismatch']),
@@ -429,7 +431,7 @@ describe('Test builtin primitives', function () {
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
           fc.property(
-            fc.fullUnicodeString(),
+            fullUnicodeString(),
             fc.array(fc.string()),
             (untrustedText, allowedValues) => {
               expect(filterExact(untrustedText, allowedValues)).to.be.oneOf([
@@ -470,7 +472,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             // should not throw
             maskU(untrustedText);
           }),
@@ -535,7 +537,7 @@ describe('Test builtin primitives', function () {
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
           fc.property(
-            fc.fullUnicodeString(),
+            fullUnicodeString(),
             fc.string(),
             (untrustedText, splitOn) => {
               fc.pre(splitOn.length > 0);
@@ -600,7 +602,7 @@ describe('Test builtin primitives', function () {
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
           fc.property(
-            fc.fullUnicodeString(),
+            fullUnicodeString(),
             fc.string(),
             (untrustedText, trySplitOn) => {
               fc.pre(trySplitOn.length > 0);
@@ -648,7 +650,7 @@ describe('Test builtin primitives', function () {
 
       it('should behave like decodeURIComponent for any properly encodeded string', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (text) => {
+          fc.property(fullUnicodeString(), (text) => {
             const input = encodeURIComponent(text);
             expect(uut(input)).to.eql(text);
           }),
@@ -672,7 +674,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             const result = uut(untrustedText);
             if (result !== null) {
               expect(result).to.be.a('string');
@@ -713,7 +715,7 @@ describe('Test builtin primitives', function () {
 
       it('should behave like decodeURIComponent for any properly encodeded string', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (text) => {
+          fc.property(fullUnicodeString(), (text) => {
             const input = encodeURIComponent(text);
             expect(uut(input)).to.eql(text);
           }),
@@ -737,7 +739,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             expect(uut(untrustedText)).to.be.a('string');
           }),
         );
@@ -860,7 +862,7 @@ describe('Test builtin primitives', function () {
       it('should not fail on well-formed but arbitrary text', function () {
         fc.assert(
           fc.property(
-            fc.fullUnicodeString(),
+            fullUnicodeString(),
             fc.string(),
             fc.boolean(),
             (untrustedText, path, extractObjects) => {
@@ -908,7 +910,7 @@ describe('Test builtin primitives', function () {
 
       it('should work on arbitrary strings and behave like String.trim', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), (untrustedText) => {
+          fc.property(fullUnicodeString(), (untrustedText) => {
             const result = trim(untrustedText);
             expect(result).to.be.a('string').and.to.eql(untrustedText.trim());
           }),
@@ -943,7 +945,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on arbitrary text and patterns', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             expect(uut(text, pattern)).to.be.a('string');
           }),
         );
@@ -951,7 +953,7 @@ describe('Test builtin primitives', function () {
 
       it('should only remove characters from the text (the result never grows)', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             const subsequence = uut(text, pattern);
             expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
           }),
@@ -986,7 +988,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on arbitrary text and patterns', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             expect(uut(text, pattern)).to.be.a('string');
           }),
         );
@@ -994,7 +996,7 @@ describe('Test builtin primitives', function () {
 
       it('should only remove characters from the text (the result never grows)', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             const subsequence = uut(text, pattern);
             expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
           }),
@@ -1029,7 +1031,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on arbitrary text and patterns', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             expect(uut(text, pattern)).to.be.a('string');
           }),
         );
@@ -1037,7 +1039,7 @@ describe('Test builtin primitives', function () {
 
       it('should only remove characters from the text (the result never grows)', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             const subsequence = uut(text, pattern);
             expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
           }),
@@ -1068,7 +1070,7 @@ describe('Test builtin primitives', function () {
 
       it('should behave like a naive match(...).join("") implementation', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             let expected = '';
             try {
               expected = (text.match(new RegExp(pattern, 'g')) || []).join('');
@@ -1090,7 +1092,7 @@ describe('Test builtin primitives', function () {
 
       it('should not fail on arbitrary text and patterns', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             expect(uut(text, pattern)).to.be.a('string');
           }),
         );
@@ -1098,7 +1100,7 @@ describe('Test builtin primitives', function () {
 
       it('should only remove characters from the text (the result never grows)', function () {
         fc.assert(
-          fc.property(fc.fullUnicodeString(), fc.string(), (text, pattern) => {
+          fc.property(fullUnicodeString(), fc.string(), (text, pattern) => {
             const subsequence = uut(text, pattern);
             expect(isSubSequence({ sequence: text, subsequence })).to.be.true;
           }),
