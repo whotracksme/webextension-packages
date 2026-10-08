@@ -29,7 +29,7 @@
     "web-ext": "^8.10.0"
   },
   "dependencies": {
-    "pako": "^2.0.4"
+    "pako": "^3.0.2"
   },
   "exports": {
     ".": "./src/index.js"
