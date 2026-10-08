@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-import pako from 'pako';
+import * as pako from 'pako';
 
 const inflate = pako.inflate.bind(pako);
 const deflate = pako.deflate.bind(pako);
