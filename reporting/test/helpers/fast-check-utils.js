@@ -23,6 +23,17 @@ export const arbitraryUrlWithDomain = fc
   .filter((url) => tldts.getDomain(url) !== null);
 
 /**
+ * Simulates the removed fc.fullUnicodeString() with binary string.
+ */
+export const fullUnicodeString = () => fc.string({ unit: 'binary' });
+
+/**
+ * Simulates the removed fc.hexaString() with hex characters.
+ */
+export const hexaString = () =>
+  fc.string({ unit: fc.constantFrom(...'0123456789abcdef') });
+
+/**
  * fast-check will find edge cases for keys like "__proto__".
  * Yet in most use cases, the keys will be simple enough to work
  * for both normal objects and for ES6 maps.

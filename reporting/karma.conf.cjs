@@ -3,7 +3,7 @@ const rollupPreprocessor = require('./rollup.common-config.cjs');
 module.exports = function (config) {
   const entry = process.env.KARMA_TEST_ENTRY || 'test/index.js';
   config.set({
-    frameworks: ['mocha', 'chai', 'sinon'],
+    frameworks: ['mocha', 'sinon'],
     files: [{ pattern: entry, watched: false }],
     preprocessors: {
       [entry]: ['rollup'],

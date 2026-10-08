@@ -12,10 +12,9 @@ module.exports = {
     commonjs({ strictRequires: ['**/cssom/**'] }),
     json(),
   ],
-  external: ['chai', 'sinon'],
+  external: ['sinon'],
   output: {
     globals: {
-      chai: 'chai',
       sinon: 'sinon',
     },
     format: 'iife',

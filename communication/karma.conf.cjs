@@ -2,7 +2,7 @@ const rollupPreprocessor = require('./rollup.common-config.cjs');
 
 module.exports = function (config) {
   config.set({
-    frameworks: ['mocha', 'chai', 'sinon'],
+    frameworks: ['mocha', 'sinon'],
     files: [{ pattern: 'test/**/*.spec.js', watched: false }],
     preprocessors: {
       'test/**/*.spec.js': ['rollup'],

@@ -12,6 +12,8 @@
 import { expect } from 'chai';
 import fc from 'fast-check';
 
+import { fullUnicodeString } from './helpers/fast-check-utils.js';
+
 import UrlAnalyzer from '../src/url-analyzer.js';
 
 describe('#UrlAnalyzer', function () {
@@ -475,7 +477,7 @@ describe('#UrlAnalyzer', function () {
 
     it('should support special characters (unicode)', function () {
       fc.assert(
-        fc.property(fc.fullUnicodeString(), (text) => {
+        fc.property(fullUnicodeString(), (text) => {
           fc.pre(text.length > 0 && text === text.trim());
           const encodedText = encodeURIComponent(text);
           const url = `https://www.google.com/search?q=${encodedText}`;

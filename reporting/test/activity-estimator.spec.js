@@ -255,12 +255,15 @@ describe('#ActivityEstimator', function () {
       ],
     } = {}) {
       return fc.array(
-        fc.record({
-          url: fc.option(...urls.map((url) => fc.constant(url))),
-          isDynamicLoad: fc.boolean(),
-          delay: fc.nat(1 * WEEK),
-          jump: fc.nat(1 * WEEK),
-        }),
+        fc.record(
+          {
+            url: fc.option(...urls.map((url) => fc.constant(url))),
+            isDynamicLoad: fc.boolean(),
+            delay: fc.nat(1 * WEEK),
+            jump: fc.nat(1 * WEEK),
+          },
+          { noNullPrototype: true },
+        ),
       );
     }
 

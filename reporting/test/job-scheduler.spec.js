@@ -1002,6 +1002,7 @@ describe('#JobScheduler', function () {
         },
         {
           requiredKeys: ['min'],
+          noNullPrototype: true,
         },
       ),
       expireIn: fc.record(
@@ -1011,6 +1012,7 @@ describe('#JobScheduler', function () {
         },
         {
           requiredKeys: ['min'],
+          noNullPrototype: true,
         },
       ),
     });
@@ -1019,7 +1021,10 @@ describe('#JobScheduler', function () {
     const arbitraryJobType = () => fc.nat(maxJobTypes - 1).map(numToJobType);
     const arbitraryJobArgs = () => fc.array(fc.nat());
     const arbitraryJobConfig = () =>
-      fc.record(commonJobConfigFields(), { requiredKeys: [] });
+      fc.record(commonJobConfigFields(), {
+        requiredKeys: [],
+        noNullPrototype: true,
+      });
     const arbitraryJob = () => {
       return fc
         .tuple(
@@ -1033,6 +1038,7 @@ describe('#JobScheduler', function () {
               },
               {
                 requiredKeys: [],
+                noNullPrototype: true,
               },
             ),
           ),

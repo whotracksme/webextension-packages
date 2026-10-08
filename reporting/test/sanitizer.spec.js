@@ -12,6 +12,8 @@
 import { expect } from 'chai';
 import fc from 'fast-check';
 
+import { fullUnicodeString } from './helpers/fast-check-utils.js';
+
 import {
   sanitizeUrl,
   checkSuspiciousQuery,
@@ -1031,7 +1033,7 @@ describe('#isValidEAN13', function () {
 
     it('with unicode input', function () {
       fc.assert(
-        fc.property(fc.fullUnicodeString(), (text) => {
+        fc.property(fullUnicodeString(), (text) => {
           expect(isValidEAN13(text)).to.be.oneOf([true, false]);
         }),
       );
@@ -1094,7 +1096,7 @@ describe('#isValidISSN', function () {
 
     it('with unicode input', function () {
       fc.assert(
-        fc.property(fc.fullUnicodeString(), (text) => {
+        fc.property(fullUnicodeString(), (text) => {
           expect(isValidISSN(text)).to.be.oneOf([true, false]);
         }),
       );
