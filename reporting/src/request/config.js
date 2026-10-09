@@ -22,7 +22,6 @@ export const COOKIE_MODE = {
 
 const DEFAULTS = {
   safekeyValuesThreshold: 4,
-  shortTokenLength: 6,
   placeHolder: 'ghostery',
   cliqzHeader: 'Ghostery-AntiTracking',
   cookieEnabled: true,

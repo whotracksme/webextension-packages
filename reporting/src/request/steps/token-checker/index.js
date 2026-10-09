@@ -14,6 +14,7 @@
 import md5, { truncatedHash } from '../../../md5.js';
 import { tryDecodeURIComponent } from '../../../utils/url.js';
 import TokenDomain from './token-domain.js';
+import { shouldCheckToken } from '../../token-detector.js';
 
 function decodeToken(token) {
   let decodedToken = tryDecodeURIComponent(token);
@@ -32,12 +33,11 @@ function decodeToken(token) {
  * @namespace antitracking.steps
  */
 export default class TokenChecker {
-  constructor(qsWhitelist, privateValues, shouldCheckToken, config, db) {
+  constructor(qsWhitelist, privateValues, config, db) {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
     this.debug = false;
     this.privateValues = privateValues;
-    this.shouldCheckToken = shouldCheckToken;
     this.tokenDomain = new TokenDomain(config, db);
   }
 
@@ -130,7 +130,7 @@ export default class TokenChecker {
       const tok = kv[1];
 
       // ignore values which don't look like identifiers
-      if (!this.shouldCheckToken(tok)) {
+      if (!shouldCheckToken(tok)) {
         return 'no_check';
       }
 
@@ -140,7 +140,7 @@ export default class TokenChecker {
       }
 
       // make different possible encodings of the token
-      if (!this.shouldCheckToken(decodeToken(tok))) {
+      if (!shouldCheckToken(decodeToken(tok))) {
         return 'no_check_decoded';
       }
 

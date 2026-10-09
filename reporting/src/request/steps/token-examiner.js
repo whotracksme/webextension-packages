@@ -15,6 +15,7 @@ import * as datetime from '../utils/time.js';
 import md5, { truncatedHash } from '../../md5.js';
 import ChromeStorageMap from '../utils/chrome-storage-map.js';
 import logger from '../../logger.js';
+import { shouldCheckToken } from '../token-detector.js';
 
 const SYNC_DB_INTERVAL = 20 * 1000;
 
@@ -22,10 +23,9 @@ const SYNC_DB_INTERVAL = 20 * 1000;
  * Manages the local safekey list
  */
 export default class TokenExaminer {
-  constructor(qsWhitelist, config, shouldCheckToken) {
+  constructor(qsWhitelist, config) {
     this.qsWhitelist = qsWhitelist;
     this.config = config;
-    this.shouldCheckToken = shouldCheckToken;
     this.hashTokens = true;
     this.requestKeyValue = new ChromeStorageMap({
       storageKey: 'wtm-request-reporting:token-examiner:request-key-value',
@@ -92,7 +92,7 @@ export default class TokenExaminer {
         .extractKeyValues()
         .params.reduce((hash, kv) => {
           const [k, v] = kv;
-          if (!this.shouldCheckToken(v)) {
+          if (!shouldCheckToken(v)) {
             return hash;
           }
           const key = this.hashTokens ? md5(k) : k;
