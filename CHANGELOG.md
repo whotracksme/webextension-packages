@@ -1,3 +1,25 @@
+# v12.1.6 (Mon Oct 12 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: removeQueryParams incorrectly replaced parts of the fragment [#247](https://github.com/whotracksme/webextension-packages/pull/247) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Update remaining dependencies [#245](https://github.com/whotracksme/webextension-packages/pull/245) ([@philipp-classen](https://github.com/philipp-classen))
+- Upgrade eslint from 8.x to 10.12.0 [#244](https://github.com/whotracksme/webextension-packages/pull/244) ([@philipp-classen](https://github.com/philipp-classen))
+- Simplification: getTime [#243](https://github.com/whotracksme/webextension-packages/pull/243) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🧪 Tests
+
+- Fix flakey test [#246](https://github.com/whotracksme/webextension-packages/pull/246) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.5 (Mon Oct 12 2026)
 
 #### 🐛 Bug Fix
