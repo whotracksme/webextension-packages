@@ -91,6 +91,12 @@ describe('#PopularityEstimator', function () {
     const _jobsRegistered = jobsRegistered;
 
     jobScheduler = createInMemoryJobScheduler();
+
+    // Guarantees that we see "jobRegistered" events.
+    // (We are not clearing the queues by processing the jobs; so once the
+    // global job limit is reached, new jobs would be rejected.)
+    jobScheduler.globalJobLimit = Infinity;
+
     jobScheduler.addObserver('jobRegistered', (job) => {
       // Nasty pitfall: it would be nice to run assertions here, but they
       // will not be visible in the console when the user runs them.
