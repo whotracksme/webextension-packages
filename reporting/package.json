@@ -43,7 +43,7 @@
     "sinon": "^22.1.0",
     "sinon-chai": "^4.0.1",
     "sinon-chrome": "^3.0.1",
-    "web-ext": "^8.2.0",
+    "web-ext": "^10.7.0",
     "webdriverio": "^9.27.0",
     "ws": "^8.22.0"
   },
