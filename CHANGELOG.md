@@ -1,3 +1,21 @@
+# v12.1.5 (Mon Oct 12 2026)
+
+#### 🐛 Bug Fix
+
+- Upgrade to prettier: 2.5.1 to 3.9.9 [#242](https://github.com/whotracksme/webextension-packages/pull/242) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- Update rollup from 2 to 4 [#237](https://github.com/whotracksme/webextension-packages/pull/237) ([@philipp-classen](https://github.com/philipp-classen))
+- Update test dependencies [#236](https://github.com/whotracksme/webextension-packages/pull/236) ([@philipp-classen](https://github.com/philipp-classen))
+- Upgrade dependencies [#235](https://github.com/whotracksme/webextension-packages/pull/235) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.4 (Fri Oct 02 2026)
 
 #### 🐛 Bug Fix
