@@ -514,7 +514,6 @@ const keyValueTestCases = [
 
 function fillInSpec(spec) {
   Object.keys(emptyParts).forEach(function (k) {
-    // eslint-disable-next-line no-param-reassign
     spec[k] = spec[k] || emptyParts[k];
   });
   return spec;

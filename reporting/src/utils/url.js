@@ -28,7 +28,7 @@ export function parse(url) {
   try {
     const parsed = new ImmutableURL(url);
     return parsed;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -51,7 +51,7 @@ function tryDecode(fn) {
 
     try {
       return fn(url);
-    } catch (e) {
+    } catch {
       return url;
     }
   };

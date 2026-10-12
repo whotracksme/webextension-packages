@@ -360,7 +360,7 @@ describe('#PatternsUpdater', function () {
           let detected = false;
           try {
             await uut.update({ now: ts, ignoreErrors: false });
-          } catch (e) {
+          } catch {
             detected = true;
           }
           expect(detected).to.equal(true);

@@ -9,8 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-/* eslint-disable no-continue */
-
 import logger from './logger';
 import parseHtml from './html-parser';
 import { fastHash } from './utils';
@@ -259,7 +257,6 @@ export default class SearchExtractor {
     // "requiredKeys" property. If not specified, all keys of the array entry need
     // to be present; otherwise, the entry will be skipped.
     const messages = [];
-    // eslint-disable-line no-labels, no-restricted-syntax
     nextaction: for (const [action, schema] of Object.entries(output)) {
       const payload = {};
       for (const {
@@ -277,7 +274,7 @@ export default class SearchExtractor {
           if (input[source].first) {
             // case 1: single extracted value
             if (!optional && !isPresent(found[source][key])) {
-              continue nextaction; // eslint-disable-line no-labels
+              continue nextaction;
             }
             payload[key] = found[source][key] ?? null;
           } else if (input[source].all) {
@@ -298,7 +295,7 @@ export default class SearchExtractor {
               required.every((x) => isPresent(entry[x]));
             const cleanedResults = results.filter(allFieldsPresent);
             if (cleanedResults.length === 0 && !optional) {
-              continue nextaction; // eslint-disable-line no-labels
+              continue nextaction;
             }
             payload[key] = { ...cleanedResults };
           } else {

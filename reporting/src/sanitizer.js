@@ -215,7 +215,7 @@ export function checkSuspiciousQuery(query) {
 function tryParseUrl(url) {
   try {
     return new URL(url);
-  } catch (e) {
+  } catch {
     return null;
   }
 }

@@ -1074,7 +1074,7 @@ describe('Test builtin primitives', function () {
             let expected = '';
             try {
               expected = (text.match(new RegExp(pattern, 'g')) || []).join('');
-            } catch (e) {
+            } catch {
               // invalid regular expression: expect the value to be cleared
             }
             expect(uut(text, pattern)).to.eql(expected);

@@ -285,7 +285,7 @@ export class DnsResolver {
     }
     try {
       return new URL(url).hostname;
-    } catch (e) {
+    } catch {
       return null;
     }
   }

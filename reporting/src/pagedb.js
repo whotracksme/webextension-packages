@@ -28,7 +28,7 @@ function normalizeUrl(url) {
     const tmp = new URL(url);
     tmp.hash = '';
     return tmp.toString();
-  } catch (e) {
+  } catch {
     // It is not necessarily a bug this code path hits, but ideally
     // invalid URLs should have been filtered already.
     logger.warn('Bad URL detected:', url, '(ignore this page and continue)');

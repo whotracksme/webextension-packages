@@ -19,7 +19,7 @@ const SECOND = 1000;
 function tryParseHostname(url) {
   try {
     return new URL(url).host;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -28,7 +28,7 @@ function hasQueryParams(url, params) {
   try {
     const { searchParams } = new URL(url);
     return params.every((key) => searchParams.has(key));
-  } catch (e) {
+  } catch {
     return false;
   }
 }

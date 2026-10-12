@@ -144,7 +144,7 @@ export default class PageQuorumCheckHandler {
           : url;
         try {
           return [url, new URL(normalizedUrl)];
-        } catch (e) {
+        } catch {
           throw new BadJobError(
             `Failed to parse URL (url=${url}, normalizedUrl=${normalizedUrl})`,
           );

@@ -121,7 +121,7 @@ describe('#SearchExtractor', function () {
         } finally {
           try {
             mockWindow?.close();
-          } catch (e) {
+          } catch {
             // ignore
           }
         }

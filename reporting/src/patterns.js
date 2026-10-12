@@ -118,7 +118,7 @@ const TRANSFORMS = new Map(
         // we only need the query parameter, but to handle relative
         // URLs we have to pass a base URL (any domain will work)
         return new URL(url, 'http://x').searchParams.get(queryParam);
-      } catch (e) {
+      } catch {
         return null;
       }
     },
@@ -185,7 +185,7 @@ const TRANSFORMS = new Map(
       requireString(url);
       try {
         return sanitizeUrl(url).safeUrl;
-      } catch (e) {
+      } catch {
         return null;
       }
     },
@@ -204,7 +204,7 @@ const TRANSFORMS = new Map(
       requireString(url);
       try {
         return sanitizeUrl(url, { strict: true }).safeUrl;
-      } catch (e) {
+      } catch {
         return null;
       }
     },
@@ -219,7 +219,7 @@ const TRANSFORMS = new Map(
       try {
         return sanitizeUrl(url, { strict: false, tryPreservePath: true })
           .safeUrl;
-      } catch (e) {
+      } catch {
         return null;
       }
     },
@@ -257,7 +257,7 @@ const TRANSFORMS = new Map(
       requireString(text);
       try {
         return decodeURIComponent(text);
-      } catch (e) {
+      } catch {
         return null;
       }
     },
@@ -269,7 +269,7 @@ const TRANSFORMS = new Map(
       requireString(text);
       try {
         return decodeURIComponent(text);
-      } catch (e) {
+      } catch {
         return text;
       }
     },
@@ -308,7 +308,7 @@ const TRANSFORMS = new Map(
         }
         // prevent uncontrolled text extraction
         return '';
-      } catch (e) {
+      } catch {
         return '';
       }
     },
@@ -338,7 +338,7 @@ const TRANSFORMS = new Map(
       }
       try {
         return text.replace(new RegExp(pattern), '');
-      } catch (e) {
+      } catch {
         return '';
       }
     },
@@ -360,7 +360,7 @@ const TRANSFORMS = new Map(
       }
       try {
         return text.replaceAll(new RegExp(pattern, 'g'), '');
-      } catch (e) {
+      } catch {
         return '';
       }
     },
@@ -384,7 +384,7 @@ const TRANSFORMS = new Map(
       try {
         const m = new RegExp(pattern).exec(text);
         return m ? m[0] : '';
-      } catch (e) {
+      } catch {
         return '';
       }
     },
@@ -435,7 +435,7 @@ const TRANSFORMS = new Map(
         // "match" is slightly faster for non-empty-matching patterns
         const matches = text.match(regexp);
         return matches ? matches.join('') : '';
-      } catch (e) {
+      } catch {
         return '';
       }
     },

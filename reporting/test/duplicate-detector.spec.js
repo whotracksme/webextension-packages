@@ -22,7 +22,6 @@ function getUniqueId() {
   return getUniqueId.uniqueId;
 }
 
-/* eslint-disable no-param-reassign */
 function mkMessage({ action = 'test-action', payload, deduplicateBy } = {}) {
   payload = payload || {
     testFieldWithSeq: `test-field-${getUniqueId()}`,

@@ -357,7 +357,7 @@ describe('#lazyInitAsync', function () {
       for (let i = 0; i < 3; i += 1) {
         try {
           await Promise.all([x(), x(), x()]);
-        } catch (e) {
+        } catch {
           // expected to throw
         }
       }

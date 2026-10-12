@@ -424,7 +424,7 @@ describe('#Pages', function () {
               try {
                 expect(actual).to.eql(expectedPageEvent);
                 return true;
-              } catch (e) {
+              } catch {
                 return false;
               }
             };
