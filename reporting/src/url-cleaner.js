@@ -25,11 +25,14 @@ export function removeQueryParams(url, queryParams) {
   if (searchStart === -1) {
     return url;
   }
-  const searchEnd = url.indexOf('#', searchStart + 1);
-  const search =
-    searchEnd === -1
-      ? url.slice(searchStart + 1)
-      : url.slice(searchStart + 1, searchEnd);
+
+  const hashStart = url.indexOf('#');
+  const searchEnd = hashStart === -1 ? url.length : hashStart;
+  if (searchStart > searchEnd) {
+    return url;
+  }
+
+  const search = url.slice(searchStart + 1, searchEnd);
   if (!search) {
     return url;
   }
@@ -38,7 +41,7 @@ export function removeQueryParams(url, queryParams) {
     .filter((x) => !queryParams.includes(split0(x, '=')));
   const beforeSearch = url.slice(0, searchStart);
 
-  const hash = searchEnd === -1 ? '' : url.slice(searchEnd);
+  const hash = url.slice(searchEnd);
   if (parts.length === 0) {
     return beforeSearch + hash;
   } else {
