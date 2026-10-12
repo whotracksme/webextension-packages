@@ -9,8 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-/* eslint-disable no-bitwise */
-
 import { inflate, deflate } from './zlib.js';
 import { TooBigMsgError } from './errors.js';
 

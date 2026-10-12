@@ -1,4 +1,0 @@
-**/*.bundle.js
-**/trackers-preview-generated.js
-**/scripts/**/*.js
-reporting/example/offscreen/**

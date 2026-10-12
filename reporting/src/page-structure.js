@@ -166,7 +166,7 @@ export async function analyzePageStructure(doc) {
         // 2) some websites use arrays, some split it across multiple scripts
         // ==> everything becomes an array
         parsedJson = Array.isArray(parsedJson) ? parsedJson : [parsedJson];
-      } catch (e) {
+      } catch {
         continue; // ignore broken JSON
       }
       for (const json of parsedJson) {

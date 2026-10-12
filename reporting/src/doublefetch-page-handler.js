@@ -53,7 +53,7 @@ export function toTrustedUrl(url, { baseUrl, log, logWarn }) {
   let from;
   try {
     from = new URL(baseUrl);
-  } catch (e) {
+  } catch {
     logWarn('Invalid baseUrl (possible but unexpected):', baseUrl);
     return null;
   }
@@ -61,7 +61,7 @@ export function toTrustedUrl(url, { baseUrl, log, logWarn }) {
   let to;
   try {
     to = new URL(url, baseUrl);
-  } catch (e) {
+  } catch {
     log('Ignore invalid url:', url);
     return null;
   }

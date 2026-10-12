@@ -52,7 +52,7 @@ describe('#SeqExecutor', function () {
         await uut.run(() => {
           throw new Error(2);
         });
-      } catch (e) {
+      } catch {
         gotError2 = true;
       }
       if (!gotError2) {
@@ -66,7 +66,7 @@ describe('#SeqExecutor', function () {
         await uut.run(async () => {
           throw new Error(4);
         });
-      } catch (e) {
+      } catch {
         gotError4 = true;
       }
       if (!gotError4) {

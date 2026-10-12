@@ -9,8 +9,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0
  */
 
-/* eslint-disable no-bitwise */
-
 // Random float in the interval [0, 1]
 export default function random() {
   return random53Bit() / 2 ** 53;

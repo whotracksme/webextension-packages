@@ -102,7 +102,7 @@ function isRealPage(url) {
 function sameHostname(url1, url2) {
   try {
     return new URL(url1).hostname === new URL(url2).hostname;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -880,7 +880,7 @@ export default class Pages {
               { urls: ['<all_urls>'] },
               ['responseHeaders'],
             );
-          } catch (e) {
+          } catch {
             this.chrome.webRequest[type].addListener(handler, {
               urls: ['<all_urls>'],
             });

@@ -11,7 +11,6 @@
 
 import Bowser from 'bowser';
 
-/* eslint-disable no-param-reassign */
 import { isLocalIP } from '../network.js';
 import Config from './config.js';
 import Database from './database.js';

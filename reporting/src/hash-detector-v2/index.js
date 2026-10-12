@@ -52,7 +52,7 @@ export class HashProb {
     if (str.includes('%') && RE_PERCENT_ENCODED.test(str)) {
       try {
         str = decodeURIComponent(str);
-      } catch (e) {
+      } catch {
         /* keep original */
       }
       if (str.length < 6) {

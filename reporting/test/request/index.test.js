@@ -388,7 +388,6 @@ describe('RequestReporter', function () {
 
       async function processRunloopUntil(timeout) {
         const start = Date.now();
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const now = await clock.runToLast();
           if (now - start > timeout) {

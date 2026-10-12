@@ -15,7 +15,6 @@ import MapCache from './fixed-size-cache.js';
  * Largely based on js-md5 (https://github.com/emn178/js-md5)
  * by Chen, Yi-Cyuan [emn178@gmail.com]
  */
-/* eslint-disable no-mixed-operators, no-bitwise, no-plusplus */
 
 const state = new Int32Array(4);
 const buffer = new ArrayBuffer(68);

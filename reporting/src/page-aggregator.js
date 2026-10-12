@@ -149,7 +149,7 @@ export default class PageAggregator {
         logger.debug('Creating', jobs.length, 'jobs for expired pages:', jobs);
         await this.jobScheduler.registerJobs(jobs);
         numJobsCreated += expiredPages.length;
-      } catch (e) {
+      } catch {
         logger.error('Failed to register jobs:', jobs.length, 'jobs were lost');
         logger.debug('Lost jobs:', jobs);
         return { numJobsCreated };

@@ -154,7 +154,7 @@ export default class AliveMessageGenerator {
       return !!(
         this.navigatorApi.brave && (await this.navigatorApi.brave.isBrave())
       );
-    } catch (e) {
+    } catch {
       return false;
     }
   }

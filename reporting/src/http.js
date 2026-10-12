@@ -200,7 +200,6 @@ function headerOverrideViaWebRequestAPI({ url, headers, requestType }) {
     const headerNames = Object.keys(headers);
     const normalizedHeaders = headerNames.map((x) => x.toLowerCase());
 
-    /* eslint-disable no-param-reassign */
     details.requestHeaders = details.requestHeaders.filter(
       (header) => !normalizedHeaders.includes(header.name.toLowerCase()),
     );
@@ -837,7 +836,7 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
             'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
           ],
         );
-      } catch (e) {
+      } catch {
         chrome.webRequest.onBeforeSendHeaders.addListener(
           onBeforeSendHeaders,
           { urls: matchedUrls },
@@ -878,7 +877,7 @@ async function anonymousHttpGet_(originalUrl, params = {}) {
             'extraHeaders', // Note: needed for Chromium, but will be rejected by Firefox
           ],
         );
-      } catch (e) {
+      } catch {
         chrome.webRequest.onHeadersReceived.addListener(
           onHeadersReceived,
           { urls: matchedUrls },

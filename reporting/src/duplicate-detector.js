@@ -149,9 +149,7 @@ function extractPath(obj, path, pos = 0) {
  */
 export function computeDeduplicationKey({ body, deduplicateBy = '' }) {
   let keys = body.payload;
-  if (!deduplicateBy) {
-    keys = body.payload;
-  } else {
+  if (deduplicateBy) {
     keys = deduplicateBy
       .split(',')
       .map((path) => extractPath(body.payload, path.split('.'), 0).value);

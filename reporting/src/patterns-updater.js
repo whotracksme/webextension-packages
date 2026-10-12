@@ -113,7 +113,7 @@ export default class PatternsUpdater {
         );
         force = true;
       }
-    } catch (e) {
+    } catch {
       logger.warn(
         'Failed to load cached patterns from disk. Forcing an update.',
       );

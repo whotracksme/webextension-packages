@@ -558,7 +558,7 @@ export default class PopularityEstimator {
       const allJobs = jobBatchesPerRotation.flat();
       try {
         await this.jobScheduler.registerJobs(allJobs);
-      } catch (e) {
+      } catch {
         logger.error('Failed to register jobs. These were lost:', allJobs);
       }
     }
