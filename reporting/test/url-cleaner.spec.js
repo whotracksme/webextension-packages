@@ -26,6 +26,27 @@ describe('#removeQueryParams', function () {
         removeQueryParams('https://example.test/path?foo=1&bar=2#baz', ['foo']),
       ).to.eql('https://example.test/path?bar=2#baz');
     });
+
+    it('should not treat a "?" in the fragment as a query', function () {
+      expect(removeQueryParams('https://example.test/#?foo=1', ['foo'])).to.eql(
+        'https://example.test/#?foo=1',
+      );
+      expect(
+        removeQueryParams('https://example.test/#/path?foo=1&bar=2', ['foo']),
+      ).to.eql('https://example.test/#/path?foo=1&bar=2');
+      expect(removeQueryParams('https://example.test/#?&', [''])).to.eql(
+        'https://example.test/#?&',
+      );
+      expect(
+        removeQueryParams('https://example.test/?foo=1#?foo=1', ['foo']),
+      ).to.eql('https://example.test/#?foo=1');
+    });
+
+    it('should support complex examples with "?" and "#" appearing again in the fragment', function () {
+      expect(
+        removeQueryParams('https://example.test/a?b#c?d#e', ['b', 'c', 'd']),
+      ).to.eql('https://example.test/a#c?d#e');
+    });
   });
 
   describe('should handle non-valid URLs gracefully', function () {
