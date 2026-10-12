@@ -1,6 +1,6 @@
 {
   "name": "@whotracksme/reporting",
-  "version": "12.1.4",
+  "version": "12.1.5",
   "type": "module",
   "exports": {
     "./sanitizer": "./reporting/src/sanitizer.js",
