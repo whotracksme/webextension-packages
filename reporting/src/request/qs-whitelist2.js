@@ -41,16 +41,15 @@ export default class QSWhitelist2 {
 
   async init() {
     try {
-      const { version, localSafeKey } = await this.storage.get(
-        STORAGE_CONFIG_KEY,
-      );
+      const { version, localSafeKey } =
+        await this.storage.get(STORAGE_CONFIG_KEY);
 
       const buffer = await this.storage.get(STORAGE_BLOOM_FILTER_KEY);
       this.bloomFilter = new PackedBloomFilter(buffer);
       this.version = version;
       this.localSafeKey = localSafeKey || {};
       logger.debug(`[QSWhitelist2] Bloom filter loaded version ${version}`);
-    } catch (e) {
+    } catch {
       logger.info('[QSWhitelist2] Failed loading filter from local');
     }
 
@@ -67,7 +66,7 @@ export default class QSWhitelist2 {
         this.networkFetchEnabled = false;
         try {
           await this._fullUpdate((await this._fetchUpdateURL()).version);
-        } catch (e2) {
+        } catch {
           logger.info('[QSWhitelist2] failed to load bloom filter');
           // local fetch also failed
           // create empty bloom filter

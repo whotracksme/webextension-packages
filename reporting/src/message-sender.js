@@ -31,9 +31,8 @@ export default class MessageSender {
 
   async send(message) {
     logger.debug('Preparing to send message:', message);
-    const { ok, rollback, rejectReason } = await this.duplicateDetector.trySend(
-      message,
-    );
+    const { ok, rollback, rejectReason } =
+      await this.duplicateDetector.trySend(message);
     if (!ok) {
       logger.info('Rejected by duplicate detector:', rejectReason, message);
       return;
