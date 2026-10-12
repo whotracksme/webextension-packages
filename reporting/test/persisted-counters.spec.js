@@ -81,9 +81,8 @@ describe('#PersistedCounters', function () {
               fc.nat(100),
               async (keys, numSamples) => {
                 keys.forEach((key) => uut.count(key));
-                const { samples, populationSize } = await uut.sample(
-                  numSamples,
-                );
+                const { samples, populationSize } =
+                  await uut.sample(numSamples);
                 expect(populationSize).to.eql(keys.length);
 
                 if (keys.length === 0) {

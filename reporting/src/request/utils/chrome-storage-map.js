@@ -250,10 +250,13 @@ export default class ChromeStorageMap {
       this._flush();
       this._scheduledFlush = null;
     } else {
-      this._scheduledFlush = setTimeout(() => {
-        this._flush();
-        this._scheduledFlush = null;
-      }, Math.min(this.softFlushIntervalInMs, nextForcedFlush - now));
+      this._scheduledFlush = setTimeout(
+        () => {
+          this._flush();
+          this._scheduledFlush = null;
+        },
+        Math.min(this.softFlushIntervalInMs, nextForcedFlush - now),
+      );
     }
   }
 

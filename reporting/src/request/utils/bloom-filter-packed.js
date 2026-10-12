@@ -59,7 +59,7 @@ export default class PackedBloomFilter {
     const l = this.locations(a, b);
     for (let i = 0; i < this.k; i += 1) {
       const bk = l[i];
-      if ((this.getBucket(Math.floor(bk / 32)) & (1 << bk % 32)) === 0) {
+      if ((this.getBucket(Math.floor(bk / 32)) & (1 << (bk % 32))) === 0) {
         return false;
       }
     }
@@ -78,7 +78,7 @@ export default class PackedBloomFilter {
     for (let i = 0; i < this.k; i += 1) {
       const bk = Math.floor(l[i] / 32);
       const offset = 5 + bk * 4;
-      const newValue = this.data.getUint32(offset, false) | (1 << l[i] % 32);
+      const newValue = this.data.getUint32(offset, false) | (1 << (l[i] % 32));
       this.data.setUint32(offset, newValue, false);
     }
   }
