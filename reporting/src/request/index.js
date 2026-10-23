@@ -106,12 +106,7 @@ export default class RequestReporter {
 
     this.ready = false;
 
-    const safeOptions = [
-      'extraHeaders',
-      'requestBody',
-      'requestHeaders',
-      'responseHeaders',
-    ];
+    const safeOptions = ['extraHeaders', 'requestHeaders', 'responseHeaders'];
     if (hasBlockingWebRequest()) {
       safeOptions.push('blocking');
     }
