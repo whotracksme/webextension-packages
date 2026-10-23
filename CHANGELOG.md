@@ -1,3 +1,19 @@
+# v12.1.7 (Fri Oct 23 2026)
+
+#### 🐛 Bug Fix
+
+- remove unnecessary "requestBody" option [#248](https://github.com/whotracksme/webextension-packages/pull/248) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### 🏠 Internal
+
+- CI: upgrade actions to fix warnings [#249](https://github.com/whotracksme/webextension-packages/pull/249) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.6 (Mon Oct 12 2026)
 
 #### 🐛 Bug Fix
