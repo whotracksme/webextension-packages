@@ -172,6 +172,49 @@ describe('#PageDB', function () {
       await expectUrlsInMemory([page.url]);
       await expectUrlsInDb([page.url]);
     });
+
+    describe('for a page in a non-active tab that is already known', function () {
+      function loadingPage() {
+        const page = { ...somePage(), status: 'loading' };
+        delete page.preDoublefetch;
+        return page;
+      }
+
+      async function pageInMemory(url) {
+        const { memory } = await uut.describeState({ inMemoryOnly: true });
+        return memory[url];
+      }
+
+      it('should take over newer information', async function () {
+        const before = loadingPage();
+        await uut.updatePages([before], undefined);
+
+        const after = {
+          ...somePage(),
+          lastUpdatedAt: before.lastUpdatedAt + 1,
+        };
+        await uut.updatePages([after], undefined);
+
+        const page = await pageInMemory(after.url);
+        expect(page.status).to.eql('complete');
+        expect(page.preDoublefetch).to.eql(after.preDoublefetch);
+      });
+
+      it('should ignore older information', async function () {
+        const before = somePage();
+        await uut.updatePages([before], undefined);
+
+        const after = {
+          ...loadingPage(),
+          lastUpdatedAt: before.lastUpdatedAt - 1,
+        };
+        await uut.updatePages([after], undefined);
+
+        const page = await pageInMemory(before.url);
+        expect(page.status).to.eql('complete');
+        expect(page.preDoublefetch).to.eql(before.preDoublefetch);
+      });
+    });
   });
 
   describe('#acquireExpiredPages', function () {
