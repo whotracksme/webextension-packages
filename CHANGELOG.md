@@ -1,3 +1,15 @@
+# v12.1.11 (Wed Nov 18 2026)
+
+#### 🐛 Bug Fix
+
+- fix: PageAggregator listens for an event name that does not exist [#253](https://github.com/whotracksme/webextension-packages/pull/253) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.10 (Wed Nov 18 2026)
 
 #### 🐛 Bug Fix
