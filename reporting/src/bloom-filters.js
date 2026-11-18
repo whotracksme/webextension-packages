@@ -309,9 +309,12 @@ export class BloomFilter {
     for (let i = this.generations.length - 1; i >= 0; i -= 1) {
       const generation = this.generations[i];
       const found = await generation.testMany(bitsToTest);
-      if (found && updateTTLIfFound && i !== this.generations.length - 1) {
-        const latestGeneration = this.generations[this.generations.length - 1];
-        await latestGeneration.setMany(bitsToTest);
+      if (found) {
+        if (updateTTLIfFound && i !== this.generations.length - 1) {
+          const latestGeneration =
+            this.generations[this.generations.length - 1];
+          await latestGeneration.setMany(bitsToTest);
+        }
         return true;
       }
     }
