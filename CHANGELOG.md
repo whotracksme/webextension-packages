@@ -1,3 +1,15 @@
+# v12.1.9 (Wed Nov 18 2026)
+
+#### 🐛 Bug Fix
+
+- fix: a page that was marked as private is accepted again (wrong key in the lookup) [#251](https://github.com/whotracksme/webextension-packages/pull/251) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.8 (Wed Nov 18 2026)
 
 #### 🐛 Bug Fix
