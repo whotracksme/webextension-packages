@@ -263,7 +263,7 @@ export default class PageDB {
           const shouldUpdate =
             url == activeUrl ||
             (inMemoryEntry !== null &&
-              pages.some((x) => x.lastUpdatedAt) > inMemoryEntry.lastUpdatedAt);
+              pages.some((x) => x.lastUpdatedAt > inMemoryEntry.lastUpdatedAt));
           if (shouldUpdate) {
             const updateDB = (oldEntry) => {
               const page = mergePages([oldEntry, ...pages]);
