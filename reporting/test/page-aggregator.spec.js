@@ -103,5 +103,44 @@ describe('#PageAggregator', function () {
       uut.fullSync();
       await clock.runAllAsync();
     });
+
+    describe('#onPageEvent', function () {
+      const tabId = 42;
+      const landingPage = {
+        status: 'complete',
+        title: 'Some landing page',
+        url: 'https://www.example.test/landing',
+        search: { category: 'go', query: 'some query', depth: 1 },
+        lastUpdatedAt: 1577836800000,
+      };
+
+      async function pagesInDb() {
+        await clock.runAllAsync();
+        const { memory } = await pagedb.describeState({ inMemoryOnly: true });
+        return memory;
+      }
+
+      beforeEach(function () {
+        pages.describeTab = (id) => (id === tabId ? landingPage : null);
+      });
+
+      it('should sync the tab when the user lands on a search result', async function () {
+        uut.onPageEvent({ type: 'safe-search-landing', tabId, details: {} });
+
+        const memory = await pagesInDb();
+        expect(Object.keys(memory)).to.eql([landingPage.url]);
+        expect(memory[landingPage.url].search).to.eql(landingPage.search);
+      });
+
+      it('should ignore other navigation events', async function () {
+        uut.onPageEvent({
+          type: 'safe-page-navigation',
+          tabId,
+          url: landingPage.url,
+        });
+
+        expect(await pagesInDb()).to.eql({});
+      });
+    });
   });
 });

@@ -53,7 +53,7 @@ export default class PageAggregator {
       } else {
         this.syncTab(event.tabId);
       }
-    } else if (event.type === 'search-landing') {
+    } else if (event.type === 'safe-search-landing') {
       this.syncTab(event.tabId);
     } else if (event.type === 'activity-updated') {
       const { urls, activityEstimator } = event;
