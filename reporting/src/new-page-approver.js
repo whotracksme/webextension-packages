@@ -56,7 +56,7 @@ export default class NewPageApprover {
     if (await this.persistedHashes.has(hash)) {
       return reject('end of cooldown not reached yet');
     }
-    if (await this.privatePageBloomFilter.mightContain(url)) {
+    if (await this.mightBeMarkedAsPrivate(url)) {
       return reject('page has been (possibly) marked as private before');
     }
 
