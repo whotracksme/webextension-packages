@@ -1,3 +1,15 @@
+# v12.1.10 (Wed Nov 18 2026)
+
+#### 🐛 Bug Fix
+
+- fix: PageDB does not update pages in tabs that are not active [#252](https://github.com/whotracksme/webextension-packages/pull/252) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.9 (Wed Nov 18 2026)
 
 #### 🐛 Bug Fix
