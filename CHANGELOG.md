@@ -1,3 +1,15 @@
+# v12.1.8 (Wed Nov 18 2026)
+
+#### 🐛 Bug Fix
+
+- fix: bloom filter always returns false [#250](https://github.com/whotracksme/webextension-packages/pull/250) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.7 (Fri Oct 23 2026)
 
 #### 🐛 Bug Fix
