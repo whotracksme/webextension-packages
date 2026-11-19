@@ -28,9 +28,13 @@ describe('#BloomFilter', function () {
     });
   }
 
+  async function flushToDisk(bloomFilter) {
+    await Promise.all(bloomFilter.generations.map((gen) => gen.flush()));
+  }
+
   // simulates a restart of the extension at the given time
   async function restartBloomFilter(oldBloomFilter, { now, ...options }) {
-    await Promise.all(oldBloomFilter.generations.map((gen) => gen.flush()));
+    await flushToDisk(oldBloomFilter);
     const uut = newBloomFilter(options);
     await uut.ready(now);
     return uut;
@@ -113,6 +117,67 @@ describe('#BloomFilter', function () {
         const bits = uut._computeBits('foo');
         expect(await uut.generations[1].testMany(bits)).to.eql(true);
       });
+    });
+  });
+
+  describe('#ready (cleanup of the database)', function () {
+    describe('with two generations on disk', function () {
+      const rotationIntervalInMs = 30 * DAY;
+      const options = { maxGenerations: 2, rotationIntervalInMs };
+      let now;
+      let uut;
+      let keysOfGen2;
+
+      beforeEach(async function () {
+        now = Date.now();
+        uut = newBloomFilter(options);
+        await uut.ready(now);
+        await uut.add('foo');
+
+        uut = await restartBloomFilter(uut, {
+          now: now + rotationIntervalInMs + DAY,
+          ...options,
+        });
+        await uut.add('bar');
+        await flushToDisk(uut);
+
+        const keys = await database.keys();
+        keysOfGen2 = keys.filter((key) => !key.includes(`|${now}|`));
+        expect(keys).to.have.lengthOf(2);
+        expect(keysOfGen2).to.have.lengthOf(1);
+      });
+
+      it('should delete the keys of a generation that was rotated out', async function () {
+        // The third generation starts. Two generations are the limit.
+        uut = await restartBloomFilter(uut, {
+          now: now + 2 * rotationIntervalInMs + 2 * DAY,
+          ...options,
+        });
+
+        expect(uut.generations).to.have.lengthOf(2);
+        expect(await database.keys()).to.eql(keysOfGen2);
+      });
+
+      it('should delete all generations that are too old', async function () {
+        // Both generations are older than their maximum age (two intervals).
+        uut = await restartBloomFilter(uut, {
+          now: now + 10 * rotationIntervalInMs,
+          ...options,
+        });
+
+        expect(uut.generations).to.have.lengthOf(1);
+        expect(await database.keys()).to.eql([]);
+      });
+    });
+
+    it('should delete keys from an old version and corrupted keys', async function () {
+      await database.set('bf|test|v0|123|some-shard', 'old version');
+      await database.set('bf|test|v1|no-timestamp|some-shard', 'corrupted');
+
+      const uut = newBloomFilter();
+      await uut.ready();
+
+      expect(await database.keys()).to.eql([]);
     });
   });
 });

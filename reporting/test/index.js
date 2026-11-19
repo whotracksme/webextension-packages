@@ -9,6 +9,7 @@ import './patterns.spec.js';
 import './patterns-updater.spec.js';
 import './job-scheduler.spec.js';
 import './bloom-filters.spec.js';
+import './persisted-bitarray.spec.js';
 import './country-provider.spec.js';
 import './persisted-hashes.spec.js';
 import './doublefetch-unbreak.spec.js';

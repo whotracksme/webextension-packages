@@ -78,11 +78,11 @@ export default class PersistedBitarray {
           const unmatchedKeys = [...remainingKeys];
           this._warn(
             'Found',
-            unmatchedKeys.size,
+            unmatchedKeys.length,
             'unmatched keys (will be deleted):',
             unmatchedKeys,
           );
-          Promise.all(unmatchedKeys.map((key) => this.db.deleteKey(key)))
+          Promise.all(unmatchedKeys.map((key) => this.db.remove(key)))
             .then(() => this._info('Unmatched keys successfully removed'))
             .catch((e) => this._warn('Failed to delete keys', e));
         }
