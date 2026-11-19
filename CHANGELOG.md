@@ -1,3 +1,15 @@
+# v12.1.16 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: After a restart of the service worker, the state of all tabs is lost [#258](https://github.com/whotracksme/webextension-packages/pull/258) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.15 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
