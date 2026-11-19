@@ -1325,7 +1325,7 @@ export default class Pages {
     const entry = this.openTabs.get(tabId);
     if (entry?.url === url) {
       this.openTabs.set(tabId, {
-        entry,
+        ...entry,
         visibility: 'private',
         pageId: ++this._pageIdGenerator,
         lastUpdatedAt: Date.now(),
