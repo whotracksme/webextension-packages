@@ -1,3 +1,15 @@
+# v12.1.13 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: search and ref could be wrong after a redirect [#255](https://github.com/whotracksme/webextension-packages/pull/255) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.12 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
