@@ -1,3 +1,15 @@
+# v12.1.15 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed bloom filter cleanup [#257](https://github.com/whotracksme/webextension-packages/pull/257) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.14 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
