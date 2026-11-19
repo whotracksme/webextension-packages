@@ -1,3 +1,15 @@
+# v12.1.19 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- fixed: only write DNS mappings if something changes [#261](https://github.com/whotracksme/webextension-packages/pull/261) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.18 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
