@@ -1,3 +1,15 @@
+# v12.1.18 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- fixed: doublefetch ignored the download limit [#260](https://github.com/whotracksme/webextension-packages/pull/260) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.17 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
