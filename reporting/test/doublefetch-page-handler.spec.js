@@ -10,6 +10,7 @@
  */
 
 import { expect, assert } from 'chai';
+import sinon from 'sinon';
 import * as fc from 'fast-check';
 
 import Sanitizer from '../src/sanitizer';
@@ -988,6 +989,75 @@ describe('DoublefetchPageHandler', function () {
 
       expect(ok).to.be.false;
       expect(details).to.be.a('string').that.is.not.empty;
+    });
+  });
+
+  describe('with the default page fetcher', function () {
+    const url = 'https://example.com/some/article';
+    let fetchStub;
+    let numDownloads;
+
+    function mockServerResponse({ contentLength }) {
+      fetchStub.callsFake(async (requestedUrl) => ({
+        ok: true,
+        status: 200,
+        type: 'basic',
+        url: requestedUrl,
+        headers: new Headers({
+          'content-type': 'text/html',
+          'content-length': String(contentLength),
+        }),
+        async text() {
+          numDownloads += 1;
+          return '<!doctype html><html><head><title>Some article</title></head></html>';
+        },
+      }));
+    }
+
+    function somePage() {
+      return {
+        url,
+        title: 'Some article',
+        status: 'complete',
+        pageLoadMethod: 'full-page-load',
+        preDoublefetch: {
+          title: 'Some article',
+          url,
+          noindex: false,
+          meta: {},
+        },
+        aggregator: { activity: 0.1 },
+      };
+    }
+
+    beforeEach(function () {
+      numDownloads = 0;
+      fetchStub = sinon.stub(globalThis, 'fetch');
+      uut = new DoublefetchPageHandler({
+        jobScheduler,
+        sanitizer,
+        newPageApprover,
+      });
+    });
+
+    afterEach(function () {
+      fetchStub.restore();
+    });
+
+    it('should download a page that is smaller than the download limit', async function () {
+      mockServerResponse({ contentLength: uut.downloadLimit - 1 });
+
+      await uut.runJob(somePage());
+      expect(numDownloads).to.eql(1);
+    });
+
+    it('should not download a page that is bigger than the download limit', async function () {
+      mockServerResponse({ contentLength: uut.downloadLimit + 1 });
+
+      const { ok, details } = await uut.runJob(somePage());
+      expect(ok).to.be.false;
+      expect(details).to.include('Exceeded size limit');
+      expect(numDownloads).to.eql(0);
     });
   });
 });

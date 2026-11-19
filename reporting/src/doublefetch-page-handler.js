@@ -312,7 +312,8 @@ function unbreakConfig(url) {
 }
 
 class CachedPageFetcher {
-  constructor() {
+  constructor({ downloadLimit } = {}) {
+    this.downloadLimit = downloadLimit;
     this.urlToAsyncPageStructure = new Map();
   }
 
@@ -380,7 +381,7 @@ export default class DoublefetchPageHandler {
     newPageApprover,
 
     // by default, use a separate fetcher cache per job
-    pageFetcherProvider = () => new CachedPageFetcher(),
+    pageFetcherProvider = (options) => new CachedPageFetcher(options),
   }) {
     this.sanitizer = requireParam(sanitizer);
     this.newPageApprover = requireParam(newPageApprover);
@@ -420,7 +421,9 @@ export default class DoublefetchPageHandler {
       throw new BadJobError('preDoublefetch missing');
     }
 
-    const pageFetcher = this.pageFetcherProvider();
+    const pageFetcher = this.pageFetcherProvider({
+      downloadLimit: this.downloadLimit,
+    });
     const log = logger.debug.bind(logger.debug, `[doublefetch=${url}]`);
     const logWarn = logger.warn.bind(logger.warn, `[doublefetch=${url}]`);
     const withBaseUrl = (baseUrl) => ({ baseUrl, log, logWarn });
