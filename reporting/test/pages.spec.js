@@ -767,6 +767,41 @@ describe('#Pages', function () {
         });
       });
 
+      describe('DNS cache in the session storage', function () {
+        let numWritesOfDnsCache;
+
+        function responseFrom(hostname, ip) {
+          chromeApiMock.webRequest.onResponseStarted.dispatch({
+            tabId: 1,
+            type: 'image',
+            url: `https://${hostname}/some/image.png`,
+            ip,
+          });
+        }
+
+        beforeEach(function () {
+          numWritesOfDnsCache = 0;
+          const originalSet = uut.sessionStore.set.bind(uut.sessionStore);
+          uut.sessionStore.set = (key, value) => {
+            if (key === 'dnsResolver') {
+              numWritesOfDnsCache += 1;
+            }
+            originalSet(key, value);
+          };
+        });
+
+        it('should write the cache only if a response has new information', function () {
+          for (let i = 0; i < 100; i += 1) {
+            responseFrom('cdn.example.com', '203.0.113.1');
+          }
+          expect(numWritesOfDnsCache).to.eql(1);
+
+          responseFrom('www.example.com', '203.0.113.2');
+          expect(numWritesOfDnsCache).to.eql(2);
+          expect(uut.sessionStore.get('dnsResolver')).to.have.lengthOf(2);
+        });
+      });
+
       // This are optional tests that can be enabled if the REPLAY_FIXTURES_URL
       // environment variable is defined. Karma lacks access to the filesystem,
       // but we can fetch fixtures over the network.
