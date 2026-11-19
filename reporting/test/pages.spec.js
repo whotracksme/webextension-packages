@@ -15,6 +15,7 @@ import Pages, { stripLazyVars, CANCEL_LAZY_VAR } from '../src/pages.js';
 import UrlAnalyzer from '../src/url-analyzer.js';
 import SessionStorageWrapper from '../src/session-storage.js';
 import Patterns from '../src/patterns.js';
+import FakeSessionApi from './helpers/fake-session-storage.js';
 
 function waitForPendingMicrotasks() {
   return new Promise((resolve) => {
@@ -859,6 +860,107 @@ ${total} tests run: ${passed} passed, ${failed} failed (${ratio}% passed)
           }
         });
       }
+    });
+
+    describe('after a restart of the service worker', function () {
+      const TAB_ID = 7;
+      const WINDOW_ID = 1;
+      const URL_A = 'https://www.example.com/start';
+      const URL_B = 'https://www.example.com/article';
+      let sessionApi;
+
+      function tab(url, status) {
+        return {
+          id: TAB_ID,
+          windowId: WINDOW_ID,
+          incognito: false,
+          active: true,
+          status,
+          title: `Title of ${url}`,
+          url,
+        };
+      }
+
+      function navigate(url, transitionType) {
+        chromeApiMock.tabs.onUpdated.dispatch(
+          TAB_ID,
+          { status: 'loading', url },
+          tab(url, 'loading'),
+        );
+        chromeApiMock.webNavigation.onCommitted.dispatch({
+          tabId: TAB_ID,
+          frameId: 0,
+          parentFrameId: -1,
+          url,
+          transitionType,
+        });
+        chromeApiMock.tabs.onUpdated.dispatch(
+          TAB_ID,
+          { status: 'complete' },
+          tab(url, 'complete'),
+        );
+      }
+
+      // like "initMocks", but the state is kept in the (fake) session storage
+      async function startPages({ openTabs }) {
+        chromeApiMock.tabs.query = async () => openTabs;
+        uut = new Pages({
+          config: { pages: { chrome: chromeApiMock } },
+          urlAnalyzer,
+          newPageApprover: stubNewPageApprover(),
+          pageSessionStore: new SessionStorageWrapper({
+            sessionApi,
+            namespace: 'test',
+          }),
+        });
+        await uut.init();
+        await uut.blockUntilFullInit();
+      }
+
+      async function restart({ openTabs }) {
+        await uut.sessionStore.flush();
+        uut.unload();
+        await startPages({ openTabs });
+      }
+
+      beforeEach(async function () {
+        sessionApi = new FakeSessionApi();
+        await startPages({ openTabs: [] });
+
+        // the user opens a page, and then follows a link to another page
+        chromeApiMock.tabs.onActivated.dispatch({
+          tabId: TAB_ID,
+          windowId: WINDOW_ID,
+        });
+        navigate(URL_A, 'typed');
+        navigate(URL_B, 'link');
+        expect(uut.describeTab(TAB_ID)).to.include({ url: URL_B, ref: URL_A });
+      });
+
+      it('should keep the information about a tab that is still open', async function () {
+        await restart({ openTabs: [tab(URL_B, 'complete')] });
+
+        expect([...uut.openTabs.keys()]).to.eql([TAB_ID]);
+        expect(uut.describeTab(TAB_ID)).to.include({
+          url: URL_B,
+          ref: URL_A,
+          pageLoadMethod: 'full-page-load',
+        });
+      });
+
+      it('should drop the information if the tab shows another page now', async function () {
+        await restart({ openTabs: [tab(URL_A, 'complete')] });
+
+        expect([...uut.openTabs.keys()]).to.eql([TAB_ID]);
+        expect(uut.describeTab(TAB_ID).url).to.eql(URL_A);
+        expect(uut.describeTab(TAB_ID).ref).to.be.undefined;
+      });
+
+      it('should drop a tab that was closed', async function () {
+        await restart({ openTabs: [] });
+
+        expect([...uut.openTabs.keys()]).to.eql([]);
+      });
     });
   });
 });
