@@ -192,7 +192,7 @@ export class BloomFilter {
             try {
               await Promise.all(
                 [...corruptedKeys, ...obsoleteKeys].map((key) =>
-                  this.db.delete(key),
+                  this.db.remove(key),
                 ),
               );
               this._info('Successfully cleaned up keys');
@@ -238,7 +238,7 @@ export class BloomFilter {
         if (this.maxGenerations > 1) {
           const isTooOld = (ts) =>
             ts < now - this.rotationIntervalInMs * this.maxGenerations;
-          while (currentGens.size > 0 && isTooOld(currentGens[0])) {
+          while (currentGens.length > 0 && isTooOld(currentGens[0])) {
             const oldestGen = currentGens.shift();
             gensToDelete.push(oldestGen);
             this._info('detected old generation:', oldestGen);
@@ -269,7 +269,7 @@ export class BloomFilter {
             this._info('Deleting generation', gen);
             const keys = keysByGen.get(gen);
             try {
-              await Promise.all(keys.map((key) => this.db.delete(key)));
+              await Promise.all(keys.map((key) => this.db.remove(key)));
               this._info(
                 `Generation ${gen} successfully deleted (${keys.length} keys in total)`,
               );
@@ -278,7 +278,7 @@ export class BloomFilter {
             }
           });
         }
-        await Promise.all(pendingCleanups);
+        await Promise.all(pendingCleanups.map((cleanup) => cleanup()));
 
         this.generations = currentGens.map(
           (gen) =>
