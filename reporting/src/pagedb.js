@@ -308,7 +308,9 @@ export default class PageDB {
         const url = normalizeUrl(url_);
         const persistedKey = this.urlsToPersistedKeys.get(url);
         if (persistedKey) {
-          const score = activityEstimator.estimate(url, now);
+          // The estimator knows the page by the URL of the tab
+          // (it can have a fragment), not by the normalized URL.
+          const score = activityEstimator.estimate(url_, now);
           if (score > 0.0) {
             const updateScore = (entry) => {
               if (score > entry.aggregator.activity) {
