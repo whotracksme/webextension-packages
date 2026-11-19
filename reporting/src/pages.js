@@ -1115,6 +1115,7 @@ export default class Pages {
           // If a link opened in a new tab, we need to merge the opener.
           if (
             entry.openedFrom?.status === 'redirecting' &&
+            !isRealPage(entry.openedFrom.url) &&
             entry.openedFrom.openedFrom
           ) {
             entry.openedFrom = { ...entry.openedFrom.openedFrom };
