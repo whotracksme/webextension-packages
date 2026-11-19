@@ -1,3 +1,15 @@
+# v12.1.14 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- fixed: Firefox on Android might have missed page loads [#256](https://github.com/whotracksme/webextension-packages/pull/256) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.13 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
