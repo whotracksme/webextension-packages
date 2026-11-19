@@ -267,6 +267,21 @@ describe('#PageDB', function () {
       await expectUrlsInDb([simplUrl]);
       await passesSelfChecks();
     });
+
+    it('should update the activity of a page that has a URL fragment', async function () {
+      const simpleUrl = 'https://de.wikipedia.test/wiki/Elefanten';
+      const urlInTab = `${simpleUrl}#Verbreitung`;
+      await uut.updatePages([somePage({ url: urlInTab })], undefined);
+
+      // the activity estimator knows only the URL of the tab
+      const activityEstimator = {
+        estimate: (url) => (url === urlInTab ? 0.5 : 0.0),
+      };
+      await uut.updateActivity([urlInTab], activityEstimator);
+
+      const { memory } = await uut.describeState({ inMemoryOnly: true });
+      expect(memory[simpleUrl].aggregator.activity).to.eql(0.5);
+    });
   });
 
   describe('emergency cleanup', function () {
