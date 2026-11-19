@@ -1146,6 +1146,12 @@ export default class Pages {
         }
       }
       this.openTabs.set(tabId, entry);
+
+      // webNavigation.onCommitted came before this update (see there)
+      const pendingCommit = oldTabEntry?._pendingCommit;
+      if (pendingCommit?.url === entry.url) {
+        this._finishCommit(tabId, entry, pendingCommit);
+      }
       return;
     }
 
@@ -1389,25 +1395,12 @@ export default class Pages {
     const { tabId, frameId, url } = details;
     if (frameId !== 0) return; // not top-level frame (of the active page)
 
-    let entry = this.openTabs.get(tabId);
+    const entry = this.openTabs.get(tabId);
     if (!entry) {
       logger.debug('Skipping navigation to', url, 'in private tab with', tabId);
       return;
     }
 
-    const now = Date.now();
-    entry = {
-      ...entry,
-      lastUpdated: now,
-
-      // Some pages trigger a history navigation with the identical URL
-      // immediately after loading. Remember the context here to be
-      // able to skip it later.
-      _previous_webNavigation_onCommitted: {
-        url,
-        lastUpdated: now,
-      },
-    };
     const isBackOrForward =
       details.transitionQualifiers?.includes('forward_back');
 
@@ -1422,6 +1415,37 @@ export default class Pages {
       // See also https://stackoverflow.com/q/25542015/783510
       forgetOpenedFrom = true;
     }
+
+    // The order of events depends on the browser. Chrome first updates the
+    // URL of the tab (tabs.onUpdated). Firefox 160 sends this event first;
+    // then wait for the update of the tab (see chrome_tabs_onUpdated).
+    if (isRealPage(url) && entry.url !== url) {
+      this.openTabs.set(tabId, {
+        ...entry,
+        _pendingCommit: { url, forgetOpenedFrom },
+      });
+      return;
+    }
+    this._finishCommit(tabId, entry, { url, forgetOpenedFrom });
+  }
+
+  _finishCommit(tabId, oldEntry, { url, forgetOpenedFrom }) {
+    const now = Date.now();
+    // this creates a copy, but omits "_pendingCommit" (the commit is handled now)
+    // eslint-disable-next-line no-unused-vars
+    const { _pendingCommit, ...oldEntry_ } = oldEntry;
+    let entry = {
+      ...oldEntry_,
+      lastUpdated: now,
+
+      // Some pages trigger a history navigation with the identical URL
+      // immediately after loading. Remember the context here to be
+      // able to skip it later.
+      _previous_webNavigation_onCommitted: {
+        url,
+        lastUpdated: now,
+      },
+    };
     if (forgetOpenedFrom && (entry.previousUrl || entry.openedFrom)) {
       // this creates a copy, but omits the fields related to "opened from"
       // eslint-disable-next-line no-unused-vars
