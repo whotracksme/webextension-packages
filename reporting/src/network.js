@@ -257,13 +257,23 @@ export class DnsResolver {
     return false;
   }
 
+  // Returns true if the cache changed. The caller can then persist it.
   cacheDnsResolution({ url, hostname, ip, now = Date.now() }) {
     const hostname_ = hostname || this._tryParseHostname(url);
-    if (hostname_) {
-      this.dns.set(hostname_, { ip, updatedAt: now });
-      return true;
+    if (!hostname_) {
+      return false;
     }
-    return false;
+
+    // Most requests bring no new information. Skip them, but refresh the
+    // timestamp from time to time; otherwise, a hostname in use expires.
+    const oldEntry = this.dns.get(hostname_);
+    const isFresh = oldEntry && Math.abs(now - oldEntry.updatedAt) < 2 * MINUTE;
+    if (isFresh && oldEntry.ip === ip) {
+      return false;
+    }
+
+    this.dns.set(hostname_, { ip, updatedAt: now });
+    return true;
   }
 
   expireEntries(now = Date.now()) {
