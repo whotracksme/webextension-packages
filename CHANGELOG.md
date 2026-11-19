@@ -1,3 +1,15 @@
+# v12.1.17 (Thu Nov 19 2026)
+
+#### 🐛 Bug Fix
+
+- fixed: activity detection missed URLs with fragments [#259](https://github.com/whotracksme/webextension-packages/pull/259) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.16 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
