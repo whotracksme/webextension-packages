@@ -599,7 +599,7 @@ export default class Pages {
     if (openTabs) {
       const deserializedTabs = Object.entries(openTabs).map(
         ([tabId, tabContent]) => [
-          tabId,
+          Number(tabId), // tab ids are numbers, but object keys are strings
           this._deserializeTabContent(tabContent),
         ],
       );
