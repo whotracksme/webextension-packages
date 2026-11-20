@@ -1,3 +1,15 @@
+# v12.1.21 (Fri Nov 20 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: the "ts" (the day) must be available before the duplicate check [#263](https://github.com/whotracksme/webextension-packages/pull/263) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.20 (Fri Nov 20 2026)
 
 #### 🐛 Bug Fix
