@@ -802,6 +802,138 @@ describe('#Pages', function () {
         });
       });
 
+      describe('when the title changes during the page analysis', function () {
+        const TAB_ID = 7;
+        const WINDOW_ID = 1;
+        const PAGE_URL = 'https://www.example.com/app';
+        const OTHER_URL = 'https://www.example.com/other';
+        let finishPageAnalysis;
+        let pageEvents;
+
+        function tab({
+          url = PAGE_URL,
+          title = 'App',
+          status = 'complete',
+        } = {}) {
+          return {
+            id: TAB_ID,
+            windowId: WINDOW_ID,
+            incognito: false,
+            active: true,
+            status,
+            title,
+            url,
+          };
+        }
+
+        function beginPageLoad(url) {
+          chromeApiMock.tabs.onUpdated.dispatch(
+            TAB_ID,
+            { status: 'loading', url },
+            tab({ url, status: 'loading' }),
+          );
+        }
+
+        function finishPageLoad(url) {
+          chromeApiMock.tabs.onUpdated.dispatch(
+            TAB_ID,
+            { status: 'complete' },
+            tab({ url }),
+          );
+        }
+
+        function changeTitle(title) {
+          chromeApiMock.tabs.onUpdated.dispatch(
+            TAB_ID,
+            { title },
+            tab({ title }),
+          );
+        }
+
+        function pageAnalysisEvents() {
+          return pageEvents.filter(
+            ({ type, field }) =>
+              type === 'lazy-init' && field === 'pageStructure',
+          );
+        }
+
+        beforeEach(function () {
+          // the page analysis script runs until the test ends it
+          chromeApiMock.scripting = {
+            executeScript: () =>
+              new Promise((resolve) => {
+                finishPageAnalysis = async () => {
+                  const result = {
+                    title: 'App',
+                    url: PAGE_URL,
+                    noindex: false,
+                  };
+                  resolve([{ result }]);
+                  await waitForPendingMicrotasks();
+                };
+              }),
+          };
+          pageEvents = [];
+          uut.addObserver((event) => pageEvents.push(event));
+          chromeApiMock.tabs.onActivated.dispatch({
+            tabId: TAB_ID,
+            windowId: WINDOW_ID,
+          });
+        });
+
+        it('should not cancel the page analysis', async function () {
+          beginPageLoad(PAGE_URL);
+          finishPageLoad(PAGE_URL);
+          changeTitle('(1) App');
+          await finishPageAnalysis();
+
+          expect(pageAnalysisEvents()).to.eql([
+            {
+              type: 'lazy-init',
+              field: 'pageStructure',
+              tabId: TAB_ID,
+              cancelled: false,
+            },
+          ]);
+          const page = uut.describeTab(TAB_ID);
+          expect(page.title).to.eql('(1) App');
+          expect(page.preDoublefetch).to.include({
+            title: 'App',
+            noindex: false,
+          });
+        });
+
+        it('should still report the new title', function () {
+          beginPageLoad(PAGE_URL);
+          finishPageLoad(PAGE_URL);
+          changeTitle('(1) App');
+
+          expect(pageEvents).to.deep.include({
+            type: 'page-updated',
+            tabId: TAB_ID,
+          });
+        });
+
+        it('should cancel the page analysis if the tab loads another page', async function () {
+          beginPageLoad(PAGE_URL);
+          finishPageLoad(PAGE_URL);
+          beginPageLoad(OTHER_URL);
+          await finishPageAnalysis();
+
+          expect(pageAnalysisEvents()).to.eql([
+            {
+              type: 'lazy-init',
+              field: 'pageStructure',
+              tabId: TAB_ID,
+              cancelled: true,
+            },
+          ]);
+          const page = uut.describeTab(TAB_ID);
+          expect(page.url).to.eql(OTHER_URL);
+          expect(page.preDoublefetch).to.be.undefined;
+        });
+      });
+
       // This are optional tests that can be enabled if the REPLAY_FIXTURES_URL
       // environment variable is defined. Karma lacks access to the filesystem,
       // but we can fetch fixtures over the network.
