@@ -1163,8 +1163,9 @@ export default class Pages {
 
       let updated = false;
       if (tab.title && tab.title !== entry.title) {
+        // A new title is not a navigation. Keep the page id, or pending
+        // lazy variables (e.g. the page structure) are lost for this page.
         entry.title = tab.title;
-        entry.pageId = ++this._pageIdGenerator;
         updated = true;
       }
       if (tab.url && tab.url !== entry.url) {
@@ -1914,6 +1915,7 @@ export default class Pages {
             type: 'lazy-init',
             field,
             tabId,
+            cancelled: result === CANCEL_LAZY_VAR,
           });
         })
         .catch((e) => {
