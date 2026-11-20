@@ -1,3 +1,15 @@
+# v12.1.20 (Fri Nov 20 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: do not change the pageId on title updates [#262](https://github.com/whotracksme/webextension-packages/pull/262) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.19 (Thu Nov 19 2026)
 
 #### 🐛 Bug Fix
