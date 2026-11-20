@@ -30,6 +30,14 @@ export default class MessageSender {
   }
 
   async send(message) {
+    // Without "ts" (the day), the duplicate detector cannot tell
+    // days apart: it would also reject the same page on the next
+    // day. So set "ts" here, before the check.
+    // ("communication.send" sets it too, but only afterwards.)
+    const ts =
+      message.body.ts || this.communication.trustedClock.getTimeAsYYYYMMDD();
+    message = { ...message, body: { ...message.body, ts } };
+
     logger.debug('Preparing to send message:', message);
     const { ok, rollback, rejectReason } =
       await this.duplicateDetector.trySend(message);
