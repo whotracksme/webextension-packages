@@ -681,6 +681,7 @@ export default class Pages {
         pageId: ++this._pageIdGenerator,
       };
       this._initVisibility(tabId, entry, now);
+      this.openTabs.set(tabId, entry);
 
       if (tab.active && isRealPage(tab.url)) {
         this.activeTab.saveActiveTabInWindow({
@@ -695,7 +696,6 @@ export default class Pages {
           }
         }
       }
-      this.openTabs.set(tabId, entry);
     }
 
     if (
