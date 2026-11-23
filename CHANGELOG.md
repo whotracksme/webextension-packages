@@ -1,3 +1,15 @@
+# v12.1.24 (Mon Nov 23 2026)
+
+#### 🐛 Bug Fix
+
+- Prevent entry.openedFrom from growing (now capped to one level) [#266](https://github.com/whotracksme/webextension-packages/pull/266) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.23 (Mon Nov 23 2026)
 
 #### 🐛 Bug Fix
