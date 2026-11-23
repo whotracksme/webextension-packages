@@ -1,3 +1,15 @@
+# v12.1.22 (Mon Nov 23 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: page analysis of active tab cancels itself [#264](https://github.com/whotracksme/webextension-packages/pull/264) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.21 (Fri Nov 20 2026)
 
 #### 🐛 Bug Fix
