@@ -1125,6 +1125,15 @@ export default class Pages {
           if (isRealPage(previousUrl)) {
             entry.previousUrl = previousUrl;
           }
+
+          // Keep only the direct opener. Without this, each link click adds
+          // one more level of "openedFrom", and the entry would grow without limit.
+          if (entry.openedFrom?.openedFrom) {
+            // this creates a copy, but omits the "openedFrom" (from the top-level "openedFrom")
+            // eslint-disable-next-line no-unused-vars
+            const { openedFrom, ...prunedOpenFrom } = entry.openedFrom;
+            entry.openedFrom = prunedOpenFrom;
+          }
         }
       }
 
