@@ -1032,8 +1032,8 @@ export default class Pages {
         entry.pageId = ++this._pageIdGenerator;
       }
 
-      this._initAllOptionalFields(tabId, entry, now);
       this.openTabs.set(tabId, entry);
+      this._initAllOptionalFields(tabId, entry, now);
 
       if (entry.search?.depth === 1) {
         const { url, search, redirects = [] } = entry;
