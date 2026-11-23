@@ -1,3 +1,15 @@
+# v12.1.23 (Mon Nov 23 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: init tab before calling _initAllOptionalFields [#265](https://github.com/whotracksme/webextension-packages/pull/265) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.22 (Mon Nov 23 2026)
 
 #### 🐛 Bug Fix
