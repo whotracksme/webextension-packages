@@ -58,7 +58,7 @@ function createPageMessage(safePage, ctry) {
   const body = {
     action: 'wtm.page',
     payload,
-    ver: 4, // Note: no need to keep this number in sync among messages
+    ver: 5, // Note: no need to keep this number in sync among messages
     'anti-duplicates': random32Bit(),
   };
   return { body, deduplicateBy };
