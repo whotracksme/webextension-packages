@@ -1,3 +1,15 @@
+# v12.1.28 (Tue Nov 24 2026)
+
+#### 🐛 Bug Fix
+
+- Bump version of "wtm.popularity" from 4 to 5 (reason: bug fixes) [#270](https://github.com/whotracksme/webextension-packages/pull/270) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.27 (Tue Nov 24 2026)
 
 #### 🐛 Bug Fix
