@@ -1,3 +1,15 @@
+# v12.1.29 (Tue Nov 24 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: private pages were not saved in session [#271](https://github.com/whotracksme/webextension-packages/pull/271) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.28 (Tue Nov 24 2026)
 
 #### 🐛 Bug Fix
