@@ -11,7 +11,7 @@
 
 import { expect } from 'chai';
 
-import PageQuorumCheckHandler from '../src/paged-quorum-check-handler.js';
+import PageQuorumCheckHandler from '../src/page-quorum-check-handler.js';
 
 function someSafePage({
   url = 'https://example.test/foo',
@@ -64,13 +64,26 @@ describe('#PageQuorumCheckHandler', function () {
   let jobScheduler;
   let quorumChecker;
   let countryProvider;
+  let votes;
+  let urlsWithQuorum;
 
   beforeEach(function () {
     jobScheduler = {
       registerHandler() {},
     };
-    quorumChecker = {};
-    countryProvider = {};
+    votes = [];
+    urlsWithQuorum = new Set();
+    quorumChecker = {
+      async sendQuorumIncrement({ text }) {
+        votes.push(text);
+      },
+      async checkQuorumConsent({ text }) {
+        return urlsWithQuorum.has(text);
+      },
+    };
+    countryProvider = {
+      getSafeCountryCode: () => '--',
+    };
     uut = new PageQuorumCheckHandler({
       jobScheduler,
       quorumChecker,
@@ -80,7 +93,75 @@ describe('#PageQuorumCheckHandler', function () {
 
   it('should be able to process a message', async function () {
     const page = someSafePage();
-    const message = uut.runJob(page);
-    expect(message).to.exist;
+    urlsWithQuorum.add(page.url);
+
+    const message = await uut.runJob(page);
+    expect(message.body.payload.url).to.eql(page.url);
+    expect(votes).to.eql([page.url]);
+  });
+
+  it('should drop a page that did not reach quorum', async function () {
+    const page = someSafePage();
+
+    const message = await uut.runJob(page);
+    expect(message).to.be.null;
+    expect(votes).to.eql([page.url]);
+  });
+
+  describe('with redirects', function () {
+    it('should accept a redirect with a null URL (dropped by the sanitizer)', async function () {
+      const page = someSafePage();
+      urlsWithQuorum.add(page.url);
+      page.redirects = [{ from: null, to: page.url, statusCode: 302 }];
+
+      const message = await uut.runJob(page);
+      expect(message.body.payload.redirects).to.eql(page.redirects);
+      expect(votes).to.eql([page.url]);
+    });
+
+    it('should accept a redirect chain with a null URL in the middle (dropped by the sanitizer)', async function () {
+      const page = someSafePage();
+      const from = 'https://example.test/start';
+      urlsWithQuorum.add(page.url);
+      urlsWithQuorum.add(from);
+      // The hop in the middle shows up twice: as "to" and as the next "from".
+      page.redirects = [
+        { from, to: null, statusCode: 302 },
+        { from: null, to: page.url, statusCode: 302 },
+      ];
+
+      const message = await uut.runJob(page);
+      expect(message.body.payload.redirects).to.eql(page.redirects);
+      expect(votes).to.have.members([page.url, from]);
+    });
+
+    it('should accept the marker for a redirect chain that was cut', async function () {
+      const page = someSafePage();
+      const from = 'https://example.test/redirect-loop';
+      urlsWithQuorum.add(page.url);
+      urlsWithQuorum.add(from);
+      page.redirects = [{ from, to: '...', statusCode: 302 }];
+
+      const message = await uut.runJob(page);
+      expect(message.body.payload.redirects).to.eql(page.redirects);
+      expect(votes).to.have.members([page.url, from]);
+    });
+
+    it('should protect a URL that did not reach quorum', async function () {
+      const page = someSafePage();
+      urlsWithQuorum.add(page.url);
+      page.redirects = [
+        { from: 'https://example.test/secret', to: page.url, statusCode: 302 },
+      ];
+
+      const message = await uut.runJob(page);
+      expect(message.body.payload.redirects).to.eql([
+        {
+          from: 'https://example.test/ (PROTECTED)',
+          to: page.url,
+          statusCode: 302,
+        },
+      ]);
+    });
   });
 });
