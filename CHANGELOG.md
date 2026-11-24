@@ -1,3 +1,15 @@
+# v12.1.25 (Tue Nov 24 2026)
+
+#### 🐛 Bug Fix
+
+- Fixes multiple bugs in the EventListenerQueue and its setup in Pages [#267](https://github.com/whotracksme/webextension-packages/pull/267) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.24 (Mon Nov 23 2026)
 
 #### 🐛 Bug Fix
