@@ -1032,6 +1032,18 @@ export default class Pages {
         entry.pageId = ++this._pageIdGenerator;
       }
 
+      // The order is important here, and the details are subtle:
+      //
+      // 1) Visibility has to be set before the entry is saved in the session;
+      //    otherwise, private pages would not get properly synced back.
+      //    Note that only non-private pages will run "_analyzePageStructure",
+      //    which would trigger a sync automatically.
+      //
+      // 2) _initAllOptionalFields must come last: it calls
+      //    "_analyzePageStructure", which expects that the entry exists;
+      //    otherwise "_tabVanished" will trigger (and lazy vars would
+      //    be cancelled, leading to information loss)
+      this._initVisibility(tabId, entry, now);
       this.openTabs.set(tabId, entry);
       this._initAllOptionalFields(tabId, entry, now);
 

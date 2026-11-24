@@ -897,6 +897,63 @@ describe('#Pages', function () {
         });
       });
 
+      describe('when a private page has finished loading', function () {
+        const TAB_ID = 7;
+
+        function finishPageLoad(url) {
+          chromeApiMock.tabs.onUpdated.dispatch(
+            TAB_ID,
+            { status: 'complete' },
+            {
+              id: TAB_ID,
+              windowId: 1,
+              incognito: false,
+              active: true,
+              status: 'complete',
+              title: 'Some title',
+              url,
+            },
+          );
+        }
+
+        async function expectSessionInSync() {
+          // these two are written with a delay
+          uut.activeTab.flush();
+          uut.activityEstimator.flush();
+
+          const { log } = (await uut.selfChecks()).report();
+          expect(log.warnings).to.eql({});
+          expect(log.failures).to.eql({});
+        }
+
+        async function expectPrivatePageInSession() {
+          expect(uut.openTabs.get(TAB_ID).visibility).to.eql('private');
+          expect(uut.sessionStore.get(TAB_ID)).to.eql(uut.openTabs.get(TAB_ID));
+          await expectSessionInSync();
+        }
+
+        // Private pages are special: there is no page analysis, which would
+        // write the entry a second time when it is complete.
+        describe('should save its visibility in the session storage', function () {
+          it('- page that is not a web page', async function () {
+            finishPageLoad('chrome://extensions/');
+            await expectPrivatePageInSession();
+          });
+
+          it('- page in a private network', async function () {
+            const url = 'http://intranet.example.com/wiki';
+            chromeApiMock.webRequest.onResponseStarted.dispatch({
+              tabId: TAB_ID,
+              type: 'main_frame',
+              url,
+              ip: '192.168.0.10',
+            });
+            finishPageLoad(url);
+            await expectPrivatePageInSession();
+          });
+        });
+      });
+
       describe('when the title changes during the page analysis', function () {
         const TAB_ID = 7;
         const WINDOW_ID = 1;
