@@ -1,3 +1,15 @@
+# v12.1.26 (Tue Nov 24 2026)
+
+#### 🐛 Bug Fix
+
+- Fixed: PageQuorumCheckHandler did not expect that redirects can be "null" [#268](https://github.com/whotracksme/webextension-packages/pull/268) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.25 (Tue Nov 24 2026)
 
 #### 🐛 Bug Fix
