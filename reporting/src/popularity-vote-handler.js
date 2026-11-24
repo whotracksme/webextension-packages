@@ -153,7 +153,7 @@ export default class PopularityVoteHandler {
         await this.communication.send({
           action: 'wtm.popularity',
           payload,
-          ver: 4, // Note: no need to keep this number in sync among messages
+          ver: 5, // Note: no need to keep this number in sync among messages
           'anti-duplicates': random32Bit(),
         });
         logger.info('Voted successfully for:', payload);
