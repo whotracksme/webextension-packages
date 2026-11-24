@@ -1,3 +1,15 @@
+# v12.1.27 (Tue Nov 24 2026)
+
+#### 🐛 Bug Fix
+
+- Bump the "wtm.page" message version from 4 to 5 (reason: lots of bugfixes) [#269](https://github.com/whotracksme/webextension-packages/pull/269) ([@philipp-classen](https://github.com/philipp-classen))
+
+#### Authors: 1
+
+- Philipp Claßen ([@philipp-classen](https://github.com/philipp-classen))
+
+---
+
 # v12.1.26 (Tue Nov 24 2026)
 
 #### 🐛 Bug Fix
