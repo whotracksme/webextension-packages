@@ -181,7 +181,7 @@ describe('#PopularityVoteHandler', function () {
       let actualPayloads = messagesSent.map(({ message }) => {
         const { action, payload, ver } = message;
         expect(action).to.eql('wtm.popularity');
-        expect(ver).to.eql(4);
+        expect(ver).to.eql(5);
 
         // "payload.activity" is an edge case, because random noise will be applied.
         // The best that we can do is a sanity check here, and then ignoring the field.
