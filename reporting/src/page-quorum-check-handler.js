@@ -126,11 +126,15 @@ export default class PageQuorumCheckHandler {
     }
     if (safePage.redirects) {
       for (const { from, to } of safePage.redirects) {
-        uniqueUrlsToInc.add(from);
+        // Note: "from" and "to" can be null if sanitizeUrl dropped the URL
+        // (see "maskUrl" in doublefetch-page-handler.js)
+        if (from) {
+          uniqueUrlsToInc.add(from);
+        }
 
         // ignore the magic '...' marker
         // (used to break long redirect chains from misconfigured servers)
-        if (to !== '...') {
+        if (to && to !== '...') {
           uniqueUrlsToInc.add(to);
         }
       }
@@ -180,7 +184,7 @@ export default class PageQuorumCheckHandler {
     }
 
     const protectUrlIfNeeded = async (url) => {
-      if (isPureDomain(url) || url === '...') {
+      if (!url || url === '...' || isPureDomain(url)) {
         return url;
       }
       if (await cachedQuorumChecker.isQuorumReached(url)) {

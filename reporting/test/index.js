@@ -26,6 +26,7 @@ import './pagedb.spec.js';
 import './pages.spec.js';
 import './page-aggregator.spec.js';
 import './persisted-counters.spec.js';
+import './page-quorum-check-handler.spec.js';
 import './popularity-estimator.spec.js';
 import './popularity-vote-handler.spec.js';
 import './popularity-vote-sanitizer.spec.js';
