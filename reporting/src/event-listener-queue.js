@@ -36,12 +36,8 @@ export default class EventListenerQueue {
     this._bufferedEvents = [];
     this._uninstallHandlers = [];
     listeners.forEach(({ method, api, type }) => {
-      if (
-        chrome &&
-        chrome[api] &&
-        chrome[api][type]?.addListener &&
-        chrome[api][type]?.removeListener
-      ) {
+      const event = globalThis.chrome?.[api]?.[type];
+      if (event?.addListener && event?.removeListener) {
         const handler = (...args) => {
           this._bufferedEvents.push({ method, args });
           if (
@@ -53,10 +49,27 @@ export default class EventListenerQueue {
             this._bufferedEvents.shift();
           }
         };
-        chrome[api][type].addListener(handler);
-        this._uninstallHandlers.push(() => {
-          chrome[api][type].removeListener(handler);
-        });
+
+        try {
+          if (api === 'webRequest') {
+            // webRequest API may refuse listeners without a filter.
+            // (Note: keep this part in sync with the setup in pages.js)
+            const filter = { urls: ['<all_urls>'] };
+            try {
+              event.addListener(handler, filter, ['responseHeaders']);
+            } catch {
+              event.addListener(handler, filter);
+            }
+          } else {
+            event.addListener(handler);
+          }
+          this._uninstallHandlers.push(() => {
+            event.removeListener(handler);
+          });
+        } catch (e) {
+          this.detectedErrors = true;
+          logger.warn('Cannot queue api', method, e);
+        }
       } else {
         logger.debug(
           'Cannot queue api',

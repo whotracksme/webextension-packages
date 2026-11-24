@@ -11,7 +11,11 @@
 
 import { expect } from 'chai';
 
-import Pages, { stripLazyVars, CANCEL_LAZY_VAR } from '../src/pages.js';
+import Pages, {
+  stripLazyVars,
+  CANCEL_LAZY_VAR,
+  eventListenerQueue,
+} from '../src/pages.js';
 import UrlAnalyzer from '../src/url-analyzer.js';
 import SessionStorageWrapper from '../src/session-storage.js';
 import Patterns from '../src/patterns.js';
@@ -246,6 +250,35 @@ describe('#Pages', function () {
       });
       await pages.init();
       pages.unload();
+    });
+  });
+
+  describe('#describeListeners', function () {
+    it('should find the listeners for the browser events', function () {
+      const listeners = Pages.describeListeners();
+      for (const expected of [
+        { method: 'chrome_tabs_onUpdated', api: 'tabs', type: 'onUpdated' },
+        {
+          method: 'chrome_webNavigation_onCommitted',
+          api: 'webNavigation',
+          type: 'onCommitted',
+        },
+        {
+          method: 'chrome_webRequest_onBeforeRedirect',
+          api: 'webRequest',
+          type: 'onBeforeRedirect',
+        },
+        {
+          method: 'chrome_windows_onFocusChanged',
+          api: 'windows',
+          type: 'onFocusChanged',
+        },
+      ]) {
+        expect(listeners).to.deep.include(expected);
+      }
+      for (const { method } of listeners) {
+        expect(Pages.prototype[method]).to.be.a('function');
+      }
     });
   });
 
@@ -589,6 +622,68 @@ describe('#Pages', function () {
         await uut._ready;
         uut.unload();
         chromeApiMock._ensureAllListenersRemoved();
+      });
+    });
+
+    describe('with events that came in during the startup', function () {
+      const TAB_ID = 7;
+      const PAGE_URL = 'https://www.example.com/article';
+
+      function tab(status) {
+        return {
+          id: TAB_ID,
+          windowId: 1,
+          incognito: false,
+          active: true,
+          status,
+          title: 'Some article',
+          url: PAGE_URL,
+        };
+      }
+
+      it('should process the events when it is ready', async function () {
+        const navigations = [];
+        uut.addObserver((event) => {
+          if (event.type === 'safe-page-navigation') {
+            navigations.push(event.url);
+          }
+        });
+
+        // The service worker starts, because the user opens a page.
+        // These events come in while "Pages" is still loading its state.
+        eventListenerQueue._bufferedEvents.push(
+          {
+            method: 'chrome_tabs_onUpdated',
+            args: [
+              TAB_ID,
+              { status: 'loading', url: PAGE_URL },
+              tab('loading'),
+            ],
+          },
+          {
+            method: 'chrome_webNavigation_onCommitted',
+            args: [
+              {
+                tabId: TAB_ID,
+                frameId: 0,
+                url: PAGE_URL,
+                transitionType: 'link',
+              },
+            ],
+          },
+          {
+            method: 'chrome_tabs_onUpdated',
+            args: [TAB_ID, { status: 'complete' }, tab('complete')],
+          },
+        );
+        await uut.init();
+        await uut.blockUntilFullInit();
+
+        expect(uut.describeTab(TAB_ID)).to.include({
+          url: PAGE_URL,
+          status: 'complete',
+        });
+        expect(navigations).to.eql([PAGE_URL]);
       });
     });
 

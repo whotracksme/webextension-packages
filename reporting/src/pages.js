@@ -433,7 +433,7 @@ export default class Pages {
             }
 
             if (this.isActive) {
-              eventListenerQueue.replayEvents();
+              eventListenerQueue.replayEvents(this);
               this._setupListener();
             }
             this._updateSession();
@@ -1968,7 +1968,7 @@ export default class Pages {
    * ]
    */
   static describeListeners() {
-    const listeners = Object.getOwnPropertyNames(Pages);
+    const listeners = Object.getOwnPropertyNames(Pages.prototype);
     return ['webRequest', 'webNavigation', 'tabs', 'windows'].flatMap((api) => {
       const prefix = `chrome_${api}_`;
       return listeners
